@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { FieldRenderer } from './IntakeFields';
 import {
@@ -70,6 +70,16 @@ export function IntakeWizard() {
     if (status.kind !== 'in-progress') return 100;
     return Math.round(((status.stepIdx + 1) / total) * 100);
   }, [status, total]);
+
+  // Scroll to the top whenever the step changes or we reach a terminal state.
+  // Without this, on mobile the next step renders at the previous scroll
+  // position and the user has to scroll up to see the new question.
+  const scrollKey =
+    status.kind === 'in-progress' ? `step-${status.stepIdx}` : status.kind;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [scrollKey]);
 
   function setField(id: string, v: unknown) {
     setAnswers((prev) => ({ ...prev, [id]: v }));
