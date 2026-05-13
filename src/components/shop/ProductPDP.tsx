@@ -47,7 +47,7 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
                 onClick={() => setActiveImage(i)}
                 aria-label={`Show image ${i + 1}`}
                 style={{
-                  background: `linear-gradient(180deg, ${product.swatch} 0%, var(--bg, #002C28) 100%)`,
+                  background: `linear-gradient(180deg, ${product.swatch} 0%, var(--bg, #000000) 100%)`,
                 }}
                 className={cn(
                   'relative aspect-square overflow-hidden rounded-xl transition-all duration-300 ease-out-expo',

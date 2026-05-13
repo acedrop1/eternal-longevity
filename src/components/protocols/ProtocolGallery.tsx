@@ -34,7 +34,7 @@ export function ProtocolGallery({ images, swatch, name, category, stack }: Props
             onClick={() => setActive(i)}
             aria-label={`Show image ${i + 1}`}
             style={{
-              background: `linear-gradient(180deg, ${swatch} 0%, var(--bg, #002C28) 100%)`,
+              background: `linear-gradient(180deg, ${swatch} 0%, var(--bg, #000000) 100%)`,
             }}
             className={cn(
               'relative aspect-square overflow-hidden rounded-xl transition-all duration-300 ease-out-expo',
@@ -69,7 +69,7 @@ export function ProtocolGallery({ images, swatch, name, category, stack }: Props
       <div
         className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
         style={{
-          background: `linear-gradient(180deg, ${swatch} 0%, var(--bg, #002C28) 100%)`,
+          background: `linear-gradient(180deg, ${swatch} 0%, var(--bg, #000000) 100%)`,
           boxShadow:
             '0 60px 120px -20px rgba(213,168,80,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
         }}

@@ -266,7 +266,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
       total: 480,
       sub: '12-week cycle',
       image: '/images/11.jpg',
-      swatch: 'linear-gradient(180deg, #1a4a3e 0%, #002C28 100%)',
+      swatch: 'linear-gradient(180deg, #1a4a3e 0%, #000000 100%)',
     }),
     []
   );

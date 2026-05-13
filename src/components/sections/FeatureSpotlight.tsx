@@ -58,7 +58,7 @@ export function FeatureSpotlight() {
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse at 25% 50%, rgba(213,168,80,0.10) 0%, rgba(0,44,40,0) 50%), #002C28',
+              'radial-gradient(ellipse at 25% 50%, rgba(213,168,80,0.10) 0%, rgba(0, 0, 0,0) 50%), #000000',
           }}
         />
 

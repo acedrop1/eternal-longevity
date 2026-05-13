@@ -43,7 +43,7 @@ export function ProtocolStickyBar({ protocol }: Props) {
           <div
             className="hidden sm:block h-12 w-12 flex-shrink-0 rounded-xl overflow-hidden border border-line"
             style={{
-              background: `linear-gradient(135deg, ${protocol.swatch} 0%, var(--bg, #002C28) 100%)`,
+              background: `linear-gradient(135deg, ${protocol.swatch} 0%, var(--bg, #000000) 100%)`,
             }}
           >
             <div className="flex h-full items-center justify-center">

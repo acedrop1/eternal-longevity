@@ -32,7 +32,7 @@ const SUBSCRIPTIONS: Subscription[] = [
     nextBillingDate: 'Aug 9, 2026',
     status: 'active',
     image: '/images/11.jpg',
-    swatch: 'linear-gradient(180deg, #1a4a3e 0%, #002C28 100%)',
+    swatch: 'linear-gradient(180deg, #1a4a3e 0%, #000000 100%)',
   },
   {
     id: 'sub-cjc',
@@ -43,7 +43,7 @@ const SUBSCRIPTIONS: Subscription[] = [
     nextBillingDate: 'June 12, 2026',
     status: 'pending-review',
     image: '/images/9.jpg',
-    swatch: 'linear-gradient(180deg, #3a5a4e 0%, #002C28 100%)',
+    swatch: 'linear-gradient(180deg, #3a5a4e 0%, #000000 100%)',
   },
 ];
 

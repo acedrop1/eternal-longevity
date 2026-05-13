@@ -22,7 +22,7 @@ export default async function Image() {
           justifyContent: 'space-between',
           padding: '72px 88px',
           background:
-            'radial-gradient(800px 600px at 50% 0%, rgba(213,168,80,0.18), rgba(0,44,40,0) 60%), #002C28',
+            'radial-gradient(800px 600px at 50% 0%, rgba(213,168,80,0.18), rgba(0, 0, 0,0) 60%), #000000',
           fontFamily: 'sans-serif',
           color: '#F4F0E8',
         }}

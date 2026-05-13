@@ -91,7 +91,7 @@ export function Comparison() {
             className="relative rounded-3xl border border-line overflow-hidden"
             style={{
               background:
-                'linear-gradient(180deg, rgba(213,168,80,0.06) 0%, rgba(0,44,40,0) 30%, rgba(0,44,40,0) 100%), rgba(3,65,56,0.6)',
+                'linear-gradient(180deg, rgba(213,168,80,0.06) 0%, rgba(0, 0, 0,0) 30%, rgba(0, 0, 0,0) 100%), rgba(20, 20, 20,0.6)',
               backdropFilter: 'blur(10px)',
             }}
           >

@@ -54,18 +54,18 @@
    * modifiers like text-foreground/65 still work. Override these on any
    * wrapper by adding .theme-light.
    */
-  --bg-rgb: 0 44 40;              /* #002C28 deep forest */
+  --bg-rgb: 0 0 0;                /* #000000 pure black */
   --fg-rgb: 244 240 232;          /* #F4F0E8 warm ivory */
-  --muted-rgb: 125 138 128;       /* sage gray */
-  --surface-rgb: 3 65 56;         /* #034138 mid teal card */
-  --surface-raised-rgb: 8 87 75;  /* #08574b raised teal */
-  --line-rgb: 244 240 232;        /* line drawn from foreground tint */
+  --muted-rgb: 154 154 154;       /* neutral mid gray */
+  --surface-rgb: 10 10 10;        /* #0a0a0a deep card */
+  --surface-raised-rgb: 20 20 20; /* #141414 raised card */
+  --line-rgb: 255 255 255;        /* line drawn from white tint */
   --line-opacity: 0.08;
   /* Glass utility (also theme-aware) */
-  --glass-bg: rgba(244, 240, 232, 0.05);
-  --glass-bg-strong: rgba(244, 240, 232, 0.08);
-  --glass-border: rgba(244, 240, 232, 0.10);
-  --glass-border-strong: rgba(244, 240, 232, 0.14);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-strong: rgba(255, 255, 255, 0.14);
 }
 
 /* --- LIGHT THEME — apply to any section/page wrapper ---
@@ -85,12 +85,12 @@
   --muted-rgb: 107 124 112;       /* muted sage on light */
   --surface-rgb: 255 255 255;     /* card white */
   --surface-raised-rgb: 240 238 232;
-  --line-rgb: 0 44 40;            /* line tint follows forest */
+  --line-rgb: 0 0 0;            /* line tint follows forest */
   --line-opacity: 0.10;
-  --glass-bg: rgba(0, 44, 40, 0.04);
+  --glass-bg: rgba(0, 0, 0, 0.04);
   --glass-bg-strong: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(0, 44, 40, 0.08);
-  --glass-border-strong: rgba(0, 44, 40, 0.10);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-strong: rgba(0, 0, 0, 0.10);
 }
 
 /* Descendant overrides for the most-used Tailwind utilities so the light
@@ -121,11 +121,11 @@
 .theme-light .text-foreground\/45 { color: rgb(26 38 32 / 0.45); }
 .theme-light .text-foreground\/40 { color: rgb(26 38 32 / 0.40); }
 .theme-light .text-foreground\/30 { color: rgb(26 38 32 / 0.30); }
-.theme-light .border-line         { border-color: rgb(0 44 40 / 0.10); }
+.theme-light .border-line         { border-color: rgb(0 0 0 / 0.10); }
 .theme-light .border-foreground\/20 { border-color: rgb(26 38 32 / 0.20); }
 .theme-light .border-foreground\/30 { border-color: rgb(26 38 32 / 0.30); }
 .theme-light .placeholder-foreground\/30::placeholder { color: rgb(26 38 32 / 0.30); }
-.theme-light .ring-line           { --tw-ring-color: rgb(0 44 40 / 0.10); }
+.theme-light .ring-line           { --tw-ring-color: rgb(0 0 0 / 0.10); }
 .theme-light .ring-foreground\/30 { --tw-ring-color: rgb(26 38 32 / 0.30); }
 /* Subtle dark overlays used in dark theme don't translate — soften them */
 .theme-light .bg-foreground\/5  { background-color: rgb(26 38 32 / 0.05); }

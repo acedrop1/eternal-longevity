@@ -106,7 +106,7 @@ export function FeaturedProtocol() {
               <div
                 className="relative aspect-[3/4] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
                 style={{
-                  background: `linear-gradient(180deg, ${active.swatch} 0%, var(--bg, #002C28) 100%)`,
+                  background: `linear-gradient(180deg, ${active.swatch} 0%, var(--bg, #000000) 100%)`,
                   boxShadow:
                     '0 60px 120px -20px rgba(213,168,80,0.30), inset 0 1px 0 rgba(255,255,255,0.06)',
                 }}

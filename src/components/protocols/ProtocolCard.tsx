@@ -17,7 +17,7 @@ export function ProtocolCard({ protocol, delay = 0 }: Props) {
         href={`/protocols/${protocol.id}`}
         className="group relative block overflow-hidden rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
         style={{
-          background: `linear-gradient(180deg, ${protocol.swatch} 0%, var(--bg, #002C28) 100%)`,
+          background: `linear-gradient(180deg, ${protocol.swatch} 0%, var(--bg, #000000) 100%)`,
           boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)',
         }}
       >
