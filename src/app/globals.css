@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Proxima Nova @font-face declarations
+ *
+ * The actual .woff2 files live in /public/fonts/ — drop them in there
+ * and these rules pick them up automatically. Until then, the Mulish
+ * fallback (loaded via next/font in layout.tsx) takes over.
+ */
+@font-face {
+  font-family: 'ProximaNova';
+  src: url('/fonts/ProximaNova-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ProximaNova';
+  src: url('/fonts/ProximaNova-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ProximaNova';
+  src: url('/fonts/ProximaNova-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ProximaNova';
+  src: url('/fonts/ProximaNova-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ProximaNova';
+  src: url('/fonts/ProximaNova-Extrabold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-proxima: 'ProximaNova';
+  /* --font-mulish is set by next/font in layout.tsx */
+
+  /* --- DARK THEME (default) ---
+   * Tailwind colors resolve through these RGB variables so opacity
+   * modifiers like text-foreground/65 still work. Override these on any
+   * wrapper by adding .theme-light.
+   */
+  --bg-rgb: 0 44 40;              /* #002C28 deep forest */
+  --fg-rgb: 244 240 232;          /* #F4F0E8 warm ivory */
+  --muted-rgb: 125 138 128;       /* sage gray */
+  --surface-rgb: 3 65 56;         /* #034138 mid teal card */
+  --surface-raised-rgb: 8 87 75;  /* #08574b raised teal */
+  --line-rgb: 244 240 232;        /* line drawn from foreground tint */
+  --line-opacity: 0.08;
+  /* Glass utility (also theme-aware) */
+  --glass-bg: rgba(244, 240, 232, 0.05);
+  --glass-bg-strong: rgba(244, 240, 232, 0.08);
+  --glass-border: rgba(244, 240, 232, 0.10);
+  --glass-border-strong: rgba(244, 240, 232, 0.14);
+}
+
+/* --- LIGHT THEME — apply to any section/page wrapper ---
+ * Off-white health-product palette. Cards and packaging keep their own
+ * dark swatches for contrast, but bg/text/line/surface flip.
+ *
+ * Sets the wrapper's OWN background + text color directly so the section
+ * is light even if Tailwind hasn't rebuilt the config (CSS variables are
+ * the long-term path; these direct properties are the safety net).
+ */
+.theme-light {
+  background-color: #F7F5F5 !important;
+  color: rgb(26 38 32);
+
+  --bg-rgb: 247 245 245;          /* #F7F5F5 off-white */
+  --fg-rgb: 26 38 32;             /* near-black with green undertone */
+  --muted-rgb: 107 124 112;       /* muted sage on light */
+  --surface-rgb: 255 255 255;     /* card white */
+  --surface-raised-rgb: 240 238 232;
+  --line-rgb: 0 44 40;            /* line tint follows forest */
+  --line-opacity: 0.10;
+  --glass-bg: rgba(0, 44, 40, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(0, 44, 40, 0.08);
+  --glass-border-strong: rgba(0, 44, 40, 0.10);
+}
+
+/* Descendant overrides for the most-used Tailwind utilities so the light
+ * theme reads correctly even without the variable-driven Tailwind config.
+ * Cards, surfaces, borders, and text-foreground all flip. */
+.theme-light .bg-background      { background-color: #F7F5F5; }
+.theme-light .bg-background\/95  { background-color: rgb(247 245 245 / 0.95); }
+.theme-light .bg-background\/90  { background-color: rgb(247 245 245 / 0.90); }
+.theme-light .bg-background\/85  { background-color: rgb(247 245 245 / 0.85); }
+.theme-light .bg-background\/80  { background-color: rgb(247 245 245 / 0.80); }
+.theme-light .bg-background\/75  { background-color: rgb(247 245 245 / 0.75); }
+.theme-light .bg-background\/70  { background-color: rgb(247 245 245 / 0.70); }
+.theme-light .bg-background\/50  { background-color: rgb(247 245 245 / 0.50); }
+.theme-light .bg-background\/40  { background-color: rgb(247 245 245 / 0.40); }
+.theme-light .bg-surface         { background-color: #FFFFFF; }
+.theme-light .bg-surface\/85     { background-color: rgb(255 255 255 / 0.85); }
+.theme-light .bg-surface\/80     { background-color: rgb(255 255 255 / 0.80); }
+.theme-light .bg-surface-raised  { background-color: #F0EEE6; }
+.theme-light .text-foreground    { color: rgb(26 38 32); }
+.theme-light .text-foreground\/85 { color: rgb(26 38 32 / 0.85); }
+.theme-light .text-foreground\/80 { color: rgb(26 38 32 / 0.80); }
+.theme-light .text-foreground\/75 { color: rgb(26 38 32 / 0.75); }
+.theme-light .text-foreground\/70 { color: rgb(26 38 32 / 0.70); }
+.theme-light .text-foreground\/65 { color: rgb(26 38 32 / 0.65); }
+.theme-light .text-foreground\/60 { color: rgb(26 38 32 / 0.60); }
+.theme-light .text-foreground\/55 { color: rgb(26 38 32 / 0.55); }
+.theme-light .text-foreground\/50 { color: rgb(26 38 32 / 0.50); }
+.theme-light .text-foreground\/45 { color: rgb(26 38 32 / 0.45); }
+.theme-light .text-foreground\/40 { color: rgb(26 38 32 / 0.40); }
+.theme-light .text-foreground\/30 { color: rgb(26 38 32 / 0.30); }
+.theme-light .border-line         { border-color: rgb(0 44 40 / 0.10); }
+.theme-light .border-foreground\/20 { border-color: rgb(26 38 32 / 0.20); }
+.theme-light .border-foreground\/30 { border-color: rgb(26 38 32 / 0.30); }
+.theme-light .placeholder-foreground\/30::placeholder { color: rgb(26 38 32 / 0.30); }
+.theme-light .ring-line           { --tw-ring-color: rgb(0 44 40 / 0.10); }
+.theme-light .ring-foreground\/30 { --tw-ring-color: rgb(26 38 32 / 0.30); }
+/* Subtle dark overlays used in dark theme don't translate — soften them */
+.theme-light .bg-foreground\/5  { background-color: rgb(26 38 32 / 0.05); }
+.theme-light .bg-foreground\/10 { background-color: rgb(26 38 32 / 0.10); }
+.theme-light .bg-foreground\/15 { background-color: rgb(26 38 32 / 0.15); }
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: 'ss01', 'cv01';
+  }
+  ::selection {
+    @apply bg-accent text-background;
+  }
+}
+
+/* Entrance animations (CSS-driven so they don't depend on framer-motion lifecycle) */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes haloDrift {
+  0%   { transform: translate(-50%, -10%) scale(1);   opacity: 0.7; }
+  100% { transform: translate(-50%, 10%)  scale(1.1); opacity: 1; }
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@layer utilities {
+  .anim-fade-up { animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .anim-fade-in { animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .anim-slide-down { animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .anim-halo { animation: haloDrift 14s ease-in-out infinite alternate; }
+  .anim-marquee { animation: marquee 20s linear infinite; }
+  .d-0 { animation-delay: 0s; }
+  .d-1 { animation-delay: 0.4s; }
+  .d-2 { animation-delay: 0.6s; }
+  .d-3 { animation-delay: 0.9s; }
+  .d-4 { animation-delay: 1.1s; }
+  .d-5 { animation-delay: 1.4s; }
+  .d-6 { animation-delay: 1.7s; }
+
+  /* Glass utilities — driven by CSS variables so .theme-light flips them. */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border: 1px solid var(--glass-border);
+  }
+  .glass-strong {
+    background: var(--glass-bg-strong);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid var(--glass-border-strong);
+  }
+  .pill {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm tracking-wider transition-colors duration-300 ease-out-expo;
+  }
+  .grid-bg {
+    background-image:
+      radial-gradient(at 20% 0%, rgba(213, 168, 80, 0.12) 0%, transparent 50%),
+      radial-gradient(at 80% 100%, rgba(213, 168, 80, 0.08) 0%, transparent 50%);
+  }
+
+  /* Hide native scrollbar on horizontal scrollers (mobile category pills etc.) */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE / Edge legacy */
+    scrollbar-width: none;    /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;            /* Chrome / Safari / Opera */
+  }
+
+  /* iOS home-indicator safe area for bottom-fixed elements (sticky CTAs etc.) */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  /* LIGHT THEME PARKED — to use light: swap into the rules above
+  .glass        { background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.08); }
+  .glass-strong { background: rgba(255,255,255,0.65); border: 1px solid rgba(0,0,0,0.08); }
+  .grid-bg      { background-image: radial-gradient(at 20% 0%, rgba(213,168,80,0.18) 0%, transparent 50%),
+                                    radial-gradient(at 80% 100%, rgba(213,168,80,0.12) 0%, transparent 50%); }
+  ----------------------------------------------------------- */
+}
