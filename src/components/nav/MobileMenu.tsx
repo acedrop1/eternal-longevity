@@ -69,7 +69,9 @@ export function MobileMenu({ links }: MobileMenuProps) {
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
         className={cn(
-          'relative inline-flex items-center justify-center rounded-full px-5 py-2.5 transition-colors',
+          // z-[45] keeps the pill (and its X) above the dropdown scrim
+          // (z-35) and panel (z-40) so it never gets covered + blurred.
+          'relative z-[45] inline-flex items-center justify-center rounded-full px-5 py-2.5 transition-colors',
           'glass text-foreground text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
         )}
       >
