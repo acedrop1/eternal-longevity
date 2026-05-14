@@ -9,6 +9,7 @@ import { ProtocolPricing } from '@/components/protocols/ProtocolPricing';
 import { ProtocolDetails } from '@/components/protocols/ProtocolDetails';
 import { RelatedProtocols } from '@/components/protocols/RelatedProtocols';
 import { ProtocolStickyBar } from '@/components/protocols/ProtocolStickyBar';
+import { ProtocolPDPMobile } from '@/components/protocols/ProtocolPDPMobile';
 import { PROTOCOLS, getProtocol, getOtherProtocols } from '@/lib/protocols';
 
 interface PageProps {
@@ -42,7 +43,12 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
        light theme variables instead of the cream-on-cream invisible state. */
     <div className="theme-light bg-background text-foreground">
       <Header />
-      <main>
+
+      {/* ===== MOBILE: sticky-gallery + slide-up panel (matches portal shop PDP) ===== */}
+      <ProtocolPDPMobile protocol={protocol} />
+
+      {/* ===== DESKTOP: original two-column layout ===== */}
+      <main className="hidden md:block">
         {/* PDP HERO — gallery left, info column right */}
         <section className="relative bg-background pt-28 pb-12 md:pt-36 md:pb-16 px-6">
           <div className="mx-auto max-w-7xl">
@@ -261,10 +267,11 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
         <RelatedProtocols protocols={others} />
       </main>
       <Footer />
-      {/* Sticky bottom checkout bar (Eight Sleep pattern) — replaces the
-          generic StickyLeadCapture on this page since the product-specific
-          CTA is more valuable here. */}
-      <ProtocolStickyBar protocol={protocol} />
+      {/* Sticky bottom checkout bar (Eight Sleep pattern) — desktop only.
+          On mobile, ProtocolPDPMobile provides its own floating CTA bar. */}
+      <div className="hidden md:block">
+        <ProtocolStickyBar protocol={protocol} />
+      </div>
     </div>
   );
 }
