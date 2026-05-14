@@ -63,12 +63,9 @@ export function ProtocolCard({ protocol, delay = 0 }: Props) {
             {protocol.shortDescription}
           </p>
           <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[10px] tracking-widest text-foreground/40">FROM</div>
-              <div className="text-base font-semibold text-foreground">
-                ${protocol.pricing.monthly}/mo
-              </div>
-            </div>
+            <span className="text-[10px] tracking-widest text-foreground/40">
+              PHYSICIAN-SUPERVISED
+            </span>
             <span className="inline-flex items-center gap-2 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1">
               EXPLORE
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

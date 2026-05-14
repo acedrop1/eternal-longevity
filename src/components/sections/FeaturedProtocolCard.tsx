@@ -9,8 +9,6 @@ import type { Protocol } from '@/lib/protocols';
  * centered carousel so the two layouts stay in sync.
  */
 export function FeaturedProtocolCard({ p }: { p: Protocol }) {
-  const perMonth = Math.round(p.pricing.annual / 12);
-
   return (
     <Link
       href={`/protocols/${p.id}`}
@@ -74,19 +72,12 @@ export function FeaturedProtocolCard({ p }: { p: Protocol }) {
           {p.shortDescription}
         </p>
 
-        {/* Price + arrow — pinned to the bottom */}
-        <div className="mt-auto flex items-end justify-between">
-          <div>
-            <p className="text-[10px] tracking-widest text-foreground/45">
-              STARTING AT
-            </p>
-            <p className="text-lg font-semibold text-foreground tracking-tight">
-              ${perMonth}
-              <span className="text-sm text-foreground/55 font-normal">
-                /mo
-              </span>
-            </p>
-          </div>
+        {/* Footer — pinned to the bottom. Pricing is members-only, so the
+            card drives to the protocol page / assessment instead. */}
+        <div className="mt-auto flex items-center justify-between">
+          <span className="text-[10px] tracking-widest text-foreground/45">
+            PRICING AFTER ASSESSMENT
+          </span>
           <span className="inline-flex items-center gap-1 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1">
             EXPLORE
             <svg

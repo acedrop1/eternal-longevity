@@ -64,8 +64,8 @@ export function ProtocolStickyBar({ protocol }: Props) {
               </span>
             </div>
             <div className="text-xs text-foreground/55">
-              From <span className="text-foreground font-semibold">${protocol.pricing.monthly}/mo</span>
-              <span className="hidden md:inline"> — Cancel anytime</span>
+              Physician-supervised
+              <span className="hidden md:inline"> — pricing shown after your assessment</span>
             </div>
           </div>
 

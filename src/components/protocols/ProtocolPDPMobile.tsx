@@ -10,65 +10,20 @@ interface ProtocolPDPMobileProps {
   protocol: Protocol;
 }
 
-type TierKey = 'monthly' | 'quarterly' | 'annual';
-
-interface Tier {
-  key: TierKey;
-  label: string;
-  description: string;
-  total: number;
-  perMonth: number;
-  saveLabel?: string;
-}
-
 /**
  * Mobile-only protocol PDP — the SAME UI pattern as the portal shop PDP
  * (ProductPDPMobile): a full-bleed sticky gallery up top, an info panel that
- * slides up over it, plan radio cards, an inline CTA block, and a floating
- * bottom CTA bar that fades in once the inline CTA scrolls away.
+ * slides up over it, an inline CTA block, and a floating bottom CTA bar that
+ * fades in once the inline CTA scrolls away.
  *
- * Differences from the shop version: this is the marketing site, so there's
- * no cart — the CTA is "Start Your Assessment" → /start. Data comes from the
- * Protocol shape instead of ShopProduct.
+ * Pricing is members-only — visitors never see dollar amounts on the
+ * marketing site. The CTA is "Start Your Assessment" → /start; pricing is
+ * revealed inside the member portal after physician review.
  *
- * The parent page renders the original desktop layout above the md breakpoint
- * and this component below it.
+ * The parent page renders the original desktop layout above the md
+ * breakpoint and this component below it.
  */
 export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
-  // ---------- Pricing tiers ----------
-  const { monthly, quarterly, annual } = protocol.pricing;
-  const qSave = Math.round((1 - quarterly / (monthly * 3)) * 100);
-  const aSave = Math.round((1 - annual / (monthly * 12)) * 100);
-  const tiers: Tier[] = [
-    {
-      key: 'monthly',
-      label: 'Monthly',
-      description: 'Billed monthly · cancel anytime',
-      total: monthly,
-      perMonth: monthly,
-    },
-    {
-      key: 'quarterly',
-      label: '3-Month',
-      description: 'Billed every 3 months · cancel between cycles',
-      total: quarterly,
-      perMonth: Math.round(quarterly / 3),
-      saveLabel: qSave > 0 ? `Save ${qSave}%` : undefined,
-    },
-    {
-      key: 'annual',
-      label: 'Annual',
-      description: 'Billed once a year · best value',
-      total: annual,
-      perMonth: Math.round(annual / 12),
-      saveLabel: aSave > 0 ? `Save ${aSave}%` : undefined,
-    },
-  ];
-  const [selectedTier, setSelectedTier] = useState<TierKey>('quarterly');
-  const active = tiers.find((t) => t.key === selectedTier) ?? tiers[0];
-  const compMultiplier =
-    active.key === 'quarterly' ? 3 : active.key === 'annual' ? 12 : 1;
-
   // ---------- Carousel ----------
   const slides = protocol.gallery.slice(0, 3);
   const [slideIdx, setSlideIdx] = useState(0);
@@ -126,14 +81,6 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
-
-  const planRef = useRef<HTMLDivElement>(null);
-  const [pulse, setPulse] = useState(false);
-  const scrollToPlan = () => {
-    planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setPulse(true);
-    setTimeout(() => setPulse(false), 1400);
-  };
 
   return (
     <div className="md:hidden relative bg-background">
@@ -267,128 +214,70 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
           {protocol.tagline}
         </p>
 
-        {/* Price line */}
-        <div className="mt-5 flex items-baseline gap-2">
-          <span className="text-[11px] tracking-widest text-foreground/50">
-            FROM
-          </span>
-          <span aria-hidden className="text-foreground/30">
-            —
-          </span>
-          {active.saveLabel && (
-            <span className="text-base text-foreground/40 line-through">
-              ${monthly * compMultiplier}
-            </span>
-          )}
-          <span className="text-2xl font-semibold tracking-tight text-foreground">
-            ${active.total}
-          </span>
-          <span className="text-sm text-foreground/55">
-            / {active.label.toLowerCase()}
-          </span>
+        {/* Members-only pricing chip */}
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[11px] tracking-wider text-foreground/70">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-accent"
+            aria-hidden
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          MEMBERS-ONLY PRICING
         </div>
 
-        {/* ===== Plan section ===== */}
-        <div ref={planRef} className="mt-8">
-          <div className="mb-3 flex items-end justify-between">
-            <div>
-              <h3 className="text-base font-semibold tracking-tight text-foreground">
-                Plan
-              </h3>
-              <p className="mt-0.5 text-[12px] italic text-foreground/55">
-                Choose your cadence — cancel between cycles
-              </p>
-            </div>
-          </div>
-
-          <div
-            role="radiogroup"
-            aria-label="Subscription plan"
-            className="space-y-2.5"
-          >
-            {tiers.map((tier) => {
-              const selected = tier.key === selectedTier;
-              return (
-                <button
-                  key={tier.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => setSelectedTier(tier.key)}
-                  className={cn(
-                    'group relative w-full rounded-2xl border-2 px-4 py-4 text-left transition-all duration-300',
-                    selected
-                      ? 'border-accent bg-accent/[0.06]'
-                      : 'border-line bg-surface-raised hover:border-foreground/30',
-                  )}
-                  style={{
-                    boxShadow:
-                      pulse && selected
-                        ? '0 0 0 6px rgba(213,168,80,0.25)'
-                        : undefined,
-                    transition:
-                      'border-color 200ms, box-shadow 1400ms ease-out, background 200ms',
-                  }}
+        {/* ===== Membership-includes card ===== */}
+        <div
+          className="mt-6 rounded-2xl border-2 border-accent p-5"
+          style={{ background: 'rgba(213,168,80,0.06)' }}
+        >
+          <p className="mb-1 text-base font-semibold tracking-tight text-foreground">
+            The {protocol.name} membership includes
+          </p>
+          <p className="mb-4 text-xs text-foreground/55 leading-relaxed">
+            Complete a short assessment to see your personalized pricing. You
+            aren&apos;t charged until a physician approves your protocol.
+          </p>
+          <ul className="space-y-2 text-sm text-foreground/80">
+            {[
+              'Physician review & e-signed prescription',
+              'Compounded vials shipped on your cadence',
+              'Dosing kit + instructions included',
+              'Clinical liaison messaging',
+            ].map((line) => (
+              <li key={line} className="flex items-start gap-2.5">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mt-0.5 flex-shrink-0 text-accent"
+                  aria-hidden
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold tracking-tight text-foreground">
-                          {tier.label}
-                        </span>
-                        {tier.saveLabel && (
-                          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-accent">
-                            {tier.saveLabel}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-[12px] text-foreground/55">
-                        {tier.description}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-base font-semibold text-foreground">
-                        ${tier.total}
-                      </div>
-                      <div className="text-[10px] tracking-wider text-foreground/45">
-                        ${tier.perMonth}/mo
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        'grid h-6 w-6 flex-shrink-0 place-items-center rounded-full border-2 transition-colors',
-                        selected
-                          ? 'border-accent bg-accent text-black'
-                          : 'border-foreground/25',
-                      )}
-                    >
-                      {selected && (
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {line}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ===== Inline CTA block ===== */}
         <div
           ref={ctaRef}
-          className="cta-block mt-7 rounded-2xl bg-surface-raised p-4"
+          className="cta-block mt-6 rounded-2xl bg-surface-raised p-4"
         >
           <Link
             href="/start"
@@ -554,50 +443,21 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
         )}
         style={{ bottom: 'max(12px, env(safe-area-inset-bottom))' }}
       >
-        <div className="rounded-2xl bg-surface-raised border border-line p-3 shadow-2xl backdrop-blur-md">
-          {/* Top row: tappable summary */}
-          <button
-            type="button"
-            onClick={scrollToPlan}
-            className="mb-2.5 flex w-full items-center justify-between gap-2 rounded-full bg-background/60 px-4 py-2 text-left transition-colors hover:bg-background/80"
-          >
-            <span className="flex items-center gap-2 text-[12px] tracking-wider text-foreground/80">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <polyline points="18 15 12 9 6 15" />
-              </svg>
-              {active.label} · {protocol.cycleLength}
-            </span>
-            <span className="text-[11px] underline-offset-2 text-foreground/60 underline">
-              Change
-            </span>
-          </button>
-          {/* Bottom row: price + Start Assessment */}
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <div className="text-[10px] tracking-wider text-foreground/50">
-                FROM
-              </div>
-              <div className="text-lg font-semibold text-foreground">
-                ${active.total}
-              </div>
+        <div className="flex items-center gap-3 rounded-2xl bg-surface-raised border border-line p-3 shadow-2xl backdrop-blur-md">
+          <div className="min-w-0 flex-shrink">
+            <div className="text-[10px] tracking-wider text-foreground/50">
+              {protocol.category}
             </div>
-            <Link
-              href="/start"
-              className="flex-1 rounded-full bg-accent px-6 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
-            >
-              Start Your Assessment
-            </Link>
+            <div className="truncate text-sm font-semibold text-foreground">
+              {protocol.name}
+            </div>
           </div>
+          <Link
+            href="/start"
+            className="flex-1 rounded-full bg-accent px-6 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
+          >
+            Start Your Assessment
+          </Link>
         </div>
       </div>
     </div>
