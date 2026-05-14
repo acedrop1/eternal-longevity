@@ -38,10 +38,8 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
   const others = getOtherProtocols(protocol.id);
 
   return (
-    /* Whole PDP runs on the light theme — wrap EVERYTHING (header + main +
-       footer + sticky bar) so the Header's nav text resolves through the
-       light theme variables instead of the cream-on-cream invisible state. */
-    <div className="theme-light bg-background text-foreground">
+    /* Dark theme — matches the rest of the site. */
+    <>
       <Header />
 
       {/* ===== MOBILE: sticky-gallery + slide-up panel (matches portal shop PDP) ===== */}
@@ -272,6 +270,6 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
       <div className="hidden md:block">
         <ProtocolStickyBar protocol={protocol} />
       </div>
-    </div>
+    </>
   );
 }
