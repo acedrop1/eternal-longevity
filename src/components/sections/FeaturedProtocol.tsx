@@ -77,12 +77,20 @@ export function FeaturedProtocol() {
           </FadeIn>
         </div>
 
-        {/* === CARD GRID === */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        {/* === CARD GRID ===
+            Mobile: horizontal peek-scroll strip — cards are 80% wide so the
+            next one peeks in at the edge, snap points keep it tidy.
+            sm+: reverts to a normal 2-up / 4-up grid. */}
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1 -mx-6 px-6 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 md:gap-5 sm:overflow-visible sm:pb-0">
           {PROTOCOLS.map((p, i) => {
             const perMonth = Math.round(p.pricing.annual / 12);
             return (
-              <FadeIn key={p.id} delay={360 + i * 100} y={20}>
+              <FadeIn
+                key={p.id}
+                delay={360 + i * 100}
+                y={20}
+                className="snap-start shrink-0 w-[80%] sm:w-auto"
+              >
                 <Link
                   href={`/protocols/${p.id}`}
                   className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/40"
