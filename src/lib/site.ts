@@ -1,9 +1,25 @@
 /**
  * Single place for site-wide metadata used by sitemap, robots, and OG.
- * Override SITE_URL in production via NEXT_PUBLIC_SITE_URL.
+ *
+ * SITE_URL resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL  — explicit override. Set this in Vercel once the
+ *      custom domain (eternallongevity.com) is connected.
+ *   2. VERCEL_PROJECT_PRODUCTION_URL — Vercel's stable production domain,
+ *      auto-set on every Vercel deployment (currently the *.vercel.app URL).
+ *   3. Fallback — the current Vercel production URL, so local dev and any
+ *      edge case still produce working absolute URLs.
+ *
+ * This matters for OG/social images: the <meta og:image> tag is an absolute
+ * URL, so it must point at a domain that's actually live.
  */
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://eternallongevity.com';
+function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return 'https://eternal-longevity-seven.vercel.app';
+}
+
+export const SITE_URL = resolveSiteUrl();
 
 export const SITE_NAME = 'Eternal Longevity';
 
