@@ -73,12 +73,14 @@ export function MobileMenu({ links }: MobileMenuProps) {
           'glass text-foreground text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
         )}
       >
-        {/* "Menu ⌄" label — fades out when open */}
+        {/* "Menu ⌄" label — fades out when open (opacity-only, no scale —
+            scale transforms leave the icon rasterized + blurry on a
+            composited layer). */}
         <span
           className={cn(
             'absolute inset-0 flex items-center justify-center gap-2',
-            'transition-all duration-300 ease-out-expo',
-            open ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+            'transition-opacity duration-300 ease-out-expo',
+            open ? 'opacity-0 pointer-events-none' : 'opacity-100'
           )}
         >
           Menu
@@ -96,13 +98,13 @@ export function MobileMenu({ links }: MobileMenuProps) {
           </svg>
         </span>
 
-        {/* "✕" icon — fades in when open */}
+        {/* "✕" icon — fades in when open (opacity-only crossfade) */}
         <span
           aria-hidden
           className={cn(
             'absolute inset-0 flex items-center justify-center',
-            'transition-all duration-300 ease-out-expo',
-            open ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'
+            'transition-opacity duration-300 ease-out-expo',
+            open ? 'opacity-100' : 'opacity-0 pointer-events-none'
           )}
         >
           <svg
