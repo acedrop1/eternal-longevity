@@ -60,12 +60,35 @@ export function ProtocolCarousel() {
     return closest;
   }, []);
 
-  // Initial: jump into the middle copy (synchronously, before paint, so the
-  // user never sees the un-looped first frame).
+  // Initial: jump into the middle copy so a card is centered with neighbors
+  // peeking on BOTH sides from the first frame. We can't rely on a single
+  // useLayoutEffect call — the track may not have its final width yet
+  // (it lives inside fade-in / reveal wrappers). A ResizeObserver fires the
+  // centering the moment the track actually has a measurable width, then
+  // disconnects so it only runs once.
   useLayoutEffect(() => {
-    centerOn(N, false);
-    setActive(0);
-  }, [centerOn]);
+    const el = trackRef.current;
+    if (!el) return;
+    let done = false;
+
+    const tryCenter = () => {
+      if (done) return;
+      if (el.clientWidth === 0) return;
+      const child = el.children[N] as HTMLElement | undefined;
+      if (!child || child.offsetWidth === 0) return;
+      el.scrollLeft =
+        child.offsetLeft - (el.clientWidth - child.offsetWidth) / 2;
+      done = true;
+      setActive(0);
+    };
+
+    tryCenter(); // synchronous attempt — works if layout is already ready
+    if (done) return;
+
+    const ro = new ResizeObserver(() => tryCenter());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Live update: track the centered card for scale/opacity + dots.
   const recompute = useCallback(() => {
