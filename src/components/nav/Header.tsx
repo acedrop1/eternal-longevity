@@ -7,6 +7,7 @@ import { MobileMenu } from './MobileMenu';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
+  { label: 'Home', href: '/' },
   { label: 'Protocols', href: '/protocols' },
   { label: 'Science', href: '/science' },
   { label: 'About', href: '/about' },
