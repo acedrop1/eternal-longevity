@@ -54,7 +54,7 @@ const COL_2: Card[] = [
     platform: 'x',
     handleName: 'Gary Brecka',
     handle: '@garybrecka',
-    body: 'BPC-157 is one of the most powerful peptides for recovery and gut health. Peptides work with your body, not against it — minimal side effects, maximum results.',
+    body: 'BPC-157 is one of the most powerful peptides for recovery and gut health. Peptides work with your body, not against it. Minimal side effects, maximum results.',
     timestamp: 'via X (Twitter)',
   },
   {
@@ -212,13 +212,12 @@ export function Testimonials() {
                   lineHeight: 1,
                 }}
               >
-                What experts say about peptides
+                What experts are saying
               </h2>
             </FadeIn>
             <FadeIn delay={220}>
               <p className="mt-4 text-foreground/55 leading-relaxed">
-                Leading voices in health and science on the science and
-                practice of peptide therapy.
+                Leading voices in health and science on longevity medicine.
               </p>
             </FadeIn>
           </div>

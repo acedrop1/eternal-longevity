@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 const FEATURES = [
   {
     title: 'Recovery',
-    body: 'Accelerate soft tissue repair and reduce inflammation. Train harder, recover faster, prevent injury — backed by physician-supervised cycles and clinical-grade compounds.',
+    body: 'Accelerate soft tissue repair and reduce inflammation. Train harder, recover faster, prevent injury. Backed by physician-supervised cycles and clinical-grade compounds.',
     label: '01',
     image: '/images/8.jpg', // core / athletic
   },
@@ -31,7 +31,7 @@ const FEATURES = [
   },
   {
     title: 'Longevity',
-    body: 'Cellular support, metabolic regulation, cognitive clarity. Engineered for the long arc — protocols you can sustain across years, not weeks.',
+    body: 'Cellular support, metabolic regulation, cognitive clarity. Engineered for the long arc. Protocols you can sustain across years, not weeks.',
     label: '03',
     image: '/images/1.jpg', // desert yoga / lifestyle
   },

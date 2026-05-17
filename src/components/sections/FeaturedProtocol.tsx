@@ -48,9 +48,9 @@ export function FeaturedProtocol() {
             </FadeIn>
             <FadeIn delay={220}>
               <p className="mt-4 max-w-xl text-foreground/60 leading-relaxed">
-                Four physician-supervised peptide stacks, each engineered for a
-                specific goal. Your physician finalizes the protocol after a
-                clinical review.
+                Four physician-supervised longevity protocols, each engineered
+                for a specific goal. Your physician finalizes the protocol
+                after a clinical review.
               </p>
             </FadeIn>
           </div>

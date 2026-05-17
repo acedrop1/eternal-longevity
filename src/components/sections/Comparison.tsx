@@ -59,7 +59,7 @@ export function Comparison() {
             </h2>
 
             <p className="text-foreground/65 leading-relaxed max-w-md mb-8">
-              The peptide market is full of unregulated research vials. Eternal Longevity is the opposite — physician-reviewed protocols, licensed compounding pharmacies, and a clinical team that knows your file.
+              The peptide market is full of unregulated research vials. Eternal Longevity is the opposite: physician-reviewed protocols, licensed compounding pharmacies, and a clinical team that knows your file.
             </p>
 
             <a

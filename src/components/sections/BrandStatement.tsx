@@ -21,10 +21,10 @@ const TOKENS: Tok[] = [
   { type: 'word', text: 'Longevity,' },
   { type: 'word', text: 'we' },
   { type: 'word', text: 'pair' },
-  { type: 'word', text: 'peptide' },
-  { type: 'word', text: 'science' },
+  { type: 'word', text: 'longevity' },
+  { type: 'word', text: 'medicine' },
   // pipette / liquid science visual
-  { type: 'img', src: '/images/11.jpg', alt: 'peptide science' },
+  { type: 'img', src: '/images/11.jpg', alt: 'longevity medicine' },
   { type: 'word', text: 'with' },
   { type: 'word', text: 'rigorous' },
   { type: 'word', text: 'medical' },
