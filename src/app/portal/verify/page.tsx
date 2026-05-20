@@ -28,6 +28,8 @@ export default async function VerifyIdPage() {
         { label: 'Dashboard', href: '/portal' },
         { label: 'Shop', href: '/portal/shop' },
         { label: 'Orders', href: '/portal/orders' },
+        { label: 'Subscriptions', href: '/portal/subscriptions' },
+        { label: 'Account', href: '/portal/account' },
       ]}
     >
       {/* Breadcrumb */}

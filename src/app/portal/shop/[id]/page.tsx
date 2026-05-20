@@ -47,6 +47,8 @@ export default async function ShopProductPage({ params }: PageProps) {
         { label: 'Dashboard', href: '/portal' },
         { label: 'Shop', href: '/portal/shop' },
         { label: 'Orders', href: '/portal/orders' },
+        { label: 'Subscriptions', href: '/portal/subscriptions' },
+        { label: 'Account', href: '/portal/account' },
       ]}
     >
       {/* Breadcrumb. Hidden on mobile where the new PDP takes over full-bleed */}

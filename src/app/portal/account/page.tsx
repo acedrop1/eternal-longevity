@@ -22,6 +22,8 @@ export default async function AccountPage() {
         { label: 'Dashboard', href: '/portal' },
         { label: 'Shop', href: '/portal/shop' },
         { label: 'Orders', href: '/portal/orders' },
+        { label: 'Subscriptions', href: '/portal/subscriptions' },
+        { label: 'Account', href: '/portal/account' },
       ]}
     >
       <div className="mb-10">
