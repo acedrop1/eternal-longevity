@@ -3,7 +3,7 @@
  * subscriptions, separate from the 4 signature protocols. This is what
  * /portal/shop displays.
  *
- * Subscription-only — no one-time purchases. Each product has three cadences:
+ * Subscription-only. No one-time purchases. Each product has three cadences:
  *   monthly, quarterly (3 cycles), annual (~4 cycles).
  */
 
@@ -79,7 +79,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Tissue Repair & Recovery',
     category: 'recovery',
     shortDescription:
-      'A 15-amino acid peptide that accelerates soft-tissue healing — tendons, ligaments, and gut lining.',
+      'A 15-amino acid peptide that accelerates soft-tissue healing. Tendons, ligaments, and gut lining.',
     longDescription:
       'BPC-157 (Body Protection Compound) upregulates growth-factor signaling at the site of injury, accelerates angiogenesis, and modulates inflammation. Strong preclinical evidence for tendon, ligament, and GI repair. Most members run an 8–12 week cycle, then take 4 weeks off before re-evaluating.',
     bestFor: 'Active members recovering from training, surgery, or chronic joint pain.',
@@ -176,7 +176,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'The clean GH-axis stack. Pulsatile release that mimics a healthy 25-year-old without elevating cortisol.',
     longDescription:
-      'CJC-1295 is a GHRH analog that extends growth-hormone pulses; Ipamorelin is a ghrelin mimetic that triggers them. Combined, they produce sustained IGF-1 increases and improved recovery, sleep, and body composition — without the prolactin or cortisol shifts seen with other secretagogues.',
+      'CJC-1295 is a GHRH analog that extends growth-hormone pulses; Ipamorelin is a ghrelin mimetic that triggers them. Combined, they produce sustained IGF-1 increases and improved recovery, sleep, and body composition. Without the prolactin or cortisol shifts seen with other secretagogues.',
     bestFor: 'Members 30+ optimizing recovery, sleep depth, and lean body composition.',
     benefits: [
       'Increased IGF-1 and sustained GH AUC',
@@ -303,7 +303,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Dual GIP/GLP-1 Agonist',
     category: 'metabolic',
     shortDescription:
-      'The strongest GLP-1 class agent — up to 22% mean body-weight reduction in Phase 3 trials.',
+      'The strongest GLP-1 class agent. Up to 22% mean body-weight reduction in Phase 3 trials.',
     longDescription:
       'Tirzepatide activates both GIP and GLP-1 receptors, producing greater weight loss and glycemic control than GLP-1-only agents. Phase 3 SURMOUNT trials show 20–22% mean body-weight reduction at 72 weeks. Titrated slowly to minimize GI side effects.',
     bestFor: 'Members who need stronger metabolic intervention than GLP-1 alone provides.',
@@ -365,7 +365,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Cognitive Performance',
     category: 'cognitive',
     shortDescription:
-      'ACTH fragment with stimulant-like cognitive effects — without the crash or dependency.',
+      'ACTH fragment with stimulant-like cognitive effects. Without the crash or dependency.',
     longDescription:
       'Semax is a heptapeptide derived from ACTH (4-10). Originally developed in Russia for stroke recovery, it has gained traction as a cognitive enhancer. Members report sustained focus, faster recall, and improved verbal fluency. Best taken in the morning to avoid sleep interference.',
     bestFor: 'Members in demanding mental work who want focus without stimulant side effects.',
@@ -398,7 +398,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'A melanocortin-receptor agonist that acts on the CNS to restore libido in both men and women.',
     longDescription:
-      'PT-141 (Bremelanotide) works through the central melanocortin system — not the vascular pathway that PDE-5 inhibitors target. That means it addresses desire itself, not just function. FDA-approved as Vyleesi for premenopausal women; well-documented off-label use in men.',
+      'PT-141 (Bremelanotide) works through the central melanocortin system. Not the vascular pathway that PDE-5 inhibitors target. That means it addresses desire itself, not just function. FDA-approved as Vyleesi for premenopausal women; well-documented off-label use in men.',
     bestFor: 'Members experiencing reduced libido that conventional approaches have not addressed.',
     benefits: [
       'Increases sexual desire (not just performance)',
@@ -430,7 +430,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'A four-amino acid peptide studied for telomerase activation and pineal-gland support.',
     longDescription:
-      'Epitalon (Epithalon) is a tetrapeptide developed at the St. Petersburg Institute of Bioregulation and Gerontology. Long-running Russian studies report telomere lengthening, improved sleep architecture, and immune support. Cycles are short — three weeks — repeated 2–3 times per year.',
+      'Epitalon (Epithalon) is a tetrapeptide developed at the St. Petersburg Institute of Bioregulation and Gerontology. Long-running Russian studies report telomere lengthening, improved sleep architecture, and immune support. Cycles are short. Three weeks. Repeated 2–3 times per year.',
     bestFor: 'Members 45+ focused on long-horizon longevity protocols.',
     benefits: [
       'Studied for telomerase activation',
@@ -466,7 +466,7 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
   ).slice(0, limit);
 }
 
-/** Cadence helper — return per-month price and discount label. */
+/** Cadence helper. Return per-month price and discount label. */
 export interface CadenceTier {
   key: 'monthly' | 'quarterly' | 'annual';
   label: string;

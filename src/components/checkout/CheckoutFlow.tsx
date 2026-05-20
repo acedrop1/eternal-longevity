@@ -364,7 +364,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
     if (!emailValid || !shippingValid || !methodValid || !cardValid) return;
     setIsPaying(true);
 
-    // Resolve the address used for this order — either a saved one or the new form.
+    // Resolve the address used for this order. Either a saved one or the new form.
     let shippingAddressForOrder: SavedAddress;
     if (usingSavedAddress) {
       shippingAddressForOrder = profile.addresses.find(
@@ -387,7 +387,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
         : { ...newAddr, id: 'unsaved' };
     }
 
-    // Resolve the card last4 — either saved or new
+    // Resolve the card last4. Either saved or new
     let cardLast4: string;
     if (usingSavedCard) {
       const savedCard = profile.cards.find((c) => c.id === selectedCardId);
@@ -550,7 +550,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
         <aside className="lg:order-2">
           <div className="lg:sticky lg:top-8">
             <div className="rounded-3xl border border-line bg-surface overflow-hidden">
-              {/* Compact mobile header — tap to expand. Hidden on lg+ where the
+              {/* Compact mobile header. Tap to expand. Hidden on lg+ where the
                   full summary is always visible in the sidebar. */}
               <button
                 type="button"
@@ -608,7 +608,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                 </span>
               </button>
 
-              {/* Full summary body — always visible on lg+, conditional on mobile */}
+              {/* Full summary body. Always visible on lg+, conditional on mobile */}
               <div
                 className={cn(
                   'lg:block lg:p-7 px-5 pb-5 pt-1',
@@ -728,7 +728,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
           </div>
         </aside>
 
-        {/* ============ LEFT — FORM SECTIONS ============ */}
+        {/* ============ LEFT. FORM SECTIONS ============ */}
         <div className="lg:order-1 space-y-3">
           <h1
             className="mb-6 font-semibold tracking-tight text-foreground"
@@ -741,7 +741,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             Start your cycle.
           </h1>
 
-          {/* === SECTION 1 — EMAIL === */}
+          {/* === SECTION 1. EMAIL === */}
           <Section
             number="1"
             title="Email"
@@ -775,7 +775,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             </ContinueButton>
           </Section>
 
-          {/* === SECTION 2 — SHIPPING === */}
+          {/* === SECTION 2. SHIPPING === */}
           <Section
             number="2"
             title="Shipping details"
@@ -793,7 +793,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             onEdit={() => setOpen('shipping')}
             sectionRef={sectionRefs.shipping}
           >
-            {/* Saved-address picker — shows when the member has saved addresses */}
+            {/* Saved-address picker. Shows when the member has saved addresses */}
             {profile.addresses.length > 0 && (
               <div className="mb-5 space-y-2">
                 <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
@@ -1034,7 +1034,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             </ContinueButton>
           </Section>
 
-          {/* === SECTION 3 — SHIPPING METHOD === */}
+          {/* === SECTION 3. SHIPPING METHOD === */}
           <Section
             number="3"
             title="Choose shipping method"
@@ -1094,7 +1094,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             </ContinueButton>
           </Section>
 
-          {/* === SECTION 4 — PAYMENT === */}
+          {/* === SECTION 4. PAYMENT === */}
           <Section
             number="4"
             title="Payment"

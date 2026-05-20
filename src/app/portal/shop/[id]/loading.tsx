@@ -2,7 +2,7 @@ import { PortalSkeletonShell } from '@/components/skeletons/PortalSkeletonShell'
 import { Shimmer } from '@/components/skeletons/Shimmer';
 
 /**
- * Product PDP skeleton — full-bleed gallery placeholder on top (mobile),
+ * Product PDP skeleton. Full-bleed gallery placeholder on top (mobile),
  * info panel below with name + tagline + price + plan radios + CTA.
  */
 export default function PdpLoading() {

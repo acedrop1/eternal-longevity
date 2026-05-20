@@ -94,7 +94,7 @@ export function BrandStatement() {
               );
             }
 
-            // inline image pill (Saki pattern — small rounded image between words)
+            // inline image pill (Saki pattern. Small rounded image between words)
             const imgOpacity = Math.min(1, Math.max(0, local));
             const scale = 0.7 + 0.3 * imgOpacity;
             return (

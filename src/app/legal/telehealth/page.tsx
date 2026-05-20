@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Telehealth Informed Consent — Eternal Longevity',
+  title: 'Telehealth Informed Consent | Eternal Longevity',
   description: 'What it means to receive care through telehealth, including risks and limitations.',
 };
 
@@ -17,7 +17,7 @@ export default function TelehealthConsentPage() {
         {
           heading: 'What Telehealth Is',
           paragraphs: [
-            'In a telehealth visit, your physician reviews your written intake, your uploaded labs and ID, and any follow-up messages you exchange — and then makes clinical decisions, including whether to write a prescription. Telehealth may also include synchronous video or phone visits, when clinically warranted.',
+            'In a telehealth visit, your physician reviews your written intake, your uploaded labs and ID, and any follow-up messages you exchange. And then makes clinical decisions, including whether to write a prescription. Telehealth may also include synchronous video or phone visits, when clinically warranted.',
             'Your physician is licensed in the state in which you reside at the time of the visit. If you move to a state where they are not licensed, your care may be transferred to a different physician on our network.',
           ],
         },

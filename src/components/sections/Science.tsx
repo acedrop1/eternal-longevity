@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useScrollProgress } from '@/lib/useScrollProgress';
 import { cn } from '@/lib/utils';
 
-/** Triangle function — returns 0 when |x|>=1, 1 at x=0, linear in between */
+/** Triangle function. Returns 0 when |x|>=1, 1 at x=0, linear in between */
 function triangle(x: number) {
   return Math.max(0, 1 - Math.abs(x));
 }
@@ -22,7 +22,7 @@ function triangle(x: number) {
  *     scrolls past, with a deep gradient backdrop and ambient water-drop
  *     style particles (CSS dots so we don't need imagery yet).
  *
- * Pure CSS + a vanilla scroll-progress hook — no framer-motion entrance bug.
+ * Pure CSS + a vanilla scroll-progress hook. No framer-motion entrance bug.
  */
 
 const CHAPTERS = [
@@ -91,13 +91,13 @@ export function Science() {
         </div>
 
         <div className="relative h-full px-6 md:px-12">
-          {/* Top section label — pushed below fixed header */}
+          {/* Top section label. Pushed below fixed header */}
           <div className="absolute top-24 left-6 md:left-12 text-[11px] tracking-widest text-foreground/50">
             03 / THE SCIENCE
           </div>
 
           <div className="mx-auto h-full max-w-7xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-28 md:pt-32">
-            {/* Left rail — numbered indicators */}
+            {/* Left rail. Numbered indicators */}
             <div className="md:col-span-1 flex md:flex-col items-start md:items-start justify-start gap-3 md:gap-6 md:pt-32">
               {CHAPTERS.map((_, i) => (
                 <div key={i} className="flex items-center md:flex-col md:items-start gap-2">
@@ -125,7 +125,7 @@ export function Science() {
               ))}
             </div>
 
-            {/* Center — title + active chapter */}
+            {/* Center. Title + active chapter */}
             <div className="md:col-span-6">
               <h2
                 className="font-semibold tracking-tight text-foreground"
@@ -140,7 +140,7 @@ export function Science() {
                 Peptide Therapy<sup className="text-accent text-[0.4em] align-super">™</sup>
               </h2>
 
-              {/* Active chapter — opacity driven directly by scroll progress
+              {/* Active chapter. Opacity driven directly by scroll progress
                   so transitions can't be restart-spammed mid-flight. */}
               <div className="relative mt-12 max-w-md min-h-[12rem]">
                 {CHAPTERS.map((c, i) => {
@@ -172,7 +172,7 @@ export function Science() {
               </div>
             </div>
 
-            {/* Right — floating product visual that crossfades through the chapter images */}
+            {/* Right. Floating product visual that crossfades through the chapter images */}
             <div className="md:col-span-5 flex justify-center md:justify-end items-center">
               <div
                 className="relative aspect-[3/5] w-[60vw] max-w-[360px] rounded-3xl overflow-hidden border border-line"
@@ -204,7 +204,7 @@ export function Science() {
                     </div>
                   );
                 })}
-                {/* Overlay label — explicit white because the card is image-backed */}
+                {/* Overlay label. Explicit white because the card is image-backed */}
                 <div className="relative flex h-full flex-col items-center justify-between p-6 pointer-events-none">
                   <span className="text-[10px] tracking-widest text-white/80">
                     ETERNAL LONGEVITY

@@ -8,9 +8,9 @@ import { LoopVideo } from '@/components/ui/LoopVideo';
 import { FAQAccordion } from '@/components/faq/FAQAccordion';
 
 export const metadata: Metadata = {
-  title: 'Questions, Answered — Eternal Longevity',
+  title: 'Questions, Answered | Eternal Longevity',
   description:
-    'How Eternal Longevity works — eligibility, protocols, pricing, and safety questions answered.',
+    'How Eternal Longevity works. Eligibility, protocols, pricing, and safety questions answered.',
 };
 
 const QUICK_LINKS = [
@@ -72,7 +72,7 @@ export default function FAQPage() {
             <FadeIn delay={240}>
               <p className="mx-auto max-w-2xl text-lg text-foreground/65 leading-relaxed">
                 The most common things members ask before, during, and after a
-                protocol. If your question isn&apos;t here, send us a note — we
+                protocol. If your question isn&apos;t here, send us a note. We
                 answer everything that comes in.
               </p>
             </FadeIn>
@@ -88,7 +88,7 @@ export default function FAQPage() {
           </div>
         </section>
 
-        {/* ============ EDITORIAL DIVIDER — wide image with caption ============ */}
+        {/* ============ EDITORIAL DIVIDER. Wide image with caption ============ */}
         <section className="relative px-6 pb-24 md:pb-32">
           <div className="mx-auto max-w-7xl">
             <FadeIn>
@@ -177,7 +177,7 @@ export default function FAQPage() {
           </div>
         </section>
 
-        {/* ============ FOOT CTA — ambient video bg ============ */}
+        {/* ============ FOOT CTA. Ambient video bg ============ */}
         <section className="relative px-6 py-24 md:py-32 overflow-hidden">
           <LoopVideo
             src="/videos/4.mp4"

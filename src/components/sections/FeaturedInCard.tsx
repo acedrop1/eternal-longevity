@@ -7,11 +7,11 @@ import Image from 'next/image';
  * Juvenx-style "rounded-top card" intro panel.
  *
  * Layout (top → bottom):
- *   1. Thin TEAL accent bar (rounded top corners) — like a tagline strip
+ *   1. Thin TEAL accent bar (rounded top corners). Like a tagline strip
  *      that visually pins the panel to the page.
  *   2. Black marquee strip: scrolling row of press brand names separated by
  *      small teal dots (continuous loop, edge-faded both sides).
- *   3. Two-column body — text on the left, image on the right.
+ *   3. Two-column body. Text on the left, image on the right.
  *      Stacks vertically on mobile.
  *
  * Reveal:
@@ -88,11 +88,11 @@ export function FeaturedInCard() {
           {/* ===== 1) Teal accent bar (rounded top) ===== */}
           <div className="w-full bg-accent text-black text-center py-2.5 md:py-3 px-6">
             <p className="text-[11px] md:text-xs tracking-[0.18em] font-semibold">
-              AS FEATURED IN — TRUSTED BY THE WORLD&apos;S LEADING PUBLICATIONS
+              AS FEATURED IN. TRUSTED BY THE WORLD&apos;S LEADING PUBLICATIONS
             </p>
           </div>
 
-          {/* ===== 2) Marquee strip — press names with teal dot separators ===== */}
+          {/* ===== 2) Marquee strip. Press names with teal dot separators ===== */}
           <div className="relative overflow-hidden border-b border-white/10 py-5 md:py-6">
             {/* Edge fade gradients */}
             <div
@@ -127,7 +127,7 @@ export function FeaturedInCard() {
 
           {/* ===== 3) Two-column body ===== */}
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Left — text */}
+            {/* Left. Text */}
             <div className="flex flex-col justify-center p-8 md:p-12 lg:p-16">
               <p className="mb-5 text-[11px] tracking-widest text-accent">
                 01 / WHY ETERNAL LONGEVITY
@@ -166,7 +166,7 @@ export function FeaturedInCard() {
               </div>
             </div>
 
-            {/* Right — image */}
+            {/* Right. Image */}
             <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[440px] overflow-hidden">
               <Image
                 src="/images/11.jpg"

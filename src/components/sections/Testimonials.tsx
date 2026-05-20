@@ -8,7 +8,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
  *
  * Four columns on desktop, two on mobile.
  * - Columns 1 + 4: a single tall photo card with name/role bottom overlay
- * - Columns 2 + 3: stacked — a quote card and a photo card together
+ * - Columns 2 + 3: stacked. A quote card and a photo card together
  *
  * Photo cards carry a play-circle icon hint, suggesting future video
  * testimonial swaps. Quote cards mock Threads / X / Instagram surfaces.
@@ -234,7 +234,7 @@ export function Testimonials() {
           </FadeIn>
         </div>
 
-        {/* Masonry — 2 cols mobile, 4 cols desktop */}
+        {/* Masonry. 2 cols mobile, 4 cols desktop */}
         <FadeIn delay={400}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <Column cards={COL_1} />

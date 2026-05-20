@@ -4,7 +4,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Settings — Eternal Longevity',
+  title: 'Settings | Eternal Longevity',
 };
 
 const ADMIN_NAV = [

@@ -8,8 +8,8 @@ import { DemoCredentials } from '@/components/auth/DemoCredentials';
 import { loginAction } from '@/lib/auth-actions';
 
 export const metadata: Metadata = {
-  title: 'Log in — Eternal Longevity',
-  description: 'Access your portal — member, doctor, or admin.',
+  title: 'Log in | Eternal Longevity',
+  description: 'Access your portal. Member, doctor, or admin.',
 };
 
 interface LoginPageProps {

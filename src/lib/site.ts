@@ -2,11 +2,11 @@
  * Single place for site-wide metadata used by sitemap, robots, and OG.
  *
  * SITE_URL resolution order:
- *   1. NEXT_PUBLIC_SITE_URL  — explicit override. Set this in Vercel once the
+ *   1. NEXT_PUBLIC_SITE_URL . Explicit override. Set this in Vercel once the
  *      custom domain (eternallongevity.com) is connected.
- *   2. VERCEL_PROJECT_PRODUCTION_URL — Vercel's stable production domain,
+ *   2. VERCEL_PROJECT_PRODUCTION_URL. Vercel's stable production domain,
  *      auto-set on every Vercel deployment (currently the *.vercel.app URL).
- *   3. Fallback — the current Vercel production URL, so local dev and any
+ *   3. Fallback. The current Vercel production URL, so local dev and any
  *      edge case still produce working absolute URLs.
  *
  * This matters for OG/social images: the <meta og:image> tag is an absolute

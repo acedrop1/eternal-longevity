@@ -28,7 +28,7 @@ export const DEMO_USERS: DemoUser[] = [
     password: 'demo',
     name: 'Alex Demo',
     redirectTo: '/portal',
-    blurb: 'A member who just finished intake — sees their protocol status, ID-verify, and checkout.',
+    blurb: 'A member who just finished intake. Sees their protocol status, ID-verify, and checkout.',
   },
   {
     role: 'doctor',
@@ -44,7 +44,7 @@ export const DEMO_USERS: DemoUser[] = [
     password: 'admin',
     name: 'Ops Admin',
     redirectTo: '/portal/admin',
-    blurb: 'Operations dashboard — members, MRR, review queue, shipments, physician network.',
+    blurb: 'Operations dashboard. Members, MRR, review queue, shipments, physician network.',
   },
 ];
 

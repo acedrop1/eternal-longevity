@@ -7,9 +7,9 @@ import { FadeIn } from '@/components/ui/FadeIn';
 import { LoopVideo } from '@/components/ui/LoopVideo';
 
 export const metadata: Metadata = {
-  title: 'The Science — Eternal Longevity',
+  title: 'The Science | Eternal Longevity',
   description:
-    'How peptides work — the mechanisms, evidence, and standards behind every Eternal Longevity protocol.',
+    'How peptides work. The mechanisms, evidence, and standards behind every Eternal Longevity protocol.',
 };
 
 const MECHANISMS = [
@@ -17,25 +17,25 @@ const MECHANISMS = [
     n: '01',
     title: 'Growth-hormone axis',
     body:
-      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile, physiological GH release — matching how a healthy 25-year-old body naturally cycles, without flooding the system.',
+      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile, physiological GH release. Matching how a healthy 25-year-old body naturally cycles, without flooding the system.',
   },
   {
     n: '02',
     title: 'Tissue repair',
     body:
-      'BPC-157 and TB-500 upregulate growth factors at the site of injury, accelerate angiogenesis, and modulate inflammation — shortening recovery windows for ligaments, tendons, and gut lining.',
+      'BPC-157 and TB-500 upregulate growth factors at the site of injury, accelerate angiogenesis, and modulate inflammation. Shortening recovery windows for ligaments, tendons, and gut lining.',
   },
   {
     n: '03',
     title: 'Cellular cleanup',
     body:
-      'Targeted senolytics and mitochondrial peptides clear damaged cells and rebuild ATP production — the deep work of slowing biological aging at the source rather than just managing its symptoms.',
+      'Targeted senolytics and mitochondrial peptides clear damaged cells and rebuild ATP production. The deep work of slowing biological aging at the source rather than just managing its symptoms.',
   },
   {
     n: '04',
     title: 'Metabolic balance',
     body:
-      'Tesofensine, Tirzepatide, and supporting peptides re-sensitize insulin pathways and re-regulate appetite signaling — producing fat loss that holds because the underlying biology shifted, not just the scale.',
+      'Tesofensine, Tirzepatide, and supporting peptides re-sensitize insulin pathways and re-regulate appetite signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
   },
 ];
 
@@ -58,7 +58,7 @@ const STANDARDS = [
   {
     label: 'Cold-Chain Shipping',
     body:
-      'Peptides are temperature-sensitive. We ship insulated with phase-change packs — never bulk-mailed.',
+      'Peptides are temperature-sensitive. We ship insulated with phase-change packs. Never bulk-mailed.',
   },
 ];
 
@@ -67,21 +67,21 @@ const EVIDENCE = [
     peptide: 'CJC-1295 / Ipamorelin',
     headline: 'GH pulse amplification, no cortisol shift',
     summary:
-      'In healthy adults, combined dosing produced sustained increases in IGF-1 and GH AUC across an eight-week window without elevating prolactin or cortisol — the cleanest pulsatile profile in this class.',
+      'In healthy adults, combined dosing produced sustained increases in IGF-1 and GH AUC across an eight-week window without elevating prolactin or cortisol. The cleanest pulsatile profile in this class.',
     note: 'Multiple Phase 1/2 trials, peer-reviewed.',
   },
   {
     peptide: 'BPC-157',
     headline: 'Tendon & ligament healing in animal models',
     summary:
-      'Strong preclinical record for accelerating soft-tissue repair, gut barrier restoration, and reducing NSAID-related GI injury. Human data remains limited — we treat it accordingly in our protocols.',
+      'Strong preclinical record for accelerating soft-tissue repair, gut barrier restoration, and reducing NSAID-related GI injury. Human data remains limited. We treat it accordingly in our protocols.',
     note: 'Preclinical robust; human evidence emerging.',
   },
   {
     peptide: 'Tesamorelin',
     headline: 'Visceral fat reduction, sustained',
     summary:
-      'FDA-approved for HIV-associated lipodystrophy, with strong off-label evidence for visceral adipose reduction in middle-aged adults — paired with measurable improvements in lipid profile.',
+      'FDA-approved for HIV-associated lipodystrophy, with strong off-label evidence for visceral adipose reduction in middle-aged adults. Paired with measurable improvements in lipid profile.',
     note: 'FDA-approved indication; off-label use is common.',
   },
   {
@@ -97,7 +97,7 @@ const PRINCIPLES = [
   {
     title: 'Start low, titrate slow',
     body:
-      'Every dose curve starts conservatively. We escalate based on labs and reported response — not on a fixed timeline. Cautious dosing is the difference between a clean protocol and a cluttered one.',
+      'Every dose curve starts conservatively. We escalate based on labs and reported response. Not on a fixed timeline. Cautious dosing is the difference between a clean protocol and a cluttered one.',
   },
   {
     title: 'Stack with intent',
@@ -107,7 +107,7 @@ const PRINCIPLES = [
   {
     title: 'Measure what matters',
     body:
-      'Bloodwork before, mid-cycle, and after. We track IGF-1, fasting insulin, lipid panels, hs-CRP, and HbA1c — and we adjust the protocol when the numbers tell us to.',
+      'Bloodwork before, mid-cycle, and after. We track IGF-1, fasting insulin, lipid panels, hs-CRP, and HbA1c. And we adjust the protocol when the numbers tell us to.',
   },
   {
     title: 'Off-cycle by design',
@@ -148,7 +148,7 @@ export default function SciencePage() {
             <FadeIn delay={240}>
               <p className="mx-auto max-w-2xl text-lg text-foreground/65 leading-relaxed">
                 Peptides are short chains of amino acids that act as biological
-                signals — telling specific cells, organs, and pathways what to
+                signals. Telling specific cells, organs, and pathways what to
                 do. Done well, they don&apos;t override your body. They restore
                 the signaling that age, stress, and modern living have quietly
                 eroded.
@@ -171,7 +171,7 @@ export default function SciencePage() {
               </div>
             </FadeIn>
 
-            {/* Ambient hero video — subtle ribbon under the CTA */}
+            {/* Ambient hero video. Subtle ribbon under the CTA */}
             <FadeIn delay={500}>
               <div className="relative mt-16 md:mt-20">
                 <LoopVideo
@@ -210,7 +210,7 @@ export default function SciencePage() {
               </FadeIn>
               <FadeIn delay={200}>
                 <p className="text-foreground/65 leading-relaxed">
-                  Our protocols target the systems that age most visibly — and
+                  Our protocols target the systems that age most visibly. And
                   most fixably. We pick mechanisms with strong human data, dose
                   them conservatively, and verify the response with labs.
                 </p>
@@ -264,9 +264,9 @@ export default function SciencePage() {
               <FadeIn delay={150}>
                 <p className="text-foreground/65 leading-relaxed">
                   A summary, not a sales pitch. Every peptide we offer is
-                  selected because the human evidence — Phase 2 and Phase 3
+                  selected because the human evidence. Phase 2 and Phase 3
                   trials where they exist, robust preclinical work where they
-                  don&apos;t — supports a real clinical case.
+                  don&apos;t. Supports a real clinical case.
                 </p>
               </FadeIn>
             </div>
@@ -303,14 +303,14 @@ export default function SciencePage() {
               <p className="mt-10 max-w-2xl text-xs text-foreground/45 leading-relaxed">
                 Summaries above are condensed for clarity. Full citations and
                 methodology notes available on request during your clinical
-                review — and your physician will discuss the specific evidence
+                review. And your physician will discuss the specific evidence
                 base for your protocol before signing.
               </p>
             </FadeIn>
           </div>
         </section>
 
-        {/* ============ LAB STRIP — editorial image triplet ============ */}
+        {/* ============ LAB STRIP. Editorial image triplet ============ */}
         <section className="relative px-6 pb-24 md:pb-32">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-3 md:grid-cols-3 md:gap-5">
@@ -433,7 +433,7 @@ export default function SciencePage() {
               </FadeIn>
               <FadeIn delay={200}>
                 <p className="text-foreground/65 leading-relaxed">
-                  A protocol is more than a vial. It&apos;s a sequence — when
+                  A protocol is more than a vial. It&apos;s a sequence. When
                   you take it, how the dose evolves, when to pause, what to
                   check. These four rules underwrite every plan we sign.
                 </p>
@@ -457,7 +457,7 @@ export default function SciencePage() {
           </div>
         </section>
 
-        {/* ============ FOOT CTA — ambient video bg ============ */}
+        {/* ============ FOOT CTA. Ambient video bg ============ */}
         <section className="relative px-6 py-24 md:py-32 bg-surface overflow-hidden">
           {/* Background video, dimmed */}
           <LoopVideo
@@ -489,7 +489,7 @@ export default function SciencePage() {
               <p className="mb-10 text-foreground/65 leading-relaxed">
                 If a protocol is right for you, your physician will tell you.
                 If it isn&apos;t, they&apos;ll tell you that too. Either way,
-                you start with a real assessment — not a checkout.
+                you start with a real assessment. Not a checkout.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

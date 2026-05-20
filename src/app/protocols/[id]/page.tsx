@@ -23,9 +23,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const p = getProtocol(id);
-  if (!p) return { title: 'Protocol — Eternal Longevity' };
+  if (!p) return { title: 'Protocol | Eternal Longevity' };
   return {
-    title: `${p.name} — Eternal Longevity`,
+    title: `${p.name} | Eternal Longevity`,
     description: p.shortDescription,
   };
 }
@@ -38,7 +38,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
   const others = getOtherProtocols(protocol.id);
 
   return (
-    /* Dark theme — matches the rest of the site. */
+    /* Dark theme. Matches the rest of the site. */
     <>
       <Header />
 
@@ -47,7 +47,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
 
       {/* ===== DESKTOP: original two-column layout ===== */}
       <main className="hidden md:block">
-        {/* PDP HERO — gallery left, info column right */}
+        {/* PDP HERO. Gallery left, info column right */}
         <section className="relative bg-background pt-28 pb-12 md:pt-36 md:pb-16 px-6">
           <div className="mx-auto max-w-7xl">
             {/* Breadcrumb (POUCH editorial pattern) */}
@@ -79,7 +79,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
             </FadeIn>
 
             <div className="grid gap-8 md:gap-12 lg:gap-16 lg:grid-cols-[1.1fr_1fr]">
-              {/* LEFT — gallery */}
+              {/* LEFT. Gallery */}
               <FadeIn delay={200}>
                 <ProtocolGallery
                   images={protocol.gallery}
@@ -90,7 +90,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
                 />
               </FadeIn>
 
-              {/* RIGHT — info column */}
+              {/* RIGHT. Info column */}
               <FadeIn delay={300}>
                 <div>
                   {/* Variant pills row */}
@@ -188,7 +188,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
                 </h2>
                 <p className="text-foreground/65 leading-relaxed">
                   Each protocol pairs synergistic peptides with physician-supervised
-                  dosing. Below is the typical structure — your physician finalizes
+                  dosing. Below is the typical structure. Your physician finalizes
                   doses based on your intake.
                 </p>
               </div>
@@ -265,7 +265,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
         <RelatedProtocols protocols={others} />
       </main>
       <Footer />
-      {/* Sticky bottom checkout bar (Eight Sleep pattern) — desktop only.
+      {/* Sticky bottom checkout bar (Eight Sleep pattern). Desktop only.
           On mobile, ProtocolPDPMobile provides its own floating CTA bar. */}
       <div className="hidden md:block">
         <ProtocolStickyBar protocol={protocol} />

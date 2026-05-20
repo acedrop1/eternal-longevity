@@ -5,7 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Order confirmed — Eternal Longevity',
+  title: 'Order confirmed | Eternal Longevity',
 };
 
 export default async function CheckoutSuccessPage() {

@@ -31,7 +31,7 @@ interface PortalShellProps {
   /** Optional nav links rendered in the left sidebar (desktop) and the
    *  horizontal scroll row (mobile, below the top bar). */
   nav?: NavItem[];
-  /** Body theme — 'light' applies the off-white treatment to the main content
+  /** Body theme. 'light' applies the off-white treatment to the main content
    *  area (sidebar + top bar stay on the dark frame). */
   bodyTheme?: 'dark' | 'light';
   children: React.ReactNode;
@@ -60,7 +60,7 @@ export function PortalShell({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ============ TOP BAR — always dark ============ */}
+      {/* ============ TOP BAR. Always dark ============ */}
       <header className="sticky top-0 z-40 border-b border-line bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-6">
           <Link
@@ -124,9 +124,9 @@ export function PortalShell({
         )}
       </header>
 
-      {/* ============ CONTENT — sidebar + main ============ */}
+      {/* ============ CONTENT. Sidebar + main ============ */}
       <div className="mx-auto max-w-7xl md:flex md:items-start">
-        {/* Left sidebar — desktop only */}
+        {/* Left sidebar. Desktop only */}
         {nav.length > 0 && (
           <aside className="hidden md:block md:flex-shrink-0 md:w-56 lg:w-60 self-start sticky top-14 max-h-[calc(100vh-3.5rem)] overflow-y-auto px-3 lg:px-4 py-8 md:py-10 border-r border-line">
             <PortalNav nav={nav} variant="sidebar" />

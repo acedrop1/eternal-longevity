@@ -6,7 +6,7 @@
  *   2. Persist to the database
  *   3. Enqueue an email to the care team with a routable link
  *   4. Send an acknowledgement email to the patient
- *   5. Create a Stripe customer (no charge yet — payment happens in portal)
+ *   5. Create a Stripe customer (no charge yet. Payment happens in portal)
  *
  * For the demo: we log the submission and simulate a short network delay so
  * the wizard's "Submit intake" button shows a meaningful spinner.
@@ -25,7 +25,7 @@ export async function submitIntakeAction(
   // normalize. In production, validate with Zod against intakeSchema.
   answers: Record<string, unknown>
 ): Promise<IntakeSubmitResult> {
-  // Basic sanity check — make sure goals and email are present.
+  // Basic sanity check. Make sure goals and email are present.
   if (!answers || typeof answers !== 'object') {
     return { ok: false, error: 'Missing payload.' };
   }

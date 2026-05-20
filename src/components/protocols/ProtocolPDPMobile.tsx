@@ -11,12 +11,12 @@ interface ProtocolPDPMobileProps {
 }
 
 /**
- * Mobile-only protocol PDP — the SAME UI pattern as the portal shop PDP
+ * Mobile-only protocol PDP. The SAME UI pattern as the portal shop PDP
  * (ProductPDPMobile): a full-bleed sticky gallery up top, an info panel that
  * slides up over it, an inline CTA block, and a floating bottom CTA bar that
  * fades in once the inline CTA scrolls away.
  *
- * Pricing is members-only — visitors never see dollar amounts on the
+ * Pricing is members-only. Visitors never see dollar amounts on the
  * marketing site. The CTA is "Start Your Assessment" → /start; pricing is
  * revealed inside the member portal after physician review.
  *
@@ -114,7 +114,7 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
               >
                 <Image
                   src={src}
-                  alt={`${protocol.name} — view ${i + 1}`}
+                  alt={`${protocol.name}. View ${i + 1}`}
                   fill
                   priority={i === 0}
                   sizes="100vw"

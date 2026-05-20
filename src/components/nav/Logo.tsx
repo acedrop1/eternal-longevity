@@ -13,8 +13,8 @@ interface LogoProps {
 
 /**
  * Logo renders /public/logo.svg in two variants:
- *   - "full"     — the full wordmark for the desktop header
- *   - "monogram" — a small circular badge that just shows the EL portion
+ *   - "full"    . The full wordmark for the desktop header
+ *   - "monogram". A small circular badge that just shows the EL portion
  *                  (mobile Saki pattern)
  *
  * Subtle scale-down on scroll for a Saki-style polish.
@@ -25,7 +25,7 @@ export function Logo({ collapsed = false, className, variant = 'full' }: LogoPro
       <Link
         href="/"
         className={cn('relative flex items-center select-none', className)}
-        aria-label="Eternal Longevity — home"
+        aria-label="Eternal Longevity. Home"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -42,7 +42,7 @@ export function Logo({ collapsed = false, className, variant = 'full' }: LogoPro
     <Link
       href="/"
       className={cn('relative flex items-center select-none', className)}
-      aria-label="Eternal Longevity — home"
+      aria-label="Eternal Longevity. Home"
     >
       <motion.div
         animate={{ scale: collapsed ? 0.88 : 1 }}

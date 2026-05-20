@@ -8,7 +8,7 @@ interface Props {
 /**
  * Membership / assessment card for the desktop protocol PDP.
  *
- * Pricing is members-only — visitors don't see dollar amounts on the
+ * Pricing is members-only. Visitors don't see dollar amounts on the
  * marketing site. Instead this card lays out what's included and drives to
  * the assessment, where pricing is revealed inside the member portal after
  * physician review.

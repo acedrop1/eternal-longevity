@@ -5,7 +5,7 @@ import { AdminQueueList } from '@/components/admin/AdminQueueList';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Review Queue — Eternal Longevity',
+  title: 'Review Queue | Eternal Longevity',
 };
 
 const ADMIN_NAV = [

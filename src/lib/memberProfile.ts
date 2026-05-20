@@ -1,5 +1,5 @@
 /**
- * Member profile data — saved addresses and payment methods that persist
+ * Member profile data. Saved addresses and payment methods that persist
  * across checkout sessions. Stored in localStorage for the demo; in
  * production this lives in the member's account row.
  */

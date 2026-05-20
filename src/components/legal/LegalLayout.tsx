@@ -6,7 +6,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
 export interface LegalSection {
   /** Short heading shown both in the body and in the sidebar table of contents */
   heading: string;
-  /** Paragraphs (in order). HTML is not interpreted — strings only. */
+  /** Paragraphs (in order). HTML is not interpreted. Strings only. */
   paragraphs: string[];
   /** Optional bullet list rendered after the paragraphs */
   bullets?: string[];
@@ -25,7 +25,7 @@ export interface LegalLayoutProps {
 }
 
 /**
- * Shared wrapper for /legal/* pages — header, footer, editorial article layout
+ * Shared wrapper for /legal/* pages. Header, footer, editorial article layout
  * with a sticky TOC on desktop. Content is data-driven; pass in sections and
  * we render headings + paragraphs consistently.
  */

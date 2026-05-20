@@ -7,7 +7,7 @@ import { ProtocolCarousel } from './ProtocolCarousel';
 /**
  * Featured Protocols.
  *
- *  - Mobile: a centered coverflow-style carousel (ProtocolCarousel) — active
+ *  - Mobile: a centered coverflow-style carousel (ProtocolCarousel). Active
  *    card centered, neighbors peeking + dimmed on both sides, swipe + dots.
  *  - sm+: a clean 4-up card grid, every protocol visible at once.
  *

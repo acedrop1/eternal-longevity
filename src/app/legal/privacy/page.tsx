@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Eternal Longevity',
+  title: 'Privacy Policy | Eternal Longevity',
   description: 'How we collect, use, and protect your health and personal information.',
 };
 
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
         {
           heading: 'HIPAA & Health Data',
           paragraphs: [
-            'Treatment provided by physicians on our platform is subject to the Health Insurance Portability and Accountability Act (HIPAA). HIPAA-protected information is handled in accordance with our Notice of Privacy Practices and is shared only as permitted by HIPAA — primarily for treatment, payment, and healthcare operations, or with your written authorization.',
+            'Treatment provided by physicians on our platform is subject to the Health Insurance Portability and Accountability Act (HIPAA). HIPAA-protected information is handled in accordance with our Notice of Privacy Practices and is shared only as permitted by HIPAA. Primarily for treatment, payment, and healthcare operations, or with your written authorization.',
             'Information you provide outside the clinical context (e.g., general marketing inquiries) is not HIPAA-protected health information, and is governed by this Privacy Policy.',
           ],
         },
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
         {
           heading: 'Data Retention',
           paragraphs: [
-            'Medical records are retained as required by state law — typically a minimum of seven years from the date of last service, longer for minors. Other personal information is retained for as long as your account is active and for a reasonable period after closure to comply with our legal and accounting obligations.',
+            'Medical records are retained as required by state law. Typically a minimum of seven years from the date of last service, longer for minors. Other personal information is retained for as long as your account is active and for a reasonable period after closure to comply with our legal and accounting obligations.',
           ],
         },
         {

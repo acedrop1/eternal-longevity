@@ -5,7 +5,7 @@ import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
 
 export const metadata: Metadata = {
-  title: 'Contact — Eternal Longevity',
+  title: 'Contact | Eternal Longevity',
   description: 'Get in touch with our care team. We answer everything within one business day.',
 };
 
@@ -27,7 +27,7 @@ const CONTACT_ROWS = [
   {
     eyebrow: 'CLINICAL CARE',
     title: 'care@eternallongevity.com',
-    body: 'Member medical questions — same-day callback available for urgent matters.',
+    body: 'Member medical questions. Same-day callback available for urgent matters.',
   },
   {
     eyebrow: 'PRESS',
@@ -162,7 +162,7 @@ export default function ContactPage() {
 
                 <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                   <p className="text-[11px] text-foreground/45 leading-relaxed">
-                    Please don&apos;t share urgent medical concerns here — call 911
+                    Please don&apos;t share urgent medical concerns here. Call 911
                     or go to the nearest ER first.
                   </p>
                   <button

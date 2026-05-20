@@ -22,9 +22,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const p = getShopProduct(id);
-  if (!p) return { title: 'Shop — Eternal Longevity' };
+  if (!p) return { title: 'Shop | Eternal Longevity' };
   return {
-    title: `${p.name} — Eternal Longevity`,
+    title: `${p.name}. Eternal Longevity`,
     description: p.shortDescription,
   };
 }
@@ -49,7 +49,7 @@ export default async function ShopProductPage({ params }: PageProps) {
         { label: 'Orders', href: '/portal/orders' },
       ]}
     >
-      {/* Breadcrumb — hidden on mobile where the new PDP takes over full-bleed */}
+      {/* Breadcrumb. Hidden on mobile where the new PDP takes over full-bleed */}
       <nav className="mb-8 hidden md:flex items-center gap-2 text-[11px] tracking-widest text-foreground/55">
         <Link href="/portal/shop" className="hover:text-foreground transition-colors">
           SHOP

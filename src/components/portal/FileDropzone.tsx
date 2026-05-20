@@ -8,7 +8,7 @@ interface FileDropzoneProps {
   label: string;
   /** Optional secondary line */
   hint?: string;
-  /** Accepted MIME types — passed to the file input */
+  /** Accepted MIME types. Passed to the file input */
   accept?: string;
   /** Max file size in MB. Files larger trigger an inline error. */
   maxMB?: number;
@@ -19,7 +19,7 @@ interface FileDropzoneProps {
 /**
  * Visual file-drop zone used by the portal upload flows (ID verification,
  * bloodwork). For the demo it accepts a single file, shows a preview row, and
- * lets you remove or replace it. No actual upload — that wires later when the
+ * lets you remove or replace it. No actual upload. That wires later when the
  * backend is real.
  */
 export function FileDropzone({

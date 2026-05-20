@@ -59,7 +59,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
 
   return (
     <>
-      {/* "Menu" trigger pill — centered in the header row (matches desktop glass) */}
+      {/* "Menu" trigger pill. Centered in the header row (matches desktop glass) */}
       {/* When open, "Menu + chevron" crossfades out and an X crossfades in,
           all in the same pill shell so the position never jumps. */}
       <button
@@ -75,7 +75,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
           'glass text-foreground text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
         )}
       >
-        {/* "Menu ⌄" label — fades out when open (opacity-only, no scale —
+        {/* "Menu ⌄" label. Fades out when open (opacity-only, no scale —
             scale transforms leave the icon rasterized + blurry on a
             composited layer). */}
         <span
@@ -100,7 +100,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
           </svg>
         </span>
 
-        {/* "✕" icon — fades in when open (opacity-only crossfade) */}
+        {/* "✕" icon. Fades in when open (opacity-only crossfade) */}
         <span
           aria-hidden
           className={cn(
@@ -125,7 +125,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         </span>
       </button>
 
-      {/* Dropdown panel — slides down below the header on open */}
+      {/* Dropdown panel. Slides down below the header on open */}
       <div
         ref={panelRef}
         className={cn(
@@ -179,7 +179,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         </div>
       </div>
 
-      {/* Subtle scrim behind the dropdown — taps anywhere to close.
+      {/* Subtle scrim behind the dropdown. Taps anywhere to close.
           z-[35] keeps it above the sticky lead-capture (z-30) and below the
           dropdown panel (z-40) so the menu panel always reads on top. */}
       <div

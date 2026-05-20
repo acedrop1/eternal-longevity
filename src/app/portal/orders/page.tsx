@@ -5,7 +5,7 @@ import { MemberOrdersList } from '@/components/orders/MemberOrdersList';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Orders — Eternal Longevity',
+  title: 'Orders | Eternal Longevity',
 };
 
 export default async function OrdersPage() {

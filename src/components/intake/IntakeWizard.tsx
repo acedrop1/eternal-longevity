@@ -94,7 +94,7 @@ export function IntakeWizard() {
     }
     if (!result.ok) return;
     if (status.stepIdx === STEPS.length - 1) {
-      // Final step — submit to the server before advancing.
+      // Final step. Submit to the server before advancing.
       setSubmitError(null);
       // Strip File objects (which can't be sent through a server action as-is)
       // before posting. In production, upload files separately and reference
@@ -170,7 +170,7 @@ export function IntakeWizard() {
             className="mb-4 font-semibold tracking-tight text-foreground"
             style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.02em', lineHeight: 1.1 }}
           >
-            That&apos;s it — you&apos;re in.
+            That&apos;s it. You&apos;re in.
           </h2>
           <p className="mb-8 text-foreground/65 leading-relaxed">
             Our clinical team is drafting your protocol and routing it to a licensed
@@ -180,7 +180,7 @@ export function IntakeWizard() {
             {[
               { n: '01', text: 'Clinical team drafts your recommended protocol.' },
               { n: '02', text: 'Physician reviews and signs your prescription.' },
-              { n: '03', text: "We'll email you to log in — verify ID, view pricing, and check out." },
+              { n: '03', text: "We'll email you to log in. Verify ID, view pricing, and check out." },
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4">
                 <span className="text-[10px] tracking-widest text-accent pt-0.5">{s.n}</span>
@@ -196,7 +196,7 @@ export function IntakeWizard() {
     );
   }
 
-  // === In progress — render current step ===
+  // === In progress. Render current step ===
   if (!currentStep) return null;
   return (
     <Shell progressPct={progressPct} stepIdx={status.stepIdx} total={total}>
@@ -213,7 +213,7 @@ export function IntakeWizard() {
         <p className="mb-8 text-foreground/65 leading-relaxed max-w-xl">{currentStep.body}</p>
       )}
 
-      {/* Disclaimer list — read-only acknowledgement statements (consent step) */}
+      {/* Disclaimer list. Read-only acknowledgement statements (consent step) */}
       {currentStep.disclaimers && currentStep.disclaimers.length > 0 && (
         <ol className="mb-8 space-y-3 rounded-2xl border border-line bg-surface p-5 md:p-6">
           {currentStep.disclaimers.map((d, i) => (

@@ -5,7 +5,7 @@ import { ShopCatalog } from '@/components/shop/ShopCatalog';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Shop — Eternal Longevity',
+  title: 'Shop | Eternal Longevity',
   description: 'Browse our full peptide catalog. Physician-reviewed, 503A compounded, subscription-only.',
 };
 
@@ -41,7 +41,7 @@ export default async function ShopPage() {
         <p className="mt-4 max-w-2xl text-foreground/65 leading-relaxed">
           Every product is reviewed by your physician, compounded by a
           503A pharmacy, and cold-chain shipped. Subscribe monthly, quarterly,
-          or annually — and cancel between cycles, never mid-cycle.
+          or annually. And cancel between cycles, never mid-cycle.
         </p>
 
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -71,7 +71,7 @@ export function FeatureSpotlight() {
           </FadeIn>
 
           <div className="mx-auto h-full max-w-7xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-28 md:pt-0">
-            {/* Left — number + title */}
+            {/* Left. Number + title */}
             <div className="md:col-span-6 relative min-h-[60vh] flex flex-col justify-center">
               {FEATURES.map((f, i) => {
                 const center = REVEAL_START + (i + 0.5) * span;
@@ -105,7 +105,7 @@ export function FeatureSpotlight() {
               })}
             </div>
 
-            {/* Right — visual plates that crossfade */}
+            {/* Right. Visual plates that crossfade */}
             <div className="md:col-span-6 flex justify-center md:justify-end items-center">
               <div className="relative aspect-[4/5] w-[70vw] max-w-[420px]">
                 {FEATURES.map((f, i) => {

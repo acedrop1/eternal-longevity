@@ -22,7 +22,7 @@ const NAV_LINKS = [
  *
  * Mobile (< md):
  *   - Saki pattern: monogram badge (left) + centered "Menu" pill (center) + Login pill (right)
- *   - Tapping Menu opens a clean white dropdown panel — see MobileMenu.tsx
+ *   - Tapping Menu opens a clean white dropdown panel. See MobileMenu.tsx
  *
  * On scroll, the desktop pill gets a stronger frosted backdrop and the
  * wordmark scales down slightly (Saki collapse).

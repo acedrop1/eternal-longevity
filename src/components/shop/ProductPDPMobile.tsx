@@ -16,18 +16,18 @@ interface ProductPDPMobileProps {
 }
 
 /**
- * Mobile-only PDP — Oura-style "sticky gallery + sheet-up info panel" pattern.
+ * Mobile-only PDP. Oura-style "sticky gallery + sheet-up info panel" pattern.
  *
  *  - Full-bleed sticky gallery at the top (70svh), 3-slide auto-advancing
  *    carousel with dot indicators + swipe gestures.
- *  - Info panel slides up over the bottom of the gallery — rounded top
+ *  - Info panel slides up over the bottom of the gallery. Rounded top
  *    corners, soft top shadow, negative margin overlap creates the "sheet".
  *  - Plan radio cards (monthly / quarterly / annual) using existing cadence data.
  *  - Inline Add-to-Cart block.
- *  - Floating bottom CTA bar — fades in when inline CTA scrolls out of view,
+ *  - Floating bottom CTA bar. Fades in when inline CTA scrolls out of view,
  *    fades out when it scrolls back in (IntersectionObserver).
  *
- * Desktop renders the original ProductPDP — this component is hidden
+ * Desktop renders the original ProductPDP. This component is hidden
  * above the md breakpoint by the parent page.
  */
 export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
@@ -147,7 +147,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
               >
                 <Image
                   src={src}
-                  alt={`${product.name} — view ${i + 1}`}
+                  alt={`${product.name}. View ${i + 1}`}
                   fill
                   priority={i === 0}
                   sizes="100vw"
@@ -278,7 +278,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
                 Plan
               </h3>
               <p className="mt-0.5 text-[12px] italic text-foreground/55">
-                Choose your cadence — cancel between cycles
+                Choose your cadence. Cancel between cycles
               </p>
             </div>
           </div>
@@ -379,7 +379,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
             onClick={handleAddToCart}
             className="block w-full rounded-full bg-accent px-6 py-4 text-base font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
           >
-            Add to Cart — ${active.total}
+            Add to Cart. ${active.total}
           </button>
           <p className="mt-3 text-center text-[11px] tracking-wider text-foreground/50">
             Ships in {active.key === 'monthly' ? 'monthly cycles' : active.key === 'quarterly' ? 'quarterly cycles' : 'a single annual shipment'} · cancel between cycles

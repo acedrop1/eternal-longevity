@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Signed Rx — Eternal Longevity',
+  title: 'Signed Rx | Eternal Longevity',
 };
 
 interface SignedRx {

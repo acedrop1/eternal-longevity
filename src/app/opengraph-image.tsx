@@ -10,7 +10,7 @@ import { SITE_NAME, SITE_TAGLINE } from '@/lib/site';
  * tags automatically, so any shared Eternal Longevity URL previews with
  * this card.
  */
-export const alt = `${SITE_NAME} — ${SITE_TAGLINE}`;
+export const alt = `${SITE_NAME} | ${SITE_TAGLINE}`;
 export const size = { width: 1200, height: 800 };
 export const contentType = 'image/png';
 

@@ -4,7 +4,7 @@ export default function CheckoutLoading() {
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 grid lg:grid-cols-[1fr_400px] gap-8">
-        {/* Left — flow */}
+        {/* Left. Flow */}
         <div className="space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -19,7 +19,7 @@ export default function CheckoutLoading() {
           ))}
         </div>
 
-        {/* Right — order summary */}
+        {/* Right. Order summary */}
         <aside>
           <div className="rounded-2xl border border-line bg-surface p-6 sticky top-6">
             <Shimmer className="mb-4 h-4 w-32" />

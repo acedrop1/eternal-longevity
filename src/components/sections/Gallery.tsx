@@ -6,7 +6,7 @@ import { useScrollProgress } from '@/lib/useScrollProgress';
 import { FadeIn } from '@/components/ui/FadeIn';
 
 /**
- * Editorial gallery strip — uses the remaining science/abstract images
+ * Editorial gallery strip. Uses the remaining science/abstract images
  * to add a moment of brightness between the dark sections.
  *
  * Four photos, staggered heights, with a slow parallax drift driven by

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Refund Policy — Eternal Longevity',
+  title: 'Refund Policy | Eternal Longevity',
   description: 'When refunds are issued, when they are not, and how to request one.',
 };
 
@@ -12,13 +12,13 @@ export default function RefundsPage() {
       eyebrow="LEGAL"
       title="Refund Policy"
       effective="May 2026"
-      lead="We want you to feel good about every order. This policy explains when refunds are issued, when they are not, and how to request one. We try to be fair and transparent — and we say no when the rules require us to."
+      lead="We want you to feel good about every order. This policy explains when refunds are issued, when they are not, and how to request one. We try to be fair and transparent. And we say no when the rules require us to."
       sections={[
         {
           heading: 'Before the Pharmacy Ships',
           paragraphs: [
             'You can cancel at any point between submitting your intake and the pharmacy releasing your prescription for shipment. If your physician has not yet signed your prescription, you are refunded in full automatically. If your physician declines to approve your protocol, you are also refunded in full.',
-            'If your physician has signed and the pharmacy has begun compounding, you are not eligible for a full refund — the compounded medication has been prepared for you specifically.',
+            'If your physician has signed and the pharmacy has begun compounding, you are not eligible for a full refund. The compounded medication has been prepared for you specifically.',
           ],
         },
         {

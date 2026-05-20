@@ -23,7 +23,7 @@ export function ProtocolGallery({ images, swatch, name, category, stack }: Props
 
   return (
     <div className="grid grid-cols-[68px_1fr] md:grid-cols-[88px_1fr] gap-3 md:gap-4">
-      {/* Thumbnails (vertical) — miniature versions of the hero treatment:
+      {/* Thumbnails (vertical). Miniature versions of the hero treatment:
           swatch background + image overlay + brand monogram so each thumb
           reads as a tiny edition of the main packaging card. */}
       <div className="flex flex-col gap-2 md:gap-3">
@@ -65,7 +65,7 @@ export function ProtocolGallery({ images, swatch, name, category, stack }: Props
         ))}
       </div>
 
-      {/* Hero — packaging-style with brand label overlaid on lifestyle image */}
+      {/* Hero. Packaging-style with brand label overlaid on lifestyle image */}
       <div
         className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
         style={{

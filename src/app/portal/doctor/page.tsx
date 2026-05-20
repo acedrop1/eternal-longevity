@@ -5,7 +5,7 @@ import { DoctorQueueList } from '@/components/doctor/DoctorQueueList';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Clinical Queue — Eternal Longevity',
+  title: 'Clinical Queue | Eternal Longevity',
 };
 
 export default async function DoctorPortalPage() {

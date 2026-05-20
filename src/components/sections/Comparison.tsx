@@ -85,7 +85,7 @@ export function Comparison() {
             </div>
           </FadeIn>
 
-          {/* Right column — Comparison table */}
+          {/* Right column. Comparison table */}
           <FadeIn delay={220}>
           <div
             className="relative rounded-3xl border border-line overflow-hidden"

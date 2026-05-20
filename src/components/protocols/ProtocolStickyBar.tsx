@@ -12,7 +12,7 @@ interface Props {
 /**
  * Eight Sleep-style sticky checkout bar. Appears once user scrolls past the
  * hero pricing card (~600px down) and stays at the bottom of the viewport.
- * Mobile-first — collapses to product name + CTA on narrow viewports.
+ * Mobile-first. Collapses to product name + CTA on narrow viewports.
  */
 export function ProtocolStickyBar({ protocol }: Props) {
   const [visible, setVisible] = useState(false);
@@ -65,7 +65,7 @@ export function ProtocolStickyBar({ protocol }: Props) {
             </div>
             <div className="text-xs text-foreground/55">
               Physician-supervised
-              <span className="hidden md:inline"> — pricing shown after your assessment</span>
+              <span className="hidden md:inline">. Pricing shown after your assessment</span>
             </div>
           </div>
 

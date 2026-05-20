@@ -57,7 +57,7 @@ export function ProtocolCard({ protocol, delay = 0 }: Props) {
           </div>
         </div>
 
-        {/* Bottom row — copy + arrow */}
+        {/* Bottom row. Copy + arrow */}
         <div className="relative p-6 md:p-7">
           <p className="text-sm text-foreground/70 leading-relaxed mb-4">
             {protocol.shortDescription}

@@ -2,7 +2,7 @@ import { PortalSkeletonShell } from '@/components/skeletons/PortalSkeletonShell'
 import { Shimmer } from '@/components/skeletons/Shimmer';
 
 /**
- * Shop catalog skeleton — search input, category pills, then a 3-column
+ * Shop catalog skeleton. Search input, category pills, then a 3-column
  * product grid (1 on mobile, 2 on tablet, 3 on desktop).
  */
 export default function ShopLoading() {

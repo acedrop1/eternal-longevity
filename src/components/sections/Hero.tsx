@@ -27,7 +27,7 @@ export function Hero() {
       />
 
 
-      {/* Darken layer for readability — kept light so the video shows through */}
+      {/* Darken layer for readability. Kept light so the video shows through */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-black/20"
@@ -71,7 +71,7 @@ export function Hero() {
           reviewed and signed by a licensed physician.
         </p>
 
-        {/* Pill-pair CTA (Protocole pattern) — stacks on mobile, joined on desktop */}
+        {/* Pill-pair CTA (Protocole pattern). Stacks on mobile, joined on desktop */}
         <div className="mt-10 flex items-center anim-fade-up d-4">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-px rounded-3xl sm:rounded-full p-2 sm:p-1.5"
             style={{

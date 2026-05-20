@@ -77,7 +77,7 @@ export interface DemoPhysician {
   name: string;
   /** States this physician is licensed in. Admin sees this when assigning. */
   states: string[];
-  /** Email key — used to match the demo doctor session. */
+  /** Email key. Used to match the demo doctor session. */
   email: string;
 }
 
@@ -118,7 +118,7 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   'denied-admin': 'DENIED BY ADMIN',
   assigned: 'AWAITING PHYSICIAN',
   signed: 'PHYSICIAN APPROVED',
-  'declined-clinical': 'DECLINED — CLINICAL',
+  'declined-clinical': 'DECLINED. CLINICAL',
   compounding: 'COMPOUNDING',
   shipped: 'SHIPPED',
   delivered: 'DELIVERED',
@@ -257,7 +257,7 @@ export const SEED_ORDERS: Order[] = [
     placedAt: Date.now() - 26 * 60 * 60 * 1000,
     status: 'compounding',
     assignedToPhysicianId: 'dr-okafor',
-    physicianNote: 'Cleared after cardiology coordination — approved.',
+    physicianNote: 'Cleared after cardiology coordination. Approved.',
   },
   {
     id: 'ord-1024',

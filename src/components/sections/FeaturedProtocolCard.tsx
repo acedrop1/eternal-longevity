@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Protocol } from '@/lib/protocols';
 
 /**
- * Single protocol card — a tall photographic card with the name + category
+ * Single protocol card. A tall photographic card with the name + category
  * overlaid, peptide stack chips, a short description, and a starting price.
  * Whole card links to the PDP. Shared by the desktop grid and the mobile
  * centered carousel so the two layouts stay in sync.
@@ -72,7 +72,7 @@ export function FeaturedProtocolCard({ p }: { p: Protocol }) {
           {p.shortDescription}
         </p>
 
-        {/* Footer — pinned to the bottom. Pricing is members-only, so the
+        {/* Footer. Pinned to the bottom. Pricing is members-only, so the
             card drives to the protocol page / assessment instead. */}
         <div className="mt-auto flex items-center justify-between">
           <span className="text-[10px] tracking-widest text-foreground/45">

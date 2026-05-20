@@ -37,7 +37,7 @@ export function ShopCatalog() {
 
   return (
     <div>
-      {/* Search + Category pill row — sticky on scroll.
+      {/* Search + Category pill row. Sticky on scroll.
           On mobile the portal header has a sub-nav row, so sticky-top is higher. */}
       <div className="sticky top-[100px] md:top-14 z-30 -mx-4 md:-mx-6 mb-10 bg-background/90 backdrop-blur py-3 md:py-4 px-4 md:px-6 border-b border-line">
         {/* Search input */}
@@ -61,7 +61,7 @@ export function ShopCatalog() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search peptides — name, category, benefit…"
+            placeholder="Search peptides. Name, category, benefit…"
             className="w-full rounded-full border border-line bg-surface pl-11 pr-10 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/20 transition-colors"
             aria-label="Search shop"
           />
@@ -161,7 +161,7 @@ export function ShopCatalog() {
               </div>
             </div>
 
-            {/* Bottom row — description, price, CTA */}
+            {/* Bottom row. Description, price, CTA */}
             <div className="p-5 md:p-6">
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
                 <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/65">

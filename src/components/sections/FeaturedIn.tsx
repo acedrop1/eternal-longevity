@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { FadeIn } from '@/components/ui/FadeIn';
 
 /**
- * "As Featured In" press strip — continuous horizontally-scrolling marquee
+ * "As Featured In" press strip. Continuous horizontally-scrolling marquee
  * of media-outlet wordmarks. Each outlet is styled in monochrome cream so
  * the strip reads as a single premium credit row on the dark forest bg.
  *

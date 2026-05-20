@@ -2,7 +2,7 @@ import { PortalSkeletonShell } from '@/components/skeletons/PortalSkeletonShell'
 import { Shimmer } from '@/components/skeletons/Shimmer';
 
 /**
- * Orders list skeleton — eyebrow + headline, then a stack of order cards.
+ * Orders list skeleton. Eyebrow + headline, then a stack of order cards.
  */
 export default function OrdersLoading() {
   return (

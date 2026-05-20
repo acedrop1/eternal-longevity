@@ -9,7 +9,7 @@
  * deferred to the member portal after physician review.
  */
 
-/** All US state abbreviations — used for shipping address dropdowns. */
+/** All US state abbreviations. Used for shipping address dropdowns. */
 export const STATES_AVAILABLE = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
   'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
@@ -72,7 +72,7 @@ const YES_NO: Option[] = [
 
 export const STEPS: Step[] = [
   // -------------------------------------------------------------
-  // 1 — GOALS
+  // 1. GOALS
   // -------------------------------------------------------------
   {
     id: 'goals',
@@ -100,7 +100,7 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 2 — ABOUT YOU (age + sex)
+  // 2. ABOUT YOU (age + sex)
   // -------------------------------------------------------------
   {
     id: 'about',
@@ -139,7 +139,7 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 3 — EMAIL CAPTURE
+  // 3. EMAIL CAPTURE
   // -------------------------------------------------------------
   {
     id: 'email-capture',
@@ -159,13 +159,13 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 4 — BODY (pill ranges — physician confirms exact in portal)
+  // 4. BODY (pill ranges. Physician confirms exact in portal)
   // -------------------------------------------------------------
   {
     id: 'body',
     eyebrow: '04 / BODY SNAPSHOT',
     heading: 'Roughly where do you land?',
-    body: "Ranges are fine — your physician confirms exact measurements in your portal review.",
+    body: "Ranges are fine. Your physician confirms exact measurements in your portal review.",
     fields: [
       {
         id: 'height',
@@ -198,7 +198,7 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 5 — LIFESTYLE (just the two that matter for routing)
+  // 5. LIFESTYLE (just the two that matter for routing)
   // -------------------------------------------------------------
   {
     id: 'lifestyle',
@@ -229,7 +229,7 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 6 — HEALTH SCREEN (knockouts + flags + meds/allergies, one step)
+  // 6. HEALTH SCREEN (knockouts + flags + meds/allergies, one step)
   // -------------------------------------------------------------
   {
     id: 'health',
@@ -290,8 +290,8 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 7 — CONSENTS — disclaimer list + master ack + optional SMS/research
-  // (Pattern adapted from competitor intake — read, then confirm.)
+  // 7. CONSENTS. Disclaimer list + master ack + optional SMS/research
+  // (Pattern adapted from competitor intake. Read, then confirm.)
   // -------------------------------------------------------------
   {
     id: 'consents',
@@ -319,12 +319,12 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 8 — ACCOUNT CREATION (gates the portal + checkout)
+  // 8. ACCOUNT CREATION (gates the portal + checkout)
   // -------------------------------------------------------------
   {
     id: 'account',
     eyebrow: '08 / CREATE ACCOUNT',
-    heading: 'Last step — set up your portal.',
+    heading: 'Last step. Set up your portal.',
     body: 'Your account is how you review the physician-signed protocol, verify ID, and check out securely.',
     fields: [
       {
@@ -339,7 +339,7 @@ export const STEPS: Step[] = [
 
 export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> = {
   under18: {
-    title: 'Sorry — our services are limited to adults 18+',
+    title: 'Sorry. Our services are limited to adults 18+',
     body: "Our protocols require informed consent from an adult of legal age. If you're under 18, we recommend speaking with your primary physician about your goals.",
   },
   cancer: {

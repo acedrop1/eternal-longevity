@@ -4,7 +4,7 @@ import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Checkout — Eternal Longevity',
+  title: 'Checkout | Eternal Longevity',
 };
 
 export default async function CheckoutPage() {

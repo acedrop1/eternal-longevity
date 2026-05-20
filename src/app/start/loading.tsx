@@ -1,7 +1,7 @@
 import { Shimmer } from '@/components/skeletons/Shimmer';
 
 /**
- * Intake wizard skeleton — shows the progress bar + step heading + a few
+ * Intake wizard skeleton. Shows the progress bar + step heading + a few
  * pill/grid placeholders + Continue button so the page feels live as soon
  * as the user clicks "Start Your Assessment".
  */

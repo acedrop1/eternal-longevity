@@ -6,7 +6,7 @@ import { FileDropzone } from '@/components/portal/FileDropzone';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Verify ID — Eternal Longevity',
+  title: 'Verify ID | Eternal Longevity',
 };
 
 const ACCEPTED_DOCS = [

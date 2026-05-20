@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
 import { LoopVideo } from '@/components/ui/LoopVideo';
 
 export const metadata: Metadata = {
-  title: 'About — Eternal Longevity',
+  title: 'About | Eternal Longevity',
   description:
     'Why Eternal Longevity exists, who built it, and the principles behind every protocol we ship.',
 };
@@ -30,19 +30,19 @@ const VALUES = [
     n: '02',
     title: 'Transparency over polish',
     body:
-      "We publish what we know — and what we don't. If a peptide has thin human data, we say so. If we're unsure, we route it back to your physician. Clean science beats clean marketing.",
+      "We publish what we know. And what we don't. If a peptide has thin human data, we say so. If we're unsure, we route it back to your physician. Clean science beats clean marketing.",
   },
   {
     n: '03',
     title: 'The physician is in the loop',
     body:
-      'No algorithm signs a prescription here. A licensed physician reviews your intake, your labs, and your protocol — and follows up across the cycle. The relationship is the product.',
+      'No algorithm signs a prescription here. A licensed physician reviews your intake, your labs, and your protocol. And follows up across the cycle. The relationship is the product.',
   },
   {
     n: '04',
     title: 'Long horizon, slow medicine',
     body:
-      "We don't do crash protocols. We design for a five-year arc — biological markers that compound, habits that hold, and stacks you can sustain. Longevity is a posture, not a sprint.",
+      "We don't do crash protocols. We design for a five-year arc. Biological markers that compound, habits that hold, and stacks you can sustain. Longevity is a posture, not a sprint.",
   },
 ];
 
@@ -57,7 +57,7 @@ const TIMELINE = [
     year: '2025',
     title: 'The pharmacy partnership',
     body:
-      'We signed our first 503A compounding partner. Every protocol now begins with a vial that has a paper trail — from amino acid to your doorstep.',
+      'We signed our first 503A compounding partner. Every protocol now begins with a vial that has a paper trail. From amino acid to your doorstep.',
   },
   {
     year: '2026',
@@ -125,12 +125,12 @@ export default function AboutPage() {
                   better front door. Not gray-market vials shipped from somewhere
                   unmarked. Not a wellness brand with a checkout button. A real
                   clinic, a real physician on the other end of your intake, and
-                  protocols built to hold for years — not weeks.
+                  protocols built to hold for years. Not weeks.
                 </p>
               </FadeIn>
             </div>
 
-            {/* Hero side image — editorial portrait */}
+            {/* Hero side image. Editorial portrait */}
             <FadeIn delay={300}>
               <figure className="relative overflow-hidden rounded-3xl border border-line bg-surface">
                 <div className="relative aspect-[3/4]">
@@ -211,7 +211,7 @@ export default function AboutPage() {
                   amounted to four shipments and a quarterly call.
                 </p>
                 <p>
-                  On the other, the underground — pseudonymous suppliers, no
+                  On the other, the underground. Pseudonymous suppliers, no
                   testing, no physician, no paper trail. The people who
                   actually needed peptide medicine the most were getting it the
                   worst.
@@ -323,7 +323,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ============ EDITORIAL DIVIDER — full-bleed image ============ */}
+        {/* ============ EDITORIAL DIVIDER. Full-bleed image ============ */}
         <section className="relative">
           <FadeIn>
             <div className="relative h-[40vh] md:h-[60vh] w-full overflow-hidden">
@@ -342,7 +342,7 @@ export default function AboutPage() {
                 <div className="mx-auto w-full max-w-6xl">
                   <p className="max-w-xl text-foreground/85 text-base md:text-lg leading-relaxed">
                     A clinical-grade pharmacy, paired with a physician who
-                    actually reads your intake — that&apos;s the whole point.
+                    actually reads your intake. That&apos;s the whole point.
                   </p>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export default function AboutPage() {
                     <div className="relative aspect-[4/5] overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-accent/5 to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        {/* Empty until real photos land — show a subtle EL monogram
+                        {/* Empty until real photos land. Show a subtle EL monogram
                             placeholder so the slot still feels intentional. */}
                         <span className="text-7xl font-semibold tracking-tight text-accent/30">
                           EL
@@ -411,7 +411,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ============ QUOTE — video bg ============ */}
+        {/* ============ QUOTE. Video bg ============ */}
         <section className="relative px-6 py-24 md:py-32 overflow-hidden">
           <LoopVideo
             src="/videos/3.mp4"
@@ -475,7 +475,7 @@ export default function AboutPage() {
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
                 Three minutes. A licensed physician reviews it. You hear back
-                within forty-eight hours with a recommendation — or a polite
+                within forty-eight hours with a recommendation. Or a polite
                 no. Either answer is the right one if it&apos;s the true one.
               </p>
             </FadeIn>

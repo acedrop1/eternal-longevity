@@ -114,7 +114,7 @@ export const PROTOCOLS: Protocol[] = [
     image: '/images/1.jpg',
     gallery: ['/images/1.jpg', '/images/2.jpg', '/images/9.jpg', '/images/13.jpg'],
     bestFor: '35+ adults focused on healthspan and cognitive maintenance',
-    cycleLength: 'Ongoing — re-authorized quarterly',
+    cycleLength: 'Ongoing. Re-authorized quarterly',
   },
   {
     id: 'sculpt',

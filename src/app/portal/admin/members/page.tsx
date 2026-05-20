@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Members — Eternal Longevity',
+  title: 'Members | Eternal Longevity',
 };
 
 const ADMIN_NAV = [

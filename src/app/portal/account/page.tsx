@@ -7,7 +7,7 @@ import { SavedCardsManager } from '@/components/profile/SavedCardsManager';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Account — Eternal Longevity',
+  title: 'Account | Eternal Longevity',
 };
 
 export default async function AccountPage() {
@@ -166,7 +166,7 @@ export default async function AccountPage() {
                 </h2>
                 <p className="text-sm text-foreground/55 mt-1">
                   Cards saved here pre-fill at checkout. We never store the full
-                  number — only the brand and last four for display.
+                  number. Only the brand and last four for display.
                 </p>
               </div>
             </div>
@@ -285,7 +285,7 @@ export default async function AccountPage() {
             <div className="space-y-2">
               <ActionRow
                 title="Download my data"
-                body="A copy of everything we have on file — labs, intake, orders, messages — exported as a ZIP."
+                body="A copy of everything we have on file. Labs, intake, orders, messages. Exported as a ZIP."
                 cta="REQUEST"
               />
               <ActionRow

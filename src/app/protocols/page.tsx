@@ -8,7 +8,7 @@ import { LoopVideo } from '@/components/ui/LoopVideo';
 import { PROTOCOLS } from '@/lib/protocols';
 
 export const metadata = {
-  title: 'Protocols — Eternal Longevity',
+  title: 'Protocols | Eternal Longevity',
   description:
     'Physician-supervised peptide protocols for recovery, performance, longevity, and body composition.',
 };
@@ -137,7 +137,7 @@ export default function ProtocolsListingPage() {
           </div>
         </section>
 
-        {/* CTA STRIP — ambient video bg */}
+        {/* CTA STRIP. Ambient video bg */}
         <section className="relative bg-background px-6 py-24 md:py-32 overflow-hidden">
           <LoopVideo
             src="/videos/3.mp4"

@@ -34,11 +34,11 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
 
   return (
     <div className="space-y-12 md:space-y-20">
-      {/* === PDP HERO — two-column on desktop === */}
+      {/* === PDP HERO. Two-column on desktop === */}
       <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
         {/* Gallery */}
         <div className="grid grid-cols-[68px_1fr] md:grid-cols-[88px_1fr] gap-3 md:gap-4">
-          {/* Thumbnails — miniature packaging cards matching the hero */}
+          {/* Thumbnails. Miniature packaging cards matching the hero */}
           <div className="flex flex-col gap-2 md:gap-3">
             {product.gallery.map((src, i) => (
               <button
@@ -77,7 +77,7 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
             ))}
           </div>
 
-          {/* Hero — packaging-style */}
+          {/* Hero. Packaging-style */}
           <div
             className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
             style={{
@@ -251,13 +251,13 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
             </div>
           </div>
 
-          {/* Subscribe CTA — adds to cart and opens the drawer */}
+          {/* Subscribe CTA. Adds to cart and opens the drawer */}
           <button
             type="button"
             onClick={handleAddToCart}
             className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
           >
-            Subscribe — ${active.perMonth}/mo →
+            Subscribe. ${active.perMonth}/mo →
           </button>
           <p className="mt-3 text-center text-[11px] text-foreground/45">
             Physician must approve before first shipment · Cancel between cycles

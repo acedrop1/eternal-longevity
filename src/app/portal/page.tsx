@@ -5,10 +5,10 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Portal — Eternal Longevity',
+  title: 'Portal | Eternal Longevity',
 };
 
-// Demo data — replace with real read from the member's record
+// Demo data. Replace with real read from the member's record
 const PROTOCOL = {
   name: 'Recover Protocol',
   cycle: '12-week cycle',
@@ -47,7 +47,7 @@ export default async function MemberPortalPage() {
             lineHeight: 1.05,
           }}
         >
-          Hi {user.name.split(' ')[0]} — your protocol is ready.
+          Hi {user.name.split(' ')[0]}. Your protocol is ready.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
           Two short steps before we ship: verify your ID, then check out. The
@@ -56,7 +56,7 @@ export default async function MemberPortalPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        {/* === MAIN — PROTOCOL SUMMARY + CHECKOUT === */}
+        {/* === MAIN. PROTOCOL SUMMARY + CHECKOUT === */}
         <div className="space-y-6">
           {/* Protocol summary card */}
           <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
@@ -147,9 +147,9 @@ export default async function MemberPortalPage() {
           </section>
         </div>
 
-        {/* === SIDEBAR — QUICK ACTIONS === */}
+        {/* === SIDEBAR. QUICK ACTIONS === */}
         <aside className="space-y-3">
-          {/* Shop highlight — Oura "explore more" pattern */}
+          {/* Shop highlight. Oura "explore more" pattern */}
           <Link
             href="/portal/shop"
             className="group relative block overflow-hidden rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5 transition-all hover:border-accent/70"
@@ -161,7 +161,7 @@ export default async function MemberPortalPage() {
               Shop more peptides
             </div>
             <p className="mb-3 text-sm text-foreground/65 leading-relaxed">
-              Add individual peptides to your routine — subscription-only,
+              Add individual peptides to your routine. Subscription-only,
               physician-reviewed before every cycle.
             </p>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent group-hover:translate-x-1 transition-transform">
@@ -187,7 +187,7 @@ export default async function MemberPortalPage() {
           <QuickAction
             eyebrow="ORDERS"
             title="Order history"
-            body="No prior orders yet — your first cycle is queued."
+            body="No prior orders yet. Your first cycle is queued."
             href="/portal/orders"
             cta="View"
           />

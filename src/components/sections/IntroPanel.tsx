@@ -5,14 +5,14 @@ import Image from 'next/image';
 import { useScrollProgress } from '@/lib/useScrollProgress';
 
 /**
- * IntroPanel — Juvenx-style rounded-top dark card that rises up over the
+ * IntroPanel. Juvenx-style rounded-top dark card that rises up over the
  * sticky Hero as the user scrolls down. The Hero is position:sticky and the
  * IntroPanel sits at z-10 in normal flow, so natural page scroll makes the
  * card physically slide up over the pinned hero.
  *
  * Three stacked layers inside one rounded card:
  *   1. Thin TEAL/ACCENT bar (rounded top corners) with a short tagline.
- *   2. Black marquee strip — scrolling row of AS FEATURED IN press brand
+ *   2. Black marquee strip. Scrolling row of AS FEATURED IN press brand
  *      names separated by small accent dots, edge-faded both sides.
  *   3. The existing Saki-style brand-statement paragraph that reveals
  *      word-by-word as the user scrolls, with inline image pills appearing
@@ -191,7 +191,7 @@ export function IntroPanel() {
             </p>
           </div>
 
-          {/* ===== 2) Marquee strip — press names with accent dot separators ===== */}
+          {/* ===== 2) Marquee strip. Press names with accent dot separators ===== */}
           <div className="relative overflow-hidden border-b border-white/10 py-6 md:py-8">
             <div
               aria-hidden

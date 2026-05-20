@@ -7,7 +7,7 @@ import { useCart, type Cadence } from './CartProvider';
 import { cn } from '@/lib/utils';
 
 /**
- * Slide-in cart drawer — Whoop / Shopify pattern.
+ * Slide-in cart drawer. Whoop / Shopify pattern.
  * - Scrim covers the page on the left, drawer panel on the right
  * - Esc key closes it
  * - "Continue to checkout" routes to /checkout
@@ -91,7 +91,7 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {/* Body — line items */}
+        {/* Body. Line items */}
         <div className="flex-1 overflow-y-auto">
           {resolvedItems.length === 0 ? (
             <EmptyState onClose={closeDrawer} />
@@ -187,7 +187,7 @@ export function CartDrawer() {
           )}
         </div>
 
-        {/* Footer — totals + CTAs */}
+        {/* Footer. Totals + CTAs */}
         {resolvedItems.length > 0 && (
           <div className="border-t border-line px-6 pt-5 pb-safe space-y-4">
             {/* Trust chip */}

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Eternal Longevity',
+  title: 'Terms of Service | Eternal Longevity',
   description: 'The agreement that governs your use of Eternal Longevity.',
 };
 

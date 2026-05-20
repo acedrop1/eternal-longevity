@@ -19,7 +19,7 @@ export default function Home() {
       <main>
         {/* Sticky-Hero scope: Hero stays pinned ONLY while the user scrolls
             through the IntroPanel reveal. Once this container scrolls past,
-            the Hero releases — no more video peeking through later sections. */}
+            the Hero releases. No more video peeking through later sections. */}
         <div className="relative">
           <Hero />
           <IntroPanel />           {/* Rounded-top card: teal bar + press marquee + animated text */}

@@ -24,7 +24,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How does Eternal Longevity work?',
-    a: "You complete a quick health assessment — about three minutes — that covers your goals, history, and a few targeted clinical questions. Our clinical team drafts a recommended protocol, a licensed physician reviews and signs your prescription, and we ship from a U.S.-licensed 503A compounding pharmacy. From assessment to your door is typically three to five days.",
+    a: "You complete a quick health assessment. About three minutes. That covers your goals, history, and a few targeted clinical questions. Our clinical team drafts a recommended protocol, a licensed physician reviews and signs your prescription, and we ship from a U.S.-licensed 503A compounding pharmacy. From assessment to your door is typically three to five days.",
   },
   {
     category: 'Getting Started',
@@ -34,7 +34,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How long until I see results?',
-    a: "It depends on the protocol and the goal. Sleep, recovery, and energy shifts often show up in two to four weeks. Body-composition and metabolic shifts are usually visible by week eight. Deeper longevity markers — IGF-1 trends, fasting insulin, hs-CRP — are measured at the end of the cycle so you have a paper trail, not just a feeling.",
+    a: "It depends on the protocol and the goal. Sleep, recovery, and energy shifts often show up in two to four weeks. Body-composition and metabolic shifts are usually visible by week eight. Deeper longevity markers. IGF-1 trends, fasting insulin, hs-CRP. Are measured at the end of the cycle so you have a paper trail, not just a feeling.",
   },
 
   // === Eligibility ===
@@ -51,19 +51,19 @@ export const FAQS: FAQ[] = [
   {
     category: 'Eligibility',
     q: 'Can I use peptides if I have a medical condition?',
-    a: "It depends entirely on the condition and the peptide. Some conditions — active cancer, certain organ transplants, current pregnancy — are categorical exclusions. Others simply require careful protocol selection and additional monitoring. Disclose everything during your intake; your physician will tell you what's appropriate.",
+    a: "It depends entirely on the condition and the peptide. Some conditions. Active cancer, certain organ transplants, current pregnancy. Are categorical exclusions. Others simply require careful protocol selection and additional monitoring. Disclose everything during your intake; your physician will tell you what's appropriate.",
   },
   {
     category: 'Eligibility',
     q: 'What if I take prescription medications?',
-    a: "Most prescription medications are compatible with peptide therapy, but interactions matter. List every medication and supplement during intake — including dose. Your physician reviews these alongside your protocol and will flag anything that needs adjusting before you start.",
+    a: "Most prescription medications are compatible with peptide therapy, but interactions matter. List every medication and supplement during intake. Including dose. Your physician reviews these alongside your protocol and will flag anything that needs adjusting before you start.",
   },
 
   // === Protocols ===
   {
     category: 'Protocols',
     q: 'How are the protocols designed?',
-    a: "Each protocol is a stack — two or three peptides chosen because their mechanisms complement each other. Our medical director writes the base template, your physician personalizes the dose to your intake, and we adjust mid-cycle if your labs or response warrants it. We don't run one-size-fits-all kits.",
+    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. Our medical director writes the base template, your physician personalizes the dose to your intake, and we adjust mid-cycle if your labs or response warrants it. We don't run one-size-fits-all kits.",
   },
   {
     category: 'Protocols',
@@ -73,19 +73,19 @@ export const FAQS: FAQ[] = [
   {
     category: 'Protocols',
     q: 'Can I stack protocols?',
-    a: "Some protocols stack cleanly (recovery with longevity, for example). Others should not be combined. Never stack on your own — your physician needs to review the combined dosing schedule and rule out interactions. If you want to combine two, mention it during your assessment and they'll advise.",
+    a: "Some protocols stack cleanly (recovery with longevity, for example). Others should not be combined. Never stack on your own. Your physician needs to review the combined dosing schedule and rule out interactions. If you want to combine two, mention it during your assessment and they'll advise.",
   },
   {
     category: 'Protocols',
     q: 'What happens at the end of a cycle?',
-    a: "You receive a written summary of your cycle — what was dosed, what changed, what your physician recommends next. Many members continue with the same protocol after a short off-cycle. Others rotate to a different goal (e.g., recovery → longevity). Either way, the next cycle is a real clinical decision, not an automatic renewal.",
+    a: "You receive a written summary of your cycle. What was dosed, what changed, what your physician recommends next. Many members continue with the same protocol after a short off-cycle. Others rotate to a different goal (e.g., recovery → longevity). Either way, the next cycle is a real clinical decision, not an automatic renewal.",
   },
 
   // === Pricing ===
   {
     category: 'Pricing',
     q: 'How much does a protocol cost?',
-    a: "Pricing varies by protocol. A single cycle generally runs between four hundred and eight hundred dollars all-in — which includes the physician review, the compounded prescription, cold-chain shipping, and the mid-cycle check-in. Subscription pricing is lower per cycle. Exact pricing is shown on each protocol page.",
+    a: "Pricing varies by protocol. A single cycle generally runs between four hundred and eight hundred dollars all-in. Which includes the physician review, the compounded prescription, cold-chain shipping, and the mid-cycle check-in. Subscription pricing is lower per cycle. Exact pricing is shown on each protocol page.",
   },
   {
     category: 'Pricing',
@@ -95,19 +95,19 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What does the subscription include?',
-    a: "A subscription locks in a lower price per cycle and includes scheduled re-shipments, a mid-cycle physician check-in, and priority access to your care team. You can pause or cancel between cycles — no penalty, no awkward call.",
+    a: "A subscription locks in a lower price per cycle and includes scheduled re-shipments, a mid-cycle physician check-in, and priority access to your care team. You can pause or cancel between cycles. No penalty, no awkward call.",
   },
   {
     category: 'Pricing',
     q: 'What is your refund policy?',
-    a: "We don't refund opened or shipped vials — compounded prescriptions cannot legally be re-dispensed. If your physician declines to sign your protocol after intake, you are refunded in full. If a shipment is damaged in transit, we replace it at no cost.",
+    a: "We don't refund opened or shipped vials. Compounded prescriptions cannot legally be re-dispensed. If your physician declines to sign your protocol after intake, you are refunded in full. If a shipment is damaged in transit, we replace it at no cost.",
   },
 
   // === Safety ===
   {
     category: 'Safety',
     q: 'Are these peptides FDA-approved?',
-    a: "Some are (e.g., Tesamorelin, Semaglutide, Tirzepatide). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category — your physician will discuss the specific status of anything you're prescribed.",
+    a: "Some are (e.g., Tesamorelin, Semaglutide, Tirzepatide). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category. Your physician will discuss the specific status of anything you're prescribed.",
   },
   {
     category: 'Safety',
@@ -117,7 +117,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How is the pharmacy quality controlled?',
-    a: "Every lot is third-party tested for purity (HPLC) and identity (mass spec). We work only with 503A pharmacies that publish certificates of analysis and operate under state-board oversight. We will share lot-level documentation on request — transparency is not optional for us.",
+    a: "Every lot is third-party tested for purity (HPLC) and identity (mass spec). We work only with 503A pharmacies that publish certificates of analysis and operate under state-board oversight. We will share lot-level documentation on request. Transparency is not optional for us.",
   },
   {
     category: 'Safety',
@@ -127,6 +127,6 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'What if I have a bad reaction?',
-    a: "Stop dosing and contact your physician through the portal — they're available for clinical messages within one business day, and a same-day callback is available if it's urgent. For any reaction that feels like an emergency, call 911 or go to the nearest ER first, then notify us.",
+    a: "Stop dosing and contact your physician through the portal. They're available for clinical messages within one business day, and a same-day callback is available if it's urgent. For any reaction that feels like an emergency, call 911 or go to the nearest ER first, then notify us.",
   },
 ];

@@ -4,7 +4,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Physician Profile — Eternal Longevity',
+  title: 'Physician Profile | Eternal Longevity',
 };
 
 const LICENSES = [

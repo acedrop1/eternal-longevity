@@ -10,15 +10,15 @@ import { FeaturedProtocolCard } from './FeaturedProtocolCard';
  *
  * The active card sits centered with its neighbors peeking + dimmed on both
  * sides (coverflow feel). Because there's always a card on each side, it
- * looks "in motion" from the very first frame — including the first card.
+ * looks "in motion" from the very first frame. Including the first card.
  *
  * Infinite loop trick: the protocol list is rendered three times. We start
  * scrolled into the MIDDLE copy. Whenever scrolling settles inside the first
  * or third copy, we instantly (no animation) reposition to the matching
- * card in the middle copy — invisible to the user because the cards are
+ * card in the middle copy. Invisible to the user because the cards are
  * identical clones. The result is a seamless wrap-around in both directions.
  *
- * Hidden at sm+ — the desktop grid in FeaturedProtocol takes over there.
+ * Hidden at sm+. The desktop grid in FeaturedProtocol takes over there.
  */
 const N = PROTOCOLS.length;
 const LOOP = [...PROTOCOLS, ...PROTOCOLS, ...PROTOCOLS];
@@ -62,7 +62,7 @@ export function ProtocolCarousel() {
 
   // Initial: jump into the middle copy so a card is centered with neighbors
   // peeking on BOTH sides from the first frame. We can't rely on a single
-  // useLayoutEffect call — the track may not have its final width yet
+  // useLayoutEffect call. The track may not have its final width yet
   // (it lives inside fade-in / reveal wrappers). A ResizeObserver fires the
   // centering the moment the track actually has a measurable width, then
   // disconnects so it only runs once.
@@ -82,7 +82,7 @@ export function ProtocolCarousel() {
       setActive(0);
     };
 
-    tryCenter(); // synchronous attempt — works if layout is already ready
+    tryCenter(); // synchronous attempt. Works if layout is already ready
     if (done) return;
 
     const ro = new ResizeObserver(() => tryCenter());
@@ -97,7 +97,7 @@ export function ProtocolCarousel() {
   }, [closestLoopIndex]);
 
   // After scrolling settles, if we've drifted into copy 1 or copy 3, snap
-  // back to the equivalent card in copy 2 — instant + invisible.
+  // back to the equivalent card in copy 2. Instant + invisible.
   const reposition = useCallback(() => {
     const idx = closestLoopIndex();
     if (idx < N) {
@@ -135,7 +135,7 @@ export function ProtocolCarousel() {
 
   return (
     <div className="sm:hidden">
-      {/* Scroll track — full-bleed, centered snap, both neighbors peek */}
+      {/* Scroll track. Full-bleed, centered snap, both neighbors peek */}
       <div
         ref={trackRef}
         onScroll={onScroll}
