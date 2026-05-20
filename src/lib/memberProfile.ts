@@ -29,16 +29,70 @@ export interface SavedCard {
 
 export interface MemberProfile {
   /** Optional richer profile fields */
+  fullName?: string;
   phone?: string;
   dateOfBirth?: string;
+  twoFactorEnabled?: boolean;
+  /** Keyed by NOTIFICATION_DEFS[].key */
+  notifications?: Record<string, boolean>;
   addresses: SavedAddress[];
   cards: SavedCard[];
 }
 
+/** Notification preferences shown on the Account page. */
+export interface NotificationDef {
+  key: string;
+  title: string;
+  body: string;
+  /** Required channels can't be turned off. */
+  required?: boolean;
+}
+
+export const NOTIFICATION_DEFS: NotificationDef[] = [
+  {
+    key: 'shipment',
+    title: 'Shipment + order updates',
+    body: 'Tracking numbers, delivery confirmations.',
+    required: true,
+  },
+  {
+    key: 'clinical',
+    title: 'Clinical messages',
+    body: 'Replies from your care team.',
+    required: true,
+  },
+  {
+    key: 'cycle',
+    title: 'Cycle reminders',
+    body: 'When to dose, when an off-cycle starts.',
+  },
+  {
+    key: 'product',
+    title: 'Product updates',
+    body: 'New peptides, formulary changes.',
+  },
+  {
+    key: 'marketing',
+    title: 'Marketing & offers',
+    body: 'Promotions, member-only pricing.',
+  },
+];
+
+export const DEFAULT_NOTIFICATIONS: Record<string, boolean> = {
+  shipment: true,
+  clinical: true,
+  cycle: true,
+  product: false,
+  marketing: false,
+};
+
 /** Seed profile so the demo member has something pre-saved to demo from. */
 export const SEED_PROFILE: MemberProfile = {
+  fullName: 'Alex Demo',
   phone: '(201) 555-0188',
   dateOfBirth: '',
+  twoFactorEnabled: false,
+  notifications: { ...DEFAULT_NOTIFICATIONS },
   addresses: [
     {
       id: 'addr-home',
