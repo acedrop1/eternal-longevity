@@ -29,8 +29,11 @@ Copy `.env.example` to `.env.local` and fill values in as you go.
    - Project URL -> `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` key -> `SUPABASE_SERVICE_ROLE_KEY` (server-only, secret)
-4. Under **Authentication -> Providers**, keep Email enabled. Configure the
-   confirmation + reset email templates and the site URL.
+4. Under **Authentication -> Providers**, keep Email enabled. Under
+   **Authentication -> URL Configuration**, set the Site URL to your domain and
+   add `https://<your-domain>/auth/callback` (and the localhost equivalent) to
+   the Redirect URLs allow-list — signup confirmation and password reset both
+   land there.
 5. Roles: every new signup gets a `profiles` row with role `member`. To make
    someone a doctor or admin, edit their `role` column in the **Table Editor**
    (or via SQL: `update profiles set role = 'admin' where email = '...';`).
@@ -93,13 +96,14 @@ Environment Variables**, then redeploy. The webhook endpoint is live at
 - Email + SMS helpers (`src/lib/email.ts`, `src/lib/sms.ts`)
 - **Intake submission** — `submitIntakeAction` persists to `intake_submissions`
   and emails the patient + care team when configured.
+- **Auth** — dual-mode. `getSession()` plus the login / signup / logout /
+  password-reset actions all use Supabase Auth when configured and fall back to
+  the demo cookie otherwise. `/login`, `/signup`, `/forgot-password`,
+  `/auth/reset`, and the `/auth/callback` code-exchange route are all built.
+  New signups get the `member` role; promote to `doctor` / `admin` in Supabase.
 
 **Still on demo data — the next wiring tasks:**
 
-- **Auth** — `src/lib/auth.ts` / `auth-server.ts` still use the demo cookie.
-  Replace `getSession()` with Supabase Auth (`createSupabaseServerClient()` ->
-  `auth.getUser()` -> read the `profiles` row) and rebuild `/login` + signup on
-  `supabase.auth`.
 - **Checkout** — `checkout-actions.ts` is a stub. Wire it to create a Stripe
   Checkout Session (or PaymentIntent) and an `orders` row.
 - **Portal data** — `CartProvider`, `OrdersProvider`, `MemberProfileProvider`,

@@ -9,6 +9,31 @@
 
 export type Role = 'member' | 'doctor' | 'admin';
 
+/**
+ * The session shape every page consumes. `getSession()` returns this whether
+ * the app is running on demo cookie auth or real Supabase Auth, so portal
+ * pages never need to know which mode is active.
+ */
+export interface SessionUser {
+  id: string;
+  role: Role;
+  email: string;
+  name: string;
+  /** Role's home dashboard. */
+  redirectTo: string;
+}
+
+/** Each role's landing dashboard. */
+export const ROLE_HOME: Record<Role, string> = {
+  member: '/portal',
+  doctor: '/portal/doctor',
+  admin: '/portal/admin',
+};
+
+export function redirectForRole(role: Role): string {
+  return ROLE_HOME[role] ?? '/portal';
+}
+
 export interface DemoUser {
   role: Role;
   email: string;

@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { logoutAction } from '@/lib/auth-actions';
-import { type DemoUser } from '@/lib/auth';
+import { type Role, type SessionUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { CartButton } from '@/components/cart/CartButton';
 import { PortalNav, type NavItem } from '@/components/portal/PortalNav';
 
 const ROLE_THEME: Record<
-  DemoUser['role'],
+  Role,
   { label: string; shortLabel: string; chipClass: string }
 > = {
   member: {
@@ -27,7 +27,7 @@ const ROLE_THEME: Record<
 };
 
 interface PortalShellProps {
-  user: DemoUser;
+  user: SessionUser;
   /** Optional nav links rendered in the left sidebar (desktop) and the
    *  horizontal scroll row (mobile, below the top bar). */
   nav?: NavItem[];
