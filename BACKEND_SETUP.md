@@ -21,10 +21,11 @@ Copy `.env.example` to `.env.local` and fill values in as you go.
 ## 1. Supabase (database, auth, file storage)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor**, paste the contents of
-   `supabase/migrations/0001_initial_schema.sql`, and run it. This creates every
-   table, the enums, Row-Level Security policies, the new-user trigger, and the
-   private `id-verifications` storage bucket.
+2. Open **SQL Editor** and run the migrations in order: first
+   `supabase/migrations/0001_initial_schema.sql` (tables, enums, RLS, the
+   new-user trigger, the private `id-verifications` storage bucket), then
+   `supabase/migrations/0002_fulfillment.sql` (the `pharmacy` role and the
+   `fulfillment_orders` queue).
 3. Go to **Project Settings -> API** and copy into `.env.local`:
    - Project URL -> `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -108,6 +109,10 @@ Environment Variables**, then redeploy. The webhook endpoint is live at
   subscriptions, charge a one-off amount, issue refunds, and send a secure
   add-a-card link. All token-based via Stripe (`src/lib/billing.ts`) — the app
   never collects or stores a raw card number.
+- **Pharmacy fulfillment** — a `pharmacy` role + portal (`/portal/pharmacy`).
+  The admin submits signed prescriptions from `/portal/admin/fulfillment`; the
+  pharmacy accepts each order and adds tracking, which notifies the patient.
+  Set `PHARMACY_EMAIL` so the pharmacy gets new-order alerts.
 
 **Still on demo data — the next wiring tasks:**
 

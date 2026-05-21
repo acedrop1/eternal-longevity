@@ -21,6 +21,7 @@ const ADMIN_NAV = [
   { label: 'Members', href: '/portal/admin/members' },
   { label: 'Queue', href: '/portal/admin/queue' },
   { label: 'Billing', href: '/portal/admin/billing' },
+  { label: 'Fulfillment', href: '/portal/admin/fulfillment' },
   { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
   { label: 'Settings', href: '/portal/admin/settings' },
 ];

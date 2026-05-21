@@ -15,7 +15,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = 'member' | 'doctor' | 'admin';
+export type UserRole = 'member' | 'doctor' | 'admin' | 'pharmacy';
 export type IntakeStatus =
   | 'submitted'
   | 'in_review'
@@ -37,6 +37,13 @@ export type SubscriptionStatus =
   | 'pending_review'
   | 'canceled';
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
+export type FulfillmentStatus =
+  | 'draft'
+  | 'submitted'
+  | 'accepted'
+  | 'shipped'
+  | 'delivered'
+  | 'canceled';
 
 export type Database = {
   public: {
@@ -50,6 +57,7 @@ export type Database = {
           phone: string | null;
           date_of_birth: string | null;
           stripe_customer_id: string | null;
+          npi: string | null;
           two_factor_enabled: boolean;
           notification_prefs: Json;
           created_at: string;
@@ -63,6 +71,7 @@ export type Database = {
           phone?: string | null;
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
+          npi?: string | null;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           created_at?: string;
@@ -76,6 +85,7 @@ export type Database = {
           phone?: string | null;
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
+          npi?: string | null;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           created_at?: string;
@@ -446,6 +456,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      fulfillment_orders: {
+        Row: {
+          id: string;
+          order_ref: string;
+          user_id: string | null;
+          prescription_id: string | null;
+          pharmacy_id: string | null;
+          status: FulfillmentStatus;
+          patient_name: string;
+          patient_dob: string | null;
+          shipping_address: Json | null;
+          prescriber_name: string | null;
+          prescriber_npi: string | null;
+          items: Json;
+          cycle_label: string | null;
+          tracking_carrier: string | null;
+          tracking_number: string | null;
+          notes: string | null;
+          submitted_at: string | null;
+          shipped_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_ref: string;
+          user_id?: string | null;
+          prescription_id?: string | null;
+          pharmacy_id?: string | null;
+          status?: FulfillmentStatus;
+          patient_name: string;
+          patient_dob?: string | null;
+          shipping_address?: Json | null;
+          prescriber_name?: string | null;
+          prescriber_npi?: string | null;
+          items?: Json;
+          cycle_label?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
+          notes?: string | null;
+          submitted_at?: string | null;
+          shipped_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_ref?: string;
+          user_id?: string | null;
+          prescription_id?: string | null;
+          pharmacy_id?: string | null;
+          status?: FulfillmentStatus;
+          patient_name?: string;
+          patient_dob?: string | null;
+          shipping_address?: Json | null;
+          prescriber_name?: string | null;
+          prescriber_npi?: string | null;
+          items?: Json;
+          cycle_label?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
+          notes?: string | null;
+          submitted_at?: string | null;
+          shipped_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -459,6 +538,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      is_pharmacy: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -467,6 +550,7 @@ export type Database = {
       order_status: OrderStatus;
       subscription_status: SubscriptionStatus;
       verification_status: VerificationStatus;
+      fulfillment_status: FulfillmentStatus;
     };
     CompositeTypes: {
       [_ in never]: never;

@@ -7,12 +7,14 @@ const ROLE_LABEL: Record<Role, string> = {
   member: 'MEMBER',
   doctor: 'DOCTOR',
   admin: 'ADMIN',
+  pharmacy: 'PHARMACY',
 };
 
 const ROLE_ACCENT: Record<Role, string> = {
   member: 'text-accent',
   doctor: 'text-sky-300',
   admin: 'text-foreground/85',
+  pharmacy: 'text-emerald-300',
 };
 
 /**

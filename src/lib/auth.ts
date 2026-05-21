@@ -7,7 +7,7 @@
  * Clerk, Supabase Auth, etc.) and hash passwords properly.
  */
 
-export type Role = 'member' | 'doctor' | 'admin';
+export type Role = 'member' | 'doctor' | 'admin' | 'pharmacy';
 
 /**
  * The session shape every page consumes. `getSession()` returns this whether
@@ -28,6 +28,7 @@ export const ROLE_HOME: Record<Role, string> = {
   member: '/portal',
   doctor: '/portal/doctor',
   admin: '/portal/admin',
+  pharmacy: '/portal/pharmacy',
 };
 
 export function redirectForRole(role: Role): string {
@@ -70,6 +71,14 @@ export const DEMO_USERS: DemoUser[] = [
     name: 'Ops Admin',
     redirectTo: '/portal/admin',
     blurb: 'Operations dashboard. Members, MRR, review queue, shipments, physician network.',
+  },
+  {
+    role: 'pharmacy',
+    email: 'pharmacy@eternal.test',
+    password: 'pharmacy',
+    name: 'Kaduceus Pharmacy',
+    redirectTo: '/portal/pharmacy',
+    blurb: 'The compounding pharmacy. Sees submitted orders, accepts them, and adds shipment tracking.',
   },
 ];
 

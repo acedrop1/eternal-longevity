@@ -24,6 +24,11 @@ const ROLE_THEME: Record<
     shortLabel: 'ADMIN',
     chipClass: 'border-foreground/20 bg-foreground/5 text-foreground/85',
   },
+  pharmacy: {
+    label: 'PHARMACY · FULFILLMENT',
+    shortLabel: 'PHARMACY',
+    chipClass: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300',
+  },
 };
 
 interface PortalShellProps {
