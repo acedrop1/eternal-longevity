@@ -1,11 +1,15 @@
 /**
  * Order state machine + shared order types.
  * Demo flow:
- *   member places order → pending-admin
- *   admin approves + assigns → assigned (to a specific physician)
+ *   member submits order → pending-admin
+ *   admin approves → assigned (awaiting physician sign-off)
  *   admin denies → denied-admin (terminal)
- *   physician signs Rx → signed → compounding → shipped → delivered
+ *   physician signs Rx → signed (first cycle billed at sign-off)
+ *     → compounding → shipped → delivered
  *   physician declines → declined-clinical (terminal)
+ *
+ * Payment: nothing is charged until a physician signs. Sign-off is the moment
+ * billing starts — the saved card is charged for the first cycle.
  */
 
 export type OrderStatus =
@@ -66,6 +70,10 @@ export interface Order {
   assignedToPhysicianId?: string;
   adminNote?: string;
   physicianNote?: string;
+  /** Set when the physician signs — the moment billing starts. */
+  paidAt?: number;
+  /** Amount charged for the first cycle at sign-off (USD). */
+  firstChargeAmount?: number;
   tracking?: string;
   carrier?: string;
   /** Chronological log of human-readable updates on the order. */

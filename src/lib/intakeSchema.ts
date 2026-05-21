@@ -304,6 +304,7 @@ export const STEPS: Step[] = [
       'I understand that this review is for informational and educational purposes only and does not constitute medical advice, diagnosis, or prescription approval by a licensed provider unless and until a licensed physician signs my prescription.',
       'I understand that results from peptide therapy may vary, and I accept the potential risks associated with their use.',
       'I understand that I may be contacted for follow-up, clarification, or adjustments to my plan.',
+      'I understand that no payment is collected when I submit this form. If a licensed physician approves and signs my protocol, my saved payment method is charged for the first cycle at that time, and on a recurring basis thereafter, until I pause or cancel.',
       'I acknowledge that submitting this form does not guarantee that I will be eligible for peptide recommendations or treatment, and final eligibility will be determined at the discretion of licensed providers.',
       'I understand that my information will be handled in accordance with the Eternal Longevity Privacy Policy.',
       'I understand that my information will be handled in accordance with the Eternal Longevity Terms of Service and Telehealth Informed Consent.',
@@ -364,6 +365,12 @@ export const CONSENT_ITEMS = [
     required: true,
     label:
       'I have read and understood the above disclaimers. I consent to the collection and review of my information for the purpose of receiving peptide recommendations. I understand that this form does not constitute medical advice or create a provider–patient relationship until a licensed physician reviews and signs my protocol.',
+  },
+  {
+    id: 'billing_auth',
+    required: true,
+    label:
+      'I authorize Eternal Longevity to charge my saved payment method for my protocol. The first cycle is charged when a licensed physician signs my prescription, and each recurring cycle thereafter, until I pause or cancel. I understand I will not be charged unless a physician approves my protocol.',
   },
   {
     id: 'sms',

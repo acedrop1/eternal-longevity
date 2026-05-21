@@ -206,10 +206,18 @@ function DoctorQueueRow({
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
           <button
             type="button"
-            onClick={() => signRx(order.id, doctorName)}
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Sign this prescription? This charges the patient's first cycle and releases the order to the pharmacy.",
+                )
+              ) {
+                signRx(order.id, doctorName);
+              }
+            }}
             className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
           >
-            Sign Rx
+            Sign &amp; start billing
           </button>
           <button
             type="button"

@@ -168,19 +168,42 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     [updateOrder]
   );
 
-  const signRx = useCallback<OrdersAPI['signRx']>(
-    (id, author, note) => {
-      updateOrder(id, { status: 'signed', physicianNote: note });
-      appendUpdate(
-        id,
-        author,
-        'physician',
-        note ?? 'Prescription signed. Releasing to pharmacy.',
-        'signed'
-      );
-    },
-    [updateOrder, appendUpdate]
-  );
+  /**
+   * Physician sign-off. This is the moment billing starts: the first cycle is
+   * charged to the card on file, and only then is the order released to the
+   * pharmacy. Recorded as two timeline entries — the sign-off and the charge.
+   */
+  const signRx = useCallback<OrdersAPI['signRx']>((id, author, note) => {
+    const now = Date.now();
+    setOrders((curr) =>
+      curr.map((o) => {
+        if (o.id !== id) return o;
+        const signEntry: OrderUpdate = {
+          id: `upd-${Math.random().toString(36).slice(2, 8)}`,
+          at: now,
+          author,
+          role: 'physician',
+          note: note ?? 'Prescription signed. Billing starts now.',
+          statusChange: 'signed',
+        };
+        const payEntry: OrderUpdate = {
+          id: `upd-${Math.random().toString(36).slice(2, 8)}`,
+          at: now + 1,
+          author: 'Billing',
+          role: 'system',
+          note: `First cycle billed. $${o.total} charged to the card on file. Order released to the pharmacy.`,
+        };
+        return {
+          ...o,
+          status: 'signed' as OrderStatus,
+          physicianNote: note,
+          paidAt: now,
+          firstChargeAmount: o.total,
+          updates: [...(o.updates ?? []), signEntry, payEntry],
+        };
+      })
+    );
+  }, []);
 
   const declineClinical = useCallback<OrdersAPI['declineClinical']>(
     (id, author, note) => {

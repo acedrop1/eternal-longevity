@@ -39,7 +39,7 @@ export default async function MemberPortalPage() {
       {/* === STATUS HEADER === */}
       <div className="mb-10">
         <p className="mb-2 text-[11px] tracking-widest text-accent">
-          PHYSICIAN APPROVED · {PROTOCOL.physician.toUpperCase()}
+          PROTOCOL DRAFTED · {PROTOCOL.physician.toUpperCase()}
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
@@ -52,8 +52,9 @@ export default async function MemberPortalPage() {
           Hi {user.name.split(' ')[0]}. Your protocol is ready.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Two short steps before we ship: verify your ID, then check out. The
-          pharmacy compounds within 48 hours of payment.
+          Two things before your physician can sign: verify your ID and add a
+          payment method. Nothing is charged until a physician approves your
+          protocol. Billing begins the moment they sign.
         </p>
       </div>
 
@@ -88,21 +89,25 @@ export default async function MemberPortalPage() {
 
             <div className="my-6 h-px bg-line" />
 
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-sm text-foreground/65">First cycle total</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-foreground/65">First cycle</span>
               <span className="text-2xl font-semibold text-foreground tracking-tight">
                 ${PROTOCOL.total}
               </span>
             </div>
+            <p className="mb-6 text-xs text-foreground/45 leading-relaxed">
+              Billed only when your physician signs your protocol. You are not
+              charged anything now.
+            </p>
 
             <Link
               href="/checkout"
               className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
             >
-              Pay &amp; start cycle →
+              Add a payment method →
             </Link>
             <p className="mt-3 text-center text-[11px] text-foreground/45">
-              Secure checkout · No-renewal until you confirm
+              Saved securely · No charge until physician sign-off
             </p>
           </section>
 
@@ -114,10 +119,10 @@ export default async function MemberPortalPage() {
             <ol className="space-y-3">
               {[
                 { n: '01', title: 'ID verification', body: 'Required by law for prescription products.', status: 'pending' as const },
-                { n: '02', title: 'Checkout', body: '503A pharmacy starts compounding once payment clears.', status: 'pending' as const },
-                { n: '03', title: 'Shipment', body: 'Cold-chain delivery within 3–5 days of payment.', status: 'upcoming' as const },
-                { n: '04', title: 'Mid-cycle check-in', body: 'Your physician messages at week 6.', status: 'upcoming' as const },
-                { n: '05', title: 'Cycle complete', body: 'Written summary + recommendation for next cycle.', status: 'upcoming' as const },
+                { n: '02', title: 'Payment method', body: 'Add a card now. It is saved securely and not charged.', status: 'pending' as const },
+                { n: '03', title: 'Physician sign-off', body: 'Your physician reviews and signs. Billing starts the moment they do.', status: 'upcoming' as const },
+                { n: '04', title: 'Shipment', body: 'The pharmacy compounds and ships cold-chain within 3 to 5 days of sign-off.', status: 'upcoming' as const },
+                { n: '05', title: 'Mid-cycle check-in', body: 'Your physician messages at week 6.', status: 'upcoming' as const },
               ].map((s) => (
                 <li
                   key={s.n}
