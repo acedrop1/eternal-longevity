@@ -25,7 +25,8 @@ Copy `.env.example` to `.env.local` and fill values in as you go.
    `supabase/migrations/0001_initial_schema.sql` (tables, enums, RLS, the
    new-user trigger, the private `id-verifications` storage bucket), then
    `supabase/migrations/0002_fulfillment.sql` (the `pharmacy` role and the
-   `fulfillment_orders` queue).
+   `fulfillment_orders` queue), then `supabase/migrations/0003_account_status.sql`
+   (the `account_status` column for suspend / deactivate).
 3. Go to **Project Settings -> API** and copy into `.env.local`:
    - Project URL -> `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`

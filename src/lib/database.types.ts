@@ -44,6 +44,7 @@ export type FulfillmentStatus =
   | 'shipped'
   | 'delivered'
   | 'canceled';
+export type AccountStatus = 'active' | 'suspended' | 'deactivated';
 
 export type Database = {
   public: {
@@ -58,6 +59,7 @@ export type Database = {
           date_of_birth: string | null;
           stripe_customer_id: string | null;
           npi: string | null;
+          account_status: AccountStatus;
           two_factor_enabled: boolean;
           notification_prefs: Json;
           created_at: string;
@@ -72,6 +74,7 @@ export type Database = {
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
           npi?: string | null;
+          account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           created_at?: string;
@@ -86,6 +89,7 @@ export type Database = {
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
           npi?: string | null;
+          account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           created_at?: string;
@@ -551,6 +555,7 @@ export type Database = {
       subscription_status: SubscriptionStatus;
       verification_status: VerificationStatus;
       fulfillment_status: FulfillmentStatus;
+      account_status: AccountStatus;
     };
     CompositeTypes: {
       [_ in never]: never;
