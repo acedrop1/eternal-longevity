@@ -20,17 +20,18 @@ import {
 interface OrdersAPI {
   orders: Order[];
   ordersByMember: (email: string) => Order[];
-  /** Orders awaiting this physician's review (status='assigned'). */
-  ordersByPhysician: (physicianId: string) => Order[];
-  /** Active cases this physician is managing post-sign (signed / compounding / shipped). */
-  activeCasesByPhysician: (physicianId: string) => Order[];
-  /** Finished cases for this physician (delivered / declined-clinical). */
-  recentByPhysician: (physicianId: string, limit?: number) => Order[];
+  /** Orders the admin has approved, awaiting physician sign-off (status='assigned'). */
+  clinicalQueue: () => Order[];
+  /** Active cases post-sign (signed / compounding / shipped). */
+  activeClinicalCases: () => Order[];
+  /** Finished cases (delivered / declined-clinical). */
+  recentClinicalCases: (limit?: number) => Order[];
   pendingAdminOrders: () => Order[];
   placeOrder: (
     order: Omit<Order, 'id' | 'placedAt' | 'status'>
   ) => Order;
-  approveAndAssign: (id: string, physicianId: string, note?: string) => void;
+  /** Admin approves an order, releasing it to the physician for sign-off. */
+  approve: (id: string, note?: string) => void;
   denyAdmin: (id: string, note: string) => void;
   signRx: (
     id: string,
@@ -146,15 +147,18 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     return order;
   }, []);
 
-  const approveAndAssign = useCallback<OrdersAPI['approveAndAssign']>(
-    (id, physicianId, note) => {
-      updateOrder(id, {
-        status: 'assigned',
-        assignedToPhysicianId: physicianId,
-        adminNote: note,
-      });
+  const approve = useCallback<OrdersAPI['approve']>(
+    (id, note) => {
+      updateOrder(id, { status: 'assigned', adminNote: note });
+      appendUpdate(
+        id,
+        'Admin',
+        'admin',
+        note ?? 'Approved. Released to the physician for sign-off.',
+        'assigned'
+      );
     },
-    [updateOrder]
+    [updateOrder, appendUpdate]
   );
 
   const denyAdmin = useCallback<OrdersAPI['denyAdmin']>(
@@ -247,37 +251,30 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     [orders]
   );
 
-  const ordersByPhysician = useCallback(
-    (physicianId: string) =>
-      orders.filter(
-        (o) =>
-          o.assignedToPhysicianId === physicianId &&
-          o.status === 'assigned'
+  // One medical director signs every case, so the clinical queue is not
+  // routed per-physician — it's simply every order the admin has approved.
+  const clinicalQueue = useCallback(
+    () => orders.filter((o) => o.status === 'assigned'),
+    [orders]
+  );
+
+  const activeClinicalCases = useCallback(
+    () =>
+      orders.filter((o) =>
+        (['signed', 'compounding', 'shipped'] as OrderStatus[]).includes(
+          o.status
+        )
       ),
     [orders]
   );
 
-  const activeCasesByPhysician = useCallback(
-    (physicianId: string) =>
-      orders.filter(
-        (o) =>
-          o.assignedToPhysicianId === physicianId &&
-          (['signed', 'compounding', 'shipped'] as OrderStatus[]).includes(
+  const recentClinicalCases = useCallback(
+    (limit = 5) =>
+      orders
+        .filter((o) =>
+          (['delivered', 'declined-clinical'] as OrderStatus[]).includes(
             o.status
           )
-      ),
-    [orders]
-  );
-
-  const recentByPhysician = useCallback(
-    (physicianId: string, limit = 5) =>
-      orders
-        .filter(
-          (o) =>
-            o.assignedToPhysicianId === physicianId &&
-            (['delivered', 'declined-clinical'] as OrderStatus[]).includes(
-              o.status
-            )
         )
         .slice(0, limit),
     [orders]
@@ -292,12 +289,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     () => ({
       orders,
       ordersByMember,
-      ordersByPhysician,
-      activeCasesByPhysician,
-      recentByPhysician,
+      clinicalQueue,
+      activeClinicalCases,
+      recentClinicalCases,
       pendingAdminOrders,
       placeOrder,
-      approveAndAssign,
+      approve,
       denyAdmin,
       signRx,
       declineClinical,
@@ -310,12 +307,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     [
       orders,
       ordersByMember,
-      ordersByPhysician,
-      activeCasesByPhysician,
-      recentByPhysician,
+      clinicalQueue,
+      activeClinicalCases,
+      recentClinicalCases,
       pendingAdminOrders,
       placeOrder,
-      approveAndAssign,
+      approve,
       denyAdmin,
       signRx,
       declineClinical,

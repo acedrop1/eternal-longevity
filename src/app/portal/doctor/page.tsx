@@ -38,14 +38,14 @@ export default async function DoctorPortalPage() {
             Welcome back, {user.name.split(' ').slice(-1)[0]}.
           </h1>
           <p className="mt-2 max-w-xl text-foreground/65 leading-relaxed text-sm">
-            Only orders an admin has approved and assigned to you appear here.
-            Sign Rx to release for compounding, decline to send the case back
-            with a clinical note.
+            Every order an admin has approved appears here. Sign Rx to release
+            for compounding, or decline to send the case back with a clinical
+            note.
           </p>
         </div>
       </div>
 
-      <DoctorQueueList doctorEmail={user.email} doctorName={user.name} />
+      <DoctorQueueList doctorName={user.name} />
     </PortalShell>
   );
 }

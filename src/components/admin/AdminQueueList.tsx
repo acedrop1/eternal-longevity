@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import {
-  physiciansForState,
-  PHYSICIANS,
-  type Order,
-} from '@/lib/orders';
+import { type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 
 export function AdminQueueList() {
@@ -55,13 +51,8 @@ export function AdminQueueList() {
 }
 
 function AdminQueueRow({ order }: { order: Order }) {
-  const { approveAndAssign, denyAdmin } = useOrders();
+  const { approve, denyAdmin } = useOrders();
   const [open, setOpen] = useState<null | 'approve' | 'deny'>(null);
-  const candidates =
-    physiciansForState(order.state).length > 0
-      ? physiciansForState(order.state)
-      : PHYSICIANS;
-  const [picked, setPicked] = useState<string>(candidates[0]?.id ?? '');
   const [note, setNote] = useState('');
 
   const age = describeAge(order.placedAt);
@@ -123,7 +114,7 @@ function AdminQueueRow({ order }: { order: Order }) {
             onClick={() => setOpen('approve')}
             className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
           >
-            Approve &amp; assign
+            Approve
           </button>
           <button
             type="button"
@@ -142,73 +133,25 @@ function AdminQueueRow({ order }: { order: Order }) {
       {open === 'approve' && (
         <div className="mt-5 rounded-2xl border border-accent/30 bg-accent/5 p-4 md:p-5">
           <div className="mb-3 text-[10px] tracking-widest text-accent">
-            ASSIGN TO PHYSICIAN
+            NOTE FOR THE PHYSICIAN (OPTIONAL)
           </div>
-          <div className="grid gap-2 mb-4">
-            {candidates.map((p) => {
-              const isActive = picked === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPicked(p.id)}
-                  className={cn(
-                    'flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all',
-                    isActive
-                      ? 'border-accent bg-background'
-                      : 'border-line bg-background hover:border-foreground/30'
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2',
-                      isActive ? 'border-accent' : 'border-line'
-                    )}
-                  >
-                    {isActive && (
-                      <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-                    )}
-                  </span>
-                  <span className="flex-1">
-                    <span className="text-sm font-semibold text-foreground">
-                      {p.name}
-                    </span>
-                    <span className="block text-xs text-foreground/55 mt-0.5">
-                      Licensed in {p.states.join(', ')}
-                      {!p.states.includes(order.state) && (
-                        <span className="ml-1 text-amber-300">
-                          · Order state not in panel
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="mb-4">
-            <label className="block text-[10px] tracking-widest text-foreground/55 mb-1.5">
-              NOTE FOR PHYSICIAN (OPTIONAL)
-            </label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={2}
-              placeholder="Anything the physician should know before reviewing…"
-              className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            placeholder="Anything the physician should know before sign-off…"
+            className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => {
-                approveAndAssign(order.id, picked, note || undefined);
+                approve(order.id, note.trim() || undefined);
                 setOpen(null);
               }}
-              disabled={!picked}
-              className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors disabled:bg-foreground/15 disabled:text-foreground/40"
+              className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
             >
-              Confirm &amp; route
+              Confirm approval
             </button>
             <button
               type="button"

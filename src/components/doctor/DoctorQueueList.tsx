@@ -3,37 +3,31 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import { PHYSICIANS, STATUS_LABEL, type Order } from '@/lib/orders';
+import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 
 interface DoctorQueueListProps {
-  /** Email of the currently logged in doctor (matches PHYSICIANS[].email). */
-  doctorEmail: string;
   doctorName: string;
 }
 
-export function DoctorQueueList({
-  doctorEmail,
-  doctorName,
-}: DoctorQueueListProps) {
-  const { orders, ordersByPhysician, activeCasesByPhysician, recentByPhysician } = useOrders();
-  // Map session email → physician id (demo). Falls back to dr-reyes for the demo doctor.
-  const physician =
-    PHYSICIANS.find((p) => p.email === doctorEmail) ??
-    PHYSICIANS.find((p) => p.name === doctorName) ??
-    PHYSICIANS[0];
+export function DoctorQueueList({ doctorName }: DoctorQueueListProps) {
+  const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
+    useOrders();
 
-  const queue = ordersByPhysician(physician.id);
-  const active = activeCasesByPhysician(physician.id);
-  const recent = recentByPhysician(physician.id, 4);
+  // One medical director handles every case — no per-physician routing.
+  const queue = clinicalQueue();
+  const active = activeClinicalCases();
+  const recent = recentClinicalCases(4);
 
-  // History (signed/declined by this doctor) to show stats at top
-  const handledByMe = orders.filter(
-    (o) =>
-      o.assignedToPhysicianId === physician.id &&
-      ['signed', 'declined-clinical', 'compounding', 'shipped', 'delivered'].includes(
-        o.status
-      )
+  // Cases handled (signed onward) — shown as a stat.
+  const handled = orders.filter((o) =>
+    [
+      'signed',
+      'declined-clinical',
+      'compounding',
+      'shipped',
+      'delivered',
+    ].includes(o.status)
   );
 
   return (
@@ -41,7 +35,7 @@ export function DoctorQueueList({
       <div className="grid gap-3 mb-8 sm:grid-cols-3">
         <Metric label="Awaiting my review" value={String(queue.length)} tone="blue" />
         <Metric label="Active cases" value={String(active.length)} tone="accent" />
-        <Metric label="Handled total" value={String(handledByMe.length)} tone="neutral" />
+        <Metric label="Handled total" value={String(handled.length)} tone="neutral" />
       </div>
 
       {/* === AWAITING REVIEW === */}
@@ -54,7 +48,7 @@ export function DoctorQueueList({
         {queue.length === 0 ? (
           <EmptySection
             title="Queue is clear"
-            body="New cases will appear here once an admin approves and assigns them to you."
+            body="New cases appear here once an admin approves them."
           />
         ) : (
           <div className="space-y-3">
