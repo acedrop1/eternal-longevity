@@ -125,6 +125,45 @@ export async function submitToPharmacy(
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Admin: submit an auto-generated refill draft to the pharmacy              */
+/* -------------------------------------------------------------------------- */
+
+export async function submitDraftOrder(
+  fulfillmentId: string,
+): Promise<FulfillmentResult> {
+  const blocked = await requireRole('admin');
+  if (blocked) return blocked;
+
+  const db = createSupabaseAdminClient();
+  const { data: order, error } = await db
+    .from('fulfillment_orders')
+    .update({ status: 'submitted', submitted_at: new Date().toISOString() })
+    .eq('id', fulfillmentId)
+    .eq('status', 'draft')
+    .select('order_ref')
+    .maybeSingle();
+  if (error) return { ok: false, message: error.message };
+  if (!order) {
+    return { ok: false, message: 'Order not found or already submitted.' };
+  }
+
+  if (process.env.PHARMACY_EMAIL) {
+    await sendEmail({
+      to: process.env.PHARMACY_EMAIL,
+      subject: `New fulfillment order ${order.order_ref}`,
+      html: `<p>A new order is waiting in your Eternal Longevity pharmacy portal.</p>
+             <p>Reference <strong>${order.order_ref}</strong>. Log in to view
+             the patient, shipping address, and prescription.</p>`,
+    });
+  }
+
+  return {
+    ok: true,
+    message: `Order ${order.order_ref} submitted to the pharmacy.`,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Pharmacy: accept an order                                                 */
 /* -------------------------------------------------------------------------- */
 

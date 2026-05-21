@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import {
+  submitDraftOrder,
   submitToPharmacy,
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
 import { cn } from '@/lib/utils';
 
 export interface ReadyRxView {
+  /** 'prescription' = a freshly signed Rx; 'draft' = an auto-generated refill. */
+  kind: 'prescription' | 'draft';
   id: string;
   patientName: string;
   protocolName: string;
@@ -139,7 +142,11 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
     setBusy(true);
     setResult(null);
     try {
-      setResult(await submitToPharmacy(rx.id));
+      setResult(
+        rx.kind === 'draft'
+          ? await submitDraftOrder(rx.id)
+          : await submitToPharmacy(rx.id),
+      );
     } catch {
       setResult({ ok: false, message: 'Request failed.' });
     } finally {
@@ -153,8 +160,13 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
     <div className="rounded-2xl border border-line bg-background p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">
+          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
             {rx.patientName}
+            {rx.kind === 'draft' && (
+              <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[9px] tracking-widest text-accent">
+                REFILL
+              </span>
+            )}
           </p>
           <p className="text-xs text-foreground/55">{rx.protocolName}</p>
         </div>

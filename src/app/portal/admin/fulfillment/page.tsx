@@ -27,8 +27,24 @@ const ADMIN_NAV = [
 ];
 
 const DEMO_READY: ReadyRxView[] = [
-  { id: 'demo-rx1', patientName: 'Priya Nair', protocolName: 'Recover Protocol' },
-  { id: 'demo-rx2', patientName: 'Hadi Karam', protocolName: 'Longevity Protocol' },
+  {
+    kind: 'prescription',
+    id: 'demo-rx1',
+    patientName: 'Priya Nair',
+    protocolName: 'Recover Protocol',
+  },
+  {
+    kind: 'prescription',
+    id: 'demo-rx2',
+    patientName: 'Hadi Karam',
+    protocolName: 'Longevity Protocol',
+  },
+  {
+    kind: 'draft',
+    id: 'demo-draft1',
+    patientName: 'Marcus Tran',
+    protocolName: 'Refill cycle',
+  },
 ];
 
 const DEMO_SUBMITTED: SubmittedOrderView[] = [
@@ -71,28 +87,42 @@ export default async function AdminFulfillmentPage() {
         db
           .from('fulfillment_orders')
           .select(
-            'id, order_ref, prescription_id, patient_name, status, tracking_carrier, tracking_number',
+            'id, order_ref, prescription_id, patient_name, status, cycle_label, tracking_carrier, tracking_number',
           )
           .order('created_at', { ascending: false }),
       ]);
 
-      submitted = (orders ?? []).map((o) => ({
-        id: o.id,
-        orderRef: o.order_ref,
-        patientName: o.patient_name,
-        status: o.status,
-        trackingCarrier: o.tracking_carrier,
-        trackingNumber: o.tracking_number,
-      }));
+      const allOrders = orders ?? [];
 
-      const submittedRxIds = new Set(
-        (orders ?? [])
+      submitted = allOrders
+        .filter((o) => o.status !== 'draft')
+        .map((o) => ({
+          id: o.id,
+          orderRef: o.order_ref,
+          patientName: o.patient_name,
+          status: o.status,
+          trackingCarrier: o.tracking_carrier,
+          trackingNumber: o.tracking_number,
+        }));
+
+      // Auto-generated refill drafts join the ready-to-submit list.
+      const draftItems: ReadyRxView[] = allOrders
+        .filter((o) => o.status === 'draft')
+        .map((o) => ({
+          kind: 'draft' as const,
+          id: o.id,
+          patientName: o.patient_name,
+          protocolName: o.cycle_label ?? 'Refill cycle',
+        }));
+
+      const orderedRxIds = new Set(
+        allOrders
           .map((o) => o.prescription_id)
           .filter((id): id is string => Boolean(id)),
       );
-      const pending = (rxs ?? []).filter((r) => !submittedRxIds.has(r.id));
+      const pending = (rxs ?? []).filter((r) => !orderedRxIds.has(r.id));
 
-      // Resolve patient names.
+      // Resolve patient names for pending prescriptions.
       const userIds = [...new Set(pending.map((r) => r.user_id).filter(Boolean))];
       const nameById = new Map<string, string>();
       if (userIds.length > 0) {
@@ -105,13 +135,17 @@ export default async function AdminFulfillmentPage() {
         }
       }
 
-      ready = pending.map((r) => ({
-        id: r.id,
-        patientName: r.user_id
-          ? nameById.get(r.user_id) ?? 'Patient'
-          : 'Patient',
-        protocolName: r.protocol_name,
-      }));
+      ready = [
+        ...pending.map((r) => ({
+          kind: 'prescription' as const,
+          id: r.id,
+          patientName: r.user_id
+            ? nameById.get(r.user_id) ?? 'Patient'
+            : 'Patient',
+          protocolName: r.protocol_name,
+        })),
+        ...draftItems,
+      ];
     } catch {
       ready = DEMO_READY;
       submitted = DEMO_SUBMITTED;

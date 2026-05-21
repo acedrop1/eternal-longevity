@@ -54,7 +54,8 @@ regenerate it: `supabase gen types typescript --project-id <id> --schema public`
 4. **Webhook:** Developers -> Webhooks -> add endpoint
    `https://<your-domain>/api/webhooks/stripe`. Select at least
    `payment_intent.succeeded`, `payment_intent.payment_failed`,
-   `checkout.session.completed`, and the `customer.subscription.*` events.
+   `checkout.session.completed`, `invoice.paid`, and the
+   `customer.subscription.*` events.
    Copy the signing secret -> `STRIPE_WEBHOOK_SECRET`.
 5. Local testing: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
    — it prints a `whsec_...` secret to use locally.
@@ -112,7 +113,8 @@ Environment Variables**, then redeploy. The webhook endpoint is live at
 - **Pharmacy fulfillment** — a `pharmacy` role + portal (`/portal/pharmacy`).
   The admin submits signed prescriptions from `/portal/admin/fulfillment`; the
   pharmacy accepts each order and adds tracking, which notifies the patient.
-  Set `PHARMACY_EMAIL` so the pharmacy gets new-order alerts.
+  Set `PHARMACY_EMAIL` so the pharmacy gets new-order alerts. Each recurring
+  paid cycle (`invoice.paid`) auto-creates a refill draft in the admin queue.
 
 **Still on demo data — the next wiring tasks:**
 

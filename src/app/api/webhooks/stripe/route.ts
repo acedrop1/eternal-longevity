@@ -17,7 +17,7 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import type { SubscriptionStatus } from '@/lib/database.types';
+import type { Json, SubscriptionStatus } from '@/lib/database.types';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -134,10 +134,83 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       break;
     }
 
+    case 'invoice.paid': {
+      const invoice = event.data.object;
+      // Only recurring renewals auto-generate a refill. The first cycle is
+      // submitted manually from the signed prescription.
+      if (invoice.billing_reason === 'subscription_cycle') {
+        const customerId =
+          typeof invoice.customer === 'string'
+            ? invoice.customer
+            : invoice.customer?.id;
+        if (customerId) await createRefillDraft(db, customerId);
+      }
+      break;
+    }
+
     default:
       // Unhandled event types are fine — acknowledge so Stripe stops retrying.
       break;
   }
+}
+
+/**
+ * A paid refill cycle -> a draft fulfillment order in the admin queue. The
+ * admin reviews it, then submits it to the pharmacy.
+ */
+async function createRefillDraft(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  stripeCustomerId: string,
+): Promise<void> {
+  const { data: profile } = await db
+    .from('profiles')
+    .select('id, full_name, date_of_birth')
+    .eq('stripe_customer_id', stripeCustomerId)
+    .maybeSingle();
+  if (!profile) return;
+
+  const { data: rx } = await db
+    .from('prescriptions')
+    .select('id, doctor_id, items')
+    .eq('user_id', profile.id)
+    .eq('status', 'signed')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!rx) return;
+
+  const { data: address } = await db
+    .from('addresses')
+    .select('line1, line2, city, state, zip')
+    .eq('user_id', profile.id)
+    .eq('is_primary', true)
+    .maybeSingle();
+
+  let prescriberName: string | null = null;
+  let prescriberNpi: string | null = null;
+  if (rx.doctor_id) {
+    const { data: doctor } = await db
+      .from('profiles')
+      .select('full_name, npi')
+      .eq('id', rx.doctor_id)
+      .maybeSingle();
+    prescriberName = doctor?.full_name ?? null;
+    prescriberNpi = doctor?.npi ?? null;
+  }
+
+  await db.from('fulfillment_orders').insert({
+    order_ref: `FUL-${Date.now().toString(36).toUpperCase()}`,
+    user_id: profile.id,
+    prescription_id: rx.id,
+    status: 'draft',
+    patient_name: profile.full_name ?? 'Patient',
+    patient_dob: profile.date_of_birth ?? null,
+    shipping_address: (address ?? null) as Json | null,
+    prescriber_name: prescriberName,
+    prescriber_npi: prescriberNpi,
+    items: rx.items,
+    cycle_label: 'Refill cycle',
+  });
 }
 
 /** Append a timeline entry to whichever order owns this payment intent. */
