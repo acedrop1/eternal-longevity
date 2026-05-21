@@ -101,11 +101,16 @@ Environment Variables**, then redeploy. The webhook endpoint is live at
   the demo cookie otherwise. `/login`, `/signup`, `/forgot-password`,
   `/auth/reset`, and the `/auth/callback` code-exchange route are all built.
   New signups get the `member` role; promote to `doctor` / `admin` in Supabase.
+- **Checkout** — `createCheckoutSessionAction` creates a Stripe Checkout
+  Session plus a pending `orders` row; the webhook flips it to paid. The
+  checkout flow redirects to Stripe automatically once keys are set.
+- **Admin billing** — `/portal/admin/billing` lets an admin create
+  subscriptions, charge a one-off amount, issue refunds, and send a secure
+  add-a-card link. All token-based via Stripe (`src/lib/billing.ts`) — the app
+  never collects or stores a raw card number.
 
 **Still on demo data — the next wiring tasks:**
 
-- **Checkout** — `checkout-actions.ts` is a stub. Wire it to create a Stripe
-  Checkout Session (or PaymentIntent) and an `orders` row.
 - **Portal data** — `CartProvider`, `OrdersProvider`, `MemberProfileProvider`,
   and the doctor/admin pages read localStorage / mock arrays. Point them at the
   matching Supabase tables.

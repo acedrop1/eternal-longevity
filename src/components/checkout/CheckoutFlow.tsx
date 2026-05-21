@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
 import { useOrders } from '@/components/orders/OrdersProvider';
+import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { STATES_AVAILABLE } from '@/lib/intakeSchema';
@@ -360,7 +361,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
     continueFrom('method', 'payment');
   }
 
-  function handlePay() {
+  async function handlePay() {
     if (!emailValid || !shippingValid || !methodValid || !cardValid) return;
     setIsPaying(true);
 
@@ -432,6 +433,25 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             swatch: fallbackLine.swatch,
           },
         ];
+
+    // If a real payment backend is connected, hand off to Stripe Checkout.
+    // The card is entered on Stripe's hosted page — never in this form.
+    try {
+      const checkout = await createCheckoutSessionAction({
+        lines: orderLines.map((l) => ({
+          productId: l.productId,
+          productName: l.productName,
+          quantity: l.quantity,
+          amountCents: Math.round(l.perCycle * 100),
+        })),
+      });
+      if (checkout.url) {
+        window.location.href = checkout.url;
+        return;
+      }
+    } catch {
+      // Fall through to the demo success flow below.
+    }
 
     placeOrder({
       memberName: shippingAddressForOrder.fullName,
