@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { FileDropzone } from '@/components/portal/FileDropzone';
+import { IdVerificationForm } from '@/components/portal/IdVerificationForm';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
@@ -67,51 +67,7 @@ export default async function VerifyIdPage() {
             </p>
           </div>
 
-          <section className="space-y-5">
-            <div>
-              <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
-                Front of ID
-              </h2>
-              <p className="mb-3 text-xs text-foreground/55">
-                Clear, well-lit. All four corners visible. No glare on the
-                photo.
-              </p>
-              <FileDropzone
-                id="id-front"
-                label="Upload the front"
-                hint="PDF or image · up to 10 MB"
-              />
-            </div>
-
-            <div>
-              <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
-                Back of ID
-              </h2>
-              <p className="mb-3 text-xs text-foreground/55">
-                We use the back to confirm address and barcode validity.
-              </p>
-              <FileDropzone
-                id="id-back"
-                label="Upload the back"
-                hint="PDF or image · up to 10 MB"
-              />
-            </div>
-
-            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-4">
-              <Link
-                href="/portal"
-                className="rounded-full border border-line bg-surface px-5 py-3 text-sm text-foreground/85 text-center hover:text-foreground hover:border-foreground/30 transition-colors"
-              >
-                Save &amp; finish later
-              </Link>
-              <button
-                type="button"
-                className="rounded-full bg-accent text-black font-semibold px-7 py-3 text-sm hover:bg-accent-soft transition-colors"
-              >
-                Submit for verification →
-              </button>
-            </div>
-          </section>
+          <IdVerificationForm />
         </div>
 
         {/* === SIDEBAR === */}
