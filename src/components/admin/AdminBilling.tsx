@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   adminChargeOnce,
   adminCreateSubscription,
@@ -16,75 +16,200 @@ export interface BillingCustomer {
   email: string;
 }
 
+export interface BillingSummary {
+  activeSubscriptions: number;
+  cycleRevenueCents: number;
+  paidOrders: number;
+  lifetimeRevenueCents: number;
+  recent: { label: string; amountCents: number; when: string }[];
+}
+
 const inputClass =
   'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
 
 const labelClass = 'mb-1.5 block text-[11px] tracking-wider text-foreground/60';
+
+function money(cents: number): string {
+  return (cents / 100).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  });
+}
 
 /* ================================================================== */
 
 export function AdminBilling({
   customers,
   live,
+  summary,
 }: {
   customers: BillingCustomer[];
   live: boolean;
+  summary: BillingSummary;
 }) {
-  const [customerId, setCustomerId] = useState(customers[0]?.id ?? '');
-  const selected = customers.find((c) => c.id === customerId);
+  const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = customers.find((c) => c.id === selectedId) ?? null;
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return customers
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q),
+      )
+      .slice(0, 6);
+  }, [customers, query]);
 
   return (
     <div className="space-y-6">
       {!live && (
         <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Billing isn&apos;t connected yet. The panels below are live UI — they
-          start working the moment Stripe and Supabase keys are set. See
-          BACKEND_SETUP.md.
+          Demo figures. Real revenue and billing actions go live once Stripe and
+          Supabase are connected.
         </div>
       )}
 
-      {/* Customer picker */}
+      {/* Overview */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric
+          label="Active subscriptions"
+          value={String(summary.activeSubscriptions)}
+        />
+        <Metric
+          label="Recurring / cycle"
+          value={money(summary.cycleRevenueCents)}
+          tone="accent"
+        />
+        <Metric label="Paid orders" value={String(summary.paidOrders)} />
+        <Metric
+          label="Lifetime revenue"
+          value={money(summary.lifetimeRevenueCents)}
+          tone="accent"
+        />
+      </section>
+
+      {/* Recent activity */}
+      {summary.recent.length > 0 && (
+        <section className="rounded-3xl border border-line bg-surface p-6">
+          <div className="mb-4 text-[10px] tracking-widest text-foreground/50">
+            RECENT ACTIVITY
+          </div>
+          <ul className="divide-y divide-line">
+            {summary.recent.map((r, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+              >
+                <span className="font-mono text-xs text-foreground/80">
+                  {r.label}
+                </span>
+                <span className="text-xs text-foreground/50">{r.when}</span>
+                <span className="text-sm font-medium text-foreground tabular-nums">
+                  {money(r.amountCents)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Bill a customer — search */}
       <section className="rounded-3xl border border-line bg-surface p-6 md:p-7">
         <div className="mb-1 text-[10px] tracking-widest text-accent">
-          CUSTOMER
+          BILL A CUSTOMER
         </div>
         <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
-          Who are you billing?
+          {selected ? selected.name : 'Search for a customer'}
         </h2>
-        {customers.length === 0 ? (
-          <p className="text-sm text-foreground/55">
-            No members yet. Members appear here once they sign up.
-          </p>
-        ) : (
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className={cn(inputClass, 'appearance-none')}
+
+        {selected ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedId(null);
+              setQuery('');
+            }}
+            className="text-xs tracking-wider text-accent hover:text-accent-soft"
           >
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {c.email}
-              </option>
-            ))}
-          </select>
-        )}
-        {selected && (
-          <p className="mt-3 text-xs text-foreground/55">
-            Every action below applies to{' '}
-            <span className="text-foreground/85">{selected.name}</span> and
-            bills the card they have on file with Stripe.
-          </p>
+            ← Choose a different customer
+          </button>
+        ) : (
+          <div>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or email…"
+              className={inputClass}
+            />
+            {query.trim() && (
+              <ul className="mt-2 overflow-hidden rounded-2xl border border-line">
+                {matches.length === 0 ? (
+                  <li className="px-4 py-3 text-sm text-foreground/45">
+                    No customers match.
+                  </li>
+                ) : (
+                  matches.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(c.id)}
+                        className="flex w-full items-center justify-between gap-3 border-b border-line px-4 py-3 text-left transition-colors last:border-0 hover:bg-background"
+                      >
+                        <span className="text-sm font-medium text-foreground">
+                          {c.name}
+                        </span>
+                        <span className="truncate text-xs text-foreground/55">
+                          {c.email}
+                        </span>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </div>
         )}
       </section>
 
       {selected && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <CardLinkPanel userId={selected.id} email={selected.email} />
+          <CardLinkPanel userId={selected.id} />
           <SubscriptionPanel userId={selected.id} />
           <ChargePanel userId={selected.id} name={selected.name} />
           <RefundPanel />
         </div>
       )}
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: string;
+  tone?: 'neutral' | 'accent';
+}) {
+  return (
+    <div className="rounded-2xl border border-line bg-surface p-5">
+      <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
+        {label.toUpperCase()}
+      </div>
+      <div
+        className={cn(
+          'text-2xl font-semibold tracking-tight tabular-nums',
+          tone === 'accent' ? 'text-accent' : 'text-foreground',
+        )}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -195,7 +320,7 @@ function ResultBanner({ result }: { result: AdminBillingResult | null }) {
 /*  Panels                                                             */
 /* ================================================================== */
 
-function CardLinkPanel({ userId }: { userId: string; email: string }) {
+function CardLinkPanel({ userId }: { userId: string }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AdminBillingResult | null>(null);
 
@@ -319,7 +444,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
     const dollars = Number(amount) || 0;
     if (
       !window.confirm(
-        `Charge ${name}'s card $${dollars.toFixed(2)} now? This bills them immediately.`,
+        `Charge ${name}'s card ${money(Math.round(dollars * 100))} now? This bills them immediately.`,
       )
     ) {
       return;
@@ -380,11 +505,9 @@ function RefundPanel() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const partial = amount.trim()
-      ? ` $${(Number(amount) || 0).toFixed(2)} of`
+      ? ` ${money(Math.round((Number(amount) || 0) * 100))} of`
       : ' all of';
-    if (
-      !window.confirm(`Refund${partial} payment ${paymentId.trim()}?`)
-    ) {
+    if (!window.confirm(`Refund${partial} payment ${paymentId.trim()}?`)) {
       return;
     }
     setBusy(true);
