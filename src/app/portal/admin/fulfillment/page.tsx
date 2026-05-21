@@ -21,7 +21,7 @@ const ADMIN_NAV = [
   { label: 'Members', href: '/portal/admin/members' },
   { label: 'Queue', href: '/portal/admin/queue' },
   { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Fulfillment', href: '/portal/admin/fulfillment' },
+  { label: 'Orders', href: '/portal/admin/fulfillment' },
   { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
@@ -156,7 +156,7 @@ export default async function AdminFulfillmentPage() {
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div className="mb-10">
         <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          FULFILLMENT
+          ORDERS
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"

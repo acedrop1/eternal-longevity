@@ -4,6 +4,7 @@ import { type Role, type SessionUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { CartButton } from '@/components/cart/CartButton';
 import { PortalNav, type NavItem } from '@/components/portal/PortalNav';
+import { enrichNavWithCounts } from '@/lib/pending-counts';
 
 const ROLE_THEME: Record<
   Role,
@@ -54,7 +55,7 @@ interface PortalShellProps {
  *   Mobile (<md):
  *     top bar · horizontal scrolling nav pills · main content full-width
  */
-export function PortalShell({
+export async function PortalShell({
   user,
   nav = [],
   bodyTheme = 'dark',
@@ -62,6 +63,9 @@ export function PortalShell({
 }: PortalShellProps) {
   const theme = ROLE_THEME[user.role];
   const lightBody = bodyTheme === 'light';
+
+  // Attach pending-task count badges to the nav.
+  const navItems = await enrichNavWithCounts(nav, user.role);
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,9 +126,9 @@ export function PortalShell({
         </div>
 
         {/* Mobile-only sub-nav (horizontal scrolling pills) */}
-        {nav.length > 0 && (
+        {navItems.length > 0 && (
           <div className="md:hidden border-t border-line">
-            <PortalNav nav={nav} variant="mobile" />
+            <PortalNav nav={navItems} variant="mobile" />
           </div>
         )}
       </header>
@@ -132,9 +136,9 @@ export function PortalShell({
       {/* ============ CONTENT. Sidebar + main ============ */}
       <div className="mx-auto max-w-7xl md:flex md:items-start">
         {/* Left sidebar. Desktop only */}
-        {nav.length > 0 && (
+        {navItems.length > 0 && (
           <aside className="hidden md:block md:flex-shrink-0 md:w-56 lg:w-60 self-start sticky top-14 max-h-[calc(100vh-3.5rem)] overflow-y-auto px-3 lg:px-4 py-8 md:py-10 border-r border-line">
-            <PortalNav nav={nav} variant="sidebar" />
+            <PortalNav nav={navItems} variant="sidebar" />
           </aside>
         )}
 

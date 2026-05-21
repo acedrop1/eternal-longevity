@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 export interface NavItem {
   label: string;
   href: string;
+  /** Optional count pill — pending tasks waiting on this tab. */
+  badge?: number;
 }
 
 interface PortalNavProps {
@@ -54,6 +56,11 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
                 )}
               >
                 {item.label.toUpperCase()}
+                {!!item.badge && (
+                  <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-black">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -88,7 +95,19 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
                     isActive ? 'bg-accent' : 'bg-foreground/20 group-hover:bg-foreground/40'
                   )}
                 />
-                <span className="truncate">{item.label}</span>
+                <span className="flex-1 truncate">{item.label}</span>
+                {!!item.badge && (
+                  <span
+                    className={cn(
+                      'inline-flex min-w-[1.3rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                      isActive
+                        ? 'bg-accent text-black'
+                        : 'bg-accent/15 text-accent'
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             </li>
           );
