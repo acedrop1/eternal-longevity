@@ -150,6 +150,59 @@ export function shipmentEmail(
   };
 }
 
+/**
+ * Sent when an admin creates an account for someone — member, doctor,
+ * pharmacy, or admin. Carries a one-time temporary password.
+ */
+export function welcomeEmail(input: {
+  fullName: string;
+  email: string;
+  tempPassword: string;
+  role: 'member' | 'doctor' | 'pharmacy' | 'admin';
+  loginUrl: string;
+}): { subject: string; html: string } {
+  const firstName = input.fullName.trim().split(/\s+/)[0] || 'there';
+  const intro: Record<string, string> = {
+    member:
+      'Your account is ready. Sign in any time to view your protocol, track orders, and manage your subscription.',
+    doctor:
+      'Your clinical account is ready. Sign in to review approved intakes and sign or decline prescriptions.',
+    pharmacy:
+      'Your fulfillment account is ready. Sign in to accept released orders and add shipment tracking.',
+    admin:
+      'Your admin account is ready. Sign in to manage intakes, billing, orders, and users.',
+  };
+  return {
+    subject: 'Your Eternal Longevity account is ready',
+    html: shell(
+      `<h1 style="color:#fff;font-size:20px;margin:12px 0;">Welcome, ${escapeHtml(
+        firstName,
+      )}.</h1>
+       <p>${intro[input.role] ?? intro.member}</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;border-collapse:collapse;">
+         <tr>
+           <td style="padding:11px 14px;background:#0a0a0a;border:1px solid #262626;border-radius:10px 10px 0 0;color:#737373;font-size:12px;">Email</td>
+           <td style="padding:11px 14px;background:#0a0a0a;border:1px solid #262626;border-left:0;border-radius:0 10px 0 0;color:#fff;font-size:14px;" align="right">${escapeHtml(
+             input.email,
+           )}</td>
+         </tr>
+         <tr>
+           <td style="padding:11px 14px;background:#0a0a0a;border:1px solid #262626;border-top:0;border-radius:0 0 0 10px;color:#737373;font-size:12px;">Temporary password</td>
+           <td style="padding:11px 14px;background:#0a0a0a;border:1px solid #262626;border-top:0;border-left:0;border-radius:0 0 10px 0;color:#d5a850;font-size:15px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" align="right">${escapeHtml(
+             input.tempPassword,
+           )}</td>
+         </tr>
+       </table>
+       <p style="margin:18px 0;">
+         <a href="${escapeHtml(
+           input.loginUrl,
+         )}" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Sign in</a>
+       </p>
+       <p style="color:#a3a3a3;font-size:13px;">For your security, please change this password after your first sign-in. You can do that any time from Account settings.</p>`,
+    ),
+  };
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

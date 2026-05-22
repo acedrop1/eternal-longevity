@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { Role } from '@/lib/auth';
 import type { AccountStatus } from '@/lib/database.types';
 import {
-  adminInviteUser,
+  adminCreateUser,
   adminSetUserStatus,
   type AdminUserResult,
 } from '@/lib/admin-users-actions';
@@ -77,7 +77,7 @@ export function AdminUsers({
     <div className="space-y-6">
       {!live && (
         <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Demo directory. Inviting and suspending users goes live once Supabase
+          Demo directory. Adding and suspending users goes live once Supabase
           is connected.
         </div>
       )}
@@ -102,7 +102,12 @@ export function AdminUsers({
         </button>
       </div>
 
-      {adding && <AddUserPanel onDone={() => setAdding(false)} />}
+      {adding && (
+        <AddUserPanel
+          onDone={() => setAdding(false)}
+          onCreated={(row) => setRows((curr) => [row, ...curr])}
+        />
+      )}
 
       {/* Role filter */}
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -305,21 +310,41 @@ function ActionButton({
 
 /* ------------------------------------------------------------------ */
 
-function AddUserPanel({ onDone }: { onDone: () => void }) {
+function AddUserPanel({
+  onDone,
+  onCreated,
+}: {
+  onDone: () => void;
+  onCreated: (row: AdminUserRow) => void;
+}) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('member');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AdminUserResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setResult(null);
+    setCopied(false);
     try {
-      const res = await adminInviteUser({ email, fullName: name, role });
+      const res = await adminCreateUser({ email, fullName: name, role });
       setResult(res);
-      if (res.ok) {
+      if (res.ok && res.userId) {
+        onCreated({
+          id: res.userId,
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          role,
+          status: 'active',
+          joinedAt: new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+        });
         setName('');
         setEmail('');
         setRole('member');
@@ -331,13 +356,28 @@ function AddUserPanel({ onDone }: { onDone: () => void }) {
     }
   }
 
+  async function copyDetails() {
+    if (!result?.tempPassword) return;
+    try {
+      await navigator.clipboard.writeText(
+        `Email: ${result.createdEmail ?? email}\n` +
+          `Temporary password: ${result.tempPassword}\n` +
+          `Sign in: ${window.location.origin}/login`,
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable; the details are visible on screen anyway */
+    }
+  }
+
   return (
     <form
       onSubmit={submit}
       className="rounded-3xl border border-accent/30 bg-accent/5 p-5 md:p-6"
     >
       <div className="mb-4 text-[10px] tracking-widest text-accent">
-        INVITE A USER
+        ADD A USER
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <input
@@ -367,8 +407,10 @@ function AddUserPanel({ onDone }: { onDone: () => void }) {
         </select>
       </div>
       <p className="mt-3 text-xs text-foreground/55">
-        The user gets an email invite and sets their own password. You never
-        handle their credentials.
+        The account is created right away and the user gets a branded welcome
+        email with a temporary password to change after signing in. If email
+        delivery is not connected yet, the password appears here so you can
+        share it.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
@@ -376,14 +418,14 @@ function AddUserPanel({ onDone }: { onDone: () => void }) {
           disabled={busy}
           className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
         >
-          {busy ? 'Sending…' : 'Send invite'}
+          {busy ? 'Creating…' : 'Create account'}
         </button>
         <button
           type="button"
           onClick={onDone}
           className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
         >
-          Cancel
+          Close
         </button>
       </div>
       {result && (
@@ -395,6 +437,32 @@ function AddUserPanel({ onDone }: { onDone: () => void }) {
         >
           {result.message}
         </p>
+      )}
+      {result?.tempPassword && (
+        <div className="mt-3 rounded-2xl border border-accent/30 bg-background p-4">
+          <div className="mb-2.5 text-[10px] tracking-widest text-accent">
+            SIGN-IN DETAILS
+          </div>
+          <dl className="space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-foreground/55">Email</dt>
+              <dd className="font-mono text-foreground">
+                {result.createdEmail}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-foreground/55">Temporary password</dt>
+              <dd className="font-mono text-accent">{result.tempPassword}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            onClick={copyDetails}
+            className="mt-3 rounded-full border border-line bg-surface px-4 py-1.5 text-[11px] font-semibold tracking-widest text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
+          >
+            {copied ? 'COPIED' : 'COPY DETAILS'}
+          </button>
+        </div>
       )}
     </form>
   );

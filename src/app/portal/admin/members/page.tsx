@@ -93,8 +93,8 @@ export default async function AdminUsersPage() {
           People & access.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Everyone with an account — members, doctors, the pharmacy, admins.
-          Invite new users, and suspend or deactivate any account. Click a
+          Everyone with an account: members, doctors, the pharmacy, admins.
+          Add new users, and suspend or deactivate any account. Click a
           member to see their full record.
         </p>
       </div>
