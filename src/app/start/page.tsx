@@ -7,7 +7,7 @@ import { LoopVideo } from '@/components/ui/LoopVideo';
 export const metadata: Metadata = {
   title: 'Start Your Assessment | Eternal Longevity',
   description:
-    'Begin your physician-supervised peptide protocol with a 3-minute health assessment.',
+    'Order your peptide protocol with a quick 3-minute profile. Compounded, third-party tested, shipped to your door.',
 };
 
 export default function StartPage() {

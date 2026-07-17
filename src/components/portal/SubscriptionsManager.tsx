@@ -53,7 +53,7 @@ const STATUS_THEME: Record<
   active: { label: 'ACTIVE', class: 'bg-accent/10 text-accent border-accent/40' },
   paused: { label: 'PAUSED', class: 'bg-amber-500/10 text-amber-300 border-amber-400/40' },
   'pending-review': {
-    label: 'AWAITING PHYSICIAN',
+    label: 'IN REVIEW',
     class: 'bg-sky-500/10 text-sky-300 border-sky-400/40',
   },
   cancelled: { label: 'CANCELLED', class: 'bg-foreground/10 text-foreground/55 border-foreground/20' },
@@ -270,7 +270,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                 {/* Pending-review: read-only */}
                 {status === 'pending-review' && (
                   <p className="text-xs text-foreground/55">
-                    Awaiting physician sign-off. Controls unlock once approved.
+                    In review. Controls unlock once your order is confirmed.
                   </p>
                 )}
 
@@ -308,7 +308,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
             </h3>
             <p className="mb-6 text-sm text-foreground/65 leading-relaxed">
               {confirm.kind === 'cancel'
-                ? "You won't be billed again. You can reactivate later — your protocol stays on file for your physician's reference."
+                ? "You won't be billed again. You can reactivate later — your protocol stays on file for reordering."
                 : "You won't be charged or shipped for the next cycle. Billing automatically resumes on the cycle after."}
             </p>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

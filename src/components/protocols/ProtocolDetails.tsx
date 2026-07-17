@@ -56,7 +56,7 @@ export function ProtocolDetails({ protocol }: Props) {
             </tbody>
           </table>
           <p className="mt-4 text-xs text-foreground/45 leading-relaxed">
-            Dosing is finalized by your physician based on your intake. The values above are typical for this protocol.
+            Dosing follows a structured cycle. The values above are typical for this protocol.
           </p>
         </div>
       ),
@@ -83,14 +83,14 @@ export function ProtocolDetails({ protocol }: Props) {
       content: (
         <div className="space-y-3 text-sm text-foreground/75 leading-relaxed">
           <p>
-            Once a physician approves your protocol, your vials are compounded by a
+            Once you place your order, your vials are compounded by a
             licensed 503A pharmacy and shipped directly to your door within 3–5
             business days. Each order arrives with dosing instructions, alcohol pads,
             syringes, and bacteriostatic water.
           </p>
           <p>
             On subscription plans, refills ship automatically before your supply
-            runs out. Provider re-authorization is handled by our clinical team.
+            runs out. Renewals are handled for you.
           </p>
         </div>
       ),

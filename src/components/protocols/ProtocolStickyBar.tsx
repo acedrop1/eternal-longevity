@@ -64,7 +64,7 @@ export function ProtocolStickyBar({ protocol }: Props) {
               </span>
             </div>
             <div className="text-xs text-foreground/55">
-              Physician-supervised
+              Third-party tested
               <span className="hidden md:inline">. Pricing shown after your assessment</span>
             </div>
           </div>

@@ -124,9 +124,9 @@ export function physiciansForState(state: string): DemoPhysician[] {
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   'pending-admin': 'AWAITING ADMIN REVIEW',
   'denied-admin': 'DENIED BY ADMIN',
-  assigned: 'AWAITING PHYSICIAN',
-  signed: 'PHYSICIAN APPROVED',
-  'declined-clinical': 'DECLINED. CLINICAL',
+  assigned: 'PROTOCOL REVIEW',
+  signed: 'ORDER CONFIRMED',
+  'declined-clinical': 'DECLINED',
   compounding: 'COMPOUNDING',
   shipped: 'SHIPPED',
   delivered: 'DELIVERED',

@@ -12,27 +12,27 @@ export default function TermsPage() {
       eyebrow="LEGAL"
       title="Terms of Service"
       effective="May 2026"
-      lead="These Terms of Service govern your access to and use of Eternal Longevity, Inc. (“Eternal Longevity,” “we,” “us”) and our products, including the website, intake assessment, telehealth services, and any compounded medications dispensed by our pharmacy partners. By using any part of our service, you agree to these terms."
+      lead="These Terms of Service govern your access to and use of Eternal Longevity, Inc. (“Eternal Longevity,” “we,” “us”) and our products, including the website, product catalog, and any compounded peptide protocols fulfilled by our licensed 503A pharmacy partners. By using any part of our service, you agree to these terms."
       sections={[
         {
           heading: 'Eligibility & Account',
           paragraphs: [
-            'You must be at least 18 years old and a legal resident of a U.S. state in which we are authorized to provide telehealth services to use our platform. You are responsible for the accuracy of the information you provide during intake and for the security of your account credentials.',
-            'We may refuse or terminate service if information is materially incorrect, if continued treatment is clinically unsafe, or if your conduct violates these terms.',
+            'You must be at least 18 years old and a legal resident of a U.S. state in which we are authorized to sell our products to use our platform. You are responsible for the accuracy of the information you provide when you order and for the security of your account credentials.',
+            'We may refuse or terminate service if information is materially incorrect, if continuing to fulfill your orders would be unsafe, or if your conduct violates these terms.',
           ],
         },
         {
-          heading: 'Telehealth Services',
+          heading: 'Our Store & Fulfillment',
           paragraphs: [
-            'Telehealth services are provided by licensed physicians and clinical staff who are independent contractors of Eternal Longevity. The physician-patient relationship is established between you and the treating physician, not Eternal Longevity itself. Eternal Longevity provides the technology platform and supports the operation of the service.',
-            'Telehealth has inherent limitations. A physician cannot perform a physical exam through video or messaging. Treatment recommendations are based on the information you provide. You agree to provide accurate information and to follow up promptly with in-person care when recommended.',
+            'Eternal Longevity operates an online store for compounded peptide protocols. Orders you place are fulfilled by U.S.-licensed 503A compounding pharmacies that operate independently of Eternal Longevity. Eternal Longevity provides the technology platform, the product catalog, and customer support for the store.',
+            'Nothing on our platform is medical advice, diagnosis, or a substitute for consulting your own healthcare provider. Product information is general in nature and is based on the information you provide. You agree to provide accurate information and to consult your own healthcare provider before using any protocol.',
           ],
         },
         {
           heading: 'Compounded Medications',
           paragraphs: [
-            'Medications dispensed through our service are compounded by U.S.-licensed 503A pharmacies operating under state-board oversight. Compounded medications are prepared for individual patients based on a physician prescription and are not FDA-approved as a finished product.',
-            'You acknowledge that some peptides and compounds offered are used for off-label indications, are evaluated by your physician on a case-by-case basis, and may not be appropriate for everyone.',
+            'Compounded peptide protocols offered through our store are compounded by U.S.-licensed 503A pharmacies operating under state-board oversight. Compounded protocols are prepared for individual customers and are not FDA-approved as a finished product.',
+            'You acknowledge that some peptides and compounds offered may not be appropriate for everyone, and that you are responsible for consulting your own healthcare provider before use.',
           ],
         },
         {
@@ -45,8 +45,8 @@ export default function TermsPage() {
         {
           heading: 'Cancellations & Refunds',
           paragraphs: [
-            'You may cancel a subscription between cycles at any time. Compounded medications that have already been prepared or shipped are not refundable, because under federal and state pharmacy law compounded prescriptions cannot be re-dispensed once they leave the pharmacy.',
-            'If a shipment is damaged in transit or arrives in a non-usable condition, contact our care team within 7 days and we will replace it at no cost. See the Refund Policy for details.',
+            'You may cancel a subscription between cycles at any time. Compounded protocols that have already been prepared or shipped are not refundable, because under federal and state pharmacy law compounded protocols cannot be re-dispensed once they leave the pharmacy.',
+            'If a shipment is damaged in transit or arrives in a non-usable condition, contact our support team within 7 days and we will replace it at no cost. See the Refund Policy for details.',
           ],
         },
         {
@@ -55,10 +55,10 @@ export default function TermsPage() {
             'You agree not to:',
           ],
           bullets: [
-            'Resell, share, or transfer any medication received through our service.',
+            'Resell, share, or transfer any product received through our service.',
             'Use the service in any way that violates applicable law, including controlled-substance laws.',
             'Attempt to interfere with the integrity or security of the platform.',
-            'Submit false or fraudulent information during intake.',
+            'Submit false or fraudulent information when placing an order.',
             'Impersonate another person or misrepresent your identity.',
           ],
         },
@@ -71,7 +71,7 @@ export default function TermsPage() {
         {
           heading: 'Disclaimers',
           paragraphs: [
-            'The service is provided “as is” without warranties of any kind, whether express or implied. Eternal Longevity does not warrant that the service will be uninterrupted or error-free. Health-information content on our site is general in nature and is not a substitute for individualized medical advice from your treating physician.',
+            'The service is provided “as is” without warranties of any kind, whether express or implied. Eternal Longevity does not warrant that the service will be uninterrupted or error-free. Health-information content on our site is general in nature, is not medical advice, and is not a substitute for consulting your own healthcare provider.',
           ],
         },
         {
@@ -101,7 +101,7 @@ export default function TermsPage() {
       ]}
       related={[
         { label: 'Privacy Policy', href: '/legal/privacy' },
-        { label: 'Telehealth Informed Consent', href: '/legal/telehealth' },
+        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/telehealth' },
         { label: 'Refund Policy', href: '/legal/refunds' },
       ]}
     />

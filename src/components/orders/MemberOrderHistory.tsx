@@ -49,7 +49,7 @@ export function MemberOrderHistory({
           No orders yet
         </h2>
         <p className="text-sm text-foreground/65">
-          Once your physician signs your protocol, your first order appears
+          Once your protocol is confirmed, your first order appears
           here with live shipment tracking.
         </p>
       </div>

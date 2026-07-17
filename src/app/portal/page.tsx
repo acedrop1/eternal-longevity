@@ -39,7 +39,7 @@ export default async function MemberPortalPage() {
       {/* === STATUS HEADER === */}
       <div className="mb-10">
         <p className="mb-2 text-[11px] tracking-widest text-accent">
-          PROTOCOL DRAFTED · {PROTOCOL.physician.toUpperCase()}
+          YOUR PROTOCOL · READY TO ORDER
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
@@ -52,9 +52,9 @@ export default async function MemberPortalPage() {
           Hi {user.name.split(' ')[0]}. Your protocol is ready.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Two things before your physician can sign: verify your ID and add a
-          payment method. Nothing is charged until a physician approves your
-          protocol. Billing begins the moment they sign.
+          Two things before your protocol ships: verify your ID and add a
+          payment method. Nothing is charged until your order is confirmed.
+          Billing begins the moment it is.
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export default async function MemberPortalPage() {
               </span>
             </div>
             <p className="mb-6 text-xs text-foreground/45 leading-relaxed">
-              Billed only when your physician signs your protocol. You are not
+              Billed only when your order is confirmed. You are not
               charged anything now.
             </p>
 
@@ -107,7 +107,7 @@ export default async function MemberPortalPage() {
               Add a payment method →
             </Link>
             <p className="mt-3 text-center text-[11px] text-foreground/45">
-              Saved securely · No charge until physician sign-off
+              Saved securely · No charge until your order is confirmed
             </p>
           </section>
 
@@ -118,11 +118,11 @@ export default async function MemberPortalPage() {
             </div>
             <ol className="space-y-3">
               {[
-                { n: '01', title: 'ID verification', body: 'Required by law for prescription products.', status: 'pending' as const },
+                { n: '01', title: 'ID verification', body: 'Required by law for compounded protocol products.', status: 'pending' as const },
                 { n: '02', title: 'Payment method', body: 'Add a card now. It is saved securely and not charged.', status: 'pending' as const },
-                { n: '03', title: 'Physician sign-off', body: 'Your physician reviews and signs. Billing starts the moment they do.', status: 'upcoming' as const },
-                { n: '04', title: 'Shipment', body: 'The pharmacy compounds and ships cold-chain within 3 to 5 days of sign-off.', status: 'upcoming' as const },
-                { n: '05', title: 'Mid-cycle check-in', body: 'Your physician messages at week 6.', status: 'upcoming' as const },
+                { n: '03', title: 'Order confirmation', body: 'Your order is confirmed. Billing starts the moment it is.', status: 'upcoming' as const },
+                { n: '04', title: 'Shipment', body: 'The pharmacy compounds and ships cold-chain within 3 to 5 days of confirmation.', status: 'upcoming' as const },
+                { n: '05', title: 'Mid-cycle check-in', body: 'A protocol check-in at week 6.', status: 'upcoming' as const },
               ].map((s) => (
                 <li
                   key={s.n}
@@ -169,7 +169,7 @@ export default async function MemberPortalPage() {
             </div>
             <p className="mb-3 text-sm text-foreground/65 leading-relaxed">
               Add individual peptides to your routine. Subscription-only,
-              physician-reviewed before every cycle.
+              third-party tested before every cycle.
             </p>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent group-hover:translate-x-1 transition-transform">
               Browse the catalog
@@ -185,8 +185,8 @@ export default async function MemberPortalPage() {
             cta="Start"
           />
           <QuickAction
-            eyebrow="CLINICAL CARE"
-            title="Message your care team"
+            eyebrow="MEMBER SUPPORT"
+            title="Message our team"
             body="Replies within one business day. Same-day callback for urgent."
             href="/contact"
             cta="Open chat"

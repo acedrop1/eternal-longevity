@@ -64,7 +64,7 @@ export function ProtocolCard({ protocol, delay = 0 }: Props) {
           </p>
           <div className="flex items-center justify-between">
             <span className="text-[10px] tracking-widest text-foreground/40">
-              PHYSICIAN-SUPERVISED
+              THIRD-PARTY TESTED
             </span>
             <span className="inline-flex items-center gap-2 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1">
               EXPLORE

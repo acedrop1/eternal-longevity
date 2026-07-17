@@ -28,7 +28,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             href="/contact"
             className="text-foreground/85 hover:text-foreground underline-offset-4 hover:underline"
           >
-            Contact our care team
+            Contact our team
           </Link>
           .
         </>

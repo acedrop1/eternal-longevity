@@ -25,14 +25,14 @@ const PILLARS = [
     image: '/images/11.jpg', // pipette / science
   },
   {
-    title: 'Physician-Reviewed',
-    kicker: 'Reviewed and signed by a licensed physician.',
-    body: 'No algorithms, no shortcuts. Your clinical team drafts a personalized protocol, your physician reviews your intake and signs the prescription before any compound is shipped.',
+    title: 'Third-Party Tested',
+    kicker: 'Formulated and third-party tested for purity.',
+    body: 'No algorithms, no shortcuts. Our formulation team builds a personalized protocol, and every compound is third-party tested for purity and potency before it ships.',
     image: '/images/7.jpg', // athlete / performance
   },
   {
     title: 'Concierge Care',
-    kicker: 'Direct access to your clinical liaison.',
+    kicker: 'Direct access to your concierge support.',
     body: 'Schedule onboarding calls, message your team in the portal, request dose adjustments. Cycle check-ins are built into every protocol so nothing falls through the cracks.',
     image: '/images/1.jpg', // desert yoga / lifestyle
   },
@@ -61,13 +61,13 @@ export function Pillars() {
             className="mb-4 max-w-3xl text-4xl md:text-6xl font-semibold tracking-tight text-foreground"
             style={{ letterSpacing: '-0.02em', lineHeight: 1 }}
           >
-            A protocole. Not a trend.
+            A protocol. Not a trend.
           </h2>
         </FadeIn>
 
         <FadeIn delay={220}>
           <p className="mb-16 max-w-xl text-foreground/55 leading-relaxed">
-            Physician-supervised peptide therapy, engineered around three
+            Expertly formulated peptide therapy, engineered around three
             non-negotiables.
           </p>
         </FadeIn>

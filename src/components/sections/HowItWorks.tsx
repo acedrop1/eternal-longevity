@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
 const STEPS = [
   { n: '1°', title: 'Begin your assessment' },
   { n: '2°', title: 'Receive a recommended protocol' },
-  { n: '3°', title: 'Physician review and approval' },
+  { n: '3°', title: 'Quality review and purity testing' },
   { n: '4°', title: 'Compounded and shipped to your door' },
   { n: '5°', title: 'Reorder seamlessly through your portal' },
 ];

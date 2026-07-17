@@ -256,7 +256,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   // --- Derived ---
   const hasCart = resolvedItems.length > 0;
 
-  // Fallback line: physician-approved Recover protocol if cart is empty.
+  // Fallback line: Recover protocol shown if cart is empty.
   const fallbackLine = useMemo(
     () => ({
       key: 'fallback-recover',
@@ -710,7 +710,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </span>
-                  <span className="font-semibold text-foreground/85">Physician-reviewed</span>
+                  <span className="font-semibold text-foreground/85">Third-party tested</span>
                   <span>· 503A compounded</span>
                 </div>
 

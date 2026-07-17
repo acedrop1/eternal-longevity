@@ -173,13 +173,13 @@ export function IntakeWizard() {
             That&apos;s it. You&apos;re in.
           </h2>
           <p className="mb-8 text-foreground/65 leading-relaxed">
-            Our clinical team is drafting your protocol and routing it to a licensed
-            physician. You&apos;ll hear back within 24–48 hours at the email you provided.
+            We&apos;re confirming your protocol and preparing your order. You&apos;ll
+            hear back within 24–48 hours at the email you provided.
           </p>
           <div className="grid gap-3 text-left mb-8">
             {[
-              { n: '01', text: 'Clinical team drafts your recommended protocol.' },
-              { n: '02', text: 'Physician reviews and signs your prescription.' },
+              { n: '01', text: 'We confirm your recommended protocol.' },
+              { n: '02', text: 'Your order is compounded and third-party tested.' },
               { n: '03', text: "We'll email you to log in. Verify ID, view pricing, and check out." },
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4">

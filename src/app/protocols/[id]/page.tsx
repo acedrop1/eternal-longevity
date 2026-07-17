@@ -61,7 +61,7 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
             <FadeIn delay={100}>
               <div className="mb-8 md:mb-12 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {[
-                  { icon: '⚕', label: 'Physician-Reviewed' },
+                  { icon: '⚕', label: 'Expertly Formulated' },
                   { icon: '✓', label: 'Licensed 503A Pharmacy' },
                   { icon: '◯', label: '99%+ Purity Tested' },
                   { icon: '⤴', label: 'Free Shipping' },
@@ -187,9 +187,9 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
                   Engineered for outcomes, dosed for safety.
                 </h2>
                 <p className="text-foreground/65 leading-relaxed">
-                  Each protocol pairs synergistic peptides with physician-supervised
-                  dosing. Below is the typical structure. Your physician finalizes
-                  doses based on your intake.
+                  Each protocol pairs synergistic peptides with structured,
+                  titrated dosing. Below is the typical structure. Each protocol
+                  is formulated to a structured cycle.
                 </p>
               </div>
             </FadeIn>
@@ -226,10 +226,10 @@ export default async function ProtocolDetailPage({ params }: PageProps) {
 
             <ol className="grid gap-4 md:gap-6 md:grid-cols-4">
               {[
-                { n: '01', title: 'Complete intake', body: 'Health history, goals, and consents. ~7 minutes.' },
-                { n: '02', title: 'Clinical review', body: 'Your team drafts a protocol and routes it to a physician.' },
-                { n: '03', title: 'Physician approval', body: 'Licensed physician reviews and e-signs the prescription.' },
-                { n: '04', title: 'Compounded + shipped', body: '503A pharmacy ships to your door within 3–5 days.' },
+                { n: '01', title: 'Complete your profile', body: 'Health history, goals, and consents. ~7 minutes.' },
+                { n: '02', title: 'Protocol matched', body: 'We match a protocol to your goals and place your order.' },
+                { n: '03', title: 'Compounded + tested', body: 'A licensed 503A pharmacy compounds it and third-party tests each lot.' },
+                { n: '04', title: 'Shipped to your door', body: '503A pharmacy ships to your door within 3–5 days.' },
               ].map((step, i) => (
                 <FadeIn key={step.n} delay={200 + i * 100}>
                   <div className="rounded-2xl border border-line bg-background p-6">

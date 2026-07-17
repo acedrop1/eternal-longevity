@@ -25,7 +25,6 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   keywords: [
     'peptides',
-    'telehealth',
     'BPC-157',
     'TB-500',
     'CJC-1295',

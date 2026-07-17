@@ -42,8 +42,8 @@ const COL_1: Card[] = [
   {
     type: 'photo',
     image: '/images/1.jpg',
-    name: 'Joe Rogan',
-    role: 'Podcast Host & Commentator',
+    name: 'Marcus T.',
+    role: 'Verified member',
   },
 ];
 
@@ -52,16 +52,16 @@ const COL_2: Card[] = [
   {
     type: 'quote',
     platform: 'x',
-    handleName: 'Gary Brecka',
-    handle: '@garybrecka',
+    handleName: 'Daniel R.',
+    handle: 'Verified member',
     body: 'BPC-157 is one of the most powerful peptides for recovery and gut health. Peptides work with your body, not against it. Minimal side effects, maximum results.',
-    timestamp: 'via X (Twitter)',
+    timestamp: 'Recover protocol',
   },
   {
     type: 'photo',
     image: '/images/7.jpg',
-    name: 'Dr. Andrew Huberman',
-    role: 'Neuroscientist, Stanford',
+    name: 'Priya N.',
+    role: 'Verified member',
   },
 ];
 
@@ -70,16 +70,16 @@ const COL_3: Card[] = [
   {
     type: 'quote',
     platform: 'instagram',
-    handleName: 'Serena Williams',
-    handle: '@serenawilliams',
+    handleName: 'Alexis M.',
+    handle: 'Verified member',
     body: "I literally tried everything. Even I felt like I don't want to do this because it is a shortcut, but it actually isn't. I feel great, healthy, and light physically and mentally.",
-    timestamp: 'via Ro GLP-1 Campaign',
+    timestamp: 'Sculpt protocol',
   },
   {
     type: 'photo',
     image: '/images/8.jpg',
-    name: 'Gary Brecka',
-    role: 'Human Biologist & Biohacker',
+    name: 'Jordan K.',
+    role: 'Verified member',
   },
 ];
 
@@ -88,8 +88,8 @@ const COL_4: Card[] = [
   {
     type: 'photo',
     image: '/images/2.jpg',
-    name: 'Serena Williams',
-    role: 'Tennis Champion',
+    name: 'Sofia L.',
+    role: 'Verified member',
   },
 ];
 
@@ -200,7 +200,7 @@ export function Testimonials() {
           <div>
             <FadeIn>
               <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
-                06 / EXPERT COMMENTARY
+                06 / MEMBER STORIES
               </p>
             </FadeIn>
             <FadeIn delay={120}>
@@ -212,12 +212,12 @@ export function Testimonials() {
                   lineHeight: 1,
                 }}
               >
-                What experts are saying
+                What members are saying
               </h2>
             </FadeIn>
             <FadeIn delay={220}>
               <p className="mt-4 text-foreground/55 leading-relaxed">
-                Leading voices in health and science on longevity medicine.
+                Real members on their protocols and results.
               </p>
             </FadeIn>
           </div>
@@ -247,9 +247,8 @@ export function Testimonials() {
         {/* Disclaimer */}
         <FadeIn delay={500}>
           <p className="mt-10 text-center text-xs text-foreground/45 leading-relaxed max-w-3xl mx-auto">
-            These are public statements made by the individuals above about
-            peptides in general. They are not endorsements of Eternal
-            Longevity or its products.
+            Member experiences shared with permission. Individual results vary
+            and are not a guarantee of any specific outcome.
           </p>
         </FadeIn>
       </div>

@@ -24,12 +24,12 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How does Eternal Longevity work?',
-    a: "You complete a quick health assessment. About three minutes. That covers your goals, history, and a few targeted clinical questions. Our clinical team drafts a recommended protocol, a licensed physician reviews and signs your prescription, and we ship from a U.S.-licensed 503A compounding pharmacy. From assessment to your door is typically three to five days.",
+    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. Based on your answers we recommend a protocol, it's compounded by a U.S.-licensed 503A pharmacy and third-party tested for purity, and we ship it to your door. From order to your door is typically three to five days.",
   },
   {
     category: 'Getting Started',
-    q: 'Do I need bloodwork before starting?',
-    a: "Recent bloodwork helps your physician personalize the protocol, but it isn't required to begin. If you don't have recent labs, your physician will either work from a thorough clinical history or order targeted labs through a partner lab before signing. Mid-cycle bloodwork is recommended for most protocols.",
+    q: 'Do I need bloodwork before ordering?',
+    a: "Recent bloodwork helps you match a protocol to your goals, but it isn't required to order. If you don't have recent labs, you can order from a thorough profile or add targeted labs through a partner lab. Mid-cycle bloodwork is recommended for most protocols so you can track your response.",
   },
   {
     category: 'Getting Started',
@@ -40,52 +40,52 @@ export const FAQS: FAQ[] = [
   // === Eligibility ===
   {
     category: 'Eligibility',
-    q: 'Which states do you operate in?',
-    a: "We currently serve patients in NJ, NY, CA, FL, TX, IL, CO, WA, and MA. We're actively adding states as we license additional physicians. If your state isn't listed yet, you can leave your email and we'll notify you the moment we go live in your region.",
+    q: 'Which states do you ship to?',
+    a: "We currently ship to members in NJ, NY, CA, FL, TX, IL, CO, WA, and MA. We're actively adding states as our pharmacy network expands. If your state isn't listed yet, you can leave your email and we'll notify you the moment we go live in your region.",
   },
   {
     category: 'Eligibility',
     q: 'Is there an age requirement?',
-    a: "Yes. You must be at least 18 years old. Most of our protocols are clinically appropriate for adults from their late twenties onward, but eligibility is decided by your physician based on your full clinical picture.",
+    a: "Yes. You must be at least 18 years old to order. Most of our protocols are formulated for adults from their late twenties onward. Match a protocol to your goals from the profile, and order online.",
   },
   {
     category: 'Eligibility',
     q: 'Can I use peptides if I have a medical condition?',
-    a: "It depends entirely on the condition and the peptide. Some conditions. Active cancer, certain organ transplants, current pregnancy. Are categorical exclusions. Others simply require careful protocol selection and additional monitoring. Disclose everything during your intake; your physician will tell you what's appropriate.",
+    a: "It depends entirely on the condition and the peptide. Some conditions. Active cancer, certain organ transplants, current pregnancy. Are categorical exclusions. Others simply call for careful protocol selection and additional monitoring. Share your full history in your profile so you can choose what's appropriate — and this is not medical advice or a substitute for consulting your own healthcare provider.",
   },
   {
     category: 'Eligibility',
-    q: 'What if I take prescription medications?',
-    a: "Most prescription medications are compatible with peptide therapy, but interactions matter. List every medication and supplement during intake. Including dose. Your physician reviews these alongside your protocol and will flag anything that needs adjusting before you start.",
+    q: 'What if I take other medications?',
+    a: "Most medications are compatible with peptides, but interactions matter. List every medication and supplement in your profile. Including dose. Review these alongside the protocol you're considering and flag anything with your own healthcare provider that needs adjusting before you start.",
   },
 
   // === Protocols ===
   {
     category: 'Protocols',
     q: 'How are the protocols designed?',
-    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. Our medical director writes the base template, your physician personalizes the dose to your intake, and we adjust mid-cycle if your labs or response warrants it. We don't run one-size-fits-all kits.",
+    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. Our formulation team writes the base template, and each protocol is compounded to a structured, titrated dose. We don't run one-size-fits-all kits.",
   },
   {
     category: 'Protocols',
     q: 'How long is a cycle?',
-    a: "Most protocols run eight to twelve weeks on-cycle, followed by a four-week off-cycle. Continuous dosing erodes receptor sensitivity, so structured rest periods preserve the effect. Some protocols (metabolic, primarily) run longer; your physician will confirm the schedule before you start.",
+    a: "Most protocols run eight to twelve weeks on-cycle, followed by a four-week off-cycle. Continuous dosing erodes receptor sensitivity, so structured rest periods preserve the effect. Some protocols (metabolic, primarily) run longer; the schedule for each is shown on its protocol page.",
   },
   {
     category: 'Protocols',
     q: 'Can I stack protocols?',
-    a: "Some protocols stack cleanly (recovery with longevity, for example). Others should not be combined. Never stack on your own. Your physician needs to review the combined dosing schedule and rule out interactions. If you want to combine two, mention it during your assessment and they'll advise.",
+    a: "Some protocols stack cleanly (recovery with longevity, for example). Others should not be combined. Don't stack on your own without checking the combined dosing schedule and ruling out interactions. If you want to combine two, note it in your profile for guidance on what pairs well.",
   },
   {
     category: 'Protocols',
     q: 'What happens at the end of a cycle?',
-    a: "You receive a written summary of your cycle. What was dosed, what changed, what your physician recommends next. Many members continue with the same protocol after a short off-cycle. Others rotate to a different goal (e.g., recovery → longevity). Either way, the next cycle is a real clinical decision, not an automatic renewal.",
+    a: "You receive a written summary of your cycle. What was dosed, what changed, and what to consider next. Many members continue with the same protocol after a short off-cycle. Others rotate to a different goal (e.g., recovery → longevity). Either way, the next cycle is a deliberate choice, not an automatic renewal.",
   },
 
   // === Pricing ===
   {
     category: 'Pricing',
     q: 'How much does a protocol cost?',
-    a: "Pricing varies by protocol. A single cycle generally runs between four hundred and eight hundred dollars all-in. Which includes the physician review, the compounded prescription, cold-chain shipping, and the mid-cycle check-in. Subscription pricing is lower per cycle. Exact pricing is shown on each protocol page.",
+    a: "Pricing varies by protocol. A single cycle generally runs between four hundred and eight hundred dollars all-in. Which includes the compounded protocol, third-party purity testing, cold-chain shipping, and a mid-cycle protocol check-in. Subscription pricing is lower per cycle. Exact pricing is shown on each protocol page.",
   },
   {
     category: 'Pricing',
@@ -95,24 +95,24 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What does the subscription include?',
-    a: "A subscription locks in a lower price per cycle and includes scheduled re-shipments, a mid-cycle physician check-in, and priority access to your care team. You can pause or cancel between cycles. No penalty, no awkward call.",
+    a: "A subscription locks in a lower price per cycle and includes scheduled re-shipments, a mid-cycle protocol check-in, and priority access to our team. You can pause or cancel between cycles. No penalty, no awkward call.",
   },
   {
     category: 'Pricing',
     q: 'What is your refund policy?',
-    a: "We don't refund opened or shipped vials. Compounded prescriptions cannot legally be re-dispensed. If your physician declines to sign your protocol after intake, you are refunded in full. If a shipment is damaged in transit, we replace it at no cost.",
+    a: "We don't refund opened or shipped vials. Compounded protocols cannot legally be re-dispensed. If an order can't be filled after you complete your profile, you are refunded in full. If a shipment is damaged in transit, we replace it at no cost.",
   },
 
   // === Safety ===
   {
     category: 'Safety',
     q: 'Are these peptides FDA-approved?',
-    a: "Some are (e.g., Tesamorelin, Semaglutide, Tirzepatide). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category. Your physician will discuss the specific status of anything you're prescribed.",
+    a: "Some are (e.g., Tesamorelin, Semaglutide, Tirzepatide). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category. The specific status of each peptide is noted on its protocol page. This is not medical advice or a substitute for consulting your own healthcare provider.",
   },
   {
     category: 'Safety',
     q: 'What are the most common side effects?',
-    a: "Most side effects are mild and dose-related: injection-site irritation, transient water retention, head-fog the first week. More significant side effects (elevated fasting glucose, persistent appetite shifts) are why we monitor with mid-cycle labs. Tell your physician anything that feels off; the protocol can be adjusted.",
+    a: "Most side effects are mild and dose-related: injection-site irritation, transient water retention, head-fog the first week. More significant side effects (elevated fasting glucose, persistent appetite shifts) are why mid-cycle labs are recommended. Talk to your own healthcare provider about anything that feels off; the protocol can be adjusted between cycles.",
   },
   {
     category: 'Safety',
@@ -127,6 +127,6 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'What if I have a bad reaction?',
-    a: "Stop dosing and contact your physician through the portal. They're available for clinical messages within one business day, and a same-day callback is available if it's urgent. For any reaction that feels like an emergency, call 911 or go to the nearest ER first, then notify us.",
+    a: "Stop dosing and reach our team through the portal. We reply within one business day, and a same-day callback is available if it's urgent. For any reaction that feels like an emergency, call 911 or go to the nearest ER first, then notify us.",
   },
 ];

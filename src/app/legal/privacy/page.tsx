@@ -20,9 +20,9 @@ export default function PrivacyPage() {
             'We collect information you give us directly during intake and through your member portal, including:',
           ],
           bullets: [
-            'Identity: name, date of birth, government-issued ID for prescription verification.',
+            'Identity: name, date of birth, government-issued ID for age and identity verification.',
             'Contact: email, mailing address, phone number.',
-            'Health information: goals, medical history, medications, allergies, bloodwork, prior peptide use, and other clinical information you share with your physician.',
+            'Health information: goals, medical history, medications, allergies, bloodwork, prior peptide use, and other information you choose to share with us.',
             'Account: password (stored hashed), authentication factors, login history.',
             'Payment: billing address and card brand/last four digits. Full card numbers are processed by our payment processor and are never stored on our servers.',
             'Technical: device, browser, IP address, pages visited, and similar metadata collected automatically.',
@@ -31,15 +31,15 @@ export default function PrivacyPage() {
         {
           heading: 'How We Use Your Information',
           paragraphs: [
-            'We use your information to provide and improve our service. Specific uses include: routing your intake to a licensed physician; preparing and shipping prescriptions through our 503A pharmacy partners; communicating with you about your care; processing payments; maintaining the security and integrity of the platform; complying with legal obligations; and developing new features.',
-            'We do not sell your personal information. We do not use your protected health information for behavioral advertising.',
+            'We use your information to provide and improve our service. Specific uses include: processing your order; preparing and shipping your protocols through our 503A pharmacy partners; communicating with you about your orders; processing payments; maintaining the security and integrity of the platform; complying with legal obligations; and developing new features.',
+            'We do not sell your personal information. We do not use your sensitive health-related information for behavioral advertising.',
           ],
         },
         {
-          heading: 'HIPAA & Health Data',
+          heading: 'Sensitive Health Information',
           paragraphs: [
-            'Treatment provided by physicians on our platform is subject to the Health Insurance Portability and Accountability Act (HIPAA). HIPAA-protected information is handled in accordance with our Notice of Privacy Practices and is shared only as permitted by HIPAA. Primarily for treatment, payment, and healthcare operations, or with your written authorization.',
-            'Information you provide outside the clinical context (e.g., general marketing inquiries) is not HIPAA-protected health information, and is governed by this Privacy Policy.',
+            'Some information you provide to our store is health-related and sensitive. We handle it with care, in accordance with this Privacy Policy and applicable law. We share it only as needed to fulfill your order, to operate our store, or with your written authorization, and we apply the safeguards described below.',
+            'Information you provide outside of ordering (e.g., general marketing inquiries) is governed by this Privacy Policy.',
           ],
         },
         {
@@ -48,8 +48,8 @@ export default function PrivacyPage() {
             'We share information only as necessary to operate our service and only with parties who are contractually bound to protect it. Categories of recipients include:',
           ],
           bullets: [
-            'Licensed physicians and clinical staff who provide your care.',
-            'Licensed 503A compounding pharmacies that prepare your prescription.',
+            'Our order-fulfillment and customer support team.',
+            'Licensed 503A compounding pharmacies that fulfill your order.',
             'Shipping carriers (FedEx, UPS) for delivery.',
             'Cloud infrastructure providers under business-associate agreements.',
             'Payment processors for billing.',
@@ -74,14 +74,14 @@ export default function PrivacyPage() {
         {
           heading: 'Data Retention',
           paragraphs: [
-            'Medical records are retained as required by state law. Typically a minimum of seven years from the date of last service, longer for minors. Other personal information is retained for as long as your account is active and for a reasonable period after closure to comply with our legal and accounting obligations.',
+            'Order and account records are retained as required by law. Typically a minimum of seven years from your last order, longer for minors. Other personal information is retained for as long as your account is active and for a reasonable period after closure to comply with our legal and accounting obligations.',
           ],
         },
         {
           heading: 'Your Rights',
           paragraphs: [
             'Depending on where you live, you may have the right to access, correct, port, or delete your personal information; to opt out of certain disclosures; and to lodge a complaint with a supervisory authority. To exercise these rights, email privacy@eternallongevity.com. We will verify your identity before fulfilling the request.',
-            'Medical-record requests are handled in accordance with HIPAA and applicable state law.',
+            'Requests for health-related records are handled in accordance with applicable law.',
           ],
         },
         {
@@ -111,7 +111,7 @@ export default function PrivacyPage() {
       ]}
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
-        { label: 'Telehealth Informed Consent', href: '/legal/telehealth' },
+        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/telehealth' },
         { label: 'Refund Policy', href: '/legal/refunds' },
       ]}
     />

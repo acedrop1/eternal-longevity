@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const NUMBERS = [
   { stat: '12', label: 'Peptides in our formulary' },
   { stat: '4', label: 'Signature protocols' },
-  { stat: '8', label: 'Licensed physician states' },
+  { stat: '8', label: 'States we ship to' },
   { stat: '99%+', label: 'Lot purity, third-party tested' },
 ];
 
@@ -30,13 +30,13 @@ const VALUES = [
     n: '02',
     title: 'Transparency over polish',
     body:
-      "We publish what we know. And what we don't. If a peptide has thin human data, we say so. If we're unsure, we route it back to your physician. Clean science beats clean marketing.",
+      "We publish what we know. And what we don't. If a peptide has thin human data, we say so. If we're unsure, we hold it back until the evidence is there. Clean science beats clean marketing.",
   },
   {
     n: '03',
-    title: 'The physician is in the loop',
+    title: 'Formulation is the product',
     body:
-      'No algorithm signs a prescription here. A licensed physician reviews your intake, your labs, and your protocol. And follows up across the cycle. The relationship is the product.',
+      'No shortcuts here. Every protocol is compounded by a licensed 503A pharmacy and third-party tested for purity and identity before it ships. The formulation is the product.',
   },
   {
     n: '04',
@@ -51,7 +51,7 @@ const TIMELINE = [
     year: '2024',
     title: 'The thesis',
     body:
-      'A clinician and an operator met over a shared frustration: the peptide market was either gray-market chaos or anti-aging hype. There was no clinical, calm middle.',
+      'A formulation specialist and an operator met over a shared frustration: the peptide market was either gray-market chaos or anti-aging hype. There was no clinical, calm middle.',
   },
   {
     year: '2025',
@@ -63,7 +63,7 @@ const TIMELINE = [
     year: '2026',
     title: 'Eternal Longevity launches',
     body:
-      'Four protocols. Eight states. A small clinical team. A simple promise: peptide medicine done the way it should have been the whole time.',
+      'Four protocols. Eight states. A small expert team. A simple promise: peptide protocols done the way they should have been the whole time.',
   },
 ];
 
@@ -71,9 +71,9 @@ const TIMELINE = [
 const TEAM = [
   {
     name: '',
-    role: 'Medical Director',
+    role: 'Head of Formulation',
     bio:
-      'Internal medicine, twelve years in integrative hormone work. Oversees protocol design and physician training across the network.',
+      'Twelve years in peptide and integrative hormone formulation. Owns protocol design and formulation standards across our lineup.',
   },
   {
     name: '',
@@ -116,15 +116,15 @@ export default function AboutPage() {
                     lineHeight: 0.98,
                   }}
                 >
-                  Built by clinicians, for the next decades of your life.
+                  Built by specialists, for the next decades of your life.
                 </h1>
               </FadeIn>
               <FadeIn delay={240}>
                 <p className="max-w-2xl text-lg text-foreground/65 leading-relaxed">
-                  Eternal Longevity exists because peptide medicine deserved a
+                  Eternal Longevity exists because peptides deserved a
                   better front door. Not gray-market vials shipped from somewhere
-                  unmarked. Not a wellness brand with a checkout button. A real
-                  clinic, a real physician on the other end of your intake, and
+                  unmarked. Not a wellness brand with a checkout button. Real
+                  formulation, a licensed 503A pharmacy behind every order, and
                   protocols built to hold for years. Not weeks.
                 </p>
               </FadeIn>
@@ -136,7 +136,7 @@ export default function AboutPage() {
                 <div className="relative aspect-[3/4]">
                   <Image
                     src="/images/10.jpg"
-                    alt="Clinical lifestyle"
+                    alt="Peptide vial detail"
                     fill
                     sizes="(max-width: 1024px) 90vw, 480px"
                     className="object-cover"
@@ -212,13 +212,13 @@ export default function AboutPage() {
                 </p>
                 <p>
                   On the other, the underground. Pseudonymous suppliers, no
-                  testing, no physician, no paper trail. The people who
-                  actually needed peptide medicine the most were getting it the
+                  testing, no paper trail. The people who
+                  actually wanted quality peptides the most were getting them the
                   worst.
                 </p>
                 <p>
-                  Eternal Longevity is the answer to that gap. Clinic-grade
-                  pharmacy. Physician-signed protocols. A price point that
+                  Eternal Longevity is the answer to that gap. Clinical-grade
+                  pharmacy. Third-party tested protocols. A price point that
                   doesn&apos;t require a private banker. And the patience to
                   measure outcomes over years, not Instagram-week before-and-afters.
                 </p>
@@ -329,7 +329,7 @@ export default function AboutPage() {
             <div className="relative h-[40vh] md:h-[60vh] w-full overflow-hidden">
               <Image
                 src="/images/2.jpg"
-                alt="Longevity in practice"
+                alt="Compound in solution"
                 fill
                 sizes="100vw"
                 className="object-cover"
@@ -341,8 +341,8 @@ export default function AboutPage() {
               <div className="absolute inset-0 flex items-end px-6 pb-10 md:pb-16">
                 <div className="mx-auto w-full max-w-6xl">
                   <p className="max-w-xl text-foreground/85 text-base md:text-lg leading-relaxed">
-                    A clinical-grade pharmacy, paired with a physician who
-                    actually reads your intake. That&apos;s the whole point.
+                    A clinical-grade pharmacy, paired with formulation that&apos;s
+                    third-party tested on every lot. That&apos;s the whole point.
                   </p>
                 </div>
               </div>
@@ -373,7 +373,7 @@ export default function AboutPage() {
               </FadeIn>
               <FadeIn delay={200}>
                 <p className="text-foreground/65 leading-relaxed">
-                  A small, deliberate team. A medical director who designs the
+                  A small, deliberate team. A head of formulation who designs the
                   protocols. A founder who keeps the operation honest. A
                   compounding lead who treats every lot like it matters —
                   because it does.
@@ -440,14 +440,14 @@ export default function AboutPage() {
                   lineHeight: 1.25,
                 }}
               >
-                We treat people for the next twenty years, not the next twenty
+                We formulate for the next twenty years, not the next twenty
                 weeks. That single shift in time horizon changes every
                 decision: how we dose, how we measure, how we say no.
               </p>
             </FadeIn>
             <FadeIn delay={200}>
               <div className="text-[11px] tracking-widest text-foreground/55">
-                MEDICAL DIRECTOR
+                HEAD OF FORMULATION
               </div>
             </FadeIn>
           </div>
@@ -474,9 +474,9 @@ export default function AboutPage() {
             </FadeIn>
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
-                Three minutes. A licensed physician reviews it. You hear back
-                within forty-eight hours with a recommendation. Or a polite
-                no. Either answer is the right one if it&apos;s the true one.
+                Three minutes. Answer a few questions and we match you to a
+                protocol. It ships compounded and third-party tested for purity,
+                straight to your door.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

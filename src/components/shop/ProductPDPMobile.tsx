@@ -229,7 +229,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          PHYSICIAN-REVIEWED · COMPOUNDED IN A 503A PHARMACY
+          THIRD-PARTY TESTED · COMPOUNDED IN A 503A PHARMACY
         </div>
 
         {/* Product name */}
@@ -390,8 +390,8 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
         <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/[0.05] p-4">
           <p className="text-[13px] leading-relaxed text-foreground/85">
             <span className="font-semibold text-accent">Important. </span>
-            Eternal Longevity peptides are dispensed under a physician
-            prescription after intake review. Not a substitute for medical
+            Eternal Longevity peptides are compounded by a licensed 503A
+            pharmacy and third-party tested. Not a substitute for medical
             care; do not use if pregnant, nursing, or under 18.
           </p>
         </div>
@@ -464,7 +464,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
               label="Storage"
               value="Refrigerated 2–8°C · use within compounding date"
             />
-            <SpecRow label="Physician review" value="Required" />
+            <SpecRow label="Third-party tested" value="Yes" />
           </dl>
         </Section>
 
@@ -473,7 +473,7 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
           <p className="text-foreground/70 leading-relaxed">
             Cold-chain shipped from our licensed 503A pharmacy in temperature-
             controlled packaging. Free shipping on every cycle. Tracking
-            available in your portal once your physician signs off.
+            available in your portal once your order ships.
           </p>
         </Section>
 

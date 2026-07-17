@@ -28,7 +28,7 @@ function triangle(x: number) {
 const CHAPTERS = [
   {
     eyebrow: 'LONGEVITY MEDICINE, MEDICAL-GRADE',
-    body: 'Every Eternal Longevity protocol mirrors the rigor of clinical compounding: small chains of amino acids, prescribed by a licensed physician, compounded for purity and potency.',
+    body: 'Every Eternal Longevity protocol mirrors the rigor of clinical compounding: small chains of amino acids, formulated to a structured cycle, compounded for purity and potency.',
     image: '/images/9.jpg', // gel / molecule
   },
   {
@@ -38,12 +38,12 @@ const CHAPTERS = [
   },
   {
     eyebrow: 'TARGETED PROTOCOLS',
-    body: 'Stacks are physician-selected against your goals: recovery, performance, body composition, or longevity. No one-size-fits-all kits. No guesswork.',
+    body: 'Stacks are formulated against your goals: recovery, performance, body composition, or longevity. No one-size-fits-all kits. No guesswork.',
     image: '/images/13.jpg', // bubble field
   },
   {
     eyebrow: 'ADVANCED CARE, MADE SIMPLE',
-    body: 'Manage everything through your member portal: refills, dosing instructions, check-ins with your clinical liaison. Concierge in your pocket.',
+    body: 'Manage everything through your member portal: refills, dosing instructions, protocol check-ins with your concierge team. Concierge in your pocket.',
     image: '/images/14.jpg', // single sphere
   },
 ];

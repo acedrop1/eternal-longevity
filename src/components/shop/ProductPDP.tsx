@@ -260,7 +260,7 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
             Subscribe. ${active.perMonth}/mo →
           </button>
           <p className="mt-3 text-center text-[11px] text-foreground/45">
-            Physician must approve before first shipment · Cancel between cycles
+            Compounded and third-party tested before it ships · Cancel between cycles
           </p>
 
           {/* Inline reassurance row */}
@@ -372,8 +372,8 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
         <ol className="grid gap-4 md:grid-cols-4">
           {[
             { n: '01', t: 'Subscribe', b: 'Pick the cadence and confirm.' },
-            { n: '02', t: 'Physician review', b: 'Verifies safety against your intake.' },
-            { n: '03', t: 'Pharmacy compounds', b: 'Within 48 hours of approval.' },
+            { n: '02', t: 'Quality review', b: 'Checked against your intake.' },
+            { n: '03', t: 'Pharmacy compounds', b: 'Within 48 hours of your order.' },
             { n: '04', t: 'Cold-chain ships', b: 'Tracked, signature required.' },
           ].map((s) => (
             <li

@@ -73,7 +73,7 @@ export default async function SubscriptionsPage() {
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
           Pause between cycles, skip a single cycle, or cancel any time before
-          the next physician sign-off. No mid-cycle billing.
+          the next cycle is confirmed. No mid-cycle billing.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export default async function SubscriptionsPage() {
             </h2>
             <p className="text-sm text-foreground/65 leading-relaxed">
               Browse the catalog and subscribe to anything that fits your
-              protocol. Your physician reviews every addition before it ships.
+              protocol. Every addition is third-party tested before it ships.
             </p>
           </div>
           <Link

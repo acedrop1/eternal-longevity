@@ -2,56 +2,56 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Telehealth Informed Consent | Eternal Longevity',
-  description: 'What it means to receive care through telehealth, including risks and limitations.',
+  title: 'Informed Consent & Product Acknowledgement | Eternal Longevity',
+  description: 'What you acknowledge when ordering compounded peptide protocols, including risks and limitations.',
 };
 
 export default function TelehealthConsentPage() {
   return (
     <LegalLayout
       eyebrow="LEGAL"
-      title="Telehealth Informed Consent"
+      title="Informed Consent & Product Acknowledgement"
       effective="May 2026"
-      lead="Telehealth lets a physician treat you remotely, using technology to share information instead of meeting in person. This document explains what to expect, what telehealth can and cannot do, and the choice you are making by consenting to it."
+      lead="Eternal Longevity is an online store for compounded peptide protocols. This document explains what you are acknowledging when you place an order, what these products are and are not, and the risks you accept. It is informational only and is not medical advice."
       sections={[
         {
-          heading: 'What Telehealth Is',
+          heading: 'What This Acknowledgement Covers',
           paragraphs: [
-            'In a telehealth visit, your physician reviews your written intake, your uploaded labs and ID, and any follow-up messages you exchange. And then makes clinical decisions, including whether to write a prescription. Telehealth may also include synchronous video or phone visits, when clinically warranted.',
-            'Your physician is licensed in the state in which you reside at the time of the visit. If you move to a state where they are not licensed, your care may be transferred to a different physician on our network.',
+            'When you order a compounded peptide protocol from Eternal Longevity, your order is submitted to a licensed 503A pharmacy that compounds and fulfills it. This document explains what you are acknowledging when you place that order, including that nothing here is medical advice and that you are responsible for consulting your own healthcare provider before use.',
+            'Eternal Longevity operates an online store and does not provide medical care, examinations, diagnosis, or treatment. Product availability may vary by state, and we may be unable to fulfill an order where a product is not available in your state.',
           ],
         },
         {
-          heading: 'What Telehealth Cannot Do',
+          heading: 'What This Product Is Not',
           paragraphs: [
-            'Telehealth has real limitations compared to an in-person visit:',
+            'There are important limitations you should understand:',
           ],
           bullets: [
-            'Your physician cannot perform a physical exam, listen to your heart, or palpate tissue.',
+            'Eternal Longevity does not provide medical examinations, diagnosis, or treatment.',
             'Some conditions cannot be properly evaluated without in-person testing.',
-            'Lab work and imaging require visits to a partner facility or your local provider.',
-            'Technical failures (lost connection, lost messages) can delay care.',
-            'A telehealth physician is not your primary care provider and does not replace primary care.',
+            'Lab work and imaging should be arranged with your own healthcare provider.',
+            'Technical failures (lost connection, lost messages) can delay order processing or communication.',
+            'Ordering from us is not a substitute for your primary care provider or ongoing medical care.',
           ],
           // ↑ keeping primary care relationship clear is important for safety + liability
         },
         {
           heading: 'Risks & Benefits',
           paragraphs: [
-            'Benefits include increased access to specialty clinicians, faster turnaround on routine prescriptions, written records of every interaction, and the convenience of receiving care from home.',
-            'Risks include: clinical limitations described above; the possibility that important information is missed because the physician cannot examine you in person; security risks inherent to electronic communication despite our safeguards; and the possibility that follow-up in-person care is needed urgently and is delayed by the telehealth process.',
+            'Benefits include convenient online access to compounded peptide protocols, fast turnaround on orders, written records of every interaction, and delivery to your door.',
+            'Risks include: the limitations described above; the possibility that a peptide protocol is not appropriate for you because we do not evaluate you in person; the general risks of using compounded products; security risks inherent to electronic communication despite our safeguards; and the possibility that in-person medical care you need is delayed. You are responsible for consulting your own healthcare provider before use.',
           ],
         },
         {
-          heading: 'No Doctor-Patient Relationship Until Acceptance',
+          heading: 'No Medical Relationship',
           paragraphs: [
-            'Submitting an intake does not automatically create a physician-patient relationship. A relationship is established only after a licensed physician on our network reviews your intake and accepts you for treatment. The physician may decline to treat at their sole clinical discretion.',
+            'Placing an order with Eternal Longevity does not create a medical, clinical, or treatment relationship of any kind. Eternal Longevity is an online store and does not provide medical advice, diagnosis, or treatment. You are responsible for consulting your own healthcare provider before using any protocol.',
           ],
         },
         {
           heading: 'Emergencies',
           paragraphs: [
-            'Telehealth is not for emergencies. If you are experiencing chest pain, difficulty breathing, sudden severe pain, a serious injury, signs of stroke, suicidal thoughts, or any condition you believe is life-threatening, call 911 or go to the nearest emergency room. Do not wait for a message reply.',
+            'Our store is not for emergencies. If you are experiencing chest pain, difficulty breathing, sudden severe pain, a serious injury, signs of stroke, suicidal thoughts, or any condition you believe is life-threatening, call 911 or go to the nearest emergency room. Do not wait for a message reply.',
           ],
         },
         {
@@ -60,41 +60,41 @@ export default function TelehealthConsentPage() {
             'For the service to work, you agree to:',
           ],
           bullets: [
-            'Provide accurate, complete information during intake and throughout care.',
-            'Disclose all medications, supplements, allergies, and relevant medical history.',
-            'Follow your physician’s instructions, including dosing, off-cycles, and follow-up labs.',
-            'Stop the protocol and contact us promptly if you experience an adverse reaction.',
+            'Provide accurate, complete information when you place an order.',
+            'Review your medications, supplements, allergies, and relevant medical history with your own healthcare provider before use.',
+            'Follow the product instructions and the guidance of your own healthcare provider, including dosing, off-cycles, and follow-up labs.',
+            'Stop the protocol and consult your own healthcare provider promptly if you experience an adverse reaction.',
             'See your primary care provider for routine care and emergencies.',
           ],
         },
         {
           heading: 'Confidentiality',
           paragraphs: [
-            'Your information is protected by HIPAA and our Privacy Policy. Despite our security measures, no electronic communication system is completely private. By consenting to telehealth, you accept the residual risk that electronic communication carries.',
+            'Your information is protected under our Privacy Policy and applicable law. Despite our security measures, no electronic communication system is completely private. By placing an order, you accept the residual risk that electronic communication carries.',
           ],
         },
         {
           heading: 'Recording',
           paragraphs: [
-            'We do not record video visits. Written messages between you and your care team are stored as part of your medical record and are accessible to you through your member portal.',
+            'We do not record calls. Written messages between you and our support team are stored as part of your account record and are accessible to you through your member portal.',
           ],
         },
         {
           heading: 'Withdrawing Consent',
           paragraphs: [
-            'You may withdraw your consent to telehealth at any time, without affecting your right to future care. To withdraw consent, message your care team through the portal or email care@eternallongevity.com. Withdrawal of consent will end active treatment but does not erase records already created.',
+            'You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email care@eternallongevity.com. Withdrawal of consent will stop future orders but does not erase records already created.',
           ],
         },
         {
           heading: 'Your Acknowledgement',
           paragraphs: [
-            'By checking the telehealth-consent box during intake, you confirm that you have read this document, understand the limitations and risks of telehealth, have had the opportunity to ask questions, and consent to receive care through telehealth on the terms above.',
+            'By checking the acknowledgement box when you order, you confirm that you are at least 18 years old, have read this document, understand the limitations and risks described above, accept those risks, and agree that you are responsible for consulting your own healthcare provider before use.',
           ],
         },
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions about this consent? Email legal@eternallongevity.com or care@eternallongevity.com for clinical questions.',
+            'Questions about this acknowledgement? Email legal@eternallongevity.com or care@eternallongevity.com for order questions.',
           ],
         },
       ]}

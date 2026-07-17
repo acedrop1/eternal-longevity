@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
   title: 'Shop | Eternal Longevity',
-  description: 'Browse our full peptide catalog. Physician-reviewed, 503A compounded, subscription-only.',
+  description: 'Browse our full peptide catalog. Third-party tested, 503A compounded, subscription-only.',
 };
 
 export default async function ShopPage() {
@@ -41,14 +41,14 @@ export default async function ShopPage() {
           Build the protocol that fits you.
         </h1>
         <p className="mt-4 max-w-2xl text-foreground/65 leading-relaxed">
-          Every product is reviewed by your physician, compounded by a
+          Every product is third-party tested, compounded by a
           503A pharmacy, and cold-chain shipped. Subscribe monthly, quarterly,
           or annually. And cancel between cycles, never mid-cycle.
         </p>
 
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: '⚕', label: 'Physician-reviewed' },
+            { icon: '⚕', label: 'Third-party tested' },
             { icon: '✓', label: '503A pharmacy' },
             { icon: '◯', label: '99%+ purity' },
             { icon: '⤴', label: 'Cold-chain shipping' },

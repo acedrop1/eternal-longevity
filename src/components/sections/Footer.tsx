@@ -23,7 +23,7 @@ const COL_LINKS = [
     links: [
       { label: 'Terms of Service', href: '/legal/terms' },
       { label: 'Privacy Policy', href: '/legal/privacy' },
-      { label: 'Telehealth Consent', href: '/legal/telehealth' },
+      { label: 'Consent Policy', href: '/legal/telehealth' },
       { label: 'Refund Policy', href: '/legal/refunds' },
     ],
   },
@@ -45,7 +45,7 @@ export function Footer() {
               />
             </div>
             <p className="max-w-xs text-sm text-foreground/55 leading-relaxed">
-              Physician-supervised peptide protocols. For performance,
+              Premium peptide protocols. For performance,
               recovery, and longevity.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -84,9 +84,9 @@ export function Footer() {
             © {new Date().getFullYear()} Eternal Longevity. All rights reserved.
           </p>
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
-            Eternal Longevity provides telehealth services strictly for health
-            optimization. Not a substitute for primary care. Final eligibility
-            at the discretion of the overseeing physician. 18+.
+            Eternal Longevity offers premium peptide protocols strictly for
+            health optimization. Not a substitute for primary care. Order
+            online; ships from a licensed 503A pharmacy. 18+.
           </p>
         </div>
       </div>

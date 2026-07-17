@@ -48,12 +48,12 @@ const STANDARDS = [
   {
     label: '503A Compounding',
     body:
-      'All prescriptions are filled by U.S.-licensed 503A pharmacies operating under state-board oversight.',
+      'All protocols are compounded by U.S.-licensed 503A pharmacies operating under state-board oversight.',
   },
   {
-    label: 'Physician Oversight',
+    label: 'Expert Formulation',
     body:
-      'Every protocol is signed by a licensed physician. We do not ship anything without a real clinical review.',
+      'Every protocol is formulated by our team and third-party tested for purity and identity before it ships.',
   },
   {
     label: 'Cold-Chain Shipping',
@@ -74,7 +74,7 @@ const EVIDENCE = [
     peptide: 'BPC-157',
     headline: 'Tendon & ligament healing in animal models',
     summary:
-      'Strong preclinical record for accelerating soft-tissue repair, gut barrier restoration, and reducing NSAID-related GI injury. Human data remains limited. We treat it accordingly in our protocols.',
+      'Strong preclinical record for accelerating soft-tissue repair, gut barrier restoration, and reducing NSAID-related GI injury. Human data remains limited. We factor that into our protocols accordingly.',
     note: 'Preclinical robust; human evidence emerging.',
   },
   {
@@ -266,7 +266,7 @@ export default function SciencePage() {
                   A summary, not a sales pitch. Every peptide we offer is
                   selected because the human evidence. Phase 2 and Phase 3
                   trials where they exist, robust preclinical work where they
-                  don&apos;t. Supports a real clinical case.
+                  don&apos;t. Supports a real scientific case.
                 </p>
               </FadeIn>
             </div>
@@ -302,9 +302,9 @@ export default function SciencePage() {
             <FadeIn delay={400}>
               <p className="mt-10 max-w-2xl text-xs text-foreground/45 leading-relaxed">
                 Summaries above are condensed for clarity. Full citations and
-                methodology notes available on request during your clinical
-                review. And your physician will discuss the specific evidence
-                base for your protocol before signing.
+                methodology notes are available on request. This is general
+                scientific information, not medical advice or a substitute for
+                consulting your own healthcare provider.
               </p>
             </FadeIn>
           </div>
@@ -435,7 +435,7 @@ export default function SciencePage() {
                 <p className="text-foreground/65 leading-relaxed">
                   A protocol is more than a vial. It&apos;s a sequence. When
                   you take it, how the dose evolves, when to pause, what to
-                  check. These four rules underwrite every plan we sign.
+                  check. These four rules underwrite every protocol we formulate.
                 </p>
               </FadeIn>
             </div>
@@ -482,14 +482,14 @@ export default function SciencePage() {
                   lineHeight: 1.05,
                 }}
               >
-                Built carefully. Reviewed clinically. Signed personally.
+                Built carefully. Tested rigorously. Shipped to your door.
               </h2>
             </FadeIn>
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
-                If a protocol is right for you, your physician will tell you.
-                If it isn&apos;t, they&apos;ll tell you that too. Either way,
-                you start with a real assessment. Not a checkout.
+                Answer a few questions and we match you to a protocol. It ships
+                compounded by a licensed 503A pharmacy and third-party tested for
+                purity. Order online, and it arrives at your door.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

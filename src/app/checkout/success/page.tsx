@@ -52,9 +52,9 @@ export default async function CheckoutSuccessPage() {
 
         <div className="grid gap-2 text-left mb-10">
           {[
-            { n: '01', text: 'Pharmacy receives your Rx and starts compounding.' },
+            { n: '01', text: 'The pharmacy receives your order and starts compounding.' },
             { n: '02', text: "We'll email you a tracking number once it ships." },
-            { n: '03', text: 'Your physician messages you at week six.' },
+            { n: '03', text: 'We check in on your protocol at week six.' },
           ].map((s) => (
             <div
               key={s.n}

@@ -6,16 +6,16 @@ import { FadeIn } from '@/components/ui/FadeIn';
  *
  * Editorial layout:
  *   - Left: section eyebrow, big serif-feel title, accent CTA pill, atmospheric photo placeholder.
- *   - Right: a comparison table comparing Eternal Longevity (physician-supervised) vs research peptides (self-sourced).
+ *   - Right: a comparison table comparing Eternal Longevity (pharmacy-grade) vs research peptides (self-sourced).
  *   - Background: atmospheric streaks (POUCH water-particle vibe, here as soft accent dashes).
  */
 
 const FEATURES = [
-  { label: 'Physician-Reviewed Protocol', ours: true, theirs: false },
+  { label: 'Third-Party Tested Protocol', ours: true, theirs: false },
   { label: 'Licensed 503A Pharmacy', ours: true, theirs: false },
   { label: 'Tested for Purity & Sterility', ours: true, theirs: 'Maybe' },
   { label: 'Personalized Dosing', ours: true, theirs: false },
-  { label: 'Clinical Liaison Support', ours: true, theirs: false },
+  { label: 'Concierge Support', ours: true, theirs: false },
   { label: 'HIPAA-Compliant Records', ours: true, theirs: false },
   { label: 'Cold-Chain Shipping', ours: true, theirs: false },
 ];
@@ -38,7 +38,7 @@ export function Comparison() {
         {/* Eyebrow */}
         <FadeIn>
           <p className="text-[11px] tracking-widest text-foreground/50 mb-6">
-            04 / PRESCRIPTION vs RESEARCH
+            04 / PHARMACY-GRADE vs RESEARCH
           </p>
         </FadeIn>
 
@@ -53,13 +53,13 @@ export function Comparison() {
                 lineHeight: 1.05,
               }}
             >
-              Prescribed Care.
+              Pharmacy-Grade.
               <br />
               <span className="text-accent">Real Protocols.</span>
             </h2>
 
             <p className="text-foreground/65 leading-relaxed max-w-md mb-8">
-              The peptide market is full of unregulated research vials. Eternal Longevity is the opposite: physician-reviewed protocols, licensed compounding pharmacies, and a clinical team that knows your file.
+              The peptide market is full of unregulated research vials. Eternal Longevity is the opposite: third-party tested protocols, licensed compounding pharmacies, and a formulation team that stands behind every batch.
             </p>
 
             <a
@@ -73,7 +73,7 @@ export function Comparison() {
             <div className="mt-12 relative aspect-square w-full max-w-[320px] rounded-2xl overflow-hidden border border-line">
               <Image
                 src="/images/2.jpg"
-                alt="Beach yoga at dusk"
+                alt="Peptide serum in solution"
                 fill
                 sizes="(max-width: 768px) 90vw, 320px"
                 className="object-cover"

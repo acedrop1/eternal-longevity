@@ -10,7 +10,7 @@ import { PROTOCOLS } from '@/lib/protocols';
 export const metadata = {
   title: 'Protocols | Eternal Longevity',
   description:
-    'Physician-supervised peptide protocols for recovery, performance, longevity, and body composition.',
+    'Premium peptide protocols for recovery, performance, longevity, and body composition.',
 };
 
 export default function ProtocolsListingPage() {
@@ -42,13 +42,13 @@ export default function ProtocolsListingPage() {
               >
                 Built for outcomes.
                 <br />
-                Reviewed by a physician.
+                Compounded to order.
               </h1>
             </FadeIn>
             <FadeIn delay={240}>
               <p className="mt-6 mx-auto max-w-xl text-base md:text-lg text-foreground/65 leading-relaxed">
                 Four protocols, each a synergistic peptide stack. Compounded by
-                licensed 503A pharmacies, prescribed under physician supervision,
+                licensed 503A pharmacies, third-party tested for purity,
                 shipped to your door.
               </p>
             </FadeIn>
@@ -106,7 +106,7 @@ export default function ProtocolsListingPage() {
               <p className="max-w-xl text-foreground/65 leading-relaxed mb-10">
                 Each protocol bills as a flat monthly subscription that includes
                 the compound, dosing instructions, shipping, and ongoing access to
-                your clinical liaison. No initiation fee. Cancel from your member
+                our support team. No initiation fee. Cancel from your member
                 portal whenever.
               </p>
             </FadeIn>
@@ -115,7 +115,7 @@ export default function ProtocolsListingPage() {
                 {[
                   { title: 'No initiation fee', body: 'Pay only when your protocol ships.' },
                   { title: 'Pause or cancel anytime', body: 'Manage everything from your member portal.' },
-                  { title: '24/7 clinical liaison', body: 'Direct message your team for adjustments.' },
+                  { title: '24/7 member support', body: 'Direct message our team for adjustments.' },
                 ].map((item, i) => (
                   <div
                     key={item.title}
@@ -166,9 +166,9 @@ export default function ProtocolsListingPage() {
             </FadeIn>
             <FadeIn delay={120}>
               <p className="mb-8 text-foreground/65 leading-relaxed">
-                Take the 3-minute assessment. Your clinical team will recommend the
-                protocol that best fits your goals, then a licensed physician signs
-                off before anything ships.
+                Take the 3-minute profile. We&apos;ll match you to the protocol
+                that best fits your goals, then it&apos;s compounded and
+                third-party tested before it ships.
               </p>
             </FadeIn>
             <FadeIn delay={240}>

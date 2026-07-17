@@ -46,7 +46,7 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 flex min-h-[100svh] flex-col items-center justify-center px-6 text-center">
         <p className="mb-6 text-[11px] tracking-widest text-accent anim-fade-up d-1">
-          PHYSICIAN-SUPERVISED · LONGEVITY PROTOCOLS
+          PREMIUM PEPTIDE PROTOCOLS
         </p>
 
         <h1
@@ -68,7 +68,7 @@ export function Hero() {
           style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}
         >
           Performance, recovery, longevity. Engineered into every protocol,
-          reviewed and signed by a licensed physician.
+          formulated and third-party tested for purity.
         </p>
 
         {/* Pill-pair CTA (Protocole pattern). Stacks on mobile, joined on desktop */}
@@ -82,7 +82,7 @@ export function Hero() {
             }}
           >
             <span className="pill text-xs sm:text-sm text-white/95 px-5 sm:px-6">
-              NJ&apos;s first longevity clinic
+              NJ&apos;s first longevity brand
             </span>
             <Link
               href="/start"
@@ -94,7 +94,7 @@ export function Hero() {
         </div>
 
         <p className="mt-6 text-xs tracking-wider text-white/70 anim-fade-in d-5">
-          Reviewed by licensed physicians · 18+
+          Third-party tested · 18+
         </p>
       </div>
 

@@ -154,7 +154,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         id,
         'Admin',
         'admin',
-        note ?? 'Approved. Released to the physician for sign-off.',
+        note ?? 'Confirmed. Released for compounding.',
         'assigned'
       );
     },
@@ -183,7 +183,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
           at: now,
           author,
           role: 'physician',
-          note: note ?? 'Prescription signed. Billing starts now.',
+          note: note ?? 'Order confirmed. Billing starts now.',
           statusChange: 'signed',
         };
         const payEntry: OrderUpdate = {

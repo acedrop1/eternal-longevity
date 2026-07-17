@@ -17,28 +17,28 @@ export default function RefundsPage() {
         {
           heading: 'Before the Pharmacy Ships',
           paragraphs: [
-            'You can cancel at any point between submitting your intake and the pharmacy releasing your prescription for shipment. If your physician has not yet signed your prescription, you are refunded in full automatically. If your physician declines to approve your protocol, you are also refunded in full.',
-            'If your physician has signed and the pharmacy has begun compounding, you are not eligible for a full refund. The compounded medication has been prepared for you specifically.',
+            'You can cancel at any point between placing your order and the pharmacy releasing your protocol for shipment. If the pharmacy has not yet begun compounding your protocol, you are refunded in full automatically. If we are unable to fulfill your order, you are also refunded in full.',
+            'Once the pharmacy has begun compounding, you are not eligible for a full refund. The compounded protocol has been prepared for you specifically.',
           ],
         },
         {
           heading: 'Compounded Medications',
           paragraphs: [
-            'Under federal and state pharmacy law, compounded medications cannot be re-dispensed once they leave the pharmacy. This means we are unable to refund an order that has already shipped, even if the package is unopened.',
+            'Under federal and state pharmacy law, compounded protocols cannot be re-dispensed once they leave the pharmacy. This means we are unable to refund an order that has already shipped, even if the package is unopened.',
             'This is a regulatory restriction, not a discretionary policy. It applies to every compounding pharmacy in the United States, including ours.',
           ],
         },
         {
           heading: 'Damaged or Lost Shipments',
           paragraphs: [
-            'If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our care team within 7 days at care@eternallongevity.com with photos. We will replace the affected vials at no cost.',
+            'If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at care@eternallongevity.com with photos. We will replace the affected vials at no cost.',
             'If a shipment is lost in transit and the carrier confirms loss, we will resend the order at no cost.',
           ],
         },
         {
           heading: 'Adverse Reactions',
           paragraphs: [
-            'If you experience a clinically significant adverse reaction, stop dosing and contact your physician through the portal. We do not refund the remaining vials in an active cycle, but your physician may adjust the protocol or recommend an alternative for the following cycle at our discretion and without additional consultation fees.',
+            'If you experience a significant adverse reaction, stop dosing and consult your own healthcare provider. We do not refund the remaining vials in an active cycle, but we may offer an adjusted protocol or an alternative for the following cycle at our discretion.',
             'If you experience a reaction that meets the criteria of a medical emergency, call 911 or go to the nearest emergency room first.',
           ],
         },
@@ -52,7 +52,7 @@ export default function RefundsPage() {
         {
           heading: 'Returns',
           paragraphs: [
-            'Do not mail unused compounded medication back to us. Per pharmacy regulations, we cannot accept it, and it will not be refunded. Dispose of unused vials per your physician’s instructions or through your local pharmaceutical-take-back program.',
+            'Do not mail unused compounded protocols back to us. Per pharmacy regulations, we cannot accept it, and it will not be refunded. Dispose of unused vials per the product instructions or through your local pharmaceutical-take-back program.',
           ],
         },
         {
@@ -76,14 +76,14 @@ export default function RefundsPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions? Email care@eternallongevity.com (clinical), billing@eternallongevity.com (billing), or write to Eternal Longevity, Inc., Suite 2200, Hoboken, NJ 07030.',
+            'Questions? Email care@eternallongevity.com (orders), billing@eternallongevity.com (billing), or write to Eternal Longevity, Inc., Suite 2200, Hoboken, NJ 07030.',
           ],
         },
       ]}
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
-        { label: 'Telehealth Informed Consent', href: '/legal/telehealth' },
+        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/telehealth' },
       ]}
     />
   );

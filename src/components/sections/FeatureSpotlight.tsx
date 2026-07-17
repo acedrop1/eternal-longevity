@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 const FEATURES = [
   {
     title: 'Recovery',
-    body: 'Accelerate soft tissue repair and reduce inflammation. Train harder, recover faster, prevent injury. Backed by physician-supervised cycles and clinical-grade compounds.',
+    body: 'Accelerate soft tissue repair and reduce inflammation. Train harder, recover faster, prevent injury. Backed by structured cycles and clinical-grade compounds.',
     label: '01',
     image: '/images/8.jpg', // core / athletic
   },

@@ -18,7 +18,7 @@ const QUICK_LINKS = [
     eyebrow: 'NEW HERE?',
     title: 'How it works',
     body:
-      'Three-minute assessment, physician review, compounded shipment. Three to five days end to end.',
+      'Three-minute profile, a matched protocol, compounded shipment. Three to five days end to end.',
     href: '/protocols',
     cta: 'See the protocols',
   },
@@ -34,7 +34,7 @@ const QUICK_LINKS = [
     eyebrow: 'STILL CURIOUS?',
     title: 'Talk to our team',
     body:
-      'Anything not answered below? Our clinical care team replies within one business day.',
+      'Anything not answered below? Our team replies within one business day.',
     href: '/contact',
     cta: 'Send a message',
   },
@@ -206,8 +206,8 @@ export default function FAQPage() {
             </FadeIn>
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
-                Three minutes. A licensed physician reviews it. You either get
-                a recommendation or a polite no. Both answers are useful.
+                Three minutes. Answer a few questions and we match you to a
+                protocol, compounded and third-party tested, shipped to your door.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

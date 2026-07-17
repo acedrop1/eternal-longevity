@@ -6,7 +6,7 @@
  *
  * DESIGN PRINCIPLE: as few steps as possible, pills over typing wherever
  * possible. Anything not strictly needed for routing or the safety screen is
- * deferred to the member portal after physician review.
+ * deferred to the member portal after the order is placed.
  */
 
 /** All US state abbreviations. Used for shipping address dropdowns. */
@@ -159,13 +159,13 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 4. BODY (pill ranges. Physician confirms exact in portal)
+  // 4. BODY (pill ranges. Exact values confirmed in portal)
   // -------------------------------------------------------------
   {
     id: 'body',
     eyebrow: '04 / BODY SNAPSHOT',
     heading: 'Roughly where do you land?',
-    body: "Ranges are fine. Your physician confirms exact measurements in your portal review.",
+    body: "Ranges are fine. You can confirm exact measurements later in your portal.",
     fields: [
       {
         id: 'height',
@@ -235,7 +235,7 @@ export const STEPS: Step[] = [
     id: 'health',
     eyebrow: '06 / HEALTH SCREEN',
     heading: 'A few important screening questions.',
-    body: 'Honest answers protect you. Reviewed by a licensed physician.',
+    body: 'Honest answers protect you. Used to match you with suitable protocols.',
     fields: [
       {
         id: 'cancer',
@@ -273,7 +273,7 @@ export const STEPS: Step[] = [
           { value: 'cardio', label: 'Cardiovascular event (heart attack, stroke, clot)' },
           { value: 't1d', label: 'Type 1 diabetes' },
           { value: 'autoimmune', label: 'Autoimmune condition' },
-          { value: 'mental', label: 'Mental-health diagnosis' },
+          { value: 'mental', label: 'Mental-health condition' },
           { value: 'endocrine', label: 'Thyroid / pituitary disorder' },
           { value: 'surgery', label: 'Major surgery in the last 12 months' },
           { value: 'prior-peptides', label: 'Prior peptide / hormone use' },
@@ -300,14 +300,14 @@ export const STEPS: Step[] = [
     body: "Take a moment to review the statements below. You'll confirm with the single acknowledgement at the bottom.",
     disclaimers: [
       'All information provided is accurate and complete to the best of my knowledge.',
-      'I consent to have my intake reviewed by the Eternal Longevity clinical team for the purpose of evaluating my responses and providing personalized peptide recommendations based on my goals and health information.',
-      'I understand that this review is for informational and educational purposes only and does not constitute medical advice, diagnosis, or prescription approval by a licensed provider unless and until a licensed physician signs my prescription.',
-      'I understand that results from peptide therapy may vary, and I accept the potential risks associated with their use.',
-      'I understand that I may be contacted for follow-up, clarification, or adjustments to my plan.',
-      'I understand that no payment is collected when I submit this form. If a licensed physician approves and signs my protocol, my saved payment method is charged for the first cycle at that time, and on a recurring basis thereafter, until I pause or cancel.',
-      'I acknowledge that submitting this form does not guarantee that I will be eligible for peptide recommendations or treatment, and final eligibility will be determined at the discretion of licensed providers.',
+      'I consent to have my information reviewed by the Eternal Longevity formulation team for the purpose of evaluating my responses and providing personalized peptide protocol recommendations based on my goals and health information.',
+      'I understand that this information is for informational and educational purposes only and does not constitute medical advice, diagnosis, or a substitute for consulting my own healthcare provider.',
+      'I understand that results from peptide protocols may vary, and I accept the potential risks associated with their use.',
+      'I understand that I may be contacted for follow-up, clarification, or adjustments to my order.',
+      'I understand that no payment is collected when I submit this form. When I place an order, my saved payment method is charged for the first cycle when the order is compounded, and on a recurring basis thereafter, until I pause or cancel.',
+      'I acknowledge that submitting this form does not guarantee that a given protocol will be available to order, and product availability may vary.',
       'I understand that my information will be handled in accordance with the Eternal Longevity Privacy Policy.',
-      'I understand that my information will be handled in accordance with the Eternal Longevity Terms of Service and Telehealth Informed Consent.',
+      'I understand that my information will be handled in accordance with the Eternal Longevity Terms of Service.',
     ],
     fields: [
       {
@@ -326,7 +326,7 @@ export const STEPS: Step[] = [
     id: 'account',
     eyebrow: '08 / CREATE ACCOUNT',
     heading: 'Last step. Set up your portal.',
-    body: 'Your account is how you review the physician-signed protocol, verify ID, and check out securely.',
+    body: 'Your account is how you review your protocol, verify ID, and check out securely.',
     fields: [
       {
         id: 'account',
@@ -340,20 +340,20 @@ export const STEPS: Step[] = [
 
 export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> = {
   under18: {
-    title: 'Sorry. Our services are limited to adults 18+',
-    body: "Our protocols require informed consent from an adult of legal age. If you're under 18, we recommend speaking with your primary physician about your goals.",
+    title: 'Sorry. Our store is limited to adults 18+',
+    body: "Our protocols require informed consent from an adult of legal age. If you're under 18, we recommend speaking with your own healthcare provider about your goals.",
   },
   cancer: {
-    title: "We can't approve this protocol right now",
-    body: "Given your history, peptide therapy isn't appropriate without direct oncologist coordination. We recommend speaking with your primary care provider about your goals.",
+    title: "This protocol isn't a fit right now",
+    body: "Given your history, these peptide protocols aren't a fit right now. We recommend speaking with your own healthcare provider about your goals.",
   },
   pregnant: {
-    title: "We can't approve this protocol right now",
-    body: 'Peptide therapy is not safe during pregnancy or breastfeeding. We recommend speaking with your obstetric provider; you can come back when ready.',
+    title: "This protocol isn't a fit right now",
+    body: 'These peptide protocols are not safe during pregnancy or breastfeeding. We recommend speaking with your own healthcare provider; you can come back when ready.',
   },
   organ: {
-    title: "We can't approve this protocol right now",
-    body: 'End-stage kidney or liver disease requires specialized supervision beyond what telehealth peptide therapy can safely provide. Please consult your primary specialist.',
+    title: "This protocol isn't a fit right now",
+    body: 'End-stage kidney or liver disease calls for specialized medical supervision beyond what these peptide protocols are intended for. Please consult your own specialist.',
   },
 };
 
@@ -364,13 +364,13 @@ export const CONSENT_ITEMS = [
     id: 'master_ack',
     required: true,
     label:
-      'I have read and understood the above disclaimers. I consent to the collection and review of my information for the purpose of receiving peptide recommendations. I understand that this form does not constitute medical advice or create a provider–patient relationship until a licensed physician reviews and signs my protocol.',
+      'I have read and understood the above disclaimers. I consent to the collection and review of my information for the purpose of receiving peptide protocol recommendations. I understand that this form is informational only and does not constitute medical advice.',
   },
   {
     id: 'billing_auth',
     required: true,
     label:
-      'I authorize Eternal Longevity to charge my saved payment method for my protocol. The first cycle is charged when a licensed physician signs my prescription, and each recurring cycle thereafter, until I pause or cancel. I understand I will not be charged unless a physician approves my protocol.',
+      'I authorize Eternal Longevity to charge my saved payment method for my protocol. The first cycle is charged when I place my order and it is compounded, and each recurring cycle thereafter, until I pause or cancel.',
   },
   {
     id: 'sms',

@@ -11,7 +11,7 @@ interface Props {
  * Pricing is members-only. Visitors don't see dollar amounts on the
  * marketing site. Instead this card lays out what's included and drives to
  * the assessment, where pricing is revealed inside the member portal after
- * physician review.
+ * the order is placed.
  */
 export function ProtocolPricing({ protocol }: Props) {
   return (
@@ -46,12 +46,12 @@ export function ProtocolPricing({ protocol }: Props) {
         </p>
         <p className="mb-4 text-xs text-foreground/55 leading-relaxed">
           Complete a short assessment to see your personalized pricing. You
-          aren&apos;t charged until a physician approves your protocol.
+          aren&apos;t charged until your protocol ships.
         </p>
         <ul className="space-y-2 text-sm text-foreground/80">
           <li className="flex items-start gap-2.5">
             <Check />
-            Physician review &amp; e-signed prescription
+            Formulated and third-party tested for purity
           </li>
           <li className="flex items-start gap-2.5">
             <Check />
@@ -63,11 +63,11 @@ export function ProtocolPricing({ protocol }: Props) {
           </li>
           <li className="flex items-start gap-2.5">
             <Check />
-            Clinical liaison messaging
+            Member support messaging
           </li>
           <li className="flex items-start gap-2.5">
             <Check />
-            Provider re-authorization handled for you
+            Renewals handled for you
           </li>
         </ul>
       </div>
@@ -93,8 +93,8 @@ export function ProtocolPricing({ protocol }: Props) {
         </svg>
       </Link>
       <p className="mt-3 text-center text-[11px] text-foreground/45 leading-relaxed">
-        Final eligibility at the discretion of the overseeing physician. You
-        won&apos;t be charged until your protocol is approved.
+        Order online. Ships from a licensed 503A pharmacy. You
+        won&apos;t be charged until your protocol ships.
       </p>
     </div>
   );

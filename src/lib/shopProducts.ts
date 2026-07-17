@@ -65,7 +65,7 @@ export interface ShopProduct {
   image: string;
   /** Additional gallery images for the PDP thumb strip */
   gallery: string[];
-  /** Whether physician review is required (always true for prescription peptides). */
+  /** Whether a quality review is required (always true for these peptides). */
   requiresReview: true;
   /** Optional "popular" badge */
   popular?: boolean;
@@ -94,7 +94,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Insulin syringes (1/2 cc, 31G)',
       'Alcohol prep pads',
       'Sharps container',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -126,7 +126,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Insulin syringes',
       'Reconstitution diluent',
       'Alcohol prep pads',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -156,7 +156,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       '12 weeks of compounded GHK-Cu (2 mg/week SQ)',
       'Reconstitution kit',
       'Insulin syringes + alcohol prep pads',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -189,7 +189,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Bacteriostatic water',
       'Insulin syringes (30G)',
       'Alcohol prep pads',
-      'Mid-cycle physician check-in',
+      'Mid-cycle protocol check-in',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -221,7 +221,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Bacteriostatic water',
       'Insulin syringes',
       'Alcohol prep pads',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -252,7 +252,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Bacteriostatic water',
       'Insulin syringes',
       'Alcohol prep pads',
-      'Two physician check-ins (week 6 + week 12)',
+      'Two protocol check-ins (week 6 + week 12)',
       'Mid-cycle metabolic labs',
     ],
     delivery: 'sq',
@@ -273,7 +273,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'The original GLP-1 RA. Average 15% body-weight reduction with sustained insulin-sensitivity gains.',
     longDescription:
-      'Semaglutide is a GLP-1 receptor agonist with extensive Phase 3 evidence for weight reduction, glycemic control, and cardiovascular risk reduction. We pair it with muscle-preserving peptides on physician request to protect lean mass during weight loss.',
+      'Semaglutide is a GLP-1 receptor agonist with extensive Phase 3 evidence for weight reduction, glycemic control, and cardiovascular risk reduction. We pair it with muscle-preserving peptides to protect lean mass during weight loss.',
     bestFor: 'Members with elevated BMI, prediabetes, or insulin resistance.',
     benefits: [
       'Mean 15% body-weight reduction at 68 weeks',
@@ -286,7 +286,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Insulin syringes',
       'Alcohol prep pads',
       'Anti-nausea support if needed',
-      'Mid-cycle physician check-in + side-effect review',
+      'Mid-cycle protocol check-in + side-effect review',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -318,7 +318,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Insulin syringes',
       'Alcohol prep pads',
       'Anti-nausea support if needed',
-      'Mid-cycle physician check-in + labs',
+      'Mid-cycle protocol check-in + labs',
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
@@ -349,7 +349,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     whatsIncluded: [
       '12 weeks of Selank nasal spray (250 mcg/spray, 2 sprays/day)',
       'Spare nozzle',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'nasal',
     cycleLength: '12-week cycle',
@@ -378,7 +378,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     whatsIncluded: [
       '12 weeks of Semax nasal spray (300 mcg/spray, 2 sprays/day AM)',
       'Spare nozzle',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'nasal',
     cycleLength: '12-week cycle',
@@ -410,7 +410,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'A 12-week supply of compounded PT-141 (as-needed dosing)',
       'Insulin syringes (30G)',
       'Alcohol prep pads',
-      'Physician check-in at week 6',
+      'Protocol check-in at week 6',
     ],
     delivery: 'sq',
     cycleLength: 'As-needed dosing · 12-week supply',
@@ -442,7 +442,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       '3-week loading cycle, repeated quarterly',
       'Compounded Epitalon (10 mg/day SQ for 21 days)',
       'Insulin syringes + alcohol prep pads',
-      'Physician check-in before each cycle',
+      'Protocol check-in before each cycle',
     ],
     delivery: 'sq',
     cycleLength: '3-week cycle · quarterly',

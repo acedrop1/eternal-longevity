@@ -66,7 +66,7 @@ export const PROTOCOLS: Protocol[] = [
     shortDescription:
       'Growth hormone signaling and body composition support for cycle-based training.',
     longDescription:
-      'PERFORM is engineered for body recomposition and athletic output. Tesamorelin reduces visceral fat and improves metabolic markers. Ipamorelin + CJC-1295 stimulate pulsatile GH release without crushing your natural production. Designed to run as 3-month cycles with off-cycle periods to maintain sensitivity. Comes with full dosing instructions and clinical liaison support.',
+      'PERFORM is engineered for body recomposition and athletic output. Tesamorelin reduces visceral fat and improves metabolic markers. Ipamorelin + CJC-1295 stimulate pulsatile GH release without crushing your natural production. Designed to run as 3-month cycles with off-cycle periods to maintain sensitivity. Comes with full dosing instructions and member support.',
     benefits: [
       'Enhances growth hormone signaling',
       'Improves body composition (lean mass up, visceral fat down)',
@@ -95,7 +95,7 @@ export const PROTOCOLS: Protocol[] = [
     shortDescription:
       'Cellular support, metabolic regulation, and cognitive clarity engineered for the long arc.',
     longDescription:
-      'LONGEVITY is for the people thinking in decades, not seasons. Epitalon supports telomere maintenance and circadian regulation. NAD+ replenishes a cofactor that declines steeply with age and underwrites mitochondrial energy. Selank supports cognitive clarity and stress regulation. Designed to be sustained across years with periodic re-evaluation by your physician.',
+      'LONGEVITY is for the people thinking in decades, not seasons. Epitalon supports telomere maintenance and circadian regulation. NAD+ replenishes a cofactor that declines steeply with age and underwrites mitochondrial energy. Selank supports cognitive clarity and stress regulation. Designed to be sustained across years with periodic protocol check-ins.',
     benefits: [
       'Cellular and mitochondrial support',
       'Sleep and circadian regulation',
@@ -114,7 +114,7 @@ export const PROTOCOLS: Protocol[] = [
     image: '/images/1.jpg',
     gallery: ['/images/1.jpg', '/images/2.jpg', '/images/9.jpg', '/images/13.jpg'],
     bestFor: '35+ adults focused on healthspan and cognitive maintenance',
-    cycleLength: 'Ongoing. Re-authorized quarterly',
+    cycleLength: 'Ongoing. Renewed quarterly',
   },
   {
     id: 'sculpt',
@@ -123,14 +123,14 @@ export const PROTOCOLS: Protocol[] = [
     category: 'BODY COMPOSITION',
     stack: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ'],
     shortDescription:
-      'Weight management and body composition refinement under physician-supervised dosing.',
+      'Weight management and body composition refinement with structured, titrated dosing.',
     longDescription:
-      'SCULPT pairs the appetite and glycemic regulation of Semaglutide with AOD-9604 (a fragment of growth hormone that targets fat metabolism) and 5-Amino-1MQ (an NNMT inhibitor that supports lean mass preservation during caloric deficit). Dosing is titrated by your physician across a structured cycle with regular check-ins for tolerability and progress.',
+      'SCULPT pairs the appetite and glycemic regulation of Semaglutide with AOD-9604 (a fragment of growth hormone that targets fat metabolism) and 5-Amino-1MQ (an NNMT inhibitor that supports lean mass preservation during caloric deficit). Dosing is titrated across a structured cycle with regular check-ins for tolerability and progress.',
     benefits: [
       'Appetite and glycemic regulation',
       'Targeted fat metabolism',
       'Lean mass preservation during deficit',
-      'Physician-titrated dosing with check-ins',
+      'Structured, titrated dosing with check-ins',
       'Optional bridge protocol on completion',
     ],
     ingredients: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ', 'Bacteriostatic water'],
@@ -143,7 +143,7 @@ export const PROTOCOLS: Protocol[] = [
     swatch: '#1f1612',
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/5.jpg', '/images/6.jpg', '/images/9.jpg'],
-    bestFor: 'Adults pursuing body recomposition with clinical support',
+    bestFor: 'Adults pursuing body recomposition with structured support',
     cycleLength: '3-month cycle, optional bridge',
   },
 ];

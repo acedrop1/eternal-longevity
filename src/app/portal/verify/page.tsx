@@ -63,7 +63,7 @@ export default async function VerifyIdPage() {
             </h1>
             <p className="mt-3 max-w-xl text-foreground/65 leading-relaxed">
               U.S. law requires us to confirm the identity of every person
-              receiving a compounded prescription. Two photos, ~30 seconds.
+              receiving a compounded protocol. Two photos, ~30 seconds.
             </p>
           </div>
 
@@ -92,7 +92,7 @@ export default async function VerifyIdPage() {
             </div>
             <p className="text-sm text-foreground/75 leading-relaxed">
               Your ID is encrypted at rest (AES-256) and accessible only to the
-              clinical staff who need to verify it. We do not share with
+              team members who need to verify it. We do not share with
               third parties. See our{' '}
               <Link
                 href="/legal/privacy"
@@ -110,7 +110,7 @@ export default async function VerifyIdPage() {
             </div>
             <p className="text-sm text-foreground/85 leading-relaxed">
               State pharmacy boards require identity verification before a
-              compounded prescription ships. Without this step the pharmacy
+              compounded protocol ships. Without this step the pharmacy
               cannot release your order.
             </p>
           </div>

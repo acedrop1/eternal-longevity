@@ -18,7 +18,7 @@ interface ProtocolPDPMobileProps {
  *
  * Pricing is members-only. Visitors never see dollar amounts on the
  * marketing site. The CTA is "Start Your Assessment" → /start; pricing is
- * revealed inside the member portal after physician review.
+ * revealed inside the member portal after the order is placed.
  *
  * The parent page renders the original desktop layout above the md
  * breakpoint and this component below it.
@@ -194,7 +194,7 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          PHYSICIAN-REVIEWED · COMPOUNDED IN A 503A PHARMACY
+          THIRD-PARTY TESTED · COMPOUNDED IN A 503A PHARMACY
         </div>
 
         {/* Protocol name */}
@@ -244,14 +244,14 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
           </p>
           <p className="mb-4 text-xs text-foreground/55 leading-relaxed">
             Complete a short assessment to see your personalized pricing. You
-            aren&apos;t charged until a physician approves your protocol.
+            aren&apos;t charged until your protocol ships.
           </p>
           <ul className="space-y-2 text-sm text-foreground/80">
             {[
-              'Physician review & e-signed prescription',
+              'Formulated and third-party tested for purity',
               'Compounded vials shipped on your cadence',
               'Dosing kit + instructions included',
-              'Clinical liaison messaging',
+              'Member support messaging',
             ].map((line) => (
               <li key={line} className="flex items-start gap-2.5">
                 <svg
@@ -286,8 +286,8 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
             Start Your Assessment
           </Link>
           <p className="mt-3 text-center text-[11px] tracking-wider text-foreground/50">
-            Physician-reviewed before dispensing · you&apos;re not charged
-            until your protocol is approved
+            Third-party tested before dispensing · you&apos;re not charged
+            until your protocol ships
           </p>
         </div>
 
@@ -295,8 +295,8 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
         <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/[0.05] p-4">
           <p className="text-[13px] leading-relaxed text-foreground/85">
             <span className="font-semibold text-accent">Important. </span>
-            Eternal Longevity protocols are dispensed under a physician
-            prescription after intake review. Not a substitute for medical
+            Eternal Longevity protocols are compounded by a licensed 503A
+            pharmacy and third-party tested. Not a substitute for medical
             care; do not use if pregnant, nursing, or under 18.
           </p>
         </div>
@@ -371,7 +371,7 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
               label="Storage"
               value="Refrigerated 2–8°C · use within compounding date"
             />
-            <SpecRow label="Physician review" value="Required" />
+            <SpecRow label="Third-party tested" value="Yes" />
           </dl>
         </Section>
 
@@ -380,7 +380,7 @@ export function ProtocolPDPMobile({ protocol }: ProtocolPDPMobileProps) {
           <p className="text-foreground/70 leading-relaxed">
             Cold-chain shipped from our licensed 503A pharmacy in temperature-
             controlled packaging. Free shipping on every cycle. Tracking
-            available in your portal once your physician signs off.
+            available in your portal once your order ships.
           </p>
         </Section>
 

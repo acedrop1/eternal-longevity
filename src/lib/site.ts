@@ -23,7 +23,7 @@ export const SITE_URL = resolveSiteUrl();
 
 export const SITE_NAME = 'Eternal Longevity';
 
-export const SITE_TAGLINE = 'Physician-supervised peptide protocols.';
+export const SITE_TAGLINE = 'Premium peptide protocols.';
 
 export const SITE_DESCRIPTION =
-  'A licensed-physician peptide telehealth platform. Compounded by 503A pharmacy, tested for 99%+ purity, shipped cold-chain.';
+  'An online peptide store. Order protocols compounded by a licensed 503A pharmacy, third-party tested for 99%+ purity, and shipped cold-chain to your door.';

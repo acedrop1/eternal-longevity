@@ -105,8 +105,8 @@ export default async function OrdersPage() {
           Your shipments &amp; receipts.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Every cycle you&apos;ve ordered, with live status from physician
-          sign-off through delivery.
+          Every cycle you&apos;ve ordered, with live status from order
+          confirmation through delivery.
         </p>
       </div>
 

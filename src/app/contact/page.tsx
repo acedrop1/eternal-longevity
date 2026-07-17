@@ -6,11 +6,11 @@ import { FadeIn } from '@/components/ui/FadeIn';
 
 export const metadata: Metadata = {
   title: 'Contact | Eternal Longevity',
-  description: 'Get in touch with our care team. We answer everything within one business day.',
+  description: 'Get in touch with our team. We answer everything within one business day.',
 };
 
 const TOPICS = [
-  { value: 'clinical', label: 'Clinical question (existing member)' },
+  { value: 'clinical', label: 'Support question (existing member)' },
   { value: 'product', label: 'Question about a protocol' },
   { value: 'eligibility', label: 'Eligibility / state availability' },
   { value: 'billing', label: 'Billing or order issue' },
@@ -25,9 +25,9 @@ const CONTACT_ROWS = [
     body: 'Replies within one business day.',
   },
   {
-    eyebrow: 'CLINICAL CARE',
+    eyebrow: 'MEMBER SUPPORT',
     title: 'care@eternallongevity.com',
-    body: 'Member medical questions. Same-day callback available for urgent matters.',
+    body: 'Member questions about your protocol or order. Same-day callback available for urgent matters.',
   },
   {
     eyebrow: 'PRESS',
@@ -202,7 +202,7 @@ export default function ContactPage() {
                     Mon – Fri · 9a – 6p ET
                   </div>
                   <p className="text-sm text-foreground/65 leading-relaxed">
-                    Care team responses happen during business hours. We&apos;ll
+                    Support team responses happen during business hours. We&apos;ll
                     triage urgent items first.
                   </p>
                 </div>

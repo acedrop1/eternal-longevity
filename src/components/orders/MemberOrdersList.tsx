@@ -97,7 +97,7 @@ function MemberOrderCard({ order }: { order: Order }) {
             </h2>
             {physician && (
               <p className="mt-0.5 text-xs text-foreground/55">
-                Reviewing: {physician}
+                Quality review
               </p>
             )}
             {order.adminNote && order.status === 'denied-admin' && (
@@ -145,7 +145,7 @@ function MemberOrderCard({ order }: { order: Order }) {
         </div>
       )}
 
-      {/* Recent physician updates (latest 2) */}
+      {/* Recent updates (latest 2) */}
       {order.updates && order.updates.length > 0 && (
         <div className="mt-5 border-t border-line pt-5">
           <div className="mb-3 text-[10px] tracking-widest text-foreground/55">

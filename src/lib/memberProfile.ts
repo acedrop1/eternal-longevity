@@ -57,8 +57,8 @@ export const NOTIFICATION_DEFS: NotificationDef[] = [
   },
   {
     key: 'clinical',
-    title: 'Clinical messages',
-    body: 'Replies from your care team.',
+    title: 'Support messages',
+    body: 'Replies from our team.',
     required: true,
   },
   {

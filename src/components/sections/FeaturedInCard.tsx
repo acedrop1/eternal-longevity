@@ -142,11 +142,11 @@ export function FeaturedInCard() {
               >
                 The science of regeneration,
                 <br />
-                <span className="text-accent">now physician-supervised.</span>
+                <span className="text-accent">now third-party tested.</span>
               </h2>
               <p className="text-white/65 leading-relaxed max-w-md mb-8">
                 Premium compounded peptides with verified purity. Third-party
-                tested, clinician-reviewed, and shipped from a licensed 503A
+                tested, lab-verified, and shipped from a licensed 503A
                 pharmacy.
               </p>
 
