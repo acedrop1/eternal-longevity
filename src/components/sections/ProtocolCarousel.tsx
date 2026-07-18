@@ -139,6 +139,9 @@ export function ProtocolCarousel() {
       <div
         ref={trackRef}
         onScroll={onScroll}
+        // Opt this horizontal track out of Lenis so swipes across the cards
+        // scroll the track natively instead of driving the page.
+        data-lenis-prevent
         className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-6 px-[16%] pb-2"
       >
         {LOOP.map((p, i) => {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Mulish } from 'next/font/google';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import './globals.css';
 
 // Mulish loads via next/font as the dev fallback for Proxima Nova.
@@ -77,7 +78,10 @@ export default function RootLayout({
       {/* suppressHydrationWarning silences the harmless mismatch caused by
           browser extensions (ColorZilla, Grammarly, etc.) that inject
           attributes into <body> before React hydrates. */}
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <SmoothScroll />
+        {children}
+      </body>
     </html>
   );
 }
