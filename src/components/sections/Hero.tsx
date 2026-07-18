@@ -27,14 +27,16 @@ export function Hero() {
       />
 
 
-      {/* Darken layer for readability. Kept light so the video shows through */}
+      {/* Darken layer for readability. Tuned for the high-key serum footage —
+          heavy enough that white headline copy holds contrast, light enough
+          that the gold ribbons still read through. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-black/20"
+        className="pointer-events-none absolute inset-0 bg-black/45"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-background"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-background"
       />
 
       {/* Drifting gold halo (Saki pattern) */}
