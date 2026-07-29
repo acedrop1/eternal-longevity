@@ -107,7 +107,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'Are these peptides FDA-approved?',
-    a: "Some are (e.g., Tesamorelin, Semaglutide, Tirzepatide). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category. The specific status of each peptide is noted on its protocol page. This is not medical advice or a substitute for consulting your own healthcare provider.",
+    a: "Some compounds we work with have FDA-approved indications; many are compounded under 503A authority. Compounded medications occupy a legitimate but distinct regulatory category. The specific status of each compound in your protocol is disclosed in your member portal after your assessment. This is not medical advice or a substitute for consulting your own healthcare provider.",
   },
   {
     category: 'Safety',

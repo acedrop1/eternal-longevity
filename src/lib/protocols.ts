@@ -10,7 +10,7 @@ export type Protocol = {
   name: string;
   tagline: string; // short label e.g. "Recovery + Joint Care"
   category: string; // e.g. "RECOVERY"
-  stack: string[]; // ["KPV", "GHK-Cu", ...]
+  stack: string[]; // goal descriptors shown as public card chips — compound names are disclosed post-assessment in the member portal
   shortDescription: string; // one-liner for cards
   longDescription: string; // full PDP paragraph
   benefits: string[]; // bullets for accordion
@@ -28,26 +28,33 @@ export type Protocol = {
   cycleLength: string; // e.g. "3-month cycle"
 };
 
+// NOTE: Public marketing pages intentionally do not name individual compounds.
+// The full formulation for each protocol is disclosed in the member portal
+// after the assessment. Keep compound names out of these fields.
+const FORMULATION_NOTE =
+  'Full formulation disclosed after your assessment, in your member portal.';
+
 export const PROTOCOLS: Protocol[] = [
   {
     id: 'recover',
     name: 'RECOVER',
     tagline: 'Recovery + Joint Care',
     category: 'RECOVERY',
-    stack: ['KPV', 'GHK-Cu'],
+    stack: ['Joint Support', 'Inflammation Control'],
     shortDescription:
-      'A two-peptide stack for reduced inflammation, joint support, and connective tissue rejuvenation.',
+      'A restorative stack for reduced inflammation, joint support, and connective tissue rejuvenation.',
     longDescription:
-      'Built for athletes and anyone training hard, RECOVER pairs two restorative peptides into one synergistic protocol. KPV calms inflammation. GHK-Cu (which gives the vial its signature blue tint from natural copper ions) rejuvenates skin, joints, and connective tissue. The result: faster recovery between sessions, fewer setbacks, and a body that holds up under volume.',
+      'Built for athletes and anyone training hard, RECOVER pairs restorative compounds into one synergistic protocol: one calms inflammation, the other rejuvenates skin, joints, and connective tissue. The result: faster recovery between sessions, fewer setbacks, and a body that holds up under volume. ' +
+      FORMULATION_NOTE,
     benefits: [
       'Reduces systemic and joint inflammation',
       'Improves recovery time between training sessions',
       'Supports skin, hair, and connective tissue health',
       'Long-term injury prevention',
     ],
-    ingredients: ['KPV', 'GHK-Cu', 'Bacteriostatic water'],
+    ingredients: ['Proprietary recovery blend (disclosed after assessment)', 'Bacteriostatic water'],
     dosing: [
-      { peptide: 'KPV / GHK-Cu blend', dose: '20 units', frequency: '5×/week', supply: '5 weeks' },
+      { peptide: 'Recovery blend', dose: '20 units', frequency: '5×/week', supply: '5 weeks' },
     ],
     pricing: { monthly: 280, quarterly: 750, annual: 2640 },
     swatch: '#1a1a1a',
@@ -61,11 +68,12 @@ export const PROTOCOLS: Protocol[] = [
     name: 'PERFORM',
     tagline: 'Performance + Strength',
     category: 'PERFORMANCE',
-    stack: ['Tesamorelin', 'Ipamorelin', 'CJC-1295'],
+    stack: ['GH-Axis Support', 'Body Composition'],
     shortDescription:
       'Growth hormone signaling and body composition support for cycle-based training.',
     longDescription:
-      'PERFORM is engineered for body recomposition and athletic output. Tesamorelin reduces visceral fat and improves metabolic markers. Ipamorelin + CJC-1295 stimulate pulsatile GH release without crushing your natural production. Designed to run as 3-month cycles with off-cycle periods to maintain sensitivity. Comes with full dosing instructions and member support.',
+      'PERFORM is engineered for body recomposition and athletic output: reduced visceral fat, improved metabolic markers, and pulsatile GH-axis support without crushing your natural production. Designed to run as 3-month cycles with off-cycle periods to maintain sensitivity. Comes with full dosing instructions and member support. ' +
+      FORMULATION_NOTE,
     benefits: [
       'Enhances growth hormone signaling',
       'Improves body composition (lean mass up, visceral fat down)',
@@ -73,10 +81,10 @@ export const PROTOCOLS: Protocol[] = [
       'Sharpens cognitive clarity',
       'Cardiovascular and metabolic markers',
     ],
-    ingredients: ['Tesamorelin', 'Ipamorelin', 'CJC-1295 (no DAC)', 'Bacteriostatic water'],
+    ingredients: ['Proprietary performance blend (disclosed after assessment)', 'Bacteriostatic water'],
     dosing: [
-      { peptide: 'Tesamorelin', dose: '30 units', frequency: '5×/week', supply: '3 weeks' },
-      { peptide: 'Ipamorelin / CJC-1295', dose: '20 units', frequency: '5×/week', supply: '4 weeks' },
+      { peptide: 'Performance blend A', dose: '30 units', frequency: '5×/week', supply: '3 weeks' },
+      { peptide: 'Performance blend B', dose: '20 units', frequency: '5×/week', supply: '4 weeks' },
     ],
     pricing: { monthly: 360, quarterly: 980, annual: 3480 },
     swatch: '#2d2419',
@@ -90,11 +98,12 @@ export const PROTOCOLS: Protocol[] = [
     name: 'LONGEVITY',
     tagline: 'Cellular + Cognitive',
     category: 'LONGEVITY',
-    stack: ['Epitalon', 'NAD+', 'Selank'],
+    stack: ['Cellular Support', 'Cognitive Clarity'],
     shortDescription:
       'Cellular support, metabolic regulation, and cognitive clarity engineered for the long arc.',
     longDescription:
-      'LONGEVITY is for the people thinking in decades, not seasons. Epitalon supports telomere maintenance and circadian regulation. NAD+ replenishes a cofactor that declines steeply with age and underwrites mitochondrial energy. Selank supports cognitive clarity and stress regulation. Designed to be sustained across years with periodic protocol check-ins.',
+      'LONGEVITY is for the people thinking in decades, not seasons. The protocol supports telomere maintenance and circadian regulation, replenishes a key cellular cofactor that declines steeply with age, and supports cognitive clarity and stress regulation. Designed to be sustained across years with periodic protocol check-ins. ' +
+      FORMULATION_NOTE,
     benefits: [
       'Cellular and mitochondrial support',
       'Sleep and circadian regulation',
@@ -102,11 +111,11 @@ export const PROTOCOLS: Protocol[] = [
       'Metabolic and energy markers',
       'Designed for long-arc adherence',
     ],
-    ingredients: ['Epitalon', 'NAD+', 'Selank', 'Bacteriostatic water'],
+    ingredients: ['Proprietary longevity blend (disclosed after assessment)', 'Bacteriostatic water'],
     dosing: [
-      { peptide: 'Epitalon', dose: '10 units', frequency: '5×/week', supply: '4 weeks' },
-      { peptide: 'NAD+', dose: '40 units', frequency: '3×/week', supply: '4 weeks' },
-      { peptide: 'Selank', dose: '15 units', frequency: 'daily', supply: '3 weeks' },
+      { peptide: 'Longevity blend A', dose: '10 units', frequency: '5×/week', supply: '4 weeks' },
+      { peptide: 'Longevity blend B', dose: '40 units', frequency: '3×/week', supply: '4 weeks' },
+      { peptide: 'Longevity blend C', dose: '15 units', frequency: 'daily', supply: '3 weeks' },
     ],
     pricing: { monthly: 420, quarterly: 1140, annual: 4080 },
     swatch: '#3a2d1a',
@@ -120,11 +129,12 @@ export const PROTOCOLS: Protocol[] = [
     name: 'SCULPT',
     tagline: 'Composition + Metabolic',
     category: 'BODY COMPOSITION',
-    stack: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ'],
+    stack: ['Appetite Regulation', 'Lean Mass Support'],
     shortDescription:
       'Weight management and body composition refinement with structured, titrated dosing.',
     longDescription:
-      'SCULPT pairs the appetite and glycemic regulation of Semaglutide with AOD-9604 (a fragment of growth hormone that targets fat metabolism) and 5-Amino-1MQ (an NNMT inhibitor that supports lean mass preservation during caloric deficit). Dosing is titrated across a structured cycle with regular check-ins for tolerability and progress.',
+      'SCULPT pairs appetite and glycemic regulation with targeted fat metabolism and lean mass preservation during caloric deficit. Dosing is titrated across a structured cycle with regular check-ins for tolerability and progress. ' +
+      FORMULATION_NOTE,
     benefits: [
       'Appetite and glycemic regulation',
       'Targeted fat metabolism',
@@ -132,11 +142,11 @@ export const PROTOCOLS: Protocol[] = [
       'Structured, titrated dosing with check-ins',
       'Optional bridge protocol on completion',
     ],
-    ingredients: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ', 'Bacteriostatic water'],
+    ingredients: ['Proprietary metabolic blend (disclosed after assessment)', 'Bacteriostatic water'],
     dosing: [
-      { peptide: 'Semaglutide', dose: 'titrated', frequency: '1×/week', supply: '4 weeks' },
-      { peptide: 'AOD-9604', dose: '30 units', frequency: '5×/week', supply: '4 weeks' },
-      { peptide: '5-Amino-1MQ', dose: 'oral, daily', frequency: 'daily', supply: '30 days' },
+      { peptide: 'Metabolic blend A', dose: 'titrated', frequency: '1×/week', supply: '4 weeks' },
+      { peptide: 'Metabolic blend B', dose: '30 units', frequency: '5×/week', supply: '4 weeks' },
+      { peptide: 'Metabolic blend C', dose: 'oral, daily', frequency: 'daily', supply: '30 days' },
     ],
     pricing: { monthly: 480, quarterly: 1320, annual: 4680 },
     swatch: '#1f1612',
