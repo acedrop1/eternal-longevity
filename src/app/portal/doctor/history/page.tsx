@@ -20,11 +20,11 @@ interface SignedRx {
 }
 
 const RX_LOG: SignedRx[] = [
-  { id: 'rx-1041', patient: 'Marcus T.', state: 'NJ', protocol: 'Recover · BPC-157 + TB-500', signedAt: 'Today · 11:42', cycle: '12 weeks', status: 'active' },
+  { id: 'rx-1041', patient: 'Marcus T.', state: 'NJ', protocol: 'Recover · KPV + GHK-Cu', signedAt: 'Today · 11:42', cycle: '12 weeks', status: 'active' },
   { id: 'rx-1039', patient: 'Hadi K.', state: 'FL', protocol: 'Longevity Foundation', signedAt: 'Today · 09:55', cycle: '16 weeks', status: 'declined' },
   { id: 'rx-1024', patient: 'Lena R.', state: 'NY', protocol: 'Sculpt · Tirzepatide', signedAt: 'Yesterday · 14:18', cycle: '12 weeks', status: 'active' },
   { id: 'rx-1018', patient: 'Sam P.', state: 'CA', protocol: 'Perform · CJC + Ipamorelin', signedAt: 'May 10 · 08:32', cycle: '8 weeks', status: 'active' },
-  { id: 'rx-0987', patient: 'Priya N.', state: 'TX', protocol: 'Recover · BPC-157 + GHK-Cu', signedAt: 'May 8 · 17:05', cycle: '12 weeks', status: 'completed' },
+  { id: 'rx-0987', patient: 'Priya N.', state: 'TX', protocol: 'Recover · KPV + GHK-Cu', signedAt: 'May 8 · 17:05', cycle: '12 weeks', status: 'completed' },
   { id: 'rx-0962', patient: 'Daniel G.', state: 'IL', protocol: 'Perform · Sermorelin', signedAt: 'May 4 · 11:09', cycle: '12 weeks', status: 'completed' },
 ];
 

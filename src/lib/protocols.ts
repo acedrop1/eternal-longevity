@@ -10,7 +10,7 @@ export type Protocol = {
   name: string;
   tagline: string; // short label e.g. "Recovery + Joint Care"
   category: string; // e.g. "RECOVERY"
-  stack: string[]; // ["BPC-157", "TB-500", ...]
+  stack: string[]; // ["KPV", "GHK-Cu", ...]
   shortDescription: string; // one-liner for cards
   longDescription: string; // full PDP paragraph
   benefits: string[]; // bullets for accordion
@@ -34,21 +34,20 @@ export const PROTOCOLS: Protocol[] = [
     name: 'RECOVER',
     tagline: 'Recovery + Joint Care',
     category: 'RECOVERY',
-    stack: ['BPC-157', 'TB-500', 'KPV', 'GHK-Cu'],
+    stack: ['KPV', 'GHK-Cu'],
     shortDescription:
-      'A four-peptide stack for accelerated soft tissue repair, reduced inflammation, and joint rejuvenation.',
+      'A two-peptide stack for reduced inflammation, joint support, and connective tissue rejuvenation.',
     longDescription:
-      'Built for athletes and anyone training hard, RECOVER combines four healing peptides into one synergistic protocol. BPC-157 and TB-500 accelerate soft tissue repair. KPV calms inflammation. GHK-Cu (which gives the vial its signature blue tint from natural copper ions) rejuvenates skin, joints, and connective tissue. The result: faster recovery between sessions, fewer setbacks, and a body that holds up under volume.',
+      'Built for athletes and anyone training hard, RECOVER pairs two restorative peptides into one synergistic protocol. KPV calms inflammation. GHK-Cu (which gives the vial its signature blue tint from natural copper ions) rejuvenates skin, joints, and connective tissue. The result: faster recovery between sessions, fewer setbacks, and a body that holds up under volume.',
     benefits: [
-      'Accelerates soft tissue and tendon repair',
       'Reduces systemic and joint inflammation',
       'Improves recovery time between training sessions',
       'Supports skin, hair, and connective tissue health',
       'Long-term injury prevention',
     ],
-    ingredients: ['BPC-157', 'TB-500', 'KPV', 'GHK-Cu', 'Bacteriostatic water'],
+    ingredients: ['KPV', 'GHK-Cu', 'Bacteriostatic water'],
     dosing: [
-      { peptide: 'BPC-157 / TB-500 / KPV / GHK-Cu blend', dose: '20 units', frequency: '5×/week', supply: '5 weeks' },
+      { peptide: 'KPV / GHK-Cu blend', dose: '20 units', frequency: '5×/week', supply: '5 weeks' },
     ],
     pricing: { monthly: 280, quarterly: 750, annual: 2640 },
     swatch: '#1a1a1a',

@@ -13,8 +13,8 @@ const PROTOCOL = {
   name: 'Recover Protocol',
   cycle: '12-week cycle',
   ingredients: [
-    { name: 'BPC-157', dose: '250 mcg / day SQ' },
-    { name: 'TB-500', dose: '2 mg / week SQ' },
+    { name: 'KPV', dose: '250 mcg / day SQ' },
+    { name: 'GHK-Cu', dose: '2 mg / week SQ' },
   ],
   total: 480,
   physician: 'Dr. M. Reyes',

@@ -74,69 +74,6 @@ export interface ShopProduct {
 export const SHOP_PRODUCTS: ShopProduct[] = [
   // ============ RECOVERY ============
   {
-    id: 'bpc-157',
-    name: 'BPC-157',
-    tagline: 'Tissue Repair & Recovery',
-    category: 'recovery',
-    shortDescription:
-      'A 15-amino acid peptide that accelerates soft-tissue healing. Tendons, ligaments, and gut lining.',
-    longDescription:
-      'BPC-157 (Body Protection Compound) upregulates growth-factor signaling at the site of injury, accelerates angiogenesis, and modulates inflammation. Strong preclinical evidence for tendon, ligament, and GI repair. Most members run an 8–12 week cycle, then take 4 weeks off before re-evaluating.',
-    bestFor: 'Active members recovering from training, surgery, or chronic joint pain.',
-    benefits: [
-      'Faster tendon and ligament healing',
-      'Reduced inflammation at injury sites',
-      'GI tract repair (esp. NSAID-related damage)',
-      'Improved joint mobility',
-    ],
-    whatsIncluded: [
-      '12 weeks of compounded BPC-157 (250 mcg/day SQ)',
-      'Insulin syringes (1/2 cc, 31G)',
-      'Alcohol prep pads',
-      'Sharps container',
-      'Protocol check-in at week 6',
-    ],
-    delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 160, quarterly: 420, annual: 1480 },
-    swatch: 'linear-gradient(180deg, #1a4a3e 0%, #000000 100%)',
-    image: '/images/11.jpg',
-    gallery: ['/images/11.jpg', '/images/13.jpg', '/images/14.jpg', '/images/9.jpg'],
-    requiresReview: true,
-    popular: true,
-  },
-  {
-    id: 'tb-500',
-    name: 'TB-500',
-    tagline: 'Deep Tissue Regeneration',
-    category: 'recovery',
-    shortDescription:
-      'Thymosin Beta-4 fragment that drives cell migration to injured tissue. Often stacked with BPC-157.',
-    longDescription:
-      'TB-500 mobilizes stem cells to areas of injury and accelerates the formation of new blood vessels. It pairs naturally with BPC-157 for compounded recovery effect across muscle, tendon, and skin. Most members run it for an 8-week loading phase followed by maintenance dosing.',
-    bestFor: 'Athletes with chronic soft-tissue issues, post-surgical recovery, or stalled healing.',
-    benefits: [
-      'Accelerates muscle and tendon healing',
-      'Reduces scar tissue formation',
-      'Increases vascular endothelial growth factor',
-      'Synergizes with BPC-157',
-    ],
-    whatsIncluded: [
-      '12 weeks of compounded TB-500 (2 mg/week SQ)',
-      'Insulin syringes',
-      'Reconstitution diluent',
-      'Alcohol prep pads',
-      'Protocol check-in at week 6',
-    ],
-    delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 180, quarterly: 480, annual: 1700 },
-    swatch: 'linear-gradient(180deg, #1e4d4a 0%, #000000 100%)',
-    image: '/images/13.jpg',
-    gallery: ['/images/13.jpg', '/images/11.jpg', '/images/14.jpg', '/images/9.jpg'],
-    requiresReview: true,
-  },
-  {
     id: 'ghk-cu',
     name: 'GHK-Cu',
     tagline: 'Skin & Connective Tissue',

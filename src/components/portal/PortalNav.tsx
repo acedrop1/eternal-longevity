@@ -20,14 +20,14 @@ interface PortalNavProps {
 /**
  * Portal navigation. Renders a vertical left-rail on desktop and a horizontal
  * scrolling pill row on mobile. Active state is derived from the current
- * pathname, with longest-prefix-match so that e.g. /portal/shop/bpc-157 still
+ * pathname, with longest-prefix-match so that e.g. /portal/shop/ghk-cu still
  * highlights the "Shop" tab.
  */
 export function PortalNav({ nav, variant }: PortalNavProps) {
   const pathname = usePathname() ?? '';
 
   // Find the best-matching nav item (longest prefix) so deep routes like
-  // /portal/shop/bpc-157 stay highlighted under "Shop".
+  // /portal/shop/ghk-cu stay highlighted under "Shop".
   const activeHref = (() => {
     const matches = nav
       .filter(

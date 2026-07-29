@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   keywords: [
     'peptides',
-    'BPC-157',
-    'TB-500',
+    'GHK-Cu',
+    'KPV',
     'CJC-1295',
     'Ipamorelin',
     'longevity',

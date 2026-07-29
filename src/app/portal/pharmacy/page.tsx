@@ -33,7 +33,7 @@ const DEMO_ORDERS: PharmacyOrderView[] = [
     prescriberNpi: '1841299300',
     items: [
       {
-        product: 'BPC-157 / TB-500',
+        product: 'KPV / GHK-Cu',
         strength: '10 mg / 10 mg',
         size: '5 mL Vial',
         quantity: 1,

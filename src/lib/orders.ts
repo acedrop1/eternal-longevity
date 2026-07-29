@@ -141,8 +141,8 @@ export const SEED_ORDERS: Order[] = [
     state: 'NJ',
     lines: [
       {
-        productId: 'bpc-157',
-        productName: 'BPC-157',
+        productId: 'ghk-cu',
+        productName: 'GHK-Cu',
         cadence: 'quarterly',
         cadenceLabel: 'Quarterly',
         quantity: 1,

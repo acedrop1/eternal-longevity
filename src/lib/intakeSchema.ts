@@ -284,7 +284,7 @@ export const STEPS: Step[] = [
         id: 'notes',
         type: 'text-long',
         label: 'Medications, allergies, or anything else? (Optional)',
-        placeholder: 'e.g. Lisinopril 10mg daily · Allergic to penicillin · BPC-157 for 3 months in 2024',
+        placeholder: 'e.g. Lisinopril 10mg daily · Allergic to penicillin',
       },
     ],
   },

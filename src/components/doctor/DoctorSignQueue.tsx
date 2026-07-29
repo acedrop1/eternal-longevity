@@ -17,7 +17,7 @@ export interface DoctorIntakeView {
   answers: { label: string; value: string }[];
 }
 
-/** Parse a textarea ("BPC-157, 250 mcg daily" per line) into Rx items. */
+/** Parse a textarea ("KPV, 250 mcg daily" per line) into Rx items. */
 function parseItems(raw: string): RxItem[] {
   return raw
     .split('\n')
@@ -202,13 +202,13 @@ function SignCard({
           </div>
           <div>
             <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-              ITEMS — ONE PER LINE, e.g. BPC-157, 250 mcg daily
+              ITEMS — ONE PER LINE, e.g. KPV, 250 mcg daily
             </label>
             <textarea
               value={items}
               onChange={(e) => setItems(e.target.value)}
               rows={3}
-              placeholder={'BPC-157, 250 mcg daily SQ\nTB-500, 2 mg weekly SQ'}
+              placeholder={'KPV, 250 mcg daily SQ\nGHK-Cu, 2 mg weekly SQ'}
               className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
           </div>

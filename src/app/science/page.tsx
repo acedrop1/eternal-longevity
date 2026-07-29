@@ -23,7 +23,7 @@ const MECHANISMS = [
     n: '02',
     title: 'Tissue repair',
     body:
-      'BPC-157 and TB-500 upregulate growth factors at the site of injury, accelerate angiogenesis, and modulate inflammation. Shortening recovery windows for ligaments, tendons, and gut lining.',
+      'Restorative peptides like KPV and GHK-Cu modulate inflammation and signal tissue remodeling. Supporting recovery across joints, skin, and connective tissue.',
   },
   {
     n: '03',
@@ -71,11 +71,11 @@ const EVIDENCE = [
     note: 'Multiple Phase 1/2 trials, peer-reviewed.',
   },
   {
-    peptide: 'BPC-157',
-    headline: 'Tendon & ligament healing in animal models',
+    peptide: 'GHK-Cu',
+    headline: 'Collagen synthesis & tissue remodeling',
     summary:
-      'Strong preclinical record for accelerating soft-tissue repair, gut barrier restoration, and reducing NSAID-related GI injury. Human data remains limited. We factor that into our protocols accordingly.',
-    note: 'Preclinical robust; human evidence emerging.',
+      'A naturally occurring copper tripeptide whose levels decline with age. Restoring it activates wound healing, collagen production, and antioxidant defense, with a long record in dermatological research.',
+    note: 'Established in dermatology; systemic evidence emerging.',
   },
   {
     peptide: 'Tesamorelin',

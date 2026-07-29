@@ -54,7 +54,7 @@ const COL_2: Card[] = [
     platform: 'x',
     handleName: 'Daniel R.',
     handle: 'Verified member',
-    body: 'BPC-157 is one of the most powerful peptides for recovery and gut health. Peptides work with your body, not against it. Minimal side effects, maximum results.',
+    body: 'The Recover protocol changed how I train. Peptides work with your body, not against it. Minimal side effects, maximum results.',
     timestamp: 'Recover protocol',
   },
   {
