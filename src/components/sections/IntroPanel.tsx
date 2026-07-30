@@ -12,121 +12,102 @@ import { useScrollProgress } from '@/lib/useScrollProgress';
  *
  * Three stacked layers inside one rounded card:
  *   1. Thin TEAL/ACCENT bar (rounded top corners) with a short tagline.
- *   2. Black marquee strip. Scrolling row of AS FEATURED IN press brand
- *      names separated by small accent dots, edge-faded both sides.
+ *   2. Black marquee strip. Scrolling row of quality-standard wordmarks
+ *      separated by small accent dots, edge-faded both sides. Every item
+ *      is a claim the site already makes elsewhere (footer pills, science
+ *      standards) — no press or endorsement claims here.
  *   3. The existing Saki-style brand-statement paragraph that reveals
  *      word-by-word as the user scrolls, with inline image pills appearing
  *      at their thresholds.
  */
 
-// --- 1) Press wordmarks for the marquee -------------------------------
-interface PressItem {
+// --- 1) Quality-standard wordmarks for the marquee --------------------
+interface StandardItem {
   name: string;
   el: ReactNode;
 }
 
-const PRESS: PressItem[] = [
+const STANDARDS: StandardItem[] = [
   {
-    name: 'Vanity Fair',
+    name: 'Third-Party Tested',
     el: (
       <span
         className="font-serif font-bold text-2xl md:text-[28px] leading-none"
         style={{ letterSpacing: '0.08em' }}
       >
-        VANITY FAIR
+        THIRD-PARTY TESTED
       </span>
     ),
   },
   {
-    name: 'Marie Claire',
-    el: (
-      <span className="font-serif italic text-2xl md:text-[28px] tracking-tight lowercase leading-none">
-        <span className="font-light">marie</span>{' '}
-        <span className="font-bold">claire</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Essence',
-    el: (
-      <span
-        className="text-2xl md:text-[28px] leading-none"
-        style={{ letterSpacing: '-0.02em' }}
-      >
-        <span className="font-bold italic">ess</span>
-        <span className="font-light italic">ence</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Yahoo',
+    name: '99%+ Purity',
     el: (
       <span className="font-black italic text-3xl md:text-4xl leading-none tracking-tight">
-        yahoo<span className="text-accent">!</span>
+        99%+ <span className="text-accent">purity</span>
       </span>
     ),
   },
   {
-    name: 'Medium',
+    name: '503A Compounded',
+    el: (
+      <span
+        className="inline-flex items-center rounded-sm bg-accent text-black px-3 py-1.5 font-black text-base md:text-lg leading-none"
+        style={{ letterSpacing: '0.05em' }}
+      >
+        503A COMPOUNDED
+      </span>
+    ),
+  },
+  {
+    name: 'HIPAA Compliant',
+    el: (
+      <span className="text-2xl md:text-[28px] italic tracking-tight leading-none">
+        <span className="font-black">HIPAA</span>
+        <span className="font-light"> compliant</span>
+      </span>
+    ),
+  },
+  {
+    name: 'Cold-Chain Shipped',
+    el: (
+      <span className="flex items-baseline gap-1.5 font-serif leading-none">
+        <span className="text-3xl md:text-[32px] italic font-semibold">Cold-Chain</span>
+        <span className="text-xl md:text-2xl font-bold tracking-tight">Shipped</span>
+      </span>
+    ),
+  },
+  {
+    name: 'Batch Documented',
     el: (
       <span className="flex items-center gap-2 text-2xl md:text-[26px] font-serif leading-none">
         <span
           aria-hidden
           className="inline-block h-3 w-3 rounded-full bg-white/90"
         />
-        <span className="font-semibold tracking-tight">Medium</span>
+        <span className="font-semibold tracking-tight">Batch Documented</span>
       </span>
     ),
   },
   {
-    name: 'Shape',
-    el: (
-      <span
-        className="inline-flex items-center rounded-sm bg-accent text-black px-3 py-1.5 font-black text-base md:text-lg leading-none"
-        style={{ letterSpacing: '0.05em' }}
-      >
-        SHAPE
-      </span>
-    ),
-  },
-  {
-    name: 'InStyle',
-    el: (
-      <span className="text-2xl md:text-[28px] italic tracking-tight leading-none">
-        <span className="font-black">In</span>
-        <span className="font-light">Style</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Vogue',
+    name: 'Compounded in the USA',
     el: (
       <span
         className="font-serif font-bold text-2xl md:text-3xl leading-none"
         style={{ letterSpacing: '0.18em' }}
       >
-        VOGUE
+        USA COMPOUNDED
       </span>
     ),
   },
   {
-    name: 'Golf Digest',
-    el: (
-      <span className="flex items-baseline gap-1.5 font-serif leading-none">
-        <span className="text-3xl md:text-[32px] italic font-semibold">Golf</span>
-        <span className="text-xl md:text-2xl font-bold tracking-tight">Digest</span>
-      </span>
-    ),
-  },
-  {
-    name: 'GQ',
+    name: '18+',
     el: (
       <span
         className="font-black text-4xl md:text-5xl leading-none"
         style={{ letterSpacing: '-0.06em' }}
       >
-        <span>G</span>
-        <span className="text-accent">Q</span>
+        <span>18</span>
+        <span className="text-accent">+</span>
       </span>
     ),
   },
@@ -174,8 +155,8 @@ export function IntroPanel() {
   const REVEAL_END = 0.8;
   const span = REVEAL_END - REVEAL_START;
 
-  // Duplicate press wordmarks for seamless marquee loop
-  const loop = [...PRESS, ...PRESS];
+  // Duplicate standard wordmarks for seamless marquee loop
+  const loop = [...STANDARDS, ...STANDARDS];
 
   return (
     <section
@@ -187,7 +168,7 @@ export function IntroPanel() {
           {/* ===== 1) Teal accent bar (rounded top, full-bleed) ===== */}
           <div className="w-full bg-accent text-black text-center py-3 md:py-3.5 px-6">
             <p className="text-[11px] md:text-[13px] tracking-[0.18em] font-semibold">
-              TRUSTED BY THE WORLD&apos;S LEADING PUBLICATIONS
+              PHARMACY-GRADE STANDARDS. EVERY BATCH. EVERY VIAL.
             </p>
           </div>
 
