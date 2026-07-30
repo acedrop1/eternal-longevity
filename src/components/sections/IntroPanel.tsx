@@ -32,7 +32,7 @@ const STANDARDS: StandardItem[] = [
     name: 'Third-Party Tested',
     el: (
       <span
-        className="font-serif font-bold text-2xl md:text-[28px] leading-none"
+        className="font-serif font-bold text-lg md:text-xl leading-none"
         style={{ letterSpacing: '0.08em' }}
       >
         THIRD-PARTY TESTED
@@ -42,7 +42,7 @@ const STANDARDS: StandardItem[] = [
   {
     name: '99%+ Purity',
     el: (
-      <span className="font-black italic text-3xl md:text-4xl leading-none tracking-tight">
+      <span className="font-black italic text-xl md:text-2xl leading-none tracking-tight">
         99%+ <span className="text-accent">purity</span>
       </span>
     ),
@@ -51,7 +51,7 @@ const STANDARDS: StandardItem[] = [
     name: '503A Compounded',
     el: (
       <span
-        className="inline-flex items-center rounded-sm bg-accent text-black px-3 py-1.5 font-black text-base md:text-lg leading-none"
+        className="inline-flex items-center rounded-sm bg-accent text-black px-2.5 py-1 font-black text-sm md:text-base leading-none"
         style={{ letterSpacing: '0.05em' }}
       >
         503A COMPOUNDED
@@ -61,7 +61,7 @@ const STANDARDS: StandardItem[] = [
   {
     name: 'HIPAA Compliant',
     el: (
-      <span className="text-2xl md:text-[28px] italic tracking-tight leading-none">
+      <span className="text-lg md:text-xl italic tracking-tight leading-none">
         <span className="font-black">HIPAA</span>
         <span className="font-light"> compliant</span>
       </span>
@@ -71,18 +71,18 @@ const STANDARDS: StandardItem[] = [
     name: 'Cold-Chain Shipped',
     el: (
       <span className="flex items-baseline gap-1.5 font-serif leading-none">
-        <span className="text-3xl md:text-[32px] italic font-semibold">Cold-Chain</span>
-        <span className="text-xl md:text-2xl font-bold tracking-tight">Shipped</span>
+        <span className="text-xl md:text-2xl italic font-semibold">Cold-Chain</span>
+        <span className="text-base md:text-lg font-bold tracking-tight">Shipped</span>
       </span>
     ),
   },
   {
     name: 'Batch Documented',
     el: (
-      <span className="flex items-center gap-2 text-2xl md:text-[26px] font-serif leading-none">
+      <span className="flex items-center gap-2 text-lg md:text-xl font-serif leading-none">
         <span
           aria-hidden
-          className="inline-block h-3 w-3 rounded-full bg-white/90"
+          className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"
         />
         <span className="font-semibold tracking-tight">Batch Documented</span>
       </span>
@@ -92,7 +92,7 @@ const STANDARDS: StandardItem[] = [
     name: 'Compounded in the USA',
     el: (
       <span
-        className="font-serif font-bold text-2xl md:text-3xl leading-none"
+        className="font-serif font-bold text-lg md:text-xl leading-none"
         style={{ letterSpacing: '0.18em' }}
       >
         USA COMPOUNDED
@@ -103,7 +103,7 @@ const STANDARDS: StandardItem[] = [
     name: '18+',
     el: (
       <span
-        className="font-black text-4xl md:text-5xl leading-none"
+        className="font-black text-2xl md:text-3xl leading-none"
         style={{ letterSpacing: '-0.06em' }}
       >
         <span>18</span>
@@ -173,7 +173,7 @@ export function IntroPanel() {
           </div>
 
           {/* ===== 2) Marquee strip. Press names with accent dot separators ===== */}
-          <div className="relative overflow-hidden border-b border-white/10 py-6 md:py-8">
+          <div className="relative overflow-hidden border-b border-white/10 py-4 md:py-5">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 md:w-32 bg-gradient-to-r from-black to-transparent"
@@ -190,7 +190,7 @@ export function IntroPanel() {
                   className="flex flex-shrink-0 items-center"
                 >
                   <span
-                    className="px-10 md:px-16 select-none flex items-center"
+                    className="px-8 md:px-12 select-none flex items-center"
                     title={p.name}
                   >
                     {p.el}
