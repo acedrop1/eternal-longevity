@@ -111,11 +111,10 @@ export default async function DoctorPortalPage() {
         </div>
       </div>
 
-      {live ? (
-        <DoctorSignQueue intakes={intakes} />
-      ) : (
-        <DoctorQueueList doctorName={user.name} />
-      )}
+      {/* Intake sign-off and the order queue are separate workstreams — the
+          doctor needs both once orders are Supabase-backed. */}
+      {live && <DoctorSignQueue intakes={intakes} />}
+      <DoctorQueueList doctorName={user.name} />
     </PortalShell>
   );
 }

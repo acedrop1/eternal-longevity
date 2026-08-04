@@ -110,11 +110,10 @@ export default async function OrdersPage() {
         </p>
       </div>
 
-      {live ? (
-        <MemberOrderHistory orders={orders} />
-      ) : (
-        <MemberOrdersList memberEmail={user.email} />
-      )}
+      {/* Two complementary views: the workflow orders the member placed, and
+          the pharmacy shipment history from fulfillment_orders. */}
+      <MemberOrdersList memberEmail={user.email} />
+      {live && orders.length > 0 && <MemberOrderHistory orders={orders} />}
     </PortalShell>
   );
 }

@@ -106,11 +106,10 @@ export default async function AdminQueuePage() {
         </p>
       </div>
 
-      {live ? (
-        <AdminIntakeQueue intakes={intakes} />
-      ) : (
-        <AdminQueueList />
-      )}
+      {/* Intakes come from Supabase in live mode. Orders now do too, so the
+          admin sees both queues rather than one or the other. */}
+      {live && <AdminIntakeQueue intakes={intakes} />}
+      <AdminQueueList />
     </PortalShell>
   );
 }
