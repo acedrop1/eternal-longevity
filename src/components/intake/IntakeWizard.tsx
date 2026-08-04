@@ -52,7 +52,15 @@ function validateStep(step: Step, answers: Answers): { ok: boolean; knockout?: s
   return { ok: true };
 }
 
-export function IntakeWizard() {
+interface IntakeWizardProps {
+  /**
+   * Product the visitor started from on the storefront. Shown as a banner and
+   * submitted with the answers so the care team knows what they asked for.
+   */
+  product?: { id: string; name: string; tagline: string };
+}
+
+export function IntakeWizard({ product }: IntakeWizardProps = {}) {
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', stepIdx: 0 });
   const [answers, setAnswers] = useState<Answers>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -99,9 +107,12 @@ export function IntakeWizard() {
       // Strip File objects (which can't be sent through a server action as-is)
       // before posting. In production, upload files separately and reference
       // them by signed URL.
-      const safeAnswers = Object.fromEntries(
-        Object.entries(answers).filter(([, v]) => !(v instanceof File))
-      );
+      const safeAnswers = {
+        ...Object.fromEntries(
+          Object.entries(answers).filter(([, v]) => !(v instanceof File))
+        ),
+        ...(product ? { requestedProduct: product.name } : {}),
+      };
       startTransition(async () => {
         const res = await submitIntakeAction(safeAnswers);
         if (res.ok) {
@@ -200,6 +211,19 @@ export function IntakeWizard() {
   if (!currentStep) return null;
   return (
     <Shell progressPct={progressPct} stepIdx={status.stepIdx} total={total}>
+      {product && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-3">
+          <span className="text-[10px] tracking-widest text-accent">
+            STARTING
+          </span>
+          <span className="text-sm font-semibold text-foreground">
+            {product.name}
+          </span>
+          <span className="hidden sm:inline text-xs text-foreground/55">
+            {product.tagline}
+          </span>
+        </div>
+      )}
       <div className="mb-2">
         <p className="text-[11px] tracking-widest text-accent">{currentStep.eyebrow}</p>
       </div>

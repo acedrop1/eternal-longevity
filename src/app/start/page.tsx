@@ -3,6 +3,7 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import { LoopVideo } from '@/components/ui/LoopVideo';
+import { getShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
   title: 'Start Your Assessment | Eternal Longevity',
@@ -10,7 +11,14 @@ export const metadata: Metadata = {
     'Order your peptide protocol with a quick 3-minute profile. Compounded, third-party tested, shipped to your door.',
 };
 
-export default function StartPage() {
+interface StartPageProps {
+  searchParams: Promise<{ product?: string }>;
+}
+
+export default async function StartPage({ searchParams }: StartPageProps) {
+  // Visitors arriving from a storefront card land here with ?product=<slug>.
+  const { product: slug } = await searchParams;
+  const requested = slug ? getShopProduct(slug) : undefined;
   return (
     <>
       <Header />
@@ -30,7 +38,17 @@ export default function StartPage() {
           className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[100px]"
         />
 
-        <IntakeWizard />
+        <IntakeWizard
+          product={
+            requested
+              ? {
+                  id: requested.id,
+                  name: requested.name,
+                  tagline: requested.tagline,
+                }
+              : undefined
+          }
+        />
       </main>
       <Footer />
     </>

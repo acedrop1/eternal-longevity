@@ -20,12 +20,20 @@ interface ShopCatalogProps {
   categories?: typeof SHOP_CATEGORIES;
   /** Route prefix for product links. '/shop' on the public storefront. */
   basePath?: string;
+  /**
+   * When set, each card gets a primary "Get started" CTA pointing at this
+   * path with ?product=<slug>, alongside a secondary "Learn more" to the
+   * product page. Omitted on the member shop, where the card opens the PDP.
+   * A plain string, not a function — this crosses the server/client boundary.
+   */
+  startPath?: string;
 }
 
 export function ShopCatalog({
   items = SHOP_PRODUCTS,
   categories = SHOP_CATEGORIES,
   basePath = '/portal/shop',
+  startPath,
 }: ShopCatalogProps = {}) {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
@@ -121,15 +129,15 @@ export function ShopCatalog({
       {/* Product grid */}
       <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => (
-          <Link
+          <div
             key={p.id}
-            href={`${basePath}/${p.id}`}
-            className="group relative block overflow-hidden rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
+            className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}
           >
             {/* Image header on swatch */}
-            <div
-              className="relative aspect-[5/6] overflow-hidden"
+            <Link
+              href={`${basePath}/${p.id}`}
+              className="relative block aspect-[5/6] overflow-hidden"
               style={{ background: p.swatch }}
             >
               <Image
@@ -172,10 +180,10 @@ export function ShopCatalog({
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Bottom row. Description, price, CTA */}
-            <div className="p-5 md:p-6">
+            <div className="flex flex-1 flex-col p-5 md:p-6">
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
                 <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/65">
                   {DELIVERY_LABEL[p.delivery].toUpperCase()}
@@ -187,10 +195,10 @@ export function ShopCatalog({
               <p className="mb-5 text-sm text-foreground/70 leading-relaxed line-clamp-3">
                 {p.shortDescription}
               </p>
-              <div className="flex items-end justify-between">
-                <div>
+              <div className="mt-auto">
+                <div className="mb-4">
                   <div className="text-[10px] tracking-widest text-foreground/45">
-                    SUBSCRIBE FROM
+                    {startPath ? 'FROM' : 'SUBSCRIBE FROM'}
                   </div>
                   <div className="text-lg font-semibold text-foreground tracking-tight">
                     ${Math.round(p.pricing.annual / 12)}
@@ -199,24 +207,45 @@ export function ShopCatalog({
                     </span>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1">
-                  EXPLORE
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+
+                {startPath ? (
+                  <div className="flex gap-2">
+                    <Link
+                      href={`${startPath}?product=${p.id}`}
+                      className="flex-1 rounded-full bg-accent px-4 py-2.5 text-center text-xs font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft"
+                    >
+                      Get started
+                    </Link>
+                    <Link
+                      href={`${basePath}/${p.id}`}
+                      className="flex-1 rounded-full border border-line bg-background px-4 py-2.5 text-center text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
+                    >
+                      Learn more
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href={`${basePath}/${p.id}`}
+                    className="inline-flex items-center gap-1.5 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
                   >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </span>
+                    EXPLORE
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </Link>
+                )}
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 

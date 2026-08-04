@@ -74,6 +74,7 @@ export default function PublicShopPage() {
               items={PUBLIC_PRODUCTS}
               categories={PUBLIC_CATEGORIES}
               basePath="/shop"
+              startPath="/start"
             />
 
             {/* Members see the rest of the catalog once signed in. */}

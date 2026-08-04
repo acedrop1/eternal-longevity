@@ -49,7 +49,7 @@ export default async function PublicProductPage({ params }: PageProps) {
           </nav>
 
           {/* Mobile: sticky-gallery + slide-up info panel */}
-          <ProductPDPMobile product={product} ctaHref="/start" />
+          <ProductPDPMobile product={product} ctaHref={`/start?product=${product.id}`} />
 
           {/* Desktop */}
           <div className="hidden md:block pb-24 lg:pb-16">
@@ -57,7 +57,7 @@ export default async function PublicProductPage({ params }: PageProps) {
               product={product}
               related={related}
               basePath="/shop"
-              ctaHref="/start"
+              ctaHref={`/start?product=${product.id}`}
             />
           </div>
         </div>
