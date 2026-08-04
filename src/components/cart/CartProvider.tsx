@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useMemo,
   useState,
   type ReactNode,
@@ -104,17 +105,29 @@ export function CartProvider({
     setHydrated(true);
   }, [live]);
 
+  /*
+   * Skip the first save in live mode. The initial items came from the server,
+   * so writing them straight back is pointless — and worse, it races: if the
+   * member adds something before that no-op save resolves, the stale empty
+   * cart can land last and wipe what they just added.
+   */
+  const skipFirstSave = useRef(live);
+
   // Persist on every change: localStorage in demo mode, the member's profile
   // row in live mode so the cart follows them across devices.
   useEffect(() => {
     if (!hydrated) return;
-    if (live) {
-      void saveCartAction(state.items).catch((err) =>
-        console.error('[cart] save failed:', err),
-      );
-    } else {
+    if (!live) {
       saveToStorage(state.items);
+      return;
     }
+    if (skipFirstSave.current) {
+      skipFirstSave.current = false;
+      return;
+    }
+    void saveCartAction(state.items).catch((err) =>
+      console.error('[cart] save failed:', err),
+    );
   }, [state.items, hydrated, live]);
 
   // Lock body scroll while drawer is open
