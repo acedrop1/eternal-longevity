@@ -1,12 +1,20 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { PROTOCOLS } from '@/lib/protocols';
+import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/shop`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    ...PUBLIC_PRODUCTS.map((p) => ({
+      url: `${SITE_URL}/shop/${p.id}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    })),
     { url: `${SITE_URL}/protocols`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE_URL}/science`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },

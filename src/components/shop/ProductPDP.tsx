@@ -13,11 +13,13 @@ import {
 import { useCart } from '@/components/cart/CartProvider';
 
 interface ProductPDPProps {
+  /** Route prefix for shop links. '/shop' on the public storefront. */
+  basePath?: string;
   product: ShopProduct;
   related: ShopProduct[];
 }
 
-export function ProductPDP({ product, related }: ProductPDPProps) {
+export function ProductPDP({ product, related, basePath = '/portal/shop' }: ProductPDPProps) {
   const [activeImage, setActiveImage] = useState(0);
   const tiers = cadenceTiersForProduct(product);
   const defaultTier =
@@ -414,7 +416,7 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
               </h2>
             </div>
             <Link
-              href="/portal/shop"
+              href={basePath}
               className="text-[11px] tracking-widest text-accent hover:text-accent-soft"
             >
               VIEW ALL PRODUCTS →
@@ -425,7 +427,7 @@ export function ProductPDP({ product, related }: ProductPDPProps) {
             {related.map((r) => (
               <Link
                 key={r.id}
-                href={`/portal/shop/${r.id}`}
+                href={`${basePath}/${r.id}`}
                 className="group block overflow-hidden rounded-3xl border border-line bg-surface transition-all hover:border-accent/30"
               >
                 <div

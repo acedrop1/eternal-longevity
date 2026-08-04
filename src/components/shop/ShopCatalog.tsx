@@ -13,13 +13,26 @@ import {
 
 type Filter = 'all' | ShopCategory;
 
-export function ShopCatalog() {
+interface ShopCatalogProps {
+  /** Products to list. Defaults to the full member catalog. */
+  items?: typeof SHOP_PRODUCTS;
+  /** Category pills to offer. Defaults to all categories. */
+  categories?: typeof SHOP_CATEGORIES;
+  /** Route prefix for product links. '/shop' on the public storefront. */
+  basePath?: string;
+}
+
+export function ShopCatalog({
+  items = SHOP_PRODUCTS,
+  categories = SHOP_CATEGORIES,
+  basePath = '/portal/shop',
+}: ShopCatalogProps = {}) {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
 
   const products = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SHOP_PRODUCTS.filter((p) => {
+    return items.filter((p) => {
       if (filter !== 'all' && p.category !== filter) return false;
       if (!q) return true;
       const haystack = [
@@ -33,7 +46,7 @@ export function ShopCatalog() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [filter, query]);
+  }, [items, filter, query]);
 
   return (
     <div>
@@ -93,7 +106,7 @@ export function ShopCatalog() {
           <Pill active={filter === 'all'} onClick={() => setFilter('all')}>
             All products
           </Pill>
-          {SHOP_CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <Pill
               key={c.key}
               active={filter === c.key}
@@ -110,7 +123,7 @@ export function ShopCatalog() {
         {products.map((p) => (
           <Link
             key={p.id}
-            href={`/portal/shop/${p.id}`}
+            href={`${basePath}/${p.id}`}
             className="group relative block overflow-hidden rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}
           >

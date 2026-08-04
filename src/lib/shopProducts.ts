@@ -69,6 +69,12 @@ export interface ShopProduct {
   requiresReview: true;
   /** Optional "popular" badge */
   popular?: boolean;
+  /**
+   * True when the active ingredient has an FDA-approved reference drug
+   * (e.g. semaglutide → Ozempic/Wegovy). Only these are listed on the public
+   * storefront at /shop; everything else is member-only at /portal/shop.
+   */
+  fdaApproved?: boolean;
 }
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
@@ -199,6 +205,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/11.jpg', '/images/14.jpg'],
     requiresReview: true,
+    fdaApproved: true,
   },
 
   // ============ METABOLIC ============
@@ -233,6 +240,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     gallery: ['/images/12.jpg', '/images/9.jpg', '/images/11.jpg', '/images/7.jpg'],
     requiresReview: true,
     popular: true,
+    fdaApproved: true,
   },
   {
     id: 'tirzepatide',
@@ -264,6 +272,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/5.jpg',
     gallery: ['/images/5.jpg', '/images/6.jpg', '/images/9.jpg', '/images/11.jpg'],
     requiresReview: true,
+    fdaApproved: true,
   },
 
   // ============ COGNITIVE ============
@@ -356,6 +365,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/2.jpg', '/images/9.jpg'],
     requiresReview: true,
+    fdaApproved: true,
   },
 
   // ============ LONGEVITY & SKIN ============
@@ -447,3 +457,17 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
     },
   ];
 }
+
+/**
+ * Products listed on the PUBLIC storefront (/shop) — only those whose active
+ * ingredient has an FDA-approved reference drug. Everything else stays
+ * member-only behind the login at /portal/shop.
+ */
+export const PUBLIC_PRODUCTS: ShopProduct[] = SHOP_PRODUCTS.filter(
+  (p) => p.fdaApproved
+);
+
+/** Categories that still have at least one product on the public storefront. */
+export const PUBLIC_CATEGORIES = SHOP_CATEGORIES.filter((c) =>
+  PUBLIC_PRODUCTS.some((p) => p.category === c.key)
+);
