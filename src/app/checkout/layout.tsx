@@ -1,20 +1,24 @@
 import { CartProvider } from '@/components/cart/CartProvider';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
+import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
 
 /**
- * /checkout layout mirrors /portal's providers so cart, orders, and saved
- * profile all carry across (via localStorage). After successful pay we
- * call OrdersProvider.placeOrder() to create the pending-admin order, and
- * MemberProfileProvider to save any new address/card the member picked.
+ * /checkout mirrors /portal's providers so cart and saved profile carry
+ * across. On successful pay, CheckoutFlow calls OrdersProvider.placeOrder(),
+ * which writes the pending-admin order to Supabase in live mode (and to
+ * localStorage otherwise).
  */
-export default function CheckoutLayout({
+export default async function CheckoutLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const live = await ordersDbConfigured();
+  const orders = live ? await listOrders() : [];
+
   return (
-    <OrdersProvider>
+    <OrdersProvider initialOrders={orders} live={live}>
       <MemberProfileProvider>
         <CartProvider>{children}</CartProvider>
       </MemberProfileProvider>

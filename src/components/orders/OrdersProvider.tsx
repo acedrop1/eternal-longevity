@@ -1,5 +1,14 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import {
+  placeOrderAction,
+  approveOrderAction,
+  denyOrderAction,
+  signRxAction,
+  declineClinicalAction,
+  advanceOrderAction,
+} from '@/lib/orders-db';
 import {
   createContext,
   useCallback,
@@ -85,19 +94,63 @@ function saveToStorage(orders: Order[]) {
   }
 }
 
-export function OrdersProvider({ children }: { children: ReactNode }) {
-  const [orders, setOrders] = useState<Order[]>([]);
+interface OrdersProviderProps {
+  children: ReactNode;
+  /**
+   * Orders fetched on the server for this session. Present in live mode; the
+   * provider then treats Supabase as the source of truth and only keeps a
+   * local copy for optimistic updates between refreshes.
+   */
+  initialOrders?: Order[];
+  /** True when Supabase is configured and `initialOrders` is authoritative. */
+  live?: boolean;
+}
+
+export function OrdersProvider({
+  children,
+  initialOrders,
+  live = false,
+}: OrdersProviderProps) {
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>(live ? initialOrders ?? [] : []);
   const [hydrated, setHydrated] = useState(false);
 
+  // Demo mode only: hydrate from localStorage. In live mode the server
+  // already handed us the rows.
   useEffect(() => {
+    if (live) return;
     setOrders(loadFromStorage());
     setHydrated(true);
-  }, []);
+  }, [live]);
+
+  // Keep local state in step with fresh server data after router.refresh().
+  useEffect(() => {
+    if (!live || !initialOrders) return;
+    setOrders(initialOrders);
+  }, [live, initialOrders]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (live || !hydrated) return;
     saveToStorage(orders);
-  }, [orders, hydrated]);
+  }, [orders, hydrated, live]);
+
+  /**
+   * Run a server action in live mode, then pull fresh rows. The optimistic
+   * local update has already happened, so the UI does not wait on the round
+   * trip; the refresh reconciles it.
+   */
+  const sync = useCallback(
+    (run: () => Promise<{ ok: boolean; error?: string }>) => {
+      if (!live) return;
+      void run()
+        .then((res) => {
+          if (!res.ok) console.error('[orders] action failed:', res.error);
+          router.refresh();
+        })
+        .catch((err) => console.error('[orders] action threw:', err));
+    },
+    [live, router],
+  );
 
   const updateOrder = useCallback(
     (id: string, patch: Partial<Order>) => {
@@ -136,16 +189,30 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const placeOrder = useCallback<OrdersAPI['placeOrder']>((draft) => {
-    const order: Order = {
-      ...draft,
-      id: `ord-${Math.random().toString(36).slice(2, 8)}`,
-      placedAt: Date.now(),
-      status: 'pending-admin' as OrderStatus,
-    };
-    setOrders((curr) => [order, ...curr]);
-    return order;
-  }, []);
+  const placeOrder = useCallback<OrdersAPI['placeOrder']>(
+    (draft) => {
+      const order: Order = {
+        ...draft,
+        id: `ord-${Math.random().toString(36).slice(2, 8)}`,
+        placedAt: Date.now(),
+        status: 'pending-admin' as OrderStatus,
+      };
+      setOrders((curr) => [order, ...curr]);
+      sync(() =>
+        placeOrderAction({
+          lines: draft.lines,
+          subtotal: draft.subtotal,
+          shippingCost: draft.shippingCost,
+          tax: draft.tax,
+          total: draft.total,
+          shippingAddress: draft.shippingAddress,
+          cardLast4: draft.cardLast4,
+        }),
+      );
+      return order;
+    },
+    [sync],
+  );
 
   const approve = useCallback<OrdersAPI['approve']>(
     (id, note) => {
@@ -157,15 +224,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         note ?? 'Confirmed. Released for compounding.',
         'assigned'
       );
+      sync(() => approveOrderAction(id, undefined, note));
     },
-    [updateOrder, appendUpdate]
+    [updateOrder, appendUpdate, sync]
   );
 
   const denyAdmin = useCallback<OrdersAPI['denyAdmin']>(
     (id, note) => {
       updateOrder(id, { status: 'denied-admin', adminNote: note });
+      sync(() => denyOrderAction(id, note));
     },
-    [updateOrder]
+    [updateOrder, sync]
   );
 
   /**
@@ -203,14 +272,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         };
       })
     );
-  }, []);
+    const charged = orders.find((o) => o.id === id)?.total ?? 0;
+    sync(() => signRxAction(id, note, charged));
+  }, [orders, sync]);
 
   const declineClinical = useCallback<OrdersAPI['declineClinical']>(
     (id, author, note) => {
       updateOrder(id, { status: 'declined-clinical', physicianNote: note });
       appendUpdate(id, author, 'physician', note, 'declined-clinical');
+      sync(() => declineClinicalAction(id, note));
     },
-    [updateOrder, appendUpdate]
+    [updateOrder, appendUpdate, sync]
   );
 
   const markCompounding = useCallback<OrdersAPI['markCompounding']>(
@@ -223,8 +295,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         note ?? 'Pharmacy is compounding now.',
         'compounding'
       );
+      sync(() => advanceOrderAction(id, 'compounding', { note }));
     },
-    [updateOrder, appendUpdate]
+    [updateOrder, appendUpdate, sync]
   );
 
   const markShipped = useCallback<OrdersAPI['markShipped']>(
@@ -237,8 +310,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         note ?? `Shipped via ${carrier} · ${tracking}`,
         'shipped'
       );
+      sync(() => advanceOrderAction(id, 'shipped', { note, carrier, tracking }));
     },
-    [updateOrder, appendUpdate]
+    [updateOrder, appendUpdate, sync]
   );
 
   const markDelivered = useCallback<OrdersAPI['markDelivered']>(
@@ -251,8 +325,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         note ?? 'Delivery confirmed.',
         'delivered'
       );
+      sync(() => advanceOrderAction(id, 'delivered', { note }));
     },
-    [updateOrder, appendUpdate]
+    [updateOrder, appendUpdate, sync]
   );
 
   const addUpdate = useCallback<OrdersAPI['addUpdate']>(

@@ -2,26 +2,29 @@ import { CartProvider } from '@/components/cart/CartProvider';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
+import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
 
 /**
  * Shared layout for everything under /portal/*.
- * Wraps in:
- *   - OrdersProvider: shared order list with the workflow state machine
- *     (member places → admin approves/assigns → doctor signs)
- *   - MemberProfileProvider: saved addresses + cards so the member doesn't
- *     re-type at each checkout
- *   - CartProvider: cart state + global drawer
  *
- * Checkout lives outside this layout but mounts the same providers so the
- * state syncs via localStorage.
+ * Orders are fetched here on the server so every role — member, doctor,
+ * admin, pharmacy — reads the same Supabase rows. RLS narrows the result:
+ * members see only their own orders, clinical staff see all of them. When
+ * Supabase is not configured the provider falls back to localStorage demo
+ * data, so the preview build still works.
+ *
+ * Cart and profile stay client-side; both are per-browser by nature.
  */
-export default function PortalLayout({
+export default async function PortalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const live = await ordersDbConfigured();
+  const orders = live ? await listOrders() : [];
+
   return (
-    <OrdersProvider>
+    <OrdersProvider initialOrders={orders} live={live}>
       <MemberProfileProvider>
         <CartProvider>
           {children}
