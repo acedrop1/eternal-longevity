@@ -160,27 +160,20 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
           </h1>
           <p className="mb-5 text-base text-accent">{product.tagline}</p>
 
-          {/* Rating placeholder */}
-          <div className="mb-6 flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <svg
-                  key={i}
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill={i <= 4 ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-accent"
-                >
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-              ))}
-            </div>
-            <span className="text-xs text-foreground/55">
-              4.7 · 184 member reviews
-            </span>
+          {/* Factual quality strip. No rating until real reviews exist. */}
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            {[
+              'Third-party tested',
+              '503A compounded',
+              product.fdaApproved ? 'FDA-approved active' : 'Cold-chain shipped',
+            ].map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] tracking-wider text-foreground/70"
+              >
+                {t.toUpperCase()}
+              </span>
+            ))}
           </div>
 
           <p className="mb-6 text-foreground/75 leading-relaxed">
@@ -373,10 +366,77 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
         </ul>
       </section>
 
+      {/* === SAFETY: side effects + contraindications === */}
+      <section className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
+        <div>
+          <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
+            03 / SAFETY
+          </p>
+          <h2
+            className="font-semibold tracking-tight text-foreground"
+            style={{
+              fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.05,
+            }}
+          >
+            What to know first.
+          </h2>
+          <p className="mt-4 text-sm text-foreground/55 leading-relaxed">
+            Most effects are mild and dose-related. Share your full history in
+            your profile so anything here can be ruled out before you order.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-surface p-5 md:p-6">
+            <p className="mb-3 text-[10px] tracking-widest text-foreground/45">
+              POSSIBLE SIDE EFFECTS
+            </p>
+            <ul className="space-y-2">
+              {product.sideEffects.map((item, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-sm text-foreground/80 leading-relaxed"
+                >
+                  <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground/40" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-accent/25 bg-accent/[0.04] p-5 md:p-6">
+            <p className="mb-3 text-[10px] tracking-widest text-accent">
+              DO NOT USE IF
+            </p>
+            <ul className="space-y-2">
+              {product.contraindications.map((item, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-sm text-foreground/85 leading-relaxed"
+                >
+                  <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-accent/70" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="sm:col-span-2 text-xs text-foreground/45 leading-relaxed">
+            This list is not exhaustive and is not medical advice. Talk to your
+            own healthcare provider about your history and any medications you
+            take before starting a protocol. Seek immediate care for symptoms
+            such as difficulty breathing, swelling of the face or throat, or
+            severe abdominal pain.
+          </p>
+        </div>
+      </section>
+
       {/* === HOW IT WORKS === */}
       <section className="rounded-3xl border border-line bg-surface px-6 py-12 md:px-12 md:py-16">
         <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-          03 / FROM SUBSCRIBE TO SHIP
+          04 / FROM SUBSCRIBE TO SHIP
         </p>
         <h2
           className="mb-10 max-w-2xl font-semibold tracking-tight text-foreground"
@@ -419,7 +479,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
           <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-                04 / KEEP EXPLORING
+                05 / KEEP EXPLORING
               </p>
               <h2
                 className="font-semibold tracking-tight text-foreground"

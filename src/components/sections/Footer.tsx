@@ -23,7 +23,7 @@ const COL_LINKS = [
     links: [
       { label: 'Terms of Service', href: '/legal/terms' },
       { label: 'Privacy Policy', href: '/legal/privacy' },
-      { label: 'Consent Policy', href: '/legal/telehealth' },
+      { label: 'Consent Policy', href: '/legal/consent' },
       { label: 'Refund Policy', href: '/legal/refunds' },
     ],
   },
@@ -86,7 +86,8 @@ export function Footer() {
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
             Eternal Longevity offers premium peptide protocols strictly for
             health optimization. Not a substitute for primary care. Order
-            online; ships from a licensed 503A pharmacy. 18+.
+            online; ships from a licensed 503A pharmacy. Currently available to
+            New Jersey residents. 18+.
           </p>
         </div>
       </div>

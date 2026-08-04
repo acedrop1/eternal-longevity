@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const p = getShopProduct(id);
-  if (!p || !p.fdaApproved) return { title: 'Shop' };
+  if (!p) return { title: 'Shop' };
   return {
     title: p.name,
     description: p.shortDescription,
@@ -30,8 +30,7 @@ export default async function PublicProductPage({ params }: PageProps) {
   const { id } = await params;
   const product = getShopProduct(id);
 
-  // Member-only products are not reachable from the public storefront.
-  if (!product || !product.fdaApproved) notFound();
+  if (!product) notFound();
 
   const related = PUBLIC_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
 

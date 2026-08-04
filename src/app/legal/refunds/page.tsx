@@ -83,7 +83,7 @@ export default function RefundsPage() {
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
-        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/telehealth' },
+        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
       ]}
     />
   );

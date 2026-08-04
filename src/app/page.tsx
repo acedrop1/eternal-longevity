@@ -5,7 +5,6 @@ import { FeaturedProtocol } from '@/components/sections/FeaturedProtocol';
 import { Pillars } from '@/components/sections/Pillars';
 import { Science } from '@/components/sections/Science';
 import { HowItWorks } from '@/components/sections/HowItWorks';
-import { Testimonials } from '@/components/sections/Testimonials';
 import { Comparison } from '@/components/sections/Comparison';
 import { FeatureSpotlight } from '@/components/sections/FeatureSpotlight';
 import { Footer } from '@/components/sections/Footer';
@@ -29,7 +28,9 @@ export default function Home() {
         <SectionReveal><Pillars /></SectionReveal>              {/* Premium expandable rows */}
         <SectionReveal><Science /></SectionReveal>              {/* POUCH sticky-scroll science section */}
         <SectionReveal><HowItWorks /></SectionReveal>
-        <SectionReveal><Testimonials /></SectionReveal>         {/* Eight Sleep "trusted reviews" masonry */}
+        {/* Testimonials intentionally omitted until real, permissioned member
+            quotes exist. The component remains in components/sections for
+            when they do — see its header comment. */}
         <SectionReveal><Comparison /></SectionReveal>           {/* POUCH Sip vs Drip comparison table */}
         <SectionReveal><FeatureSpotlight /></SectionReveal>     {/* Eight Sleep scroll-pinned spotlight */}
       </main>

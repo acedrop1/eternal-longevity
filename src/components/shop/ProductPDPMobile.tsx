@@ -463,8 +463,38 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           </ul>
         </Section>
 
+        {/* ===== Safety ===== */}
+        <Section title="Safety" eyebrow="05">
+          <p className="mb-3 text-[11px] tracking-widest text-foreground/45">
+            POSSIBLE SIDE EFFECTS
+          </p>
+          <ul className="mb-6 space-y-2">
+            {product.sideEffects.map((b) => (
+              <li key={b} className="flex items-start gap-2.5 text-foreground/75">
+                <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground/40" />
+                <span className="leading-relaxed">{b}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mb-3 text-[11px] tracking-widest text-accent">
+            DO NOT USE IF
+          </p>
+          <ul className="space-y-2">
+            {product.contraindications.map((b) => (
+              <li key={b} className="flex items-start gap-2.5 text-foreground/85">
+                <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-accent/70" />
+                <span className="leading-relaxed">{b}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5 text-xs text-foreground/45 leading-relaxed">
+            Not exhaustive and not medical advice. Talk to your own healthcare
+            provider about your history and medications before starting.
+          </p>
+        </Section>
+
         {/* ===== Specifications ===== */}
-        <Section title="Specifications" eyebrow="05">
+        <Section title="Specifications" eyebrow="06">
           <dl className="divide-y divide-line text-sm">
             <SpecRow label="Delivery" value={DELIVERY_LABEL[product.delivery]} />
             <SpecRow label="Cycle length" value={product.cycleLength} />
@@ -484,7 +514,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         </Section>
 
         {/* ===== Shipping ===== */}
-        <Section title="Shipping" eyebrow="06">
+        <Section title="Shipping" eyebrow="07">
           <p className="text-foreground/70 leading-relaxed">
             Cold-chain shipped from our licensed 503A pharmacy in temperature-
             controlled packaging. Free shipping on every cycle. Tracking
@@ -493,7 +523,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         </Section>
 
         {/* ===== Questions ===== */}
-        <Section title="Questions?" eyebrow="07">
+        <Section title="Questions?" eyebrow="08">
           <div className="space-y-3 text-foreground/75">
             <a
               href="mailto:care@eternallongevity.com"

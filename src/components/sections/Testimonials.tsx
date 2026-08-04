@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * NOT CURRENTLY RENDERED. Removed from the homepage because the quotes and
+ * personas in here are placeholders, not real permissioned member
+ * testimonials — publishing invented reviews is an FTC problem and a red flag
+ * in payment-processor review. Re-add <Testimonials /> to app/page.tsx once
+ * the arrays below hold real quotes collected with permission.
+ */
+
 import Image from 'next/image';
 import { FadeIn } from '@/components/ui/FadeIn';
 

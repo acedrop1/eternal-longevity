@@ -70,6 +70,14 @@ export interface ShopProduct {
   /** Optional "popular" badge */
   popular?: boolean;
   /**
+   * Commonly reported side effects. Shown on the PDP — most are mild and
+   * dose-related, and being upfront about them is both good practice and
+   * what a payment processor expects to see on a compounded product page.
+   */
+  sideEffects: string[];
+  /** Who should not use this product without clearing it first. */
+  contraindications: string[];
+  /**
    * True when the active ingredient has an FDA-approved reference drug
    * (e.g. semaglutide → Ozempic/Wegovy). Only these are listed on the public
    * storefront at /shop; everything else is member-only at /portal/shop.
@@ -108,6 +116,18 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/14.jpg',
     gallery: ['/images/14.jpg', '/images/13.jpg', '/images/11.jpg', '/images/9.jpg'],
     requiresReview: true,
+    sideEffects: [
+      'Injection-site redness or itching',
+      'Temporary blue-green tint at the injection site (copper)',
+      'Mild lightheadedness at higher doses',
+      'Headache in the first week',
+    ],
+    contraindications: [
+      "Wilson's disease or any copper-metabolism disorder",
+      'Known copper hypersensitivity',
+      'Pregnancy or breastfeeding',
+      'Active malignancy',
+    ],
   },
 
   // ============ GROWTH HORMONE ============
@@ -142,6 +162,19 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     gallery: ['/images/9.jpg', '/images/11.jpg', '/images/13.jpg', '/images/14.jpg'],
     requiresReview: true,
     popular: true,
+    sideEffects: [
+      'Injection-site redness or swelling',
+      'Water retention or mild joint puffiness',
+      'Head rush or flushing shortly after dosing',
+      'Vivid dreams or altered sleep the first week',
+      'Increased appetite',
+    ],
+    contraindications: [
+      'Active or prior malignancy',
+      'Pregnancy or breastfeeding',
+      'Uncontrolled diabetes or severe insulin resistance',
+      'Active proliferative retinopathy',
+    ],
   },
   {
     id: 'sermorelin',
@@ -173,6 +206,19 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/7.jpg',
     gallery: ['/images/7.jpg', '/images/8.jpg', '/images/9.jpg', '/images/13.jpg'],
     requiresReview: true,
+    sideEffects: [
+      'Injection-site irritation',
+      'Flushing or warmth after dosing',
+      'Headache',
+      'Transient dizziness',
+      'Mild water retention',
+    ],
+    contraindications: [
+      'Active malignancy',
+      'Pregnancy or breastfeeding',
+      'Known hypersensitivity to GHRH analogs',
+      'Untreated hypothyroidism',
+    ],
   },
   {
     id: 'tesamorelin',
@@ -206,6 +252,19 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/11.jpg', '/images/14.jpg'],
     requiresReview: true,
     fdaApproved: true,
+    sideEffects: [
+      'Injection-site reactions (most common)',
+      'Joint pain or stiffness',
+      'Peripheral edema / swelling in hands and feet',
+      'Muscle aches',
+      'Elevated blood glucose',
+    ],
+    contraindications: [
+      'Active malignancy',
+      'Pregnancy or breastfeeding',
+      'Disrupted hypothalamic-pituitary axis (pituitary tumor, surgery, or radiation)',
+      'Known hypersensitivity to tesamorelin or mannitol',
+    ],
   },
 
   // ============ METABOLIC ============
@@ -241,6 +300,21 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     requiresReview: true,
     popular: true,
     fdaApproved: true,
+    sideEffects: [
+      'Nausea, especially during dose escalation',
+      'Vomiting, diarrhea, or constipation',
+      'Reduced appetite and early fullness',
+      'Fatigue',
+      'Injection-site reactions',
+      'Gallbladder issues at higher doses',
+    ],
+    contraindications: [
+      'Personal or family history of medullary thyroid carcinoma',
+      'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
+      'History of pancreatitis',
+      'Pregnancy, breastfeeding, or actively trying to conceive',
+      'Severe gastrointestinal disease or gastroparesis',
+    ],
   },
   {
     id: 'tirzepatide',
@@ -273,6 +347,21 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     gallery: ['/images/5.jpg', '/images/6.jpg', '/images/9.jpg', '/images/11.jpg'],
     requiresReview: true,
     fdaApproved: true,
+    sideEffects: [
+      'Nausea, especially during dose escalation',
+      'Vomiting, diarrhea, or constipation',
+      'Reduced appetite and early fullness',
+      'Abdominal discomfort',
+      'Injection-site reactions',
+      'Gallbladder issues at higher doses',
+    ],
+    contraindications: [
+      'Personal or family history of medullary thyroid carcinoma',
+      'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
+      'History of pancreatitis',
+      'Pregnancy, breastfeeding, or actively trying to conceive',
+      'Severe gastrointestinal disease or gastroparesis',
+    ],
   },
 
   // ============ COGNITIVE ============
@@ -304,6 +393,17 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/6.jpg',
     gallery: ['/images/6.jpg', '/images/5.jpg', '/images/7.jpg', '/images/11.jpg'],
     requiresReview: true,
+    sideEffects: [
+      'Nasal irritation or dryness (nasal spray)',
+      'Mild drowsiness',
+      'Headache',
+      'Altered taste briefly after dosing',
+    ],
+    contraindications: [
+      'Pregnancy or breastfeeding',
+      'Known hypersensitivity to the peptide',
+      'Use alongside sedatives without guidance',
+    ],
   },
   {
     id: 'semax',
@@ -333,6 +433,18 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/1.jpg',
     gallery: ['/images/1.jpg', '/images/7.jpg', '/images/8.jpg', '/images/6.jpg'],
     requiresReview: true,
+    sideEffects: [
+      'Nasal irritation (nasal spray)',
+      'Headache',
+      'Overstimulation or difficulty sleeping if dosed late',
+      'Transient blood-pressure changes',
+    ],
+    contraindications: [
+      'Pregnancy or breastfeeding',
+      'Uncontrolled hypertension',
+      'Seizure disorder without guidance',
+      'Known hypersensitivity to the peptide',
+    ],
   },
 
   // ============ SEXUAL HEALTH ============
@@ -366,6 +478,20 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/2.jpg', '/images/9.jpg'],
     requiresReview: true,
     fdaApproved: true,
+    sideEffects: [
+      'Nausea (most common, dose-related)',
+      'Facial flushing',
+      'Headache',
+      'Temporary rise in blood pressure',
+      'Injection-site reactions',
+      'Darkening of skin or freckles with frequent use',
+    ],
+    contraindications: [
+      'Uncontrolled hypertension or known cardiovascular disease',
+      'Pregnancy or breastfeeding',
+      'History of melanoma or numerous atypical moles',
+      'Concurrent use of nitrates',
+    ],
   },
 
   // ============ LONGEVITY & SKIN ============
@@ -398,6 +524,17 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/10.jpg',
     gallery: ['/images/10.jpg', '/images/2.jpg', '/images/1.jpg', '/images/14.jpg'],
     requiresReview: true,
+    sideEffects: [
+      'Injection-site irritation',
+      'Mild drowsiness',
+      'Headache',
+      'Changes to sleep pattern in the first week',
+    ],
+    contraindications: [
+      'Active malignancy',
+      'Pregnancy or breastfeeding',
+      'Known hypersensitivity to the peptide',
+    ],
   },
 ];
 
@@ -459,13 +596,14 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
 }
 
 /**
- * Products listed on the PUBLIC storefront (/shop) — only those whose active
- * ingredient has an FDA-approved reference drug. Everything else stays
- * member-only behind the login at /portal/shop.
+ * Products listed on the PUBLIC storefront (/shop).
+ *
+ * The whole catalog is public — the products underwriting flagged as
+ * prohibited were removed from the catalog entirely rather than hidden, so
+ * there is nothing left to gate. `fdaApproved` is kept as a display badge,
+ * not as a visibility filter.
  */
-export const PUBLIC_PRODUCTS: ShopProduct[] = SHOP_PRODUCTS.filter(
-  (p) => p.fdaApproved
-);
+export const PUBLIC_PRODUCTS: ShopProduct[] = SHOP_PRODUCTS;
 
 /** Categories that still have at least one product on the public storefront. */
 export const PUBLIC_CATEGORIES = SHOP_CATEGORIES.filter((c) =>

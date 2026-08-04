@@ -17,13 +17,13 @@ const MECHANISMS = [
     n: '01',
     title: 'Growth-hormone axis',
     body:
-      'GH secretagogues act on the pituitary to produce pulsatile, physiological GH release. Matching how a healthy 25-year-old body naturally cycles, without flooding the system.',
+      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile, physiological GH release. Matching how a healthy 25-year-old body naturally cycles, without flooding the system.',
   },
   {
     n: '02',
     title: 'Tissue repair',
     body:
-      'Restorative peptides modulate inflammation and signal tissue remodeling. Supporting recovery across joints, skin, and connective tissue.',
+      'Restorative peptides like KPV and GHK-Cu modulate inflammation and signal tissue remodeling. Supporting recovery across joints, skin, and connective tissue.',
   },
   {
     n: '03',
@@ -35,7 +35,7 @@ const MECHANISMS = [
     n: '04',
     title: 'Metabolic balance',
     body:
-      'Metabolic peptides re-sensitize insulin pathways and re-regulate appetite signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
+      'Tesofensine, Tirzepatide, and supporting peptides re-sensitize insulin pathways and re-regulate appetite signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
   },
 ];
 
@@ -64,28 +64,28 @@ const STANDARDS = [
 
 const EVIDENCE = [
   {
-    peptide: 'GH secretagogue class',
+    peptide: 'CJC-1295 / Ipamorelin',
     headline: 'GH pulse amplification, no cortisol shift',
     summary:
       'In healthy adults, combined dosing produced sustained increases in IGF-1 and GH AUC across an eight-week window without elevating prolactin or cortisol. The cleanest pulsatile profile in this class.',
     note: 'Multiple Phase 1/2 trials, peer-reviewed.',
   },
   {
-    peptide: 'Copper tripeptide class',
+    peptide: 'GHK-Cu',
     headline: 'Collagen synthesis & tissue remodeling',
     summary:
       'A naturally occurring copper tripeptide whose levels decline with age. Restoring it activates wound healing, collagen production, and antioxidant defense, with a long record in dermatological research.',
     note: 'Established in dermatology; systemic evidence emerging.',
   },
   {
-    peptide: 'GH-axis analog class',
+    peptide: 'Tesamorelin',
     headline: 'Visceral fat reduction, sustained',
     summary:
       'FDA-approved for HIV-associated lipodystrophy, with strong off-label evidence for visceral adipose reduction in middle-aged adults. Paired with measurable improvements in lipid profile.',
     note: 'FDA-approved indication; off-label use is common.',
   },
   {
-    peptide: 'GLP-1 / GIP class',
+    peptide: 'Semaglutide / Tirzepatide',
     headline: 'GLP-1 metabolic reset',
     summary:
       'Large randomized trials demonstrate 15–22% mean body-weight reduction with sustained insulin sensitivity gains. Our protocols pair these with muscle-preserving peptides to protect lean mass.',

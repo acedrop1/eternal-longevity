@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'What you acknowledge when ordering compounded peptide protocols, including risks and limitations.',
 };
 
-export default function TelehealthConsentPage() {
+export default function ConsentPolicyPage() {
   return (
     <LegalLayout
       eyebrow="LEGAL"

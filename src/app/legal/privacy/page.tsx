@@ -111,7 +111,7 @@ export default function PrivacyPage() {
       ]}
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
-        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/telehealth' },
+        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
         { label: 'Refund Policy', href: '/legal/refunds' },
       ]}
     />
