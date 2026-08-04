@@ -2,6 +2,7 @@ import { CartProvider } from '@/components/cart/CartProvider';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
 import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
+import { loadCart, loadProfile, profileDbConfigured } from '@/lib/profile-db';
 
 /**
  * /checkout mirrors /portal's providers so cart and saved profile carry
@@ -15,12 +16,20 @@ export default async function CheckoutLayout({
   children: React.ReactNode;
 }) {
   const live = await ordersDbConfigured();
-  const orders = live ? await listOrders() : [];
+  const profileLive = await profileDbConfigured();
+  const [orders, profile, cart] = await Promise.all([
+    live ? listOrders() : Promise.resolve([]),
+    profileLive ? loadProfile() : Promise.resolve(null),
+    profileLive ? loadCart() : Promise.resolve({ items: [], supported: false }),
+  ]);
 
   return (
     <OrdersProvider initialOrders={orders} live={live}>
-      <MemberProfileProvider>
-        <CartProvider>{children}</CartProvider>
+      <MemberProfileProvider
+        initialProfile={profile ?? undefined}
+        live={profileLive}
+      >
+        <CartProvider initialItems={cart.items} live={cart.supported}>{children}</CartProvider>
       </MemberProfileProvider>
     </OrdersProvider>
   );

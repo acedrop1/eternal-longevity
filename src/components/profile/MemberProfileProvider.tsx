@@ -1,6 +1,16 @@
 'use client';
 
 import {
+  patchProfileAction,
+  addAddressAction,
+  updateAddressAction,
+  removeAddressAction,
+  setPrimaryAddressAction,
+  addCardAction,
+  removeCardAction,
+  setPrimaryCardAction,
+} from '@/lib/profile-db';
+import {
   createContext,
   useCallback,
   useContext,
@@ -62,23 +72,62 @@ function randId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function MemberProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<MemberProfile>(SEED_PROFILE);
+interface MemberProfileProviderProps {
+  children: ReactNode;
+  /** Profile loaded on the server: scalar fields, addresses, saved cards. */
+  initialProfile?: MemberProfile;
+  /** True when signed in with Supabase — writes then go to the database. */
+  live?: boolean;
+}
+
+export function MemberProfileProvider({
+  children,
+  initialProfile,
+  live = false,
+}: MemberProfileProviderProps) {
+  const [profile, setProfile] = useState<MemberProfile>(
+    live ? initialProfile ?? { addresses: [], cards: [] } : SEED_PROFILE,
+  );
   const [hydrated, setHydrated] = useState(false);
 
+  // Demo mode only: hydrate from localStorage.
   useEffect(() => {
+    if (live) return;
     setProfile(load());
     setHydrated(true);
-  }, []);
+  }, [live]);
+
+  // Keep in step with fresh server data after a refresh.
+  useEffect(() => {
+    if (!live || !initialProfile) return;
+    setProfile(initialProfile);
+  }, [live, initialProfile]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (live || !hydrated) return;
     save(profile);
-  }, [profile, hydrated]);
+  }, [profile, hydrated, live]);
 
-  const patchProfile = useCallback<MemberProfileAPI['patchProfile']>((patch) => {
-    setProfile((p) => ({ ...p, ...patch }));
-  }, []);
+  /** Fire a server action in live mode; local state already updated. */
+  const sync = useCallback(
+    (run: () => Promise<{ ok: boolean; error?: string }>) => {
+      if (!live) return;
+      void run()
+        .then((r) => {
+          if (!r.ok) console.error('[profile] action failed:', r.error);
+        })
+        .catch((err) => console.error('[profile] action threw:', err));
+    },
+    [live],
+  );
+
+  const patchProfile = useCallback<MemberProfileAPI['patchProfile']>(
+    (patch) => {
+      setProfile((p) => ({ ...p, ...patch }));
+      sync(() => patchProfileAction(patch));
+    },
+    [sync],
+  );
 
   const addAddress = useCallback<MemberProfileAPI['addAddress']>((a) => {
     const created: SavedAddress = { ...a, id: randId('addr') };
@@ -95,8 +144,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
       }
       return { ...p, addresses };
     });
+    sync(() => addAddressAction(a));
     return created;
-  }, []);
+  }, [sync]);
 
   const updateAddress = useCallback<MemberProfileAPI['updateAddress']>(
     (id, patch) => {
@@ -106,8 +156,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
           a.id === id ? { ...a, ...patch } : a
         ),
       }));
+      sync(() => updateAddressAction(id, patch));
     },
-    []
+    [sync]
   );
 
   const removeAddress = useCallback<MemberProfileAPI['removeAddress']>(
@@ -123,8 +174,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
         }
         return { ...p, addresses: remaining };
       });
+      sync(() => removeAddressAction(id));
     },
-    []
+    [sync]
   );
 
   const setPrimaryAddress = useCallback<MemberProfileAPI['setPrimaryAddress']>(
@@ -136,8 +188,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
           isPrimary: a.id === id,
         })),
       }));
+      sync(() => setPrimaryAddressAction(id));
     },
-    []
+    [sync]
   );
 
   const addCard = useCallback<MemberProfileAPI['addCard']>((c) => {
@@ -153,8 +206,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
       }
       return { ...p, cards };
     });
+    sync(() => addCardAction(c));
     return created;
-  }, []);
+  }, [sync]);
 
   const removeCard = useCallback<MemberProfileAPI['removeCard']>((id) => {
     setProfile((p) => {
@@ -164,7 +218,8 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
       }
       return { ...p, cards: remaining };
     });
-  }, []);
+    sync(() => removeCardAction(id));
+  }, [sync]);
 
   const setPrimaryCard = useCallback<MemberProfileAPI['setPrimaryCard']>(
     (id) => {
@@ -172,8 +227,9 @@ export function MemberProfileProvider({ children }: { children: ReactNode }) {
         ...p,
         cards: p.cards.map((c) => ({ ...c, isPrimary: c.id === id })),
       }));
+      sync(() => setPrimaryCardAction(id));
     },
-    []
+    [sync]
   );
 
   const resetProfile = useCallback(() => {

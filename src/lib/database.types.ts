@@ -68,6 +68,7 @@ export type Database = {
           account_status: AccountStatus;
           two_factor_enabled: boolean;
           notification_prefs: Json;
+          cart: Json;
           created_at: string;
           updated_at: string;
         };
@@ -83,6 +84,7 @@ export type Database = {
           account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
+          cart?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -98,6 +100,7 @@ export type Database = {
           account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
+          cart?: Json;
           created_at?: string;
           updated_at?: string;
         };

@@ -14,15 +14,12 @@ import {
   cadenceTiersForProduct,
   type ShopProduct,
 } from '@/lib/shopProducts';
+import type { Cadence, CartItem } from '@/lib/cartTypes';
+import { saveCartAction } from '@/lib/profile-db';
 
-export type Cadence = 'monthly' | 'quarterly' | 'annual';
-
-export interface CartItem {
-  productId: string;
-  cadence: Cadence;
-  quantity: number;
-  addedAt: number;
-}
+// Shared with the server actions — see lib/cartTypes.ts. Re-exported here so
+// the many existing `from '@/components/cart/CartProvider'` imports still work.
+export type { Cadence, CartItem } from '@/lib/cartTypes';
 
 /** Derived item enriched with product detail + resolved price for the cadence. */
 export interface ResolvedCartItem extends CartItem {
@@ -80,21 +77,45 @@ function saveToStorage(items: CartItem[]) {
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<CartState>({ items: [], drawerOpen: false });
-  const [hydrated, setHydrated] = useState(false);
+interface CartProviderProps {
+  children: ReactNode;
+  /** Cart loaded from the member's profile row on the server. */
+  initialItems?: CartItem[];
+  /** True when signed in with Supabase — the cart then persists server-side. */
+  live?: boolean;
+}
 
-  // Load from localStorage once on mount (post-hydration)
+export function CartProvider({
+  children,
+  initialItems,
+  live = false,
+}: CartProviderProps) {
+  const [state, setState] = useState<CartState>({
+    items: live ? initialItems ?? [] : [],
+    drawerOpen: false,
+  });
+  const [hydrated, setHydrated] = useState(live);
+
+  // Demo mode only: the cart lives in localStorage. In live mode the server
+  // handed us the member's saved cart.
   useEffect(() => {
+    if (live) return;
     setState((s) => ({ ...s, items: loadFromStorage() }));
     setHydrated(true);
-  }, []);
+  }, [live]);
 
-  // Mirror items to localStorage on every change (post-hydration only)
+  // Persist on every change: localStorage in demo mode, the member's profile
+  // row in live mode so the cart follows them across devices.
   useEffect(() => {
     if (!hydrated) return;
-    saveToStorage(state.items);
-  }, [state.items, hydrated]);
+    if (live) {
+      void saveCartAction(state.items).catch((err) =>
+        console.error('[cart] save failed:', err),
+      );
+    } else {
+      saveToStorage(state.items);
+    }
+  }, [state.items, hydrated, live]);
 
   // Lock body scroll while drawer is open
   useEffect(() => {
