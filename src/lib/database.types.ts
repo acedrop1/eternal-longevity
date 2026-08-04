@@ -30,7 +30,13 @@ export type OrderStatus =
   | 'shipped'
   | 'delivered'
   | 'canceled'
-  | 'refunded';
+  | 'refunded'
+  // Clinical workflow states — migration 0004.
+  | 'pending-admin'
+  | 'denied-admin'
+  | 'assigned'
+  | 'signed'
+  | 'declined-clinical';
 export type SubscriptionStatus =
   | 'active'
   | 'paused'
@@ -275,6 +281,16 @@ export type Database = {
           shipping_address: Json | null;
           tracking_carrier: string | null;
           tracking_number: string | null;
+          member_name: string | null;
+          member_email: string | null;
+          ship_state: string | null;
+          assigned_physician_id: string | null;
+          admin_note: string | null;
+          physician_note: string | null;
+          paid_at: string | null;
+          first_charge_cents: number | null;
+          card_last4: string | null;
+          tax_cents: number;
           created_at: string;
           updated_at: string;
         };
@@ -290,6 +306,16 @@ export type Database = {
           shipping_address?: Json | null;
           tracking_carrier?: string | null;
           tracking_number?: string | null;
+          member_name?: string | null;
+          member_email?: string | null;
+          ship_state?: string | null;
+          assigned_physician_id?: string | null;
+          admin_note?: string | null;
+          physician_note?: string | null;
+          paid_at?: string | null;
+          first_charge_cents?: number | null;
+          card_last4?: string | null;
+          tax_cents?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -305,6 +331,16 @@ export type Database = {
           shipping_address?: Json | null;
           tracking_carrier?: string | null;
           tracking_number?: string | null;
+          member_name?: string | null;
+          member_email?: string | null;
+          ship_state?: string | null;
+          assigned_physician_id?: string | null;
+          admin_note?: string | null;
+          physician_note?: string | null;
+          paid_at?: string | null;
+          first_charge_cents?: number | null;
+          card_last4?: string | null;
+          tax_cents?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -318,6 +354,10 @@ export type Database = {
           product_name: string;
           quantity: number;
           unit_price_cents: number;
+          cadence: string | null;
+          cadence_label: string | null;
+          image: string | null;
+          swatch: string | null;
         };
         Insert: {
           id?: string;
@@ -326,6 +366,10 @@ export type Database = {
           product_name: string;
           quantity?: number;
           unit_price_cents?: number;
+          cadence?: string | null;
+          cadence_label?: string | null;
+          image?: string | null;
+          swatch?: string | null;
         };
         Update: {
           id?: string;
@@ -334,6 +378,10 @@ export type Database = {
           product_name?: string;
           quantity?: number;
           unit_price_cents?: number;
+          cadence?: string | null;
+          cadence_label?: string | null;
+          image?: string | null;
+          swatch?: string | null;
         };
         Relationships: [];
       };
@@ -343,6 +391,9 @@ export type Database = {
           order_id: string;
           label: string;
           body: string | null;
+          author: string | null;
+          author_role: string | null;
+          status_change: string | null;
           created_at: string;
         };
         Insert: {
@@ -350,6 +401,9 @@ export type Database = {
           order_id: string;
           label: string;
           body?: string | null;
+          author?: string | null;
+          author_role?: string | null;
+          status_change?: string | null;
           created_at?: string;
         };
         Update: {
@@ -357,6 +411,9 @@ export type Database = {
           order_id?: string;
           label?: string;
           body?: string | null;
+          author?: string | null;
+          author_role?: string | null;
+          status_change?: string | null;
           created_at?: string;
         };
         Relationships: [];
