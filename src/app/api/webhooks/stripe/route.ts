@@ -18,6 +18,12 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import type { Json, SubscriptionStatus } from '@/lib/database.types';
+import {
+  SUPPORT_EMAIL,
+  emailConfigured,
+  orderConfirmationEmail,
+  sendEmail,
+} from '@/lib/email';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -84,6 +90,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         .update({ status: 'paid' })
         .eq('stripe_payment_intent_id', pi.id);
       await addOrderUpdate(db, pi.id, 'Payment received', 'Your card was charged successfully.');
+      await sendOrderConfirmation(db, pi.id);
       break;
     }
 
@@ -211,6 +218,52 @@ async function createRefillDraft(
     items: rx.items,
     cycle_label: 'Refill cycle',
   });
+}
+
+/**
+ * Email the customer their confirmation and copy the support inbox. Never
+ * throws — a mail failure must not fail the webhook, or Stripe will retry a
+ * payment that already succeeded.
+ */
+async function sendOrderConfirmation(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  paymentIntentId: string,
+): Promise<void> {
+  if (!emailConfigured()) return;
+  try {
+    const { data: order } = await db
+      .from('orders')
+      .select('id, order_number, total_cents, user_id')
+      .eq('stripe_payment_intent_id', paymentIntentId)
+      .maybeSingle();
+    if (!order) return;
+
+    const [{ data: profile }, { data: items }] = await Promise.all([
+      db.from('profiles').select('email, full_name').eq('id', order.user_id).maybeSingle(),
+      db.from('order_items').select('product_name, quantity, unit_price_cents').eq('order_id', order.id),
+    ]);
+    if (!profile?.email) return;
+
+    const mail = orderConfirmationEmail({
+      firstName: (profile.full_name || '').split(' ')[0] || 'there',
+      orderNumber: order.order_number,
+      total: order.total_cents ?? 0,
+      items: (items ?? []).map((i) => ({
+        name: i.product_name,
+        qty: i.quantity ?? 1,
+        amount: (i.unit_price_cents ?? 0) * (i.quantity ?? 1),
+      })),
+    });
+
+    await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `New order — ${order.order_number}`,
+      html: mail.html,
+    });
+  } catch (err) {
+    console.error('[stripe] order confirmation email failed:', err);
+  }
 }
 
 /** Append a timeline entry to whichever order owns this payment intent. */

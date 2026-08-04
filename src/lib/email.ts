@@ -25,9 +25,11 @@ function getResend(): Resend {
   return cached;
 }
 
+/** Every outbound message sends from — and replies to — the support inbox. */
+export const SUPPORT_EMAIL = process.env.CARE_TEAM_EMAIL || 'support@etlongevity.com';
+
 const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ||
-  'Eternal Longevity <hello@eternallongevity.com>';
+  process.env.RESEND_FROM_EMAIL || `Eternal Longevity <${SUPPORT_EMAIL}>`;
 
 export interface SendEmailInput {
   to: string | string[];
@@ -56,7 +58,7 @@ export async function sendEmail(
       to: input.to,
       subject: input.subject,
       html: input.html,
-      replyTo: input.replyTo,
+      replyTo: input.replyTo ?? SUPPORT_EMAIL,
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: data?.id };
@@ -84,8 +86,9 @@ function shell(body: string): string {
         ${body}
       </td></tr>
       <tr><td style="padding:20px 32px;border-top:1px solid #262626;color:#737373;font-size:12px;line-height:1.5;">
-        Physician-supervised longevity protocols. This message may contain
-        confidential health information intended only for the named recipient.
+        Premium peptide protocols. Compounded by a licensed 503A pharmacy.<br />
+        This message may contain confidential information intended only for the
+        named recipient.
       </td></tr>
     </table>
   </td></tr></table>
@@ -199,6 +202,110 @@ export function welcomeEmail(input: {
          )}" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Sign in</a>
        </p>
        <p style="color:#a3a3a3;font-size:13px;">For your security, please change this password after your first sign-in. You can do that any time from Account settings.</p>`,
+    ),
+  };
+}
+
+/** Sent to the customer once payment succeeds. */
+export function orderConfirmationEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  items: { name: string; qty: number; amount: number }[];
+  total: number;
+}): { subject: string; html: string } {
+  const rows = input.items
+    .map(
+      (i) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#e5e5e5;font-size:14px;">${escapeHtml(
+          i.name,
+        )}${i.qty > 1 ? ` &times;${i.qty}` : ''}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#fff;font-size:14px;" align="right">$${(
+          i.amount / 100
+        ).toFixed(2)}</td>
+      </tr>`,
+    )
+    .join('');
+  return {
+    subject: `Order confirmed — ${input.orderNumber}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your order is confirmed.</h1>
+       <p style="margin:0 0 18px;">Thanks ${escapeHtml(
+         input.firstName,
+       )} — we've received your order. It goes to our partner 503A pharmacy for compounding, and you'll get tracking as soon as it ships.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;">
+         ${rows}
+         <tr>
+           <td style="padding:12px 0;color:#737373;font-size:13px;">Total</td>
+           <td style="padding:12px 0;color:#d5a850;font-size:18px;font-weight:700;" align="right">$${(
+             input.total / 100
+           ).toFixed(2)}</td>
+         </tr>
+       </table>
+       <p style="color:#a3a3a3;font-size:13px;">Order reference <strong style="color:#e5e5e5;">${escapeHtml(
+         input.orderNumber,
+       )}</strong>. Questions? Just reply to this email.</p>`,
+    ),
+  };
+}
+
+export interface DailyReportStats {
+  /** Human date the report covers, e.g. "Tuesday, 4 August 2026". */
+  dateLabel: string;
+  signups: number;
+  intakes: number;
+  orders: number;
+  revenueCents: number;
+  prescriptionsSigned: number;
+  shipmentsSent: number;
+  pendingIntakes: number;
+  pendingFulfillment: number;
+}
+
+/** Branded end-of-day summary for the support inbox. */
+export function dailyReportEmail(s: DailyReportStats): {
+  subject: string;
+  html: string;
+} {
+  const tile = (label: string, value: string, accent = false) => `
+    <td width="50%" style="padding:6px;">
+      <div style="background:#0a0a0a;border:1px solid #262626;border-radius:14px;padding:16px;">
+        <div style="color:#737373;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;">${label}</div>
+        <div style="color:${accent ? '#d5a850' : '#ffffff'};font-size:26px;font-weight:700;margin-top:6px;">${value}</div>
+      </div>
+    </td>`;
+
+  const row = (a: string, b: string) =>
+    `<tr>${a}${b}</tr>`;
+
+  return {
+    subject: `Daily report — ${s.dateLabel} · ${s.orders} orders, ${s.signups} signups`,
+    html: shell(
+      `<h1 style="margin:0 0 4px;color:#fff;font-size:22px;">Daily report</h1>
+       <p style="margin:0 0 18px;color:#a3a3a3;font-size:13px;">${escapeHtml(
+         s.dateLabel,
+       )}</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 -6px 8px;">
+         ${row(
+           tile('Orders', String(s.orders), true),
+           tile('Revenue', `$${(s.revenueCents / 100).toFixed(2)}`, true),
+         )}
+         ${row(tile('New signups', String(s.signups)), tile('Intakes', String(s.intakes)))}
+         ${row(
+           tile('Rx signed', String(s.prescriptionsSigned)),
+           tile('Shipments', String(s.shipmentsSent)),
+         )}
+       </table>
+       <div style="margin-top:18px;padding:16px;background:#0a0a0a;border:1px solid #262626;border-radius:14px;">
+         <div style="color:#737373;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:10px;">Needs attention</div>
+         <div style="color:#e5e5e5;font-size:14px;line-height:1.9;">
+           Intakes awaiting review: <strong style="color:${
+             s.pendingIntakes > 0 ? '#d5a850' : '#e5e5e5'
+           };">${s.pendingIntakes}</strong><br />
+           Orders awaiting fulfillment: <strong style="color:${
+             s.pendingFulfillment > 0 ? '#d5a850' : '#e5e5e5'
+           };">${s.pendingFulfillment}</strong>
+         </div>
+       </div>`,
     ),
   };
 }

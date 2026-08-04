@@ -19,6 +19,7 @@ import {
   intakeConfirmationEmail,
   intakeReceivedTeamEmail,
   sendEmail,
+  SUPPORT_EMAIL,
 } from '@/lib/email';
 
 export interface IntakeSubmitResult {
@@ -88,13 +89,11 @@ export async function submitIntakeAction(
 
   await Promise.allSettled([
     sendEmail({ to: email, subject: patient.subject, html: patient.html }),
-    process.env.CARE_TEAM_EMAIL
-      ? sendEmail({
-          to: process.env.CARE_TEAM_EMAIL,
-          subject: team.subject,
-          html: team.html,
-        })
-      : Promise.resolve(),
+    sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: team.subject,
+      html: team.html,
+    }),
   ]);
 
   return { ok: true, caseId };
