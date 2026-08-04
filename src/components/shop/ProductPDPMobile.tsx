@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   cadenceTiersForProduct,
@@ -13,6 +14,11 @@ import { useCart } from '@/components/cart/CartProvider';
 
 interface ProductPDPMobileProps {
   product: ShopProduct;
+  /**
+   * When set, CTAs link here instead of adding to cart. The public
+   * storefront points it at the assessment.
+   */
+  ctaHref?: string;
 }
 
 /**
@@ -30,7 +36,7 @@ interface ProductPDPMobileProps {
  * Desktop renders the original ProductPDP. This component is hidden
  * above the md breakpoint by the parent page.
  */
-export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
+export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
   const { addItem } = useCart();
   const tiers = cadenceTiersForProduct(product);
   const defaultTier = tiers.find((t) => t.key === 'quarterly') ?? tiers[0];
@@ -374,13 +380,22 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
           ref={ctaRef}
           className="cta-block mt-7 rounded-2xl bg-surface-raised p-4"
         >
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="block w-full rounded-full bg-accent px-6 py-4 text-base font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
-          >
-            Add to Cart. ${active.total}
-          </button>
+          {ctaHref ? (
+            <Link
+              href={ctaHref}
+              className="block w-full rounded-full bg-accent px-6 py-4 text-center text-base font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
+            >
+              Get started. From ${active.total}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="block w-full rounded-full bg-accent px-6 py-4 text-base font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
+            >
+              Add to Cart. ${active.total}
+            </button>
+          )}
           <p className="mt-3 text-center text-[11px] tracking-wider text-foreground/50">
             Ships in {active.key === 'monthly' ? 'monthly cycles' : active.key === 'quarterly' ? 'quarterly cycles' : 'a single annual shipment'} · cancel between cycles
           </p>
@@ -575,13 +590,22 @@ export function ProductPDPMobile({ product }: ProductPDPMobileProps) {
                 ${active.total}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="flex-1 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
-            >
-              Add to Cart
-            </button>
+            {ctaHref ? (
+              <Link
+                href={ctaHref}
+                className="flex-1 rounded-full bg-accent px-6 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
+              >
+                Get started
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="flex-1 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-soft active:scale-[0.98]"
+              >
+                Add to Cart
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -15,11 +15,17 @@ import { useCart } from '@/components/cart/CartProvider';
 interface ProductPDPProps {
   /** Route prefix for shop links. '/shop' on the public storefront. */
   basePath?: string;
+  /**
+   * When set, the subscribe CTA becomes a link to this href instead of an
+   * add-to-cart action. The public storefront points it at the assessment —
+   * ordering requires a completed assessment and an account.
+   */
+  ctaHref?: string;
   product: ShopProduct;
   related: ShopProduct[];
 }
 
-export function ProductPDP({ product, related, basePath = '/portal/shop' }: ProductPDPProps) {
+export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHref }: ProductPDPProps) {
   const [activeImage, setActiveImage] = useState(0);
   const tiers = cadenceTiersForProduct(product);
   const defaultTier =
@@ -253,16 +259,27 @@ export function ProductPDP({ product, related, basePath = '/portal/shop' }: Prod
             </div>
           </div>
 
-          {/* Subscribe CTA. Adds to cart and opens the drawer */}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
-          >
-            Subscribe. ${active.perMonth}/mo →
-          </button>
+          {/* CTA. Members add to cart; public visitors start the assessment. */}
+          {ctaHref ? (
+            <Link
+              href={ctaHref}
+              className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
+            >
+              Get started. From ${active.perMonth}/mo →
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
+            >
+              Subscribe. ${active.perMonth}/mo →
+            </button>
+          )}
           <p className="mt-3 text-center text-[11px] text-foreground/45">
-            Compounded and third-party tested before it ships · Cancel between cycles
+            {ctaHref
+              ? 'Complete a short assessment to order · Compounded and third-party tested before it ships'
+              : 'Compounded and third-party tested before it ships · Cancel between cycles'}
           </p>
 
           {/* Inline reassurance row */}
@@ -476,6 +493,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop' }: Prod
         product={product}
         active={active}
         onSubscribe={handleAddToCart}
+        ctaHref={ctaHref}
       />
     </div>
   );
@@ -485,10 +503,12 @@ function StickySubscribeBar({
   product,
   active,
   onSubscribe,
+  ctaHref,
 }: {
   product: ShopProduct;
   active: CadenceTier;
   onSubscribe: () => void;
+  ctaHref?: string;
 }) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-background/95 backdrop-blur pb-safe lg:hidden">
@@ -501,13 +521,22 @@ function StickySubscribeBar({
             {active.label.toUpperCase()} · ${active.perMonth}/MO
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onSubscribe}
-          className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
-        >
-          Subscribe →
-        </button>
+        {ctaHref ? (
+          <Link
+            href={ctaHref}
+            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+          >
+            Get started →
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onSubscribe}
+            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+          >
+            Subscribe →
+          </button>
+        )}
       </div>
     </div>
   );
