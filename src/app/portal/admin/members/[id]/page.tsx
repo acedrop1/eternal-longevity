@@ -47,46 +47,22 @@ const STATUS_BADGE: Record<AccountStatus, string> = {
   deactivated: 'border-line bg-surface text-foreground/45',
 };
 
-const DEMO_NAMES: Record<string, { name: string; email: string }> = {
-  'demo-m1': { name: 'Marcus Thompson', email: 'marcus.t@protonmail.com' },
-  'demo-m2': { name: 'Lena Rodriguez', email: 'lena.r@gmail.com' },
-  'demo-m3': { name: 'Sam Park', email: 'sam.park@icloud.com' },
-  'demo-m4': { name: 'Hadi Khoury', email: 'hadi.k@gmail.com' },
-  'demo-m5': { name: 'Priya Narayan', email: 'priya.n@gmail.com' },
-};
-
+/**
+ * Empty record, used only when the Supabase lookup fails. This screen shows
+ * member contact details and assessment answers, so a fabricated fallback
+ * would put invented health information in front of an admin.
+ */
 function demoDetail(id: string): MemberDetail {
-  const who = DEMO_NAMES[id] ?? {
-    name: 'Member record',
-    email: 'member@example.com',
-  };
   return {
-    name: who.name,
-    email: who.email,
-    phone: '(201) 555-0188',
-    dob: '1988-03-12',
+    name: 'Member record unavailable',
+    email: '—',
+    phone: '—',
+    dob: '—',
     status: 'active',
-    joinedAt: 'Apr 23, 2026',
-    subscriptions: [
-      {
-        productName: 'Recover Protocol',
-        status: 'active',
-        cadence: 'Quarterly',
-        perCycle: 480,
-      },
-    ],
-    orders: [
-      { ref: 'FUL-DEMO02', status: 'shipped', createdAt: 'May 12, 2026' },
-      { ref: 'FUL-DEMO01', status: 'delivered', createdAt: 'Feb 9, 2026' },
-    ],
-    assessment: [
-      { label: 'Primary goal', value: 'Recovery & joint repair' },
-      { label: 'Age', value: '38' },
-      { label: 'Biological sex', value: 'Male' },
-      { label: 'Current medications', value: 'None reported' },
-      { label: 'Known conditions', value: 'None reported' },
-      { label: 'Training load', value: '5–6 sessions / week' },
-    ],
+    joinedAt: '—',
+    subscriptions: [],
+    orders: [],
+    assessment: [],
   };
 }
 

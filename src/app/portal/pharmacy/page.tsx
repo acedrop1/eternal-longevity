@@ -16,59 +16,9 @@ export const metadata: Metadata = {
   title: 'Pharmacy | Eternal Longevity',
 };
 
-const DEMO_ORDERS: PharmacyOrderView[] = [
-  {
-    id: 'demo-f1',
-    orderRef: 'FUL-DEMO01',
-    patientName: 'Marcus Tran',
-    patientDob: '1988-03-12',
-    address: {
-      line1: '1402 Garden St',
-      line2: 'Apt 4B',
-      city: 'Hoboken',
-      state: 'NJ',
-      zip: '07030',
-    },
-    prescriberName: 'Dr. M. Reyes',
-    prescriberNpi: '1841299300',
-    items: [
-      {
-        product: 'KPV / GHK-Cu',
-        strength: '10 mg / 10 mg',
-        size: '5 mL Vial',
-        quantity: 1,
-      },
-    ],
-    status: 'submitted',
-    trackingCarrier: null,
-    trackingNumber: null,
-  },
-  {
-    id: 'demo-f2',
-    orderRef: 'FUL-DEMO02',
-    patientName: 'Lena Ruiz',
-    patientDob: '1991-07-29',
-    address: {
-      line1: '88 Hudson Ave',
-      city: 'Jersey City',
-      state: 'NJ',
-      zip: '07302',
-    },
-    prescriberName: 'Dr. M. Reyes',
-    prescriberNpi: '1841299300',
-    items: [
-      {
-        product: 'CJC-1295 / Ipamorelin',
-        strength: '6 mg / 12 mg',
-        size: '5 mL Vial',
-        quantity: 1,
-      },
-    ],
-    status: 'accepted',
-    trackingCarrier: null,
-    trackingNumber: null,
-  },
-];
+// Empty fallback: renders only if the Supabase query fails. Never invent
+// patient or order data on a staff screen.
+const DEMO_ORDERS: PharmacyOrderView[] = [];
 
 function rowToView(row: {
   id: string;

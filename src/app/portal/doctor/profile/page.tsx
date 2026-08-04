@@ -2,21 +2,41 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
   title: 'Physician Profile | Eternal Longevity',
 };
 
+/**
+ * Real licensure for the prescriber of record, per the signed pharmacy
+ * onboarding form. New Jersey only — this is what limits the states we can
+ * serve, so it must not drift from reality.
+ */
 const LICENSES = [
-  { state: 'New Jersey', number: '25MA08123900', expires: 'Jun 2027' },
-  { state: 'New York', number: '281234', expires: 'Aug 2026' },
-  { state: 'Massachusetts', number: '283456', expires: 'Mar 2027' },
+  { state: 'New Jersey', number: '25MB11925900', expires: '—' },
 ];
 
 export default async function DoctorProfilePage() {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'doctor') redirect(user.redirectTo);
+
+  // Contact details come from the prescriber's own profile row, never from
+  // placeholder values.
+  let npi = '—';
+  let phone = '—';
+  if (supabaseConfigured) {
+    const db = await createSupabaseServerClient();
+    const { data } = await db
+      .from('profiles')
+      .select('npi, phone')
+      .eq('id', user.id)
+      .maybeSingle();
+    npi = data?.npi || '—';
+    phone = data?.phone || '—';
+  }
 
   return (
     <PortalShell
@@ -52,9 +72,9 @@ export default async function DoctorProfilePage() {
             </h2>
             <div className="grid gap-5 sm:grid-cols-2">
               <ReadOnlyField label="FULL NAME" value={user.name} />
-              <ReadOnlyField label="NPI" value="1245678901" />
+              <ReadOnlyField label="NPI" value={npi} />
               <ReadOnlyField label="EMAIL" value={user.email} />
-              <ReadOnlyField label="PHONE" value="(201) 555-0188" />
+              <ReadOnlyField label="PHONE" value={phone} />
             </div>
           </section>
 

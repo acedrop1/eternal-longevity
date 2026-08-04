@@ -26,45 +26,11 @@ const ADMIN_NAV = [
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
-const DEMO_READY: ReadyRxView[] = [
-  {
-    kind: 'prescription',
-    id: 'demo-rx1',
-    patientName: 'Priya Nair',
-    protocolName: 'Recover Protocol',
-  },
-  {
-    kind: 'prescription',
-    id: 'demo-rx2',
-    patientName: 'Hadi Karam',
-    protocolName: 'Longevity Protocol',
-  },
-  {
-    kind: 'draft',
-    id: 'demo-draft1',
-    patientName: 'Marcus Tran',
-    protocolName: 'Refill cycle',
-  },
-];
+// Empty fallback: renders only if the Supabase query fails. Never invent
+// patient or order data on a staff screen.
+const DEMO_READY: ReadyRxView[] = [];
 
-const DEMO_SUBMITTED: SubmittedOrderView[] = [
-  {
-    id: 'demo-f1',
-    orderRef: 'FUL-DEMO01',
-    patientName: 'Marcus Tran',
-    status: 'submitted',
-    trackingCarrier: null,
-    trackingNumber: null,
-  },
-  {
-    id: 'demo-f2',
-    orderRef: 'FUL-DEMO02',
-    patientName: 'Lena Ruiz',
-    status: 'shipped',
-    trackingCarrier: 'FedEx',
-    trackingNumber: '7712 4408 9921',
-  },
-];
+const DEMO_SUBMITTED: SubmittedOrderView[] = [];
 
 export default async function AdminFulfillmentPage() {
   const user = await getSession();
