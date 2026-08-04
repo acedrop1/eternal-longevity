@@ -351,6 +351,10 @@ export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> 
     title: "This protocol isn't a fit right now",
     body: 'These peptide protocols are not safe during pregnancy or breastfeeding. We recommend speaking with your own healthcare provider; you can come back when ready.',
   },
+  glp1_allergy: {
+    title: "This product isn't a fit right now",
+    body: 'A previous allergic reaction to a GLP-1 medication rules this out. Please talk to your own healthcare provider — our non-GLP-1 protocols may still be an option.',
+  },
   organ: {
     title: "This protocol isn't a fit right now",
     body: 'End-stage kidney or liver disease calls for specialized medical supervision beyond what these peptide protocols are intended for. Please consult your own specialist.',
@@ -431,3 +435,210 @@ export const PRODUCT_KNOCKOUT = {
   title: "This product isn't a fit right now",
   body: 'Based on what you told us, this product is not appropriate for you. Please talk to your own healthcare provider — and feel free to browse our other protocols.',
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Extended clinical questions                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Conditions screen. Mirrors the condition list a prescriber needs before
+ * approving a compounded peptide. Reporting one is NOT a disqualifier — it
+ * routes to the prescriber with context, which is why the helper text says so
+ * explicitly.
+ */
+export const CONDITIONS_STEP: Step = {
+  id: 'conditions',
+  eyebrow: 'MEDICAL HISTORY',
+  heading: 'Have you ever been diagnosed with any of the following?',
+  body: 'Select all that apply. Your answer will not automatically disqualify you — it gives the prescriber the context they need.',
+  fields: [
+    {
+      id: 'conditions',
+      type: 'multi-select',
+      label: 'Select all that apply.',
+      required: true,
+      options: [
+        { value: 'sleep_apnea', label: 'Sleep apnea' },
+        { value: 'gallstones', label: 'Gallstones or gallbladder disease' },
+        { value: 'fatty_liver', label: 'Fatty liver disease (NAFLD / NASH)' },
+        { value: 'heart_disease', label: 'Heart disease' },
+        { value: 'stroke', label: 'Stroke' },
+        { value: 'pvd', label: 'Peripheral vascular disease' },
+        { value: 'metabolic', label: 'Metabolic syndrome' },
+        { value: 'heart_failure', label: 'Heart failure' },
+        { value: 'ckd', label: 'Chronic kidney disease (stage 3 or higher)' },
+        { value: 'cirrhosis', label: 'Cirrhosis' },
+        { value: 'siadh', label: 'SIADH' },
+        { value: 'ekg', label: 'EKG abnormalities' },
+        { value: 'thyroid', label: 'Thyroid condition' },
+        { value: 'hyperlipidemia', label: 'High cholesterol (hyperlipidemia)' },
+        { value: 'none', label: 'No, I have not been diagnosed with any of these' },
+      ],
+    },
+  ],
+};
+
+/** Medications and allergies, asked separately rather than as free text. */
+export const MEDS_STEP: Step = {
+  id: 'medications',
+  eyebrow: 'MEDICATIONS & ALLERGIES',
+  heading: 'What do you currently take?',
+  body: 'Include prescriptions, over-the-counter medicines, herbals and supplements. Interactions matter.',
+  fields: [
+    {
+      id: 'medications',
+      type: 'text-long',
+      label: 'List the medications, herbals and supplements you use, with the dose and why you take them.',
+      placeholder: 'e.g. Lisinopril 10mg daily — blood pressure',
+    },
+    {
+      id: 'allergies_any',
+      type: 'pill-grid',
+      label: 'Do you have any drug allergies?',
+      required: true,
+      options: YES_NO,
+    },
+    {
+      id: 'allergies_detail',
+      type: 'text-long',
+      label: 'If yes, list them and describe the reaction.',
+      placeholder: 'e.g. Penicillin — hives',
+    },
+  ],
+};
+
+/** Current symptoms. Context for the prescriber, never a knockout. */
+export const SYMPTOMS_STEP: Step = {
+  id: 'symptoms',
+  eyebrow: 'HOW YOU FEEL',
+  heading: 'Are you currently experiencing any of the following?',
+  body: 'Select all that apply.',
+  fields: [
+    {
+      id: 'symptoms',
+      type: 'multi-select',
+      label: 'Select all that apply.',
+      required: true,
+      options: [
+        { value: 'memory', label: 'Memory issues' },
+        { value: 'focus', label: 'Difficulty concentrating' },
+        { value: 'mood', label: 'Depression or anxiety' },
+        { value: 'sleep', label: 'Sleep disorders' },
+        { value: 'pain', label: 'Chronic pain' },
+        { value: 'fatigue', label: 'Fatigue or low energy' },
+        { value: 'none', label: 'None of these' },
+      ],
+    },
+  ],
+};
+
+/** Prior peptide / anti-aging treatment and how it went. */
+export const PRIOR_TREATMENT_STEP: Step = {
+  id: 'prior-treatment',
+  eyebrow: 'TREATMENT HISTORY',
+  heading: 'Have you had peptide or anti-aging treatment before?',
+  body: 'Includes NAD+, glutathione, GHK-Cu, B12, metformin and similar.',
+  fields: [
+    {
+      id: 'prior_treatment',
+      type: 'pill-grid',
+      label: 'Have you received treatment like this before?',
+      required: true,
+      options: YES_NO,
+    },
+    {
+      id: 'prior_reaction',
+      type: 'text-long',
+      label: 'If you had any negative reaction, describe it.',
+      placeholder: 'Leave blank if not applicable',
+    },
+  ],
+};
+
+/** Free-text question for the prescriber, asked last before consents. */
+export const DOCTOR_QUESTION_STEP: Step = {
+  id: 'doctor-question',
+  eyebrow: 'ANYTHING ELSE',
+  heading: 'Any questions for the prescriber?',
+  body: 'Optional. Anything you write here goes with your file.',
+  fields: [
+    {
+      id: 'doctor_question',
+      type: 'text-long',
+      label: 'Your question (optional)',
+      placeholder: 'Leave blank if none',
+    },
+  ],
+};
+
+/** Products whose active ingredient is a GLP-1 / GIP agonist. */
+export const GLP1_PRODUCT_IDS = ['semaglutide', 'tirzepatide'];
+
+/**
+ * Extra screening required for GLP-1 products: the contraindicated-medication
+ * and recent-surgery questions a prescriber must have before approving one.
+ */
+export const GLP1_STEP: Step = {
+  id: 'glp1-screen',
+  eyebrow: 'GLP-1 SCREEN',
+  heading: 'A few questions specific to GLP-1 therapy.',
+  body: 'These are required before a GLP-1 can be prescribed.',
+  fields: [
+    {
+      id: 'glp1_surgery',
+      type: 'pill-grid',
+      label: 'Have you had, or are you scheduled for, bariatric or gastric-bypass surgery in the next 6 months?',
+      required: true,
+      options: YES_NO,
+    },
+    {
+      id: 'glp1_prior',
+      type: 'pill-grid',
+      label: 'Are you currently taking, or have you recently taken, a GLP-1 medication?',
+      required: true,
+      options: YES_NO,
+    },
+    {
+      id: 'glp1_prior_detail',
+      type: 'text-long',
+      label: 'If yes, which one, at what dose, and when was your last injection?',
+      placeholder: 'e.g. Semaglutide 0.5mg — last injection 4 days ago',
+    },
+    {
+      id: 'glp1_allergy',
+      type: 'pill-grid',
+      label: 'Have you ever had an allergic reaction to a GLP-1 medication?',
+      required: true,
+      options: YES_NO,
+      knockoutOn: { values: ['yes'], key: 'glp1_allergy' },
+    },
+  ],
+};
+
+/**
+ * Assemble the intake for this visitor.
+ *
+ * The base wizard stays as-is; clinical depth is added around it. A visitor
+ * who arrived from a product gets that product's own contraindication screen,
+ * and GLP-1 products get the extra screening a prescriber needs before
+ * approving one. Order is deliberate: every medical question comes before
+ * checkout, so nobody is charged and then disqualified.
+ */
+export function buildSteps(product?: {
+  id: string;
+  name: string;
+  contraindications: string[];
+}): Step[] {
+  const out: Step[] = [];
+  for (const step of STEPS) {
+    // Clinical history slots in right after the built-in health screen.
+    if (step.id === 'consents') {
+      out.push(CONDITIONS_STEP, MEDS_STEP, SYMPTOMS_STEP, PRIOR_TREATMENT_STEP);
+      if (product && GLP1_PRODUCT_IDS.includes(product.id)) out.push(GLP1_STEP);
+      if (product?.contraindications?.length) out.push(productScreeningStep(product));
+      out.push(DOCTOR_QUESTION_STEP);
+    }
+    out.push(step);
+  }
+  return out;
+}

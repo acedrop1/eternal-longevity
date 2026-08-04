@@ -7,7 +7,7 @@ import {
   STEPS,
   KNOCKOUT_MESSAGES,
   PRODUCT_KNOCKOUT,
-  productScreeningStep,
+  buildSteps,
   CONSENT_ITEMS,
   type Step,
   type Field,
@@ -78,13 +78,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
    * safety screen is inserted just before the consents so the questions match
    * what they are actually ordering.
    */
-  const steps = useMemo(() => {
-    if (!product?.contraindications?.length) return STEPS;
-    const idx = STEPS.findIndex((st) => st.id === 'consents');
-    const screen = productScreeningStep(product);
-    if (idx === -1) return [...STEPS, screen];
-    return [...STEPS.slice(0, idx), screen, ...STEPS.slice(idx)];
-  }, [product]);
+  const steps = useMemo(() => buildSteps(product), [product]);
 
   const total = steps.length;
   const currentStep = status.kind === 'in-progress' ? steps[status.stepIdx] : null;
