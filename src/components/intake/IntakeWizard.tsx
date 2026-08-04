@@ -6,6 +6,8 @@ import { FieldRenderer } from './IntakeFields';
 import {
   STEPS,
   KNOCKOUT_MESSAGES,
+  PRODUCT_KNOCKOUT,
+  productScreeningStep,
   CONSENT_ITEMS,
   type Step,
   type Field,
@@ -57,7 +59,12 @@ interface IntakeWizardProps {
    * Product the visitor started from on the storefront. Shown as a banner and
    * submitted with the answers so the care team knows what they asked for.
    */
-  product?: { id: string; name: string; tagline: string };
+  product?: {
+    id: string;
+    name: string;
+    tagline: string;
+    contraindications: string[];
+  };
 }
 
 export function IntakeWizard({ product }: IntakeWizardProps = {}) {
@@ -66,8 +73,21 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const total = STEPS.length;
-  const currentStep = status.kind === 'in-progress' ? STEPS[status.stepIdx] : null;
+  /*
+   * Steps for this run. When the visitor arrived from a product, its own
+   * safety screen is inserted just before the consents so the questions match
+   * what they are actually ordering.
+   */
+  const steps = useMemo(() => {
+    if (!product?.contraindications?.length) return STEPS;
+    const idx = STEPS.findIndex((st) => st.id === 'consents');
+    const screen = productScreeningStep(product);
+    if (idx === -1) return [...STEPS, screen];
+    return [...STEPS.slice(0, idx), screen, ...STEPS.slice(idx)];
+  }, [product]);
+
+  const total = steps.length;
+  const currentStep = status.kind === 'in-progress' ? steps[status.stepIdx] : null;
 
   const validation = useMemo(() => {
     if (!currentStep) return { ok: true };
@@ -95,13 +115,13 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
 
   function handleContinue() {
     if (status.kind !== 'in-progress') return;
-    const result = validateStep(STEPS[status.stepIdx], answers);
+    const result = validateStep(steps[status.stepIdx], answers);
     if (result.knockout) {
       setStatus({ kind: 'knockout', key: result.knockout });
       return;
     }
     if (!result.ok) return;
-    if (status.stepIdx === STEPS.length - 1) {
+    if (status.stepIdx === steps.length - 1) {
       // Final step. Submit to the server before advancing.
       setSubmitError(null);
       // Strip File objects (which can't be sent through a server action as-is)
@@ -136,7 +156,10 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
 
   // === Knockout screen ===
   if (status.kind === 'knockout') {
-    const msg = KNOCKOUT_MESSAGES[status.key];
+    const msg =
+      status.key === 'product_contraindication'
+        ? PRODUCT_KNOCKOUT
+        : KNOCKOUT_MESSAGES[status.key];
     return (
       <Shell progressPct={100}>
         <div className="text-center max-w-xl mx-auto">

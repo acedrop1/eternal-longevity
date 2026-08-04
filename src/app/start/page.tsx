@@ -45,6 +45,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
                   id: requested.id,
                   name: requested.name,
                   tagline: requested.tagline,
+                  contraindications: requested.contraindications,
                 }
               : undefined
           }

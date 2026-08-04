@@ -385,3 +385,49 @@ export const CONSENT_ITEMS = [
       'I consent to the use of my de-identified information for internal research, analytics, and product improvement purposes.',
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+/*  Product-specific screening                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Build a screening step for the product the visitor started from.
+ *
+ * Each product carries its own contraindications, so the questions asked are
+ * the ones that actually matter for that compound rather than a generic
+ * catch-all — semaglutide asks about thyroid cancer and pancreatitis, PT-141
+ * asks about blood pressure. Answering "yes" is a knockout: the order stops
+ * before it reaches the prescriber.
+ */
+export function productScreeningStep(product: {
+  name: string;
+  contraindications: string[];
+}): Step {
+  return {
+    id: 'product-screen',
+    eyebrow: `SAFETY SCREEN · ${product.name.toUpperCase()}`,
+    heading: `A few questions specific to ${product.name}.`,
+    body: `These are the conditions that would make ${product.name} unsafe for you. Answer honestly — this is the screen that protects you.`,
+    fields: [
+      {
+        id: 'product_contraindications',
+        type: 'single-select',
+        label: `Do any of the following apply to you?\n\n${product.contraindications
+          .map((c) => `• ${c}`)
+          .join('\n')}`,
+        options: [
+          { value: 'none', label: 'None of these apply' },
+          { value: 'some', label: 'One or more applies' },
+        ],
+        required: true,
+        knockoutOn: { values: ['some'], key: 'product_contraindication' },
+      },
+    ],
+  };
+}
+
+/** Knockout shown when a product-specific contraindication is reported. */
+export const PRODUCT_KNOCKOUT = {
+  title: "This product isn't a fit right now",
+  body: 'Based on what you told us, this product is not appropriate for you. Please talk to your own healthcare provider — and feel free to browse our other protocols.',
+};
