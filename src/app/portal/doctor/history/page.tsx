@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
+import { listOrders } from '@/lib/orders-db';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -19,14 +20,6 @@ interface SignedRx {
   status: 'active' | 'completed' | 'declined';
 }
 
-const RX_LOG: SignedRx[] = [
-  { id: 'rx-1041', patient: 'Marcus T.', state: 'NJ', protocol: 'Recover · KPV + GHK-Cu', signedAt: 'Today · 11:42', cycle: '12 weeks', status: 'active' },
-  { id: 'rx-1039', patient: 'Hadi K.', state: 'FL', protocol: 'Longevity Foundation', signedAt: 'Today · 09:55', cycle: '16 weeks', status: 'declined' },
-  { id: 'rx-1024', patient: 'Lena R.', state: 'NY', protocol: 'Sculpt · Tirzepatide', signedAt: 'Yesterday · 14:18', cycle: '12 weeks', status: 'active' },
-  { id: 'rx-1018', patient: 'Sam P.', state: 'CA', protocol: 'Perform · CJC + Ipamorelin', signedAt: 'May 10 · 08:32', cycle: '8 weeks', status: 'active' },
-  { id: 'rx-0987', patient: 'Priya N.', state: 'TX', protocol: 'Recover · KPV + GHK-Cu', signedAt: 'May 8 · 17:05', cycle: '12 weeks', status: 'completed' },
-  { id: 'rx-0962', patient: 'Daniel G.', state: 'IL', protocol: 'Perform · Sermorelin', signedAt: 'May 4 · 11:09', cycle: '12 weeks', status: 'completed' },
-];
 
 const STATUS_THEME: Record<SignedRx['status'], { label: string; class: string }> = {
   active: { label: 'ACTIVE', class: 'bg-accent/10 text-accent border-accent/40' },
@@ -34,10 +27,41 @@ const STATUS_THEME: Record<SignedRx['status'], { label: string; class: string }>
   declined: { label: 'DECLINED', class: 'bg-red-500/10 text-red-300 border-red-500/40' },
 };
 
+/** Orders this physician has acted on, newest first. */
+async function loadSignedRx(): Promise<SignedRx[]> {
+  const orders = await listOrders();
+  const acted = orders.filter((o) =>
+    ['signed', 'compounding', 'shipped', 'delivered', 'declined-clinical'].includes(
+      o.status,
+    ),
+  );
+  return acted.map((o) => ({
+    id: o.id,
+    patient: o.memberName || o.memberEmail,
+    state: o.state,
+    protocol: o.lines.map((l) => l.productName).join(' + ') || '—',
+    signedAt: new Date(o.paidAt ?? o.placedAt).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+    cycle: o.lines[0]?.cadenceLabel ?? '—',
+    status:
+      o.status === 'declined-clinical'
+        ? 'declined'
+        : o.status === 'delivered'
+          ? 'completed'
+          : 'active',
+  }));
+}
+
 export default async function DoctorHistoryPage() {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'doctor') redirect(user.redirectTo);
+
+  const RX_LOG = await loadSignedRx();
 
   return (
     <PortalShell

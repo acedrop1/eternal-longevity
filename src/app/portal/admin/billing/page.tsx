@@ -27,26 +27,19 @@ const ADMIN_NAV = [
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
-const DEMO_CUSTOMERS: BillingCustomer[] = [
-  { id: 'demo-1', name: 'Marcus Thompson', email: 'marcus.t@protonmail.com' },
-  { id: 'demo-2', name: 'Lena Rodriguez', email: 'lena.r@gmail.com' },
-  { id: 'demo-3', name: 'Sam Park', email: 'sam.park@icloud.com' },
-  { id: 'demo-4', name: 'Hadi Khoury', email: 'hadi.k@gmail.com' },
-  { id: 'demo-5', name: 'Priya Narayan', email: 'priya.n@gmail.com' },
-];
+/*
+ * Empty fallbacks, deliberately. These render only if the Supabase query
+ * fails; showing invented customers or revenue to an admin would be worse
+ * than showing nothing.
+ */
+const DEMO_CUSTOMERS: BillingCustomer[] = [];
 
 const DEMO_SUMMARY: BillingSummary = {
-  activeSubscriptions: 38,
-  cycleRevenueCents: 1_412_000,
-  paidOrders: 126,
-  lifetimeRevenueCents: 4_820_500,
-  recent: [
-    { label: 'EL-9F2K4', amountCents: 48000, when: 'Today' },
-    { label: 'EL-9F1B7', amountCents: 24000, when: 'Today' },
-    { label: 'EL-9EXR2', amountCents: 87000, when: 'Yesterday' },
-    { label: 'EL-9EW8M', amountCents: 16000, when: 'Yesterday' },
-    { label: 'EL-9ET5P', amountCents: 32000, when: '2 days ago' },
-  ],
+  activeSubscriptions: 0,
+  cycleRevenueCents: 0,
+  paidOrders: 0,
+  lifetimeRevenueCents: 0,
+  recent: [],
 };
 
 function fmtWhen(iso: string): string {

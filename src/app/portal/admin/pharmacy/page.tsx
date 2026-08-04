@@ -42,16 +42,14 @@ interface Activity {
   account: { email: string; status: string };
 }
 
+// Zeroed fallback: only renders if the Supabase query fails. The partner
+// details above are real; these counters must never be invented.
 const DEMO_ACTIVITY: Activity = {
-  draft: 2,
-  atPharmacy: 3,
-  shipped: 9,
-  delivered: 41,
-  recent: [
-    { ref: 'FUL-DEMO02', patient: 'Lena Ruiz', status: 'shipped', when: 'May 18' },
-    { ref: 'FUL-DEMO01', patient: 'Marcus Tran', status: 'submitted', when: 'May 18' },
-    { ref: 'FUL-9KX2', patient: 'Hadi Khoury', status: 'delivered', when: 'May 14' },
-  ],
+  draft: 0,
+  atPharmacy: 0,
+  shipped: 0,
+  delivered: 0,
+  recent: [],
   account: { email: 'orders@mykaduceus.com', status: 'active' },
 };
 

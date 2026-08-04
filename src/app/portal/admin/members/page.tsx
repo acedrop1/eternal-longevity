@@ -22,16 +22,9 @@ const ADMIN_NAV = [
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
-const DEMO_USERS: AdminUserRow[] = [
-  { id: 'demo-m1', name: 'Marcus Thompson', email: 'marcus.t@protonmail.com', role: 'member', status: 'active', joinedAt: 'May 9, 2026' },
-  { id: 'demo-m2', name: 'Lena Rodriguez', email: 'lena.r@gmail.com', role: 'member', status: 'active', joinedAt: 'Apr 23, 2026' },
-  { id: 'demo-m3', name: 'Sam Park', email: 'sam.park@icloud.com', role: 'member', status: 'suspended', joinedAt: 'Apr 17, 2026' },
-  { id: 'demo-m4', name: 'Hadi Khoury', email: 'hadi.k@gmail.com', role: 'member', status: 'active', joinedAt: 'Apr 10, 2026' },
-  { id: 'demo-m5', name: 'Priya Narayan', email: 'priya.n@gmail.com', role: 'member', status: 'deactivated', joinedAt: 'Mar 30, 2026' },
-  { id: 'demo-d1', name: 'Dr. Bader', email: 'bader@eternallongevity.com', role: 'doctor', status: 'active', joinedAt: 'Feb 2, 2026' },
-  { id: 'demo-p1', name: 'Kaduceus Pharmacy', email: 'orders@mykaduceus.com', role: 'pharmacy', status: 'active', joinedAt: 'Feb 2, 2026' },
-  { id: 'demo-a1', name: 'Ops Admin', email: 'admin@eternallongevity.com', role: 'admin', status: 'active', joinedAt: 'Jan 14, 2026' },
-];
+// Empty fallback: only renders if the Supabase query fails. Inventing
+// members for an admin screen would be worse than showing none.
+const DEMO_USERS: AdminUserRow[] = [];
 
 function formatJoined(iso: string): string {
   const d = new Date(iso);
