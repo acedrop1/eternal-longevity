@@ -21,6 +21,7 @@ const COL_LINKS = [
   {
     title: 'Legal',
     links: [
+      { label: 'Compliance', href: '/compliance' },
       { label: 'Terms of Service', href: '/legal/terms' },
       { label: 'Privacy Policy', href: '/legal/privacy' },
       { label: 'Consent Policy', href: '/legal/consent' },

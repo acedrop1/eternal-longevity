@@ -23,6 +23,7 @@ import {
 } from '@/lib/supabase/admin';
 import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
+import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -213,6 +214,16 @@ export async function placeOrderAction(input: {
 }): Promise<ActionResult & { orderNumber?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  /*
+   * Geofence, enforced server-side. The shipping dropdown only offers
+   * serviceable states, but a dropdown is not a control — this is the check
+   * that actually holds, and it is the one the processor is relying on.
+   */
+  const shipState = (input.shippingAddress.state || '').toUpperCase();
+  if (!SERVICEABLE_STATES.includes(shipState)) {
+    return { ok: false, error: 'state_not_serviced' };
+  }
 
   const db = createSupabaseAdminClient();
   const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}`;

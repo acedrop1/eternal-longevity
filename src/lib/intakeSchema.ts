@@ -9,7 +9,17 @@
  * deferred to the member portal after the order is placed.
  */
 
-/** All US state abbreviations. Used for shipping address dropdowns. */
+/**
+ * States we can actually ship to.
+ *
+ * Our prescriber is licensed in New Jersey only, and the practice of medicine
+ * happens where the patient is — so NJ is the whole serviceable footprint.
+ * This is also the geofence our payment processor requires. Add a state here
+ * only when a prescriber is licensed there.
+ */
+export const SERVICEABLE_STATES = ['NJ'];
+
+/** All US state abbreviations. Billing addresses only — never shipping. */
 export const STATES_AVAILABLE = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
   'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',

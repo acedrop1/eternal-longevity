@@ -16,7 +16,7 @@ import { useOrders } from '@/components/orders/OrdersProvider';
 import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
-import { STATES_AVAILABLE } from '@/lib/intakeSchema';
+import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
 
 type SectionKey = 'email' | 'shipping' | 'method' | 'payment';
@@ -990,7 +990,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                     className={cn(inputClass, 'appearance-none')}
                   >
                     <option value="">—</option>
-                    {STATES_AVAILABLE.map((st) => (
+                    {SERVICEABLE_STATES.map((st) => (
                       <option key={st} value={st}>
                         {st}
                       </option>

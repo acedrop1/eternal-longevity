@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMemberProfile } from './MemberProfileProvider';
 import { formatAddressOneLine } from '@/lib/memberProfile';
-import { STATES_AVAILABLE } from '@/lib/intakeSchema';
+import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
 
 interface NewAddressDraft {
@@ -163,7 +163,7 @@ export function SavedAddressesManager() {
                   className={cn(inputClass, 'appearance-none')}
                 >
                   <option value="">—</option>
-                  {STATES_AVAILABLE.map((st) => (
+                  {SERVICEABLE_STATES.map((st) => (
                     <option key={st} value={st}>
                       {st}
                     </option>
