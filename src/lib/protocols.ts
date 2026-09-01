@@ -120,23 +120,21 @@ export const PROTOCOLS: Protocol[] = [
     name: 'SCULPT',
     tagline: 'Composition + Metabolic',
     category: 'BODY COMPOSITION',
-    stack: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ'],
+    stack: ['Semaglutide', 'AOD-9604'],
     shortDescription:
       'Weight management and body composition refinement with structured, titrated dosing.',
     longDescription:
-      'SCULPT pairs the appetite and glycemic regulation of Semaglutide with AOD-9604 (a fragment of growth hormone that targets fat metabolism) and 5-Amino-1MQ (an NNMT inhibitor that supports lean mass preservation during caloric deficit). Dosing is titrated across a structured cycle with regular check-ins for tolerability and progress.',
+      'SCULPT pairs the appetite and glycemic regulation of Semaglutide with AOD-9604, a fragment of growth hormone that targets fat metabolism. Dosing is titrated across a structured cycle with regular check-ins for tolerability and progress.',
     benefits: [
       'Appetite and glycemic regulation',
       'Targeted fat metabolism',
-      'Lean mass preservation during deficit',
       'Structured, titrated dosing with check-ins',
       'Optional bridge protocol on completion',
     ],
-    ingredients: ['Semaglutide', 'AOD-9604', '5-Amino-1MQ', 'Bacteriostatic water'],
+    ingredients: ['Semaglutide', 'AOD-9604', 'Bacteriostatic water'],
     dosing: [
       { peptide: 'Semaglutide', dose: 'titrated', frequency: '1×/week', supply: '4 weeks' },
       { peptide: 'AOD-9604', dose: '30 units', frequency: '5×/week', supply: '4 weeks' },
-      { peptide: '5-Amino-1MQ', dose: 'oral, daily', frequency: 'daily', supply: '30 days' },
     ],
     pricing: { monthly: 480, quarterly: 1320, annual: 4680 },
     swatch: '#1f1612',
