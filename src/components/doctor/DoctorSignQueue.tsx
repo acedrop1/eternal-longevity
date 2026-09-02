@@ -196,7 +196,7 @@ function SignCard({
             <input
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
-              placeholder="Recover Protocol"
+              placeholder="GHK-Cu — 12-week course"
               className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
           </div>

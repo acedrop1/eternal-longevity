@@ -392,7 +392,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
           <input
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            placeholder="Recover Protocol"
+            placeholder="GHK-Cu"
             required
             className={inputClass}
           />
@@ -485,7 +485,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Cycle 2 — Recover Protocol"
+            placeholder="Cycle 2 — GHK-Cu"
             className={inputClass}
           />
         </div>

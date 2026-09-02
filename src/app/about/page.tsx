@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const NUMBERS = [
   { stat: '12', label: 'Peptides in our formulary' },
-  { stat: '4', label: 'Signature protocols' },
+  { stat: '10', label: 'Compounded peptides' },
   { stat: '8', label: 'States we ship to' },
   { stat: '99%+', label: 'Lot purity, third-party tested' },
 ];

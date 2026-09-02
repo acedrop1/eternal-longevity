@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
   title: 'Shop | Eternal Longevity',
-  description: 'Browse our full peptide catalog. Third-party tested, 503A compounded, subscription-only.',
+  description: 'Browse our full peptide catalog. Third-party tested, 503A compounded.',
 };
 
 export default async function ShopPage() {
@@ -29,7 +29,7 @@ export default async function ShopPage() {
       {/* === HERO === */}
       <header className="mb-10 md:mb-12">
         <p className="mb-3 text-[11px] tracking-widest text-accent">
-          MEMBER SHOP · SUBSCRIPTION-ONLY
+          MEMBER SHOP
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground max-w-3xl"

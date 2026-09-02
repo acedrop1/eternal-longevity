@@ -163,7 +163,7 @@ export default function SciencePage() {
                   Start your assessment →
                 </Link>
                 <Link
-                  href="/protocols"
+                  href="/shop"
                   className="pill glass text-foreground/85 hover:text-foreground px-7 py-3"
                 >
                   See our protocols

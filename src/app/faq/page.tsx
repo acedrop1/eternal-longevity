@@ -19,8 +19,8 @@ const QUICK_LINKS = [
     title: 'How it works',
     body:
       'Three-minute profile, a matched protocol, compounded shipment. Three to five days end to end.',
-    href: '/protocols',
-    cta: 'See the protocols',
+    href: '/shop',
+    cta: 'Browse the shop',
   },
   {
     eyebrow: 'READY?',

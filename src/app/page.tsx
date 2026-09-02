@@ -1,7 +1,6 @@
 import { Header } from '@/components/nav/Header';
 import { Hero } from '@/components/sections/Hero';
 import { IntroPanel } from '@/components/sections/IntroPanel';
-import { FeaturedProtocol } from '@/components/sections/FeaturedProtocol';
 import { Pillars } from '@/components/sections/Pillars';
 import { Science } from '@/components/sections/Science';
 import { HowItWorks } from '@/components/sections/HowItWorks';
@@ -24,7 +23,6 @@ export default function Home() {
           <IntroPanel />           {/* Rounded-top card: teal bar + press marquee + animated text */}
         </div>
         {/* Wrap each subsequent section in SectionReveal so it fades + rises into view */}
-        <SectionReveal><FeaturedProtocol /></SectionReveal>     {/* Saki Tea Maker Pro drag carousel */}
         <SectionReveal><Pillars /></SectionReveal>              {/* Premium expandable rows */}
         <SectionReveal><Science /></SectionReveal>              {/* POUCH sticky-scroll science section */}
         <SectionReveal><HowItWorks /></SectionReveal>

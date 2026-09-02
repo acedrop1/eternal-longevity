@@ -4,7 +4,7 @@ const COL_LINKS = [
   {
     title: 'Platform',
     links: [
-      { label: 'Protocols', href: '/protocols' },
+      { label: 'Shop', href: '/shop' },
       { label: 'Science', href: '/science' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Start assessment', href: '/start' },

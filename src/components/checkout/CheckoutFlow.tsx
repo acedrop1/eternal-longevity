@@ -260,8 +260,8 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   // Fallback line: Recover protocol shown if cart is empty.
   const fallbackLine = useMemo(
     () => ({
-      key: 'fallback-recover',
-      name: 'Recover Protocol',
+      key: 'fallback-ghk',
+      name: 'GHK-Cu',
       cadence: 'Quarterly billing',
       qty: 1,
       perMonth: 160,
@@ -424,8 +424,8 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
         }))
       : [
           {
-            productId: 'fallback-recover',
-            productName: 'Recover Protocol',
+            productId: 'ghk-cu',
+            productName: 'GHK-Cu',
             cadence: 'quarterly' as const,
             cadenceLabel: 'Quarterly',
             quantity: 1,

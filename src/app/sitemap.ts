@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
-import { PROTOCOLS } from '@/lib/protocols';
 import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,7 +14,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     })),
-    { url: `${SITE_URL}/protocols`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE_URL}/science`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
@@ -29,12 +27,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/legal/refunds`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
   ];
 
-  const protocolEntries: MetadataRoute.Sitemap = PROTOCOLS.map((p) => ({
-    url: `${SITE_URL}/protocols/${p.id}`,
-    lastModified: now,
-    changeFrequency: 'monthly',
-    priority: 0.85,
-  }));
-
-  return [...staticEntries, ...protocolEntries];
+  return staticEntries;
 }

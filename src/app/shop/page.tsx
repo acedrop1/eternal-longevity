@@ -26,7 +26,7 @@ export default function PublicShopPage() {
           <div className="relative mx-auto max-w-5xl text-center">
             <FadeIn>
               <p className="mb-4 text-[11px] tracking-widest text-accent">
-                SHOP · SUBSCRIPTION-ONLY
+                SHOP · PRESCRIPTION REQUIRED
               </p>
             </FadeIn>
             <FadeIn delay={100}>
@@ -57,7 +57,7 @@ export default function PublicShopPage() {
                   Start your assessment
                 </Link>
                 <Link
-                  href="/protocols"
+                  href="/shop"
                   className="pill glass px-7 py-3 text-base text-foreground/80 hover:text-foreground transition"
                 >
                   See protocols

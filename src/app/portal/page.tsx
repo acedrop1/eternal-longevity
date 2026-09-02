@@ -32,7 +32,7 @@ export default async function MemberPortalPage() {
     {
       href: '/portal/shop',
       title: 'Shop',
-      body: 'Browse protocols and peptides.',
+      body: 'Browse the peptide catalog.',
     },
     {
       href: '/portal/orders',

@@ -231,7 +231,7 @@ export function Testimonials() {
           </div>
           <FadeIn delay={300}>
             <a
-              href="/protocols"
+              href="/shop"
               className="pill bg-foreground text-background px-7 py-3 text-base font-semibold hover:bg-accent hover:text-black transition-colors inline-flex items-center gap-2"
             >
               See the protocols

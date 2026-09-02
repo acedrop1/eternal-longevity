@@ -51,7 +51,7 @@ export default function NotFound() {
               Back to home
             </Link>
             <Link
-              href="/protocols"
+              href="/shop"
               className="pill glass text-foreground/85 hover:text-foreground px-7 py-3"
             >
               See the protocols

@@ -3,7 +3,7 @@
  * subscriptions, separate from the 4 signature protocols. This is what
  * /portal/shop displays.
  *
- * Subscription-only. No one-time purchases. Each product has three cadences:
+ * Sold as a subscription (monthly/quarterly/annual) or a one-time purchase:
  *   monthly, quarterly (3 cycles), annual (~4 cycles).
  */
 
