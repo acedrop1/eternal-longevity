@@ -86,6 +86,7 @@ export default async function OrdersPage() {
         { label: 'Dashboard', href: '/portal' },
         { label: 'Shop', href: '/portal/shop' },
         { label: 'Orders', href: '/portal/orders' },
+        { label: 'Messages', href: '/portal/messages' },
         { label: 'Subscriptions', href: '/portal/subscriptions' },
         { label: 'Account', href: '/portal/account' },
       ]}

@@ -85,6 +85,7 @@ export default async function DoctorPortalPage() {
       user={user}
       nav={[
         { label: 'Queue', href: '/portal/doctor' },
+        { label: 'Messages', href: '/portal/doctor/messages' },
         { label: 'My signed Rx', href: '/portal/doctor/history' },
         { label: 'Profile', href: '/portal/doctor/profile' },
       ]}

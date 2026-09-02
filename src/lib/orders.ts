@@ -25,7 +25,7 @@ export type OrderStatus =
 export interface OrderLine {
   productId: string;
   productName: string;
-  cadence: 'monthly' | 'quarterly' | 'annual';
+  cadence: 'monthly' | 'quarterly' | 'annual' | 'once';
   cadenceLabel: string;
   quantity: number;
   perCycle: number;

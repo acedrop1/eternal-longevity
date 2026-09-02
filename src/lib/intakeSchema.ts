@@ -634,21 +634,31 @@ export const GLP1_STEP: Step = {
  * approving one. Order is deliberate: every medical question comes before
  * checkout, so nobody is charged and then disqualified.
  */
-export function buildSteps(product?: {
+export type IntakeProduct = {
   id: string;
   name: string;
   contraindications: string[];
-}): Step[] {
-  const out: Step[] = [];
-  for (const step of STEPS) {
-    // Clinical history slots in right after the built-in health screen.
-    if (step.id === 'consents') {
-      out.push(CONDITIONS_STEP, MEDS_STEP, SYMPTOMS_STEP, PRIOR_TREATMENT_STEP);
-      if (product && GLP1_PRODUCT_IDS.includes(product.id)) out.push(GLP1_STEP);
-      if (product?.contraindications?.length) out.push(productScreeningStep(product));
-      out.push(DOCTOR_QUESTION_STEP);
-    }
-    out.push(step);
-  }
+};
+
+/**
+ * Two-phase intake, matching the telehealth pattern underwriters expect:
+ *
+ *   PRE  — the short pre-checkout profile: goals, demographics, body,
+ *          consents, account. Enough to open the account and place the order.
+ *   VISIT — the clinical portion, completed inside the portal after checkout
+ *          ("Complete your visit"). Nothing is prescribed until it's done.
+ */
+const VISIT_TOPLEVEL_IDS = new Set(['lifestyle', 'health']);
+
+export function buildPreSteps(): Step[] {
+  return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));
+}
+
+export function buildVisitSteps(product?: IntakeProduct): Step[] {
+  const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
+  out.push(CONDITIONS_STEP, MEDS_STEP, SYMPTOMS_STEP, PRIOR_TREATMENT_STEP);
+  if (product && GLP1_PRODUCT_IDS.includes(product.id)) out.push(GLP1_STEP);
+  if (product?.contraindications?.length) out.push(productScreeningStep(product));
+  out.push(DOCTOR_QUESTION_STEP);
   return out;
 }

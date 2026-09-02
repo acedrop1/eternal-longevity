@@ -57,6 +57,7 @@ export default async function AdminPortalPage() {
         { label: 'Overview', href: '/portal/admin' },
         { label: 'Members', href: '/portal/admin/members' },
         { label: 'Queue', href: '/portal/admin/queue' },
+        { label: 'Messages', href: '/portal/admin/messages' },
         { label: 'Billing', href: '/portal/admin/billing' },
         { label: 'Orders', href: '/portal/admin/fulfillment' },
         { label: 'Pharmacy', href: '/portal/admin/pharmacy' },

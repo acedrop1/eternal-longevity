@@ -552,7 +552,7 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
 
 /** Cadence helper. Return per-month price and discount label. */
 export interface CadenceTier {
-  key: 'monthly' | 'quarterly' | 'annual';
+  key: 'monthly' | 'quarterly' | 'annual' | 'once';
   label: string;
   description: string;
   total: number;
@@ -591,6 +591,15 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       total: a,
       perMonth: aPerMonth,
       saveLabel: aSave > 0 ? `Save ${aSave}%` : undefined,
+    },
+    {
+      key: 'once',
+      label: 'One-time purchase',
+      description: 'Single order · No subscription',
+      // ponytail: flat $20 premium over the monthly rate, mirroring the
+      // competitor's spread; tune per-product if merch wants finer control.
+      total: m + 20,
+      perMonth: m + 20,
     },
   ];
 }

@@ -17,6 +17,7 @@ export type Json =
 
 export type UserRole = 'member' | 'doctor' | 'admin' | 'pharmacy';
 export type IntakeStatus =
+  | 'awaiting_visit'
   | 'submitted'
   | 'in_review'
   | 'needs_info'
@@ -498,6 +499,7 @@ export type Database = {
           id: string;
           thread_user_id: string;
           sender_id: string;
+          channel: 'support' | 'doctor';
           body: string;
           read_at: string | null;
           created_at: string;
@@ -506,6 +508,7 @@ export type Database = {
           id?: string;
           thread_user_id: string;
           sender_id: string;
+          channel?: 'support' | 'doctor';
           body: string;
           read_at?: string | null;
           created_at?: string;
@@ -514,6 +517,7 @@ export type Database = {
           id?: string;
           thread_user_id?: string;
           sender_id?: string;
+          channel?: 'support' | 'doctor';
           body?: string;
           read_at?: string | null;
           created_at?: string;

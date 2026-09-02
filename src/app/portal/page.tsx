@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
+import { getPendingVisit } from '@/lib/intake-actions';
 
 export const metadata: Metadata = {
   title: 'Portal | Eternal Longevity',
@@ -25,6 +26,8 @@ export default async function MemberPortalPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
+  const pendingVisit = await getPendingVisit();
+
   return (
     <PortalShell
       user={user}
@@ -32,10 +35,33 @@ export default async function MemberPortalPage() {
         { label: 'Dashboard', href: '/portal' },
         { label: 'Shop', href: '/portal/shop' },
         { label: 'Orders', href: '/portal/orders' },
+        { label: 'Messages', href: '/portal/messages' },
         { label: 'Subscriptions', href: '/portal/subscriptions' },
         { label: 'Account', href: '/portal/account' },
       ]}
     >
+      {pendingVisit && (
+        <div className="mb-8 rounded-3xl border border-accent/40 bg-accent/[0.06] p-6 md:flex md:items-center md:justify-between md:gap-6">
+          <div>
+            <p className="mb-1 flex items-center gap-2 text-[11px] tracking-widest text-accent">
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              REQUIRED ACTION
+            </p>
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              Complete your <strong>clinical visit</strong> so your prescriber
+              can review your{pendingVisit.productName ? ` ${pendingVisit.productName}` : ''} order.
+              Nothing ships until it&apos;s done.
+            </p>
+          </div>
+          <Link
+            href="/portal/visit"
+            className="pill mt-4 inline-block bg-accent px-6 py-2.5 text-sm font-semibold text-black md:mt-0 md:flex-none"
+          >
+            Complete your visit
+          </Link>
+        </div>
+      )}
+
       {/* === STATUS HEADER === */}
       <div className="mb-10">
         <p className="mb-2 text-[11px] tracking-widest text-accent">

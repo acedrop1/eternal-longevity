@@ -24,7 +24,7 @@ export default function TermsPage() {
         {
           heading: 'Our Store & Fulfillment',
           paragraphs: [
-            'Eternal Longevity operates an online store for compounded peptide protocols. Orders you place are fulfilled by U.S.-licensed 503A compounding pharmacies that operate independently of Eternal Longevity. Eternal Longevity provides the technology platform, the product catalog, and customer support for the store.',
+            'Eternal Longevity provides access to prescription peptide protocols. Every order is reviewed by a licensed prescriber, and approved orders are fulfilled by U.S.-licensed 503A compounding pharmacies pursuant to a patient-specific prescription. Eternal Longevity provides the platform, the product catalog, and customer support.',
             'Nothing on our platform is medical advice, diagnosis, or a substitute for consulting your own healthcare provider. Product information is general in nature and is based on the information you provide. You agree to provide accurate information and to consult your own healthcare provider before using any protocol.',
           ],
         },

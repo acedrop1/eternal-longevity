@@ -12,13 +12,13 @@ export default function ConsentPolicyPage() {
       eyebrow="LEGAL"
       title="Informed Consent & Product Acknowledgement"
       effective="May 2026"
-      lead="Eternal Longevity is an online store for compounded peptide protocols. This document explains what you are acknowledging when you place an order, what these products are and are not, and the risks you accept. It is informational only and is not medical advice."
+      lead="Eternal Longevity provides access to prescription peptide protocols through a licensed prescriber and a licensed 503A compounding pharmacy. This document explains what you are acknowledging when you place an order, how the telehealth review works, and the risks you accept."
       sections={[
         {
           heading: 'What This Acknowledgement Covers',
           paragraphs: [
             'When you order a compounded peptide protocol from Eternal Longevity, your order is submitted to a licensed 503A pharmacy that compounds and fulfills it. This document explains what you are acknowledging when you place that order, including that nothing here is medical advice and that you are responsible for consulting your own healthcare provider before use.',
-            'Eternal Longevity operates an online store and does not provide medical care, examinations, diagnosis, or treatment. Product availability may vary by state, and we may be unable to fulfill an order where a product is not available in your state.',
+            'Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. Product availability varies by state, and we can only serve states where our prescriber is licensed.',
           ],
         },
         {
@@ -43,9 +43,9 @@ export default function ConsentPolicyPage() {
           ],
         },
         {
-          heading: 'No Medical Relationship',
+          heading: 'Scope of the Telehealth Relationship',
           paragraphs: [
-            'Placing an order with Eternal Longevity does not create a medical, clinical, or treatment relationship of any kind. Eternal Longevity is an online store and does not provide medical advice, diagnosis, or treatment. You are responsible for consulting your own healthcare provider before using any protocol.',
+            'The prescriber review is limited to assessing whether the protocol you selected is safe and appropriate for you, and to issuing or declining a prescription on that basis. It is not primary care: the prescriber does not diagnose, treat, or manage general medical conditions, and is not your primary care provider. You remain responsible for maintaining a relationship with your own healthcare provider for everything beyond this medication review.',
           ],
         },
         {

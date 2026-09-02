@@ -340,7 +340,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
                         ${tier.total}
                       </div>
                       <div className="text-[10px] tracking-wider text-foreground/45">
-                        ${tier.perMonth}/mo
+                        {tier.key === 'once' ? 'one time' : `$${tier.perMonth}/mo`}
                       </div>
                     </div>
                     {/* Radio bullet */}

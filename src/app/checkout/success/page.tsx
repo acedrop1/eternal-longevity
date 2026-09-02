@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
+import { getPendingVisit } from '@/lib/intake-actions';
 
 export const metadata: Metadata = {
   title: 'Order confirmed | Eternal Longevity',
@@ -12,6 +13,8 @@ export default async function CheckoutSuccessPage() {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
+
+  const pendingVisit = await getPendingVisit();
 
   return (
     <PortalShell user={user}>
@@ -32,7 +35,7 @@ export default async function CheckoutSuccessPage() {
         </div>
 
         <p className="mb-3 text-[11px] tracking-widest text-accent">
-          PAYMENT RECEIVED
+          ORDER RECEIVED
         </p>
         <h1
           className="mb-4 font-semibold tracking-tight text-foreground"
@@ -42,19 +45,19 @@ export default async function CheckoutSuccessPage() {
             lineHeight: 1.05,
           }}
         >
-          Your cycle is queued.
+          Your order is in.
         </h1>
         <p className="mb-10 text-foreground/65 leading-relaxed">
-          We&apos;ve sent a receipt to {user.email}. The pharmacy will compound
-          and ship within 3–5 business days; you&apos;ll get a tracking number
-          the moment it leaves the lab.
+          We&apos;ve emailed a confirmation to {user.email}. Your card is only
+          charged if your prescriber approves your treatment — if it&apos;s
+          declined, you pay nothing.
         </p>
 
         <div className="grid gap-2 text-left mb-10">
           {[
-            { n: '01', text: 'The pharmacy receives your order and starts compounding.' },
-            { n: '02', text: "We'll email you a tracking number once it ships." },
-            { n: '03', text: 'We check in on your protocol at week six.' },
+            { n: '01', text: 'Complete your clinical visit so your prescriber can review.' },
+            { n: '02', text: 'If approved, your prescription goes to the pharmacy and your card is charged.' },
+            { n: '03', text: "It's compounded, tested, and shipped — tracking lands in your inbox." },
           ].map((s) => (
             <div
               key={s.n}
@@ -71,10 +74,10 @@ export default async function CheckoutSuccessPage() {
         </div>
 
         <Link
-          href="/portal"
+          href={pendingVisit ? '/portal/visit' : '/portal'}
           className="inline-flex items-center gap-2 rounded-full bg-foreground text-background font-semibold px-7 py-3 hover:bg-accent hover:text-black transition-colors"
         >
-          Back to portal
+          {pendingVisit ? 'Complete your visit' : 'Back to portal'}
           <span aria-hidden>→</span>
         </Link>
       </div>

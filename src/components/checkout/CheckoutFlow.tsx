@@ -1,5 +1,6 @@
 'use client';
 
+import type { Cadence } from '@/lib/cartTypes';
 import {
   useEffect,
   useMemo,
@@ -279,7 +280,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
         productId: it.productId,
         cadence: it.cadence,
         name: it.product.name,
-        cadenceLabel: `${it.cadenceLabel} billing`,
+        cadenceLabel: it.cadence === 'once' ? 'One-time purchase' : `${it.cadenceLabel} billing`,
         qty: it.quantity,
         perMonth: it.perMonth,
         total: it.total * it.quantity,
@@ -414,7 +415,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
       ? resolvedItems.map((it) => ({
           productId: it.productId,
           productName: it.product.name,
-          cadence: it.cadence as 'monthly' | 'quarterly' | 'annual',
+          cadence: it.cadence,
           cadenceLabel: it.cadenceLabel,
           quantity: it.quantity,
           perCycle: it.total,
@@ -678,7 +679,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                               onClick={() =>
                                 removeItem(
                                   l.productId as string,
-                                  l.cadence as 'monthly' | 'quarterly' | 'annual'
+                                  l.cadence as Cadence
                                 )
                               }
                               className="mt-1 text-[10px] tracking-widest text-foreground/45 hover:text-red-300 transition-colors"
@@ -1349,10 +1350,12 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                   className="h-4 w-4 inline-block rounded-full border-2 border-black/30 border-t-black animate-spin"
                 />
               )}
-              {isPaying ? 'Processing…' : `Pay $${total}`}
+              {isPaying ? 'Processing…' : `Confirm order · $${total}`}
             </button>
             <p className="mt-3 text-center text-[11px] text-foreground/45">
-              You can pause or cancel between cycles · No mid-cycle billing
+              You&apos;re only charged if a licensed prescriber approves your
+              treatment — declined orders are never billed. Pause or cancel
+              between cycles.
             </p>
           </Section>
         </div>

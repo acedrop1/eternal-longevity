@@ -4,15 +4,19 @@ import { useState, useMemo, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { FieldRenderer } from './IntakeFields';
 import {
-  STEPS,
   KNOCKOUT_MESSAGES,
   PRODUCT_KNOCKOUT,
-  buildSteps,
+  buildPreSteps,
+  buildVisitSteps,
   CONSENT_ITEMS,
   type Step,
   type Field,
 } from '@/lib/intakeSchema';
-import { submitIntakeAction } from '@/lib/intake-actions';
+import {
+  submitIntakeAction,
+  submitVisitAction,
+  declineVisitAction,
+} from '@/lib/intake-actions';
 import { cn } from '@/lib/utils';
 
 type Answers = Record<string, unknown>;
@@ -65,9 +69,16 @@ interface IntakeWizardProps {
     tagline: string;
     contraindications: string[];
   };
+  /**
+   * 'pre'   — the short pre-checkout profile (default, rendered at /start).
+   * 'visit' — the clinical visit completed in the portal before prescriber
+   *           review ("Complete your visit").
+   */
+  mode?: 'pre' | 'visit';
 }
 
-export function IntakeWizard({ product }: IntakeWizardProps = {}) {
+export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) {
+  const compact = mode === 'visit';
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', stepIdx: 0 });
   const [answers, setAnswers] = useState<Answers>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -78,7 +89,10 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
    * safety screen is inserted just before the consents so the questions match
    * what they are actually ordering.
    */
-  const steps = useMemo(() => buildSteps(product), [product]);
+  const steps = useMemo(
+    () => (mode === 'visit' ? buildVisitSteps(product) : buildPreSteps()),
+    [product, mode]
+  );
 
   const total = steps.length;
   const currentStep = status.kind === 'in-progress' ? steps[status.stepIdx] : null;
@@ -112,6 +126,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
     const result = validateStep(steps[status.stepIdx], answers);
     if (result.knockout) {
       setStatus({ kind: 'knockout', key: result.knockout });
+      if (mode === 'visit') void declineVisitAction(result.knockout);
       return;
     }
     if (!result.ok) return;
@@ -125,10 +140,18 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
         ...Object.fromEntries(
           Object.entries(answers).filter(([, v]) => !(v instanceof File))
         ),
-        ...(product ? { requestedProduct: product.name } : {}),
+        // The account step's password rides in answers.account; the server
+        // creates the auth user from it and never stores it.
+
+        ...(product
+          ? { requestedProduct: product.name, requestedProductId: product.id }
+          : {}),
       };
       startTransition(async () => {
-        const res = await submitIntakeAction(safeAnswers);
+        const res =
+          mode === 'visit'
+            ? await submitVisitAction(safeAnswers)
+            : await submitIntakeAction(safeAnswers);
         if (res.ok) {
           setStatus({ kind: 'submitted' });
         } else {
@@ -155,7 +178,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
         ? PRODUCT_KNOCKOUT
         : KNOCKOUT_MESSAGES[status.key];
     return (
-      <Shell progressPct={100}>
+      <Shell progressPct={100} compact={compact}>
         <div className="text-center max-w-xl mx-auto">
           <div className="mb-6 inline-flex items-center justify-center h-14 w-14 rounded-full bg-accent/10 text-accent">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -187,7 +210,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
   // === Submitted screen ===
   if (status.kind === 'submitted') {
     return (
-      <Shell progressPct={100}>
+      <Shell progressPct={100} compact={compact}>
         <div className="text-center max-w-xl mx-auto">
           <div className="mb-6 inline-flex items-center justify-center h-14 w-14 rounded-full bg-accent text-black">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -198,26 +221,37 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
             className="mb-4 font-semibold tracking-tight text-foreground"
             style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.02em', lineHeight: 1.1 }}
           >
-            That&apos;s it. You&apos;re in.
+            {mode === 'visit' ? 'Your visit is complete.' : "That's it. You're in."}
           </h2>
           <p className="mb-8 text-foreground/65 leading-relaxed">
-            We&apos;re confirming your protocol and preparing your order. You&apos;ll
-            hear back within 24–48 hours at the email you provided.
+            {mode === 'visit'
+              ? 'Your licensed prescriber will review your visit and either issue or decline your prescription. Nothing ships, and nothing is charged, until it is approved.'
+              : 'Your account is ready. Log in to place your order and complete your clinical visit — your prescriber reviews it before anything ships.'}
           </p>
           <div className="grid gap-3 text-left mb-8">
-            {[
-              { n: '01', text: 'We confirm your recommended protocol.' },
-              { n: '02', text: 'Your order is compounded and third-party tested.' },
-              { n: '03', text: "We'll email you to log in. Verify ID, view pricing, and check out." },
-            ].map((s) => (
+            {(mode === 'visit'
+              ? [
+                  { n: '01', text: 'Your prescriber reviews your visit answers.' },
+                  { n: '02', text: 'If approved, your prescription is sent to the pharmacy.' },
+                  { n: '03', text: 'Your order is compounded, tested, and shipped to you.' },
+                ]
+              : [
+                  { n: '01', text: 'Log in and place your order — you are only charged if approved.' },
+                  { n: '02', text: 'Complete your clinical visit in the portal.' },
+                  { n: '03', text: 'Your prescriber reviews it and your order ships if approved.' },
+                ]
+            ).map((s) => (
               <div key={s.n} className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4">
                 <span className="text-[10px] tracking-widest text-accent pt-0.5">{s.n}</span>
                 <span className="text-sm text-foreground/80 leading-relaxed">{s.text}</span>
               </div>
             ))}
           </div>
-          <Link href="/" className="pill bg-foreground text-background font-semibold px-7 py-3">
-            Back to home
+          <Link
+            href={mode === 'visit' ? '/portal' : '/login'}
+            className="pill bg-foreground text-background font-semibold px-7 py-3"
+          >
+            {mode === 'visit' ? 'Back to your portal' : 'Log in to continue'}
           </Link>
         </div>
       </Shell>
@@ -227,7 +261,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
   // === In progress. Render current step ===
   if (!currentStep) return null;
   return (
-    <Shell progressPct={progressPct} stepIdx={status.stepIdx} total={total}>
+    <Shell progressPct={progressPct} stepIdx={status.stepIdx} total={total} compact={compact}>
       {product && (
         <div className="mb-6 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-3">
           <span className="text-[10px] tracking-widest text-accent">
@@ -326,7 +360,7 @@ export function IntakeWizard({ product }: IntakeWizardProps = {}) {
               className="h-4 w-4 inline-block rounded-full border-2 border-black/30 border-t-black animate-spin"
             />
           )}
-          {status.stepIdx === STEPS.length - 1
+          {status.stepIdx === total - 1
             ? isPending
               ? 'Submitting…'
               : 'Submit intake →'
@@ -342,16 +376,18 @@ function Shell({
   progressPct,
   stepIdx,
   total,
+  compact,
 }: {
   children: React.ReactNode;
   progressPct: number;
   stepIdx?: number;
   total?: number;
+  compact?: boolean;
 }) {
   return (
-    <div className="relative mx-auto max-w-2xl px-6 pb-32 pt-28 md:pt-36">
+    <div className={compact ? 'relative mx-auto max-w-2xl pb-16 pt-6' : 'relative mx-auto max-w-2xl px-6 pb-32 pt-28 md:pt-36'}>
       {/* Progress bar */}
-      <div className="sticky top-20 z-10 mb-10 -mx-6 px-6 py-4 bg-background/80 backdrop-blur">
+      <div className={compact ? "mb-8 py-2" : "sticky top-20 z-10 mb-10 -mx-6 px-6 py-4 bg-background/80 backdrop-blur"}>
         <div className="flex items-center justify-between mb-2 text-[11px] tracking-wider text-foreground/55">
           <span>{stepIdx !== undefined && total !== undefined ? `Step ${stepIdx + 1} of ${total}` : 'Complete'}</span>
           <span>{progressPct}%</span>

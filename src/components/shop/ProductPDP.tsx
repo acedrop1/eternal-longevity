@@ -238,12 +238,14 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                     <span className="flex-shrink-0 text-right">
                       <span className="block text-base font-semibold text-foreground tabular-nums">
                         ${t.perMonth}
-                        <span className="text-xs text-foreground/55 font-normal">
-                          /mo
-                        </span>
+                        {t.key !== 'once' && (
+                          <span className="text-xs text-foreground/55 font-normal">
+                            /mo
+                          </span>
+                        )}
                       </span>
                       <span className="block text-[10px] tracking-wider text-foreground/45 mt-0.5">
-                        ${t.total} total
+                        {t.key === 'once' ? 'one time' : `$${t.total} total`}
                       </span>
                     </span>
                   </button>
@@ -258,7 +260,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               href={ctaHref}
               className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
             >
-              Get started. From ${active.perMonth}/mo →
+              Get started. {active.key === 'once' ? `$${active.total}` : `From $${active.perMonth}/mo`} →
             </Link>
           ) : (
             <button
@@ -266,7 +268,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               onClick={handleAddToCart}
               className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
             >
-              Subscribe. ${active.perMonth}/mo →
+              {active.key === 'once' ? `Buy once. $${active.total}` : `Subscribe. $${active.perMonth}/mo`} →
             </button>
           )}
           <p className="mt-3 text-center text-[11px] text-foreground/45">
