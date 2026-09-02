@@ -12,7 +12,13 @@ import { DEMO_USERS, redirectForRole, type Role } from './auth';
 import { clearSession, setSession } from './auth-server';
 import { supabaseConfigured } from './env';
 import { createSupabaseServerClient } from './supabase/server';
+import {
+  createSupabaseAdminClient,
+  supabaseAdminConfigured,
+} from './supabase/admin';
+import { passwordResetEmail, sendEmail } from './email';
 import { SITE_URL } from './site';
+import { passwordValid } from './intakeSchema';
 
 /** Sign in. Form fields: email, password. */
 export async function loginAction(formData: FormData): Promise<void> {
@@ -103,7 +109,31 @@ export async function requestPasswordResetAction(
     .trim()
     .toLowerCase();
 
-  if (supabaseConfigured && email.includes('@')) {
+  if (supabaseAdminConfigured() && email.includes('@')) {
+    // Generate the recovery token ourselves and send it through our own
+    // branded email, so nothing arrives "from Supabase" — and the link goes
+    // straight to our /auth/confirm route instead of through Supabase's
+    // redirect allowlist (which is what breaks the default links).
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data } = await admin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+      });
+      const tokenHash = data?.properties?.hashed_token;
+      if (tokenHash) {
+        const link = `${SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(
+          tokenHash,
+        )}&type=recovery&next=/auth/reset`;
+        const msg = passwordResetEmail(link);
+        await sendEmail({ to: email, subject: msg.subject, html: msg.html });
+      }
+      // No token = no such account. Fall through silently.
+    } catch {
+      // Never surface errors here — same response either way.
+    }
+  } else if (supabaseConfigured && email.includes('@')) {
+    // Fallback (no service key): Supabase's own email flow.
     const supabase = await createSupabaseServerClient();
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${SITE_URL}/auth/callback?next=/auth/reset`,
@@ -121,7 +151,7 @@ export async function updatePasswordAction(
   if (!supabaseConfigured) redirect('/login');
 
   const password = String(formData.get('password') ?? '');
-  if (password.length < 8) redirect('/auth/reset?error=weak');
+  if (!passwordValid(password)) redirect('/auth/reset?error=weak');
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });

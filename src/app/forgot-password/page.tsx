@@ -9,13 +9,13 @@ export const metadata: Metadata = {
 };
 
 interface ForgotPageProps {
-  searchParams: Promise<{ sent?: string }>;
+  searchParams: Promise<{ sent?: string; error?: string }>;
 }
 
 export default async function ForgotPasswordPage({
   searchParams,
 }: ForgotPageProps) {
-  const { sent } = await searchParams;
+  const { sent, error } = await searchParams;
 
   // Demo mode — no real accounts to reset.
   if (!supabaseConfigured) {
@@ -54,6 +54,12 @@ export default async function ForgotPasswordPage({
         </>
       }
     >
+      {error === 'expired' && (
+        <div className="mb-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+          That reset link has expired or was already used. Enter your email and
+          we&apos;ll send a fresh one.
+        </div>
+      )}
       {sent === '1' ? (
         <div className="rounded-3xl border border-accent/30 bg-accent/10 p-6 md:p-8 text-center space-y-3">
           <p className="text-sm text-foreground leading-relaxed">

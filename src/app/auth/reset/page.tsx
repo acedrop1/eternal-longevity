@@ -48,7 +48,7 @@ export default async function ResetPasswordPage({
       >
         {error === 'weak' && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            Use a password of at least 8 characters.
+            Password must be 8+ characters with an uppercase letter, a lowercase letter, and a special character.
           </div>
         )}
         {error === 'failed' && (

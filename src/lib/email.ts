@@ -128,6 +128,26 @@ export function intakeConfirmationEmail(firstName: string): {
   };
 }
 
+/** Branded password-reset email — replaces Supabase's default sender. */
+export function passwordResetEmail(link: string): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: 'Reset your password — Eternal Longevity',
+    html: shell(
+      `<h1 style="color:#fff;font-size:20px;margin:12px 0;">Reset your password.</h1>
+       <p>We received a request to reset the password on your Eternal Longevity
+       account. The link below is valid for one hour and can be used once.</p>
+       <p style="margin:20px 0;">
+         <a href="${escapeHtml(link)}" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Choose a new password</a>
+       </p>
+       <p style="color:#a3a3a3;font-size:13px;">If you didn't request this, you
+       can safely ignore this email — your password won't change.</p>`,
+    ),
+  };
+}
+
 /** Internal notification to the care team that a new intake landed. */
 export function intakeReceivedTeamEmail(
   caseId: string,
