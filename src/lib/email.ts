@@ -101,16 +101,29 @@ export function intakeConfirmationEmail(firstName: string): {
   html: string;
 } {
   return {
-    subject: 'We received your intake — Eternal Longevity',
+    subject: 'Your account is ready — Eternal Longevity',
     html: shell(
-      `<h1 style="color:#fff;font-size:20px;margin:12px 0;">Thanks, ${escapeHtml(
-        firstName,
-      )}.</h1>
-       <p>Your intake is in. A licensed physician will review it and either
-       approve a protocol or follow up with a few questions, usually within one
-       business day.</p>
-       <p>You'll get an email the moment there's an update. Nothing is charged
-       until a physician signs off and you check out.</p>`,
+      `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">WELCOME</div>
+       <h1 style="color:#fff;font-size:22px;margin:10px 0 14px;">Hi ${escapeHtml(
+         firstName,
+       )}, your account is ready.</h1>
+       <p>Welcome to Eternal Longevity. Your portal is where everything lives —
+       messages with your care team, your protocol details, refills and order
+       tracking.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:18px 0;">
+         <tr><td style="padding:18px 20px;color:#e5e5e5;font-size:14px;line-height:1.6;">
+           <div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-bottom:10px;">WHAT HAPPENS NEXT</div>
+           <p style="margin:0 0 10px;"><strong style="color:#fff;">1. Place your order.</strong><br/>
+           You're only charged if a licensed prescriber approves your treatment.</p>
+           <p style="margin:0 0 10px;"><strong style="color:#fff;">2. Complete your clinical visit.</strong><br/>
+           A short set of health questions in your portal — your prescriber reviews it.</p>
+           <p style="margin:0;"><strong style="color:#fff;">3. Your treatment ships discreetly.</strong><br/>
+           Tracking is added to your order the moment it leaves the pharmacy.</p>
+         </td></tr>
+       </table>
+       <p style="margin:18px 0 6px;">
+         <a href="https://etlongevity.com/login" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Go to my portal</a>
+       </p>`,
     ),
   };
 }

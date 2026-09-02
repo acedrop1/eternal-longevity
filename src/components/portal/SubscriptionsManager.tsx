@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import {
+  changeSubscriptionPlanAction,
+  setSubscriptionStatusAction,
+  type PlanKey,
+} from '@/lib/subscriptions-db';
 
 export interface Subscription {
   id: string;
@@ -99,8 +104,10 @@ export function SubscriptionsManager({ subscriptions }: Props) {
     const current = getStatus(s);
     if (current === 'paused') {
       update(s.id, { status: 'active' });
+      void setSubscriptionStatusAction(s.id, 'active');
     } else if (current === 'active') {
       update(s.id, { status: 'paused' });
+      void setSubscriptionStatusAction(s.id, 'paused');
     }
   };
 
@@ -111,11 +118,20 @@ export function SubscriptionsManager({ subscriptions }: Props) {
 
   const cancel = (s: Subscription) => {
     update(s.id, { status: 'cancelled', skipNextCycleAt: null });
+    void setSubscriptionStatusAction(s.id, 'canceled');
     setConfirm(null);
   };
 
   const reactivate = (s: Subscription) => {
     update(s.id, { status: 'active', skipNextCycleAt: null });
+    void setSubscriptionStatusAction(s.id, 'active');
+  };
+
+  // Billing-plan change only — product and dosage are never editable here.
+  const [planFor, setPlanFor] = useState<Record<string, string>>({});
+  const changePlan = (s: Subscription, plan: PlanKey) => {
+    setPlanFor((prev) => ({ ...prev, [s.id]: plan }));
+    void changeSubscriptionPlanAction(s.id, plan);
   };
 
   return (
@@ -215,6 +231,29 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   >
                     Reactivate
                   </button>
+                )}
+
+                {/* Billing plan — the one thing a member can change */}
+                {status === 'active' && (
+                  <label className="flex items-center gap-2 rounded-full border border-line bg-background px-3 py-1.5 text-xs text-foreground/85">
+                    <span className="text-[10px] tracking-widest text-foreground/50">PLAN</span>
+                    <select
+                      value={
+                        planFor[s.id] ??
+                        (s.cadenceLabel.toLowerCase().includes('quarter')
+                          ? 'quarterly'
+                          : s.cadenceLabel.toLowerCase().includes('annual')
+                            ? 'annual'
+                            : 'monthly')
+                      }
+                      onChange={(e) => changePlan(s, e.target.value as PlanKey)}
+                      className="bg-transparent text-xs text-foreground outline-none"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="annual">Annual</option>
+                    </select>
+                  </label>
                 )}
 
                 {/* Pause / Skip / Cancel — only when active */}

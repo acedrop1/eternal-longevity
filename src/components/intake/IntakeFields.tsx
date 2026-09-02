@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type Field, CONSENT_ITEMS } from '@/lib/intakeSchema';
+import { type Field, CONSENT_ITEMS, PASSWORD_RULES } from '@/lib/intakeSchema';
 
 interface FieldRendererProps {
   field: Field;
@@ -129,6 +129,17 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
           placeholder={field.placeholder}
           rows={4}
           className={cn(inputBase, 'resize-none')}
+        />
+      );
+
+    case 'date':
+      return (
+        <input
+          type="date"
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          max={new Date().toISOString().slice(0, 10)}
+          className={cn(inputBase, '[color-scheme:dark]')}
         />
       );
 
@@ -295,7 +306,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
               type="password"
               value={acc.password ?? ''}
               onChange={(e) => onChange({ ...acc, password: e.target.value })}
-              placeholder="At least 12 characters"
+              placeholder="Create a password"
               className={inputBase}
             />
           </div>
@@ -309,6 +320,44 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
               className={inputBase}
             />
           </div>
+
+          {/* Live password checklist — unmet rules turn red once typing starts. */}
+          <ul className="space-y-1.5">
+            {PASSWORD_RULES.map((r) => {
+              const pw = acc.password ?? '';
+              const met = r.test(pw);
+              const idle = pw.length === 0;
+              return (
+                <li
+                  key={r.id}
+                  className={cn(
+                    'flex items-center gap-2 text-xs transition-colors',
+                    idle ? 'text-foreground/45' : met ? 'text-emerald-400' : 'text-red-400'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-flex h-4 w-4 flex-none items-center justify-center rounded-full border text-[9px]',
+                      idle
+                        ? 'border-foreground/25'
+                        : met
+                          ? 'border-emerald-400/60 bg-emerald-400/10'
+                          : 'border-red-400/60 bg-red-400/10'
+                    )}
+                  >
+                    {idle ? '' : met ? '✓' : '✕'}
+                  </span>
+                  {r.label}
+                </li>
+              );
+            })}
+            {(acc.confirm ?? '') !== '' && acc.confirm !== acc.password && (
+              <li className="flex items-center gap-2 text-xs text-red-400">
+                <span className="inline-flex h-4 w-4 flex-none items-center justify-center rounded-full border border-red-400/60 bg-red-400/10 text-[9px]">✕</span>
+                Passwords match
+              </li>
+            )}
+          </ul>
           <button
             type="button"
             onClick={() => onChange({ ...acc, mfa: !acc.mfa })}

@@ -4,29 +4,49 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
+import { listOrders } from '@/lib/orders-db';
+import { STATUS_LABEL } from '@/lib/orders';
 
 export const metadata: Metadata = {
   title: 'Portal | Eternal Longevity',
 };
 
-// Demo data. Replace with real read from the member's record
-const PROTOCOL = {
-  name: 'Recover Protocol',
-  cycle: '12-week cycle',
-  ingredients: [
-    { name: 'KPV', dose: '250 mcg / day SQ' },
-    { name: 'GHK-Cu', dose: '2 mg / week SQ' },
-  ],
-  total: 480,
-  physician: 'Dr. M. Reyes',
-};
-
+/**
+ * Member home. Deliberately minimal: a greeting, ONE required action if there
+ * is one, the latest order's status, and three big tiles. Everything else
+ * lives on its own page.
+ */
 export default async function MemberPortalPage() {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const pendingVisit = await getPendingVisit();
+  const [pendingVisit, orders] = await Promise.all([
+    getPendingVisit(),
+    listOrders().catch(() => []),
+  ]);
+  const latest = orders[0] ?? null;
+  const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
+
+  const tiles = [
+    {
+      href: '/portal/shop',
+      title: 'Shop',
+      body: 'Browse protocols and peptides.',
+    },
+    {
+      href: '/portal/orders',
+      title: 'Orders',
+      body: latest
+        ? `Latest: ${STATUS_LABEL[latest.status] ?? latest.status}`
+        : 'No orders yet.',
+    },
+    {
+      href: '/portal/messages',
+      title: 'Messages',
+      body: 'Your care team and doctor.',
+    },
+  ];
 
   return (
     <PortalShell
@@ -40,225 +60,100 @@ export default async function MemberPortalPage() {
         { label: 'Account', href: '/portal/account' },
       ]}
     >
-      {pendingVisit && (
-        <div className="mb-8 rounded-3xl border border-accent/40 bg-accent/[0.06] p-6 md:flex md:items-center md:justify-between md:gap-6">
-          <div>
-            <p className="mb-1 flex items-center gap-2 text-[11px] tracking-widest text-accent">
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              REQUIRED ACTION
-            </p>
-            <p className="text-sm text-foreground/80 leading-relaxed">
-              Complete your <strong>clinical visit</strong> so your prescriber
-              can review your{pendingVisit.productName ? ` ${pendingVisit.productName}` : ''} order.
-              Nothing ships until it&apos;s done.
-            </p>
-          </div>
-          <Link
-            href="/portal/visit"
-            className="pill mt-4 inline-block bg-accent px-6 py-2.5 text-sm font-semibold text-black md:mt-0 md:flex-none"
-          >
-            Complete your visit
-          </Link>
-        </div>
-      )}
-
-      {/* === STATUS HEADER === */}
-      <div className="mb-10">
-        <p className="mb-2 text-[11px] tracking-widest text-accent">
-          YOUR PROTOCOL · READY TO ORDER
-        </p>
+      {/* Greeting */}
+      <div className="mb-8">
         <h1
           className="font-semibold tracking-tight text-foreground"
           style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
+            fontSize: 'clamp(2rem, 4.5vw, 3rem)',
             letterSpacing: '-0.02em',
             lineHeight: 1.05,
           }}
         >
-          Hi {user.name.split(' ')[0]}. Your protocol is ready.
+          Hi {firstName}.
         </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Two things before your protocol ships: verify your ID and add a
-          payment method. Nothing is charged until your order is confirmed.
-          Billing begins the moment it is.
+        <p className="mt-2 text-foreground/60">
+          {pendingVisit
+            ? 'One thing needs your attention.'
+            : latest
+              ? 'Everything is on track.'
+              : 'Ready when you are.'}
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        {/* === MAIN. PROTOCOL SUMMARY + CHECKOUT === */}
-        <div className="space-y-6">
-          {/* Protocol summary card */}
-          <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
-            <div className="mb-1 text-[10px] tracking-widest text-accent">
-              YOUR PROTOCOL
-            </div>
-            <h2 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
-              {PROTOCOL.name}
-            </h2>
-            <p className="text-sm text-foreground/55">{PROTOCOL.cycle}</p>
-
-            <div className="my-6 h-px bg-line" />
-
-            <ul className="space-y-3">
-              {PROTOCOL.ingredients.map((ing) => (
-                <li
-                  key={ing.name}
-                  className="flex items-center justify-between"
-                >
-                  <span className="font-medium text-foreground">
-                    {ing.name}
-                  </span>
-                  <span className="text-sm text-foreground/65">{ing.dose}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="my-6 h-px bg-line" />
-
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-foreground/65">First cycle</span>
-              <span className="text-2xl font-semibold text-foreground tracking-tight">
-                ${PROTOCOL.total}
-              </span>
-            </div>
-            <p className="mb-6 text-xs text-foreground/45 leading-relaxed">
-              Billed only when your order is confirmed. You are not
-              charged anything now.
+      {/* The one required action */}
+      {pendingVisit && (
+        <Link
+          href="/portal/visit"
+          className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-accent/40 bg-accent/[0.07] p-6 transition hover:bg-accent/[0.12]"
+        >
+          <div>
+            <p className="mb-1 flex items-center gap-2 text-[11px] tracking-widest text-accent">
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              REQUIRED
             </p>
-
-            <Link
-              href="/checkout"
-              className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
-            >
-              Add a payment method →
-            </Link>
-            <p className="mt-3 text-center text-[11px] text-foreground/45">
-              Saved securely · No charge until your order is confirmed
+            <p className="text-lg font-semibold text-foreground">
+              Complete your visit
             </p>
-          </section>
+            <p className="mt-1 text-sm text-foreground/60">
+              A few health questions so your prescriber can review
+              {pendingVisit.productName ? ` your ${pendingVisit.productName} order` : ''}.
+              Takes about 3 minutes.
+            </p>
+          </div>
+          <span aria-hidden className="text-2xl text-accent">
+            →
+          </span>
+        </Link>
+      )}
 
-          {/* Cycle timeline */}
-          <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
-            <div className="mb-4 text-[10px] tracking-widest text-foreground/50">
-              CYCLE TIMELINE
-            </div>
-            <ol className="space-y-3">
-              {[
-                { n: '01', title: 'ID verification', body: 'Required by law for compounded protocol products.', status: 'pending' as const },
-                { n: '02', title: 'Payment method', body: 'Add a card now. It is saved securely and not charged.', status: 'pending' as const },
-                { n: '03', title: 'Order confirmation', body: 'Your order is confirmed. Billing starts the moment it is.', status: 'upcoming' as const },
-                { n: '04', title: 'Shipment', body: 'The pharmacy compounds and ships cold-chain within 3 to 5 days of confirmation.', status: 'upcoming' as const },
-                { n: '05', title: 'Mid-cycle check-in', body: 'A protocol check-in at week 6.', status: 'upcoming' as const },
-              ].map((s) => (
-                <li
-                  key={s.n}
-                  className="flex items-start gap-3 rounded-2xl border border-line bg-background p-4"
-                >
-                  <span className="text-[10px] tracking-widest text-accent pt-0.5">
-                    {s.n}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-foreground">
-                      {s.title}
-                    </div>
-                    <p className="text-xs text-foreground/55 leading-relaxed mt-0.5">
-                      {s.body}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      s.status === 'pending'
-                        ? 'rounded-full border border-accent/40 bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest'
-                        : 'rounded-full border border-line bg-surface text-foreground/45 px-2 py-0.5 text-[10px] tracking-widest'
-                    }
-                  >
-                    {s.status === 'pending' ? 'PENDING YOU' : 'UPCOMING'}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </div>
+      {/* Latest order, one line */}
+      {latest && (
+        <Link
+          href="/portal/orders"
+          className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-line bg-surface px-6 py-5 transition hover:border-foreground/25"
+        >
+          <div className="min-w-0">
+            <p className="mb-1 text-[11px] tracking-widest text-foreground/50">
+              LATEST ORDER
+            </p>
+            <p className="truncate text-sm text-foreground/85">
+              {latest.lines.map((l) => l.productName).join(', ')}
+            </p>
+          </div>
+          <span className="flex-none rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[10px] font-semibold tracking-widest text-accent">
+            {(STATUS_LABEL[latest.status] ?? latest.status).toUpperCase()}
+          </span>
+        </Link>
+      )}
 
-        {/* === SIDEBAR. QUICK ACTIONS === */}
-        <aside className="space-y-3">
-          {/* Shop highlight. Oura "explore more" pattern */}
+      {/* Three tiles. That's the whole dashboard. */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {tiles.map((t) => (
           <Link
-            href="/portal/shop"
-            className="group relative block overflow-hidden rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5 transition-all hover:border-accent/70"
+            key={t.href}
+            href={t.href}
+            className="group rounded-3xl border border-line bg-surface p-6 transition hover:border-accent/40"
           >
-            <div className="mb-2 text-[10px] tracking-widest text-accent">
-              MEMBER SHOP · NEW
-            </div>
-            <div className="mb-1 text-base font-semibold tracking-tight text-foreground">
-              Shop more peptides
-            </div>
-            <p className="mb-3 text-sm text-foreground/65 leading-relaxed">
-              Add individual peptides to your routine. Subscription-only,
-              third-party tested before every cycle.
-            </p>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent group-hover:translate-x-1 transition-transform">
-              Browse the catalog
-              <span aria-hidden>→</span>
+            <p className="text-lg font-semibold text-foreground">{t.title}</p>
+            <p className="mt-1 text-sm text-foreground/55">{t.body}</p>
+            <span
+              aria-hidden
+              className="mt-4 inline-block text-foreground/40 transition group-hover:translate-x-1 group-hover:text-accent"
+            >
+              →
             </span>
           </Link>
-
-          <QuickAction
-            eyebrow="ID VERIFICATION"
-            title="Upload a photo ID"
-            body="Required before your first shipment. ~30 seconds."
-            href="/portal/verify"
-            cta="Start"
-          />
-          <QuickAction
-            eyebrow="MEMBER SUPPORT"
-            title="Message our team"
-            body="Replies within one business day. Same-day callback for urgent."
-            href="/contact"
-            cta="Open chat"
-          />
-          <QuickAction
-            eyebrow="ORDERS"
-            title="Order history"
-            body="No prior orders yet. Your first cycle is queued."
-            href="/portal/orders"
-            cta="View"
-          />
-        </aside>
+        ))}
       </div>
+
+      <p className="mt-8 text-xs text-foreground/40">
+        Need anything?{' '}
+        <Link href="/portal/messages" className="text-accent hover:underline">
+          Message us
+        </Link>{' '}
+        — replies within one business day.
+      </p>
     </PortalShell>
-  );
-}
-
-function QuickAction({
-  eyebrow,
-  title,
-  body,
-  href,
-  cta,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group block rounded-2xl border border-line bg-surface p-5 transition-all hover:border-accent/40"
-    >
-      <div className="mb-2 text-[10px] tracking-widest text-accent">
-        {eyebrow}
-      </div>
-      <div className="mb-1 text-base font-semibold tracking-tight text-foreground">
-        {title}
-      </div>
-      <p className="mb-3 text-sm text-foreground/55 leading-relaxed">{body}</p>
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground/85 group-hover:text-accent transition-colors">
-        {cta}
-        <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-      </span>
-    </Link>
   );
 }

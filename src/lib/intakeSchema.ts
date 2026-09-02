@@ -29,6 +29,7 @@ export const STATES_AVAILABLE = [
 ];
 
 export type FieldType =
+  | 'date'
   | 'multi-select'
   | 'single-select'
   | 'pill-grid'
@@ -119,19 +120,25 @@ export const STEPS: Step[] = [
     body: 'We use this to tailor your protocol options.',
     fields: [
       {
-        id: 'age',
-        type: 'pill-grid',
-        label: 'Age range',
+        id: 'first_name',
+        type: 'text-short',
+        label: 'First name',
+        placeholder: 'First name',
         required: true,
-        options: [
-          { value: 'under18', label: 'Under 18' },
-          { value: '18-24', label: '18–24' },
-          { value: '25-34', label: '25–34' },
-          { value: '35-44', label: '35–44' },
-          { value: '45-54', label: '45–54' },
-          { value: '55-64', label: '55–64' },
-          { value: '65+', label: '65+' },
-        ],
+      },
+      {
+        id: 'last_name',
+        type: 'text-short',
+        label: 'Last name',
+        placeholder: 'Last name',
+        required: true,
+      },
+      {
+        id: 'dob',
+        type: 'date',
+        label: 'Date of birth',
+        required: true,
+        // Age is computed from the date; under 18 fires the knockout.
         knockoutOn: { values: ['under18'], key: 'under18' },
       },
       {
@@ -174,35 +181,35 @@ export const STEPS: Step[] = [
   {
     id: 'body',
     eyebrow: '04 / BODY SNAPSHOT',
-    heading: 'Roughly where do you land?',
-    body: "Ranges are fine. You can confirm exact measurements later in your portal.",
+    heading: 'Enter your height and weight.',
+    body: 'The doctor uses this for dosing — exact numbers, not ranges.',
     fields: [
       {
-        id: 'height',
-        type: 'pill-grid',
-        label: 'Height',
+        id: 'height_ft',
+        type: 'number',
+        label: 'Height — feet',
+        placeholder: '5',
         required: true,
-        options: [
-          { value: 'lt-54', label: "Under 5'4\"" },
-          { value: '54-58', label: "5'4\" – 5'8\"" },
-          { value: '58-60', label: "5'8\" – 6'0\"" },
-          { value: '60-64', label: "6'0\" – 6'4\"" },
-          { value: 'gt-64', label: "6'4\"+" },
-        ],
+        min: 3,
+        max: 8,
       },
       {
-        id: 'weight',
-        type: 'pill-grid',
-        label: 'Weight',
+        id: 'height_in',
+        type: 'number',
+        label: 'Height — inches',
+        placeholder: '10',
         required: true,
-        options: [
-          { value: 'lt-130', label: 'Under 130 lbs' },
-          { value: '130-160', label: '130 – 160 lbs' },
-          { value: '160-190', label: '160 – 190 lbs' },
-          { value: '190-220', label: '190 – 220 lbs' },
-          { value: '220-260', label: '220 – 260 lbs' },
-          { value: 'gt-260', label: '260+ lbs' },
-        ],
+        min: 0,
+        max: 11,
+      },
+      {
+        id: 'weight_lb',
+        type: 'number',
+        label: 'Weight (lbs)',
+        placeholder: '180',
+        required: true,
+        min: 60,
+        max: 700,
       },
     ],
   },
@@ -336,8 +343,15 @@ export const STEPS: Step[] = [
     id: 'account',
     eyebrow: '08 / CREATE ACCOUNT',
     heading: 'Last step. Set up your portal.',
-    body: 'Your account is how you review your protocol, verify ID, and check out securely.',
+    body: 'Your account is how you review your protocol, message your care team, and check out securely. Your shipping address is collected at checkout.',
     fields: [
+      {
+        id: 'phone',
+        type: 'text-short',
+        label: 'Mobile number',
+        placeholder: '(201) 555-0100',
+        required: true,
+      },
       {
         id: 'account',
         type: 'account-creation',
@@ -347,6 +361,18 @@ export const STEPS: Step[] = [
     ],
   },
 ];
+
+/** Password policy — shared by the field UI, wizard validation and server. */
+export const PASSWORD_RULES: { id: string; label: string; test: (p: string) => boolean }[] = [
+  { id: 'len', label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { id: 'upper', label: 'One uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { id: 'lower', label: 'One lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { id: 'special', label: 'One special character (!@#$…)', test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
+
+export function passwordValid(p: string): boolean {
+  return PASSWORD_RULES.every((r) => r.test(p));
+}
 
 export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> = {
   under18: {

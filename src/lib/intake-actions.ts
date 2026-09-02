@@ -12,6 +12,7 @@
  */
 import type { Json } from '@/lib/database.types';
 import { getSession } from '@/lib/auth-server';
+import { passwordValid } from '@/lib/intakeSchema';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -59,6 +60,19 @@ export async function submitIntakeAction(
     | { password?: string; mfa?: boolean }
     | undefined;
   delete answers.account;
+  if (account?.password && !passwordValid(account.password)) {
+    return {
+      ok: false,
+      error:
+        'Password must be 8+ characters with an uppercase letter, a lowercase letter, and a special character.',
+    };
+  }
+
+  const fullName = [answers.first_name, answers.last_name]
+    .filter((v) => typeof v === 'string' && v.trim())
+    .map((v) => String(v).trim())
+    .join(' ');
+  const phone = typeof answers.phone === 'string' ? answers.phone.trim() : '';
 
   // --- live mode: create the account + persist ----------------------------
   let userId: string | null = null;
@@ -70,15 +84,18 @@ export async function submitIntakeAction(
         email: email.trim().toLowerCase(),
         password: account.password,
         email_confirm: true,
+        user_metadata: fullName ? { full_name: fullName } : undefined,
       });
       if (created?.user) {
         userId = created.user.id;
-        if (account.mfa) {
-          await db
-            .from('profiles')
-            .update({ two_factor_enabled: true })
-            .eq('id', userId);
-        }
+        await db
+          .from('profiles')
+          .update({
+            ...(fullName ? { full_name: fullName } : {}),
+            ...(phone ? { phone } : {}),
+            ...(account.mfa ? { two_factor_enabled: true } : {}),
+          })
+          .eq('id', userId);
       } else if (authErr) {
         // Email already registered — link the intake to the existing account.
         const { data: existing } = await db
@@ -115,11 +132,9 @@ export async function submitIntakeAction(
 
   // --- live mode: notify (best-effort, never blocks the response) ---------
   const firstName =
-    typeof answers.firstName === 'string' && answers.firstName.trim()
-      ? answers.firstName.trim()
-      : typeof answers.name === 'string'
-        ? String(answers.name).trim().split(/\s+/)[0]
-        : 'there';
+    typeof answers.first_name === 'string' && answers.first_name.trim()
+      ? answers.first_name.trim()
+      : 'there';
 
   const patient = intakeConfirmationEmail(firstName);
   const team = intakeReceivedTeamEmail(caseId, email);

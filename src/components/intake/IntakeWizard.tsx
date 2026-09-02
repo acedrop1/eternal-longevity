@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FieldRenderer } from './IntakeFields';
 import {
   KNOCKOUT_MESSAGES,
+  passwordValid,
   PRODUCT_KNOCKOUT,
   buildPreSteps,
   buildVisitSteps,
@@ -36,7 +37,7 @@ function valueIsPresent(field: Field, v: unknown): boolean {
   }
   if (field.type === 'account-creation') {
     const acc = (v as { password?: string; confirm?: string }) ?? {};
-    return !!acc.password && acc.password.length >= 12 && acc.password === acc.confirm;
+    return !!acc.password && passwordValid(acc.password) && acc.password === acc.confirm;
   }
   if (field.type === 'id-upload') {
     return v instanceof File || typeof v === 'string';
@@ -48,6 +49,15 @@ function validateStep(step: Step, answers: Answers): { ok: boolean; knockout?: s
   for (const f of step.fields) {
     const v = answers[f.id];
     if (!valueIsPresent(f, v)) return { ok: false };
+    if (f.type === 'date' && f.knockoutOn?.values.includes('under18') && typeof v === 'string') {
+      const dob = new Date(v);
+      const now = new Date();
+      let age = now.getFullYear() - dob.getFullYear();
+      const m = now.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+      if (age < 18) return { ok: false, knockout: f.knockoutOn.key };
+      continue;
+    }
     if (f.knockoutOn) {
       const vStr = String(v);
       if (f.knockoutOn.values.includes(vStr)) {
@@ -276,7 +286,9 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
         </div>
       )}
       <div className="mb-2">
-        <p className="text-[11px] tracking-widest text-accent">{currentStep.eyebrow}</p>
+        <p className="text-[11px] tracking-widest text-accent">
+          {`${String(status.stepIdx + 1).padStart(2, '0')} / ${currentStep.eyebrow.replace(/^\d+\s*\/\s*/, '')}`}
+        </p>
       </div>
       <h2
         className="mb-3 font-semibold tracking-tight text-foreground"
