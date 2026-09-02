@@ -60,7 +60,7 @@ async function loadOverview(): Promise<Overview> {
           .gte('created_at', weekAgo),
         db
           .from('order_updates')
-          .select('author, author_role, note, status_change, created_at')
+          .select('author, author_role, label, body, created_at')
           .order('created_at', { ascending: false })
           .limit(6),
       ]);
@@ -101,7 +101,7 @@ async function loadOverview(): Promise<Overview> {
           hour: 'numeric',
           minute: '2-digit',
         }),
-        action: [u.author ?? u.author_role ?? 'System', u.note ?? u.status_change ?? '']
+        action: [u.author ?? u.author_role ?? 'System', u.label, u.body ?? '']
           .filter(Boolean)
           .join(' · '),
       })),
