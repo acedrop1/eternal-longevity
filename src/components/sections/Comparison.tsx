@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { FadeIn } from '@/components/ui/FadeIn';
 
 /**
@@ -69,20 +68,6 @@ export function Comparison() {
               Start Your Assessment →
             </a>
 
-            {/* Atmospheric lifestyle photo */}
-            <div className="mt-12 relative aspect-square w-full max-w-[320px] rounded-2xl overflow-hidden border border-line">
-              <Image
-                src="/images/2.jpg"
-                alt="Peptide serum in solution"
-                fill
-                sizes="(max-width: 768px) 90vw, 320px"
-                className="object-cover"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
-              />
-            </div>
           </FadeIn>
 
           {/* Right column. Comparison table */}
