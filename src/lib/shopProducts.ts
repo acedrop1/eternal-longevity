@@ -475,7 +475,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     pricing: { monthly: 200, quarterly: 550, annual: 1940 },
     swatch: 'linear-gradient(180deg, #4a5042 0%, #000000 100%)',
     image: '/images/8.jpg',
-    gallery: ['/images/8.jpg', '/images/7.jpg', '/images/2.jpg', '/images/9.jpg'],
+    gallery: ['/images/8.jpg', '/images/7.jpg', '/images/9.jpg'],
     requiresReview: true,
     fdaApproved: true,
     sideEffects: [
@@ -522,7 +522,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     pricing: { monthly: 160, quarterly: 440, annual: 1560 },
     swatch: 'linear-gradient(180deg, #3a4e48 0%, #000000 100%)',
     image: '/images/10.jpg',
-    gallery: ['/images/10.jpg', '/images/2.jpg', '/images/1.jpg', '/images/14.jpg'],
+    gallery: ['/images/10.jpg', '/images/1.jpg', '/images/14.jpg'],
     requiresReview: true,
     sideEffects: [
       'Injection-site irritation',

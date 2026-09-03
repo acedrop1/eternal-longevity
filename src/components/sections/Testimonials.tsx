@@ -83,20 +83,14 @@ const COL_3: Card[] = [
     body: "I literally tried everything. Even I felt like I don't want to do this because it is a shortcut, but it actually isn't. I feel great, healthy, and light physically and mentally.",
     timestamp: 'Sculpt protocol',
   },
-  {
-    type: 'photo',
-    image: '/images/8.jpg',
-    name: 'Jordan K.',
-    role: 'Verified member',
-  },
 ];
 
 // Column 4 (tall)
 const COL_4: Card[] = [
   {
     type: 'photo',
-    image: '/images/2.jpg',
-    name: 'Sofia L.',
+    image: '/images/8.jpg',
+    name: 'Jordan K.',
     role: 'Verified member',
   },
 ];

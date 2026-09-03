@@ -328,7 +328,7 @@ export default function AboutPage() {
           <FadeIn>
             <div className="relative h-[40vh] md:h-[60vh] w-full overflow-hidden">
               <Image
-                src="/images/2.jpg"
+                src="/images/13.jpg"
                 alt="Compound in solution"
                 fill
                 sizes="100vw"
