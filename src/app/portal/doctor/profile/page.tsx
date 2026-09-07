@@ -166,10 +166,10 @@ export default async function DoctorProfilePage() {
             <p className="text-sm text-foreground/75 leading-relaxed">
               Issue with a case or queue routing? Email{' '}
               <a
-                href="mailto:physicians@eternallongevity.com"
+                href="mailto:support@etlongevity.com"
                 className="text-accent hover:text-accent-soft"
               >
-                physicians@eternallongevity.com
+                support@etlongevity.com
               </a>{' '}
               or page on-call ops via Slack.
             </p>

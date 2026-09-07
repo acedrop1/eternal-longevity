@@ -82,7 +82,7 @@ export default function ConsentPolicyPage() {
         {
           heading: 'Withdrawing Consent',
           paragraphs: [
-            'You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email care@eternallongevity.com. Withdrawal of consent will stop future orders but does not erase records already created.',
+            'You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email support@etlongevity.com. Withdrawal of consent will stop future orders but does not erase records already created.',
           ],
         },
         {
@@ -94,7 +94,7 @@ export default function ConsentPolicyPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions about this acknowledgement? Email legal@eternallongevity.com or care@eternallongevity.com for order questions.',
+            'Questions about this acknowledgement? Email support@etlongevity.com or support@etlongevity.com for order questions.',
           ],
         },
       ]}

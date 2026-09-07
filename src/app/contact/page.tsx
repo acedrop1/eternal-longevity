@@ -20,24 +20,14 @@ const TOPICS = [
 
 const CONTACT_ROWS = [
   {
-    eyebrow: 'GENERAL',
-    title: 'hello@eternallongevity.com',
-    body: 'Replies within one business day.',
-  },
-  {
-    eyebrow: 'MEMBER SUPPORT',
-    title: 'care@eternallongevity.com',
-    body: 'Member questions about your protocol or order. Same-day callback available for urgent matters.',
-  },
-  {
-    eyebrow: 'PRESS',
-    title: 'press@eternallongevity.com',
-    body: 'Media requests, partnerships, interviews.',
+    eyebrow: 'SUPPORT',
+    title: 'support@etlongevity.com',
+    body: 'Orders, protocols, billing, press and partnerships. Replies within one business day.',
   },
   {
     eyebrow: 'MAILING ADDRESS',
-    title: 'Eternal Longevity, Inc.',
-    body: 'Suite 2200, Hoboken, NJ 07030',
+    title: 'Eternal Longevity LLC',
+    body: '825 Riverview Dr, Floor 2, Totowa, NJ 07512',
   },
 ];
 

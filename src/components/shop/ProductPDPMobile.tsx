@@ -526,7 +526,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         <Section title="Questions?" eyebrow="08">
           <div className="space-y-3 text-foreground/75">
             <a
-              href="mailto:care@eternallongevity.com"
+              href="mailto:support@etlongevity.com"
               className="flex items-center gap-3 hover:text-foreground transition-colors"
             >
               <svg
@@ -544,10 +544,10 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              <span>care@eternallongevity.com</span>
+              <span>support@etlongevity.com</span>
             </a>
             <a
-              href="tel:+18555551234"
+              href="tel:+12123444247"
               className="flex items-center gap-3 hover:text-foreground transition-colors"
             >
               <svg

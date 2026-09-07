@@ -177,7 +177,7 @@ export function SavedAddressesManager() {
                   setDraft({ ...draft, zip: v.replace(/\D/g, '').slice(0, 5) })
                 }
                 inputMode="numeric"
-                placeholder="07030"
+                placeholder="07512"
               />
             </div>
             <Field

@@ -12,7 +12,7 @@ export default function TermsPage() {
       eyebrow="LEGAL"
       title="Terms of Service"
       effective="May 2026"
-      lead="These Terms of Service govern your access to and use of Eternal Longevity, Inc. (“Eternal Longevity,” “we,” “us”) and our products, including the website, product catalog, and any compounded peptide protocols fulfilled by our licensed 503A pharmacy partners. By using any part of our service, you agree to these terms."
+      lead="These Terms of Service govern your access to and use of Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) and our products, including the website, product catalog, and any compounded peptide protocols fulfilled by our licensed 503A pharmacy partners. By using any part of our service, you agree to these terms."
       sections={[
         {
           heading: 'Eligibility & Account',
@@ -65,7 +65,7 @@ export default function TermsPage() {
         {
           heading: 'Intellectual Property',
           paragraphs: [
-            'The Eternal Longevity name, logo, content, and all related marks are owned by Eternal Longevity, Inc. and are protected by U.S. trademark, copyright, and other intellectual-property laws. You may not use these marks without our prior written permission.',
+            'The Eternal Longevity name, logo, content, and all related marks are owned by Eternal Longevity LLC and are protected by U.S. trademark, copyright, and other intellectual-property laws. You may not use these marks without our prior written permission.',
           ],
         },
         {
@@ -95,7 +95,7 @@ export default function TermsPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions about these terms? Email legal@eternallongevity.com or write to Eternal Longevity, Inc., Suite 2200, Hoboken, NJ 07030.',
+            'Questions about these terms? Email support@etlongevity.com or write to Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
           ],
         },
       ]}

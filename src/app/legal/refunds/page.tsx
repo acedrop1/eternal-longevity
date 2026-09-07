@@ -17,7 +17,7 @@ export default function RefundsPage() {
         {
           heading: 'Before the Pharmacy Ships',
           paragraphs: [
-            'You can cancel at any point between placing your order and the pharmacy releasing your protocol for shipment. If the pharmacy has not yet begun compounding your protocol, you are refunded in full automatically. If we are unable to fulfill your order, you are also refunded in full.',
+            'Your card is not charged until a licensed prescriber approves your order. If you cancel before approval, or if your order is declined or we are unable to fulfill it, nothing is charged. After approval, you can still cancel for a full refund at any point before the pharmacy begins compounding.',
             'Once the pharmacy has begun compounding, you are not eligible for a full refund. The compounded protocol has been prepared for you specifically.',
           ],
         },
@@ -31,7 +31,7 @@ export default function RefundsPage() {
         {
           heading: 'Damaged or Lost Shipments',
           paragraphs: [
-            'If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at care@eternallongevity.com with photos. We will replace the affected vials at no cost.',
+            'If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at support@etlongevity.com with photos. We will replace the affected vials at no cost.',
             'If a shipment is lost in transit and the carrier confirms loss, we will resend the order at no cost.',
           ],
         },
@@ -58,13 +58,13 @@ export default function RefundsPage() {
         {
           heading: 'Disputes',
           paragraphs: [
-            'If you believe a charge is in error, contact us at billing@eternallongevity.com before initiating a chargeback. We aim to resolve billing disputes within five business days. Initiating a chargeback without first contacting us may delay resolution.',
+            'If you believe a charge is in error, contact us at support@etlongevity.com before initiating a chargeback. We aim to resolve billing disputes within five business days. Initiating a chargeback without first contacting us may delay resolution.',
           ],
         },
         {
           heading: 'How to Request a Refund',
           paragraphs: [
-            'Eligible refund requests can be made by emailing care@eternallongevity.com with your order number and a brief description of the issue. Refunds are processed to the original payment method within 5–10 business days of approval.',
+            'Eligible refund requests can be made by emailing support@etlongevity.com with your order number and a brief description of the issue. Refunds are processed to the original payment method within 5–10 business days of approval.',
           ],
         },
         {
@@ -76,7 +76,7 @@ export default function RefundsPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions? Email care@eternallongevity.com (orders), billing@eternallongevity.com (billing), or write to Eternal Longevity, Inc., Suite 2200, Hoboken, NJ 07030.',
+            'Questions? Email support@etlongevity.com (orders), support@etlongevity.com (billing), or write to Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
           ],
         },
       ]}

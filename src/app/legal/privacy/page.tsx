@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       eyebrow="LEGAL"
       title="Privacy Policy"
       effective="May 2026"
-      lead="Your health information is sensitive. This policy explains what we collect, why we collect it, who we share it with, and the choices you have. Eternal Longevity, Inc. (“Eternal Longevity,” “we,” “us”) is committed to handling your data with the care it deserves."
+      lead="Your health information is sensitive. This policy explains what we collect, why we collect it, who we share it with, and the choices you have. Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) is committed to handling your data with the care it deserves."
       sections={[
         {
           heading: 'Information We Collect',
@@ -80,14 +80,14 @@ export default function PrivacyPage() {
         {
           heading: 'Your Rights',
           paragraphs: [
-            'Depending on where you live, you may have the right to access, correct, port, or delete your personal information; to opt out of certain disclosures; and to lodge a complaint with a supervisory authority. To exercise these rights, email privacy@eternallongevity.com. We will verify your identity before fulfilling the request.',
+            'Depending on where you live, you may have the right to access, correct, port, or delete your personal information; to opt out of certain disclosures; and to lodge a complaint with a supervisory authority. To exercise these rights, email support@etlongevity.com. We will verify your identity before fulfilling the request.',
             'Requests for health-related records are handled in accordance with applicable law.',
           ],
         },
         {
           heading: 'Children',
           paragraphs: [
-            'Our service is intended for adults 18 and older. We do not knowingly collect personal information from children. If you believe a child has provided us with information, please email privacy@eternallongevity.com and we will delete it.',
+            'Our service is intended for adults 18 and older. We do not knowingly collect personal information from children. If you believe a child has provided us with information, please email support@etlongevity.com and we will delete it.',
           ],
         },
         {
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions or concerns? Email privacy@eternallongevity.com or write to Privacy Officer, Eternal Longevity, Inc., Suite 2200, Hoboken, NJ 07030.',
+            'Questions or concerns? Email support@etlongevity.com or write to Privacy Officer, Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
           ],
         },
       ]}

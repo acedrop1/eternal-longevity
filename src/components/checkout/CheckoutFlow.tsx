@@ -1015,7 +1015,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                       }
                     }}
                     autoComplete="postal-code"
-                    placeholder="07030"
+                    placeholder="07512"
                     className={inputClass}
                   />
                 </div>

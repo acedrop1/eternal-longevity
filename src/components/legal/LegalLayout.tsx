@@ -177,10 +177,10 @@ export function LegalLayout({
                 <p className="pt-8 text-xs text-foreground/45 leading-relaxed">
                   Questions about this document? Email{' '}
                   <a
-                    href="mailto:legal@eternallongevity.com"
+                    href="mailto:support@etlongevity.com"
                     className="text-accent hover:text-accent-soft"
                   >
-                    legal@eternallongevity.com
+                    support@etlongevity.com
                   </a>
                   . This page is for informational purposes and does not
                   constitute legal advice.
