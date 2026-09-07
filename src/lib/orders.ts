@@ -173,8 +173,8 @@ export const SEED_ORDERS: Order[] = [
     state: 'NY',
     lines: [
       {
-        productId: 'semaglutide',
-        productName: 'Semaglutide',
+        productId: 'tesamorelin',
+        productName: 'Tesamorelin',
         cadence: 'quarterly',
         cadenceLabel: 'Quarterly',
         quantity: 1,

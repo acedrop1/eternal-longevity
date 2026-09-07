@@ -18,7 +18,6 @@ export type ShopCategory =
 export const SHOP_CATEGORIES: { key: ShopCategory; label: string }[] = [
   { key: 'recovery', label: 'Recovery & repair' },
   { key: 'growth', label: 'Growth hormone' },
-  { key: 'metabolic', label: 'Metabolic' },
   { key: 'cognitive', label: 'Cognitive' },
   { key: 'sexual', label: 'Sexual health' },
   { key: 'longevity', label: 'Longevity & skin' },
@@ -79,7 +78,7 @@ export interface ShopProduct {
   contraindications: string[];
   /**
    * True when the active ingredient has an FDA-approved reference drug
-   * (e.g. semaglutide → Ozempic/Wegovy). Only these are listed on the public
+   * (e.g. tesamorelin → Egrifta). Only these are listed on the public
    * storefront at /shop; everything else is member-only at /portal/shop.
    */
   fdaApproved?: boolean;
@@ -268,101 +267,6 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   },
 
   // ============ METABOLIC ============
-  {
-    id: 'semaglutide',
-    name: 'Semaglutide',
-    tagline: 'GLP-1 Metabolic Reset',
-    category: 'metabolic',
-    shortDescription:
-      'The original GLP-1 RA. Average 15% body-weight reduction with sustained insulin-sensitivity gains.',
-    longDescription:
-      'Semaglutide is a GLP-1 receptor agonist with extensive Phase 3 evidence for weight reduction, glycemic control, and cardiovascular risk reduction. We pair it with muscle-preserving peptides to protect lean mass during weight loss.',
-    bestFor: 'Members with elevated BMI, prediabetes, or insulin resistance.',
-    benefits: [
-      'Mean 15% body-weight reduction at 68 weeks',
-      'Sustained insulin sensitivity',
-      'Reduced appetite and food noise',
-      'Cardiovascular risk reduction',
-    ],
-    whatsIncluded: [
-      '12 weeks of compounded Semaglutide (0.25–2.4 mg/week SQ, titrated)',
-      'Insulin syringes',
-      'Alcohol prep pads',
-      'Anti-nausea support if needed',
-      'Mid-cycle protocol check-in + side-effect review',
-    ],
-    delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 280, quarterly: 770, annual: 2720 },
-    swatch: 'linear-gradient(180deg, #3e5a52 0%, #000000 100%)',
-    image: '/images/12.jpg',
-    gallery: ['/images/12.jpg', '/images/9.jpg', '/images/11.jpg', '/images/7.jpg'],
-    requiresReview: true,
-    popular: true,
-    fdaApproved: true,
-    sideEffects: [
-      'Nausea, especially during dose escalation',
-      'Vomiting, diarrhea, or constipation',
-      'Reduced appetite and early fullness',
-      'Fatigue',
-      'Injection-site reactions',
-      'Gallbladder issues at higher doses',
-    ],
-    contraindications: [
-      'Personal or family history of medullary thyroid carcinoma',
-      'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
-      'History of pancreatitis',
-      'Pregnancy, breastfeeding, or actively trying to conceive',
-      'Severe gastrointestinal disease or gastroparesis',
-    ],
-  },
-  {
-    id: 'tirzepatide',
-    name: 'Tirzepatide',
-    tagline: 'Dual GIP/GLP-1 Agonist',
-    category: 'metabolic',
-    shortDescription:
-      'The strongest GLP-1 class agent. Up to 22% mean body-weight reduction in Phase 3 trials.',
-    longDescription:
-      'Tirzepatide activates both GIP and GLP-1 receptors, producing greater weight loss and glycemic control than GLP-1-only agents. Phase 3 SURMOUNT trials show 20–22% mean body-weight reduction at 72 weeks. Titrated slowly to minimize GI side effects.',
-    bestFor: 'Members who need stronger metabolic intervention than GLP-1 alone provides.',
-    benefits: [
-      '20–22% mean body-weight reduction',
-      'Superior glycemic control vs GLP-1 alone',
-      'Reduced visceral fat',
-      'Sustained appetite regulation',
-    ],
-    whatsIncluded: [
-      '12 weeks of compounded Tirzepatide (2.5–15 mg/week SQ, titrated)',
-      'Insulin syringes',
-      'Alcohol prep pads',
-      'Anti-nausea support if needed',
-      'Mid-cycle protocol check-in + labs',
-    ],
-    delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 360, quarterly: 990, annual: 3500 },
-    swatch: 'linear-gradient(180deg, #4e6258 0%, #000000 100%)',
-    image: '/images/5.jpg',
-    gallery: ['/images/5.jpg', '/images/6.jpg', '/images/9.jpg', '/images/11.jpg'],
-    requiresReview: true,
-    fdaApproved: true,
-    sideEffects: [
-      'Nausea, especially during dose escalation',
-      'Vomiting, diarrhea, or constipation',
-      'Reduced appetite and early fullness',
-      'Abdominal discomfort',
-      'Injection-site reactions',
-      'Gallbladder issues at higher doses',
-    ],
-    contraindications: [
-      'Personal or family history of medullary thyroid carcinoma',
-      'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
-      'History of pancreatitis',
-      'Pregnancy, breastfeeding, or actively trying to conceive',
-      'Severe gastrointestinal disease or gastroparesis',
-    ],
-  },
 
   // ============ COGNITIVE ============
   {

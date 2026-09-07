@@ -35,7 +35,7 @@ const MECHANISMS = [
     n: '04',
     title: 'Metabolic balance',
     body:
-      'Tesofensine, Tirzepatide, and supporting peptides re-sensitize insulin pathways and re-regulate appetite signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
+      'Tesamorelin and supporting peptides target visceral fat and re-sensitize metabolic signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
   },
 ];
 
@@ -83,13 +83,6 @@ const EVIDENCE = [
     summary:
       'FDA-approved for HIV-associated lipodystrophy, with strong off-label evidence for visceral adipose reduction in middle-aged adults. Paired with measurable improvements in lipid profile.',
     note: 'FDA-approved indication; off-label use is common.',
-  },
-  {
-    peptide: 'Semaglutide / Tirzepatide',
-    headline: 'GLP-1 metabolic reset',
-    summary:
-      'Large randomized trials demonstrate 15–22% mean body-weight reduction with sustained insulin sensitivity gains. Our protocols pair these with muscle-preserving peptides to protect lean mass.',
-    note: 'Phase 3 RCTs, FDA-approved.',
   },
 ];
 

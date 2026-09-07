@@ -31,7 +31,7 @@ const PHARMACY = {
   phone: '(470) 831-7220',
   website: 'mykaduceus.com',
   license: 'Licensed by the Texas State Board of Pharmacy (503A)',
-  catalog: '72 compounds — GLP-1s, single peptides, and peptide blends',
+  catalog: 'Single peptides and peptide blends',
 };
 
 interface Activity {

@@ -387,10 +387,6 @@ export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> 
     title: "This protocol isn't a fit right now",
     body: 'These peptide protocols are not safe during pregnancy or breastfeeding. We recommend speaking with your own healthcare provider; you can come back when ready.',
   },
-  glp1_allergy: {
-    title: "This product isn't a fit right now",
-    body: 'A previous allergic reaction to a GLP-1 medication rules this out. Please talk to your own healthcare provider — our non-GLP-1 protocols may still be an option.',
-  },
   organ: {
     title: "This protocol isn't a fit right now",
     body: 'End-stage kidney or liver disease calls for specialized medical supervision beyond what these peptide protocols are intended for. Please consult your own specialist.',
@@ -435,7 +431,7 @@ export const CONSENT_ITEMS = [
  *
  * Each product carries its own contraindications, so the questions asked are
  * the ones that actually matter for that compound rather than a generic
- * catch-all — semaglutide asks about thyroid cancer and pancreatitis, PT-141
+ * catch-all — PT-141
  * asks about blood pressure. Answering "yes" is a knockout: the order stops
  * before it reaches the prescriber.
  */
@@ -607,58 +603,13 @@ export const DOCTOR_QUESTION_STEP: Step = {
   ],
 };
 
-/** Products whose active ingredient is a GLP-1 / GIP agonist. */
-export const GLP1_PRODUCT_IDS = ['semaglutide', 'tirzepatide'];
-
-/**
- * Extra screening required for GLP-1 products: the contraindicated-medication
- * and recent-surgery questions a prescriber must have before approving one.
- */
-export const GLP1_STEP: Step = {
-  id: 'glp1-screen',
-  eyebrow: 'GLP-1 SCREEN',
-  heading: 'A few questions specific to GLP-1 therapy.',
-  body: 'These are required before a GLP-1 can be prescribed.',
-  fields: [
-    {
-      id: 'glp1_surgery',
-      type: 'pill-grid',
-      label: 'Have you had, or are you scheduled for, bariatric or gastric-bypass surgery in the next 6 months?',
-      required: true,
-      options: YES_NO,
-    },
-    {
-      id: 'glp1_prior',
-      type: 'pill-grid',
-      label: 'Are you currently taking, or have you recently taken, a GLP-1 medication?',
-      required: true,
-      options: YES_NO,
-    },
-    {
-      id: 'glp1_prior_detail',
-      type: 'text-long',
-      label: 'If yes, which one, at what dose, and when was your last injection?',
-      placeholder: 'e.g. Semaglutide 0.5mg — last injection 4 days ago',
-    },
-    {
-      id: 'glp1_allergy',
-      type: 'pill-grid',
-      label: 'Have you ever had an allergic reaction to a GLP-1 medication?',
-      required: true,
-      options: YES_NO,
-      knockoutOn: { values: ['yes'], key: 'glp1_allergy' },
-    },
-  ],
-};
-
 /**
  * Assemble the intake for this visitor.
  *
  * The base wizard stays as-is; clinical depth is added around it. A visitor
- * who arrived from a product gets that product's own contraindication screen,
- * and GLP-1 products get the extra screening a prescriber needs before
- * approving one. Order is deliberate: every medical question comes before
- * checkout, so nobody is charged and then disqualified.
+ * who arrived from a product gets that product's own contraindication screen.
+ * Order is deliberate: every medical question comes before checkout, so
+ * nobody is charged and then disqualified.
  */
 export type IntakeProduct = {
   id: string;
@@ -683,7 +634,6 @@ export function buildPreSteps(): Step[] {
 export function buildVisitSteps(product?: IntakeProduct): Step[] {
   const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
   out.push(CONDITIONS_STEP, MEDS_STEP, SYMPTOMS_STEP, PRIOR_TREATMENT_STEP);
-  if (product && GLP1_PRODUCT_IDS.includes(product.id)) out.push(GLP1_STEP);
   if (product?.contraindications?.length) out.push(productScreeningStep(product));
   out.push(DOCTOR_QUESTION_STEP);
   return out;
