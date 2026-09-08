@@ -15,16 +15,11 @@
  *
  * Two things gate a state: a prescriber licensed there (medicine is practiced
  * where the patient is) and a pharmacy licensed to dispense there. Both must
- * be true. California is excluded — our pharmacy network does not hold a CA
- * non-resident license for patient-specific orders.
+ * be true — today only New Jersey clears both, because Dr. Elder holds a NJ
+ * license and nothing else. Add states here the moment a contracted prescriber
+ * network covers them; every consumer of this list follows automatically.
  */
-export const SERVICEABLE_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
-];
+export const SERVICEABLE_STATES = ['NJ'];
 
 /** All US state abbreviations. Billing addresses only — never shipping. */
 export const STATES_AVAILABLE = [
