@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { getOrderByPayToken } from '@/lib/pay-on-approval';
+import { PayForm } from '@/components/pay/PayForm';
+import { stripeConfigured } from '@/lib/stripe';
 
 export const metadata: Metadata = {
   title: 'Complete your payment | Eternal Longevity',
@@ -23,6 +25,9 @@ interface PayPageProps {
 export default async function PayPage({ params }: PayPageProps) {
   const { token } = await params;
   const order = await getOrderByPayToken(token);
+
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY ?? '';
+  const cardReady = stripeConfigured() && publishableKey.startsWith('pk_');
 
   return (
     <>
@@ -107,21 +112,31 @@ export default async function PayPage({ params }: PayPageProps) {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-3xl border border-accent/30 bg-accent/[0.06] p-6">
-                <p className="mb-2 text-[11px] tracking-widest text-accent">
-                  HOW TO PAY
+              <div className="mt-6 rounded-3xl border border-line bg-surface p-6">
+                <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
+                  PAYMENT DETAILS
                 </p>
-                <p className="mb-4 text-sm text-foreground/75 leading-relaxed">
-                  Card payment is being enabled on your account. In the
-                  meantime, message us and we&apos;ll send payment details and
-                  release your order to the pharmacy the same day.
-                </p>
-                <Link
-                  href="/portal/messages"
-                  className="pill bg-accent px-6 py-3 text-sm font-semibold text-black"
-                >
-                  Message support to pay
-                </Link>
+                {cardReady ? (
+                  <PayForm
+                    token={token}
+                    publishableKey={publishableKey}
+                    amountLabel={`$${(order.totalCents / 100).toFixed(2)}`}
+                  />
+                ) : (
+                  <>
+                    <p className="mb-4 text-sm text-foreground/75 leading-relaxed">
+                      Card payment is being enabled on your account. In the
+                      meantime, message us and we&apos;ll send payment details
+                      and release your order to the pharmacy the same day.
+                    </p>
+                    <Link
+                      href="/portal/messages"
+                      className="pill bg-accent px-6 py-3 text-sm font-semibold text-black"
+                    >
+                      Message support to pay
+                    </Link>
+                  </>
+                )}
               </div>
 
               <p className="mt-6 text-center text-xs text-foreground/40">

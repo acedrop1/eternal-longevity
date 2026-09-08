@@ -21,6 +21,8 @@ import {
 import { getSession } from '@/lib/auth-server';
 import { SITE_URL } from '@/lib/site';
 import { approvedPayNowEmail, sendEmail } from '@/lib/email';
+import { getStripe, stripeConfigured } from '@/lib/stripe';
+import { getOrCreateStripeCustomer } from '@/lib/billing';
 
 const TOKEN_TTL_DAYS = 7;
 
@@ -164,4 +166,98 @@ export async function confirmPaymentAction(input: {
   revalidatePath('/portal/orders');
   revalidatePath('/portal/admin/fulfillment');
   return { ok: true };
+}
+
+/* ----------------------------- card payment ------------------------------ */
+
+/**
+ * Create (or reuse) the PaymentIntent for a pay link. Called from the pay
+ * page; the token is the authorization, so no session is required — the
+ * member clicks through from their email.
+ *
+ * Approval already happened, so this charges immediately on confirmation.
+ * There is no separate capture step to forget.
+ */
+export async function createPayIntentAction(token: string): Promise<{
+  ok: boolean;
+  clientSecret?: string;
+  error?: string;
+}> {
+  if (!stripeConfigured() || !supabaseAdminConfigured()) {
+    return { ok: false, error: 'not_configured' };
+  }
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select(
+      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id',
+    )
+    .eq('pay_token', token)
+    .maybeSingle();
+
+  if (!order) return { ok: false, error: 'invalid_link' };
+  if (order.paid_confirmed_at) return { ok: false, error: 'already_paid' };
+  if (
+    order.pay_token_expires &&
+    new Date(order.pay_token_expires).getTime() < Date.now()
+  ) {
+    return { ok: false, error: 'expired' };
+  }
+
+  const amount = order.total_cents ?? 0;
+  if (amount <= 0) return { ok: false, error: 'invalid_amount' };
+
+  const stripe = getStripe();
+
+  // Reuse the intent if the member reloads the page, so one order never
+  // produces two charges.
+  if (order.stripe_payment_intent_id) {
+    try {
+      const existing = await stripe.paymentIntents.retrieve(
+        order.stripe_payment_intent_id,
+      );
+      if (
+        existing.client_secret &&
+        existing.amount === amount &&
+        ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(
+          existing.status,
+        )
+      ) {
+        return { ok: true, clientSecret: existing.client_secret };
+      }
+    } catch {
+      // Fall through and create a fresh one.
+    }
+  }
+
+  const customerId = order.member_email
+    ? await getOrCreateStripeCustomer({
+        userId: order.user_id,
+        email: order.member_email,
+        name: order.member_name ?? undefined,
+      })
+    : undefined;
+
+  const intent = await stripe.paymentIntents.create({
+    amount,
+    currency: 'usd',
+    customer: customerId,
+    // Neutral naming — peptide names never reach the card statement or
+    // dispute record.
+    description: `Care program — order ${order.order_number}`,
+    statement_descriptor_suffix: 'CARE',
+    metadata: {
+      order_number: order.order_number,
+      order_id: order.id,
+    },
+    automatic_payment_methods: { enabled: true },
+  });
+
+  await db
+    .from('orders')
+    .update({ stripe_payment_intent_id: intent.id })
+    .eq('id', order.id);
+
+  return { ok: true, clientSecret: intent.client_secret ?? undefined };
 }

@@ -85,9 +85,16 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const pi = event.data.object;
+      // Burn the pay-link token alongside marking the order paid, so the
+      // emailed link cannot be reused or forwarded after it has been used.
       await db
         .from('orders')
-        .update({ status: 'paid' })
+        .update({
+          status: 'paid',
+          paid_confirmed_at: new Date().toISOString(),
+          pay_token: null,
+          pay_token_expires: null,
+        })
         .eq('stripe_payment_intent_id', pi.id);
       await addOrderUpdate(db, pi.id, 'Payment received', 'Your card was charged successfully.');
       await sendOrderConfirmation(db, pi.id);
