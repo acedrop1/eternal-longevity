@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 /**
  * Real licensure for the prescriber of record, per the signed pharmacy
- * onboarding form. New Jersey only — this is what limits the states we can
+ * onboarding form. Prescriber licensure is what limits the states we can
  * serve, so it must not drift from reality.
  */
 const LICENSES = [

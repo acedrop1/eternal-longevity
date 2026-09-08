@@ -86,9 +86,9 @@ export function Footer() {
           </p>
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
             Eternal Longevity offers premium peptide protocols strictly for
-            health optimization. Not a substitute for primary care. Order
-            online; ships from a licensed 503A pharmacy. Currently available to
-            New Jersey residents. 18+.
+            health optimization. Not a substitute for primary care. Prescription
+            required; ships from a licensed 503A pharmacy. Available in 49
+            states. 18+.
           </p>
         </div>
       </div>

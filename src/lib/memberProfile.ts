@@ -93,31 +93,8 @@ export const SEED_PROFILE: MemberProfile = {
   dateOfBirth: '',
   twoFactorEnabled: false,
   notifications: { ...DEFAULT_NOTIFICATIONS },
-  addresses: [
-    {
-      id: 'addr-home',
-      label: 'Home',
-      fullName: 'Alex Demo',
-      line1: '1402 Garden St',
-      line2: 'Apt 4B',
-      city: 'Hoboken',
-      state: 'NJ',
-      zip: '07030',
-      phone: '(201) 555-0188',
-      isPrimary: true,
-    },
-  ],
-  cards: [
-    {
-      id: 'card-primary',
-      brand: 'VISA',
-      last4: '4242',
-      expMonth: '04',
-      expYear: '27',
-      nameOnCard: 'Alex Demo',
-      isPrimary: true,
-    },
-  ],
+  addresses: [],
+  cards: [],
 };
 
 export function formatAddressOneLine(a: SavedAddress): string {

@@ -28,7 +28,7 @@ const FACTS: { label: string; value: string }[] = [
   { label: 'Prescriber licensure', value: 'New Jersey · License 25MB11925900' },
   { label: 'NPI', value: '1619538881' },
   { label: 'Compounding partner', value: 'Kaduceus Pharmacy, a licensed 503A compounder' },
-  { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
+  { label: 'States served', value: `${SERVICEABLE_STATES.length} states — all except California` },
   { label: 'Minimum age', value: '18+' },
 ];
 
@@ -39,7 +39,7 @@ const CONTROLS: { title: string; body: string }[] = [
   },
   {
     title: 'State restriction',
-    body: `Medicine is practiced where the patient is located, so we serve only states where our prescriber is licensed — currently ${SERVICEABLE_STATES.join(', ')}. Shipping addresses outside that footprint are rejected at checkout and again on the server.`,
+    body: `Medicine is practiced where the patient is located, so we serve only states where a licensed prescriber can treat you and our pharmacy can dispense — currently ${SERVICEABLE_STATES.length} states. California is excluded. Shipping addresses outside that footprint are rejected at checkout and again on the server.`,
   },
   {
     title: 'Age restriction',

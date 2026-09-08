@@ -10,14 +10,21 @@
  */
 
 /**
- * States we can actually ship to.
+ * States we can actually ship to — the single source of truth for the
+ * geofence, the checkout dropdown, and the compliance page.
  *
- * Our prescriber is licensed in New Jersey only, and the practice of medicine
- * happens where the patient is — so NJ is the whole serviceable footprint.
- * This is also the geofence our payment processor requires. Add a state here
- * only when a prescriber is licensed there.
+ * Two things gate a state: a prescriber licensed there (medicine is practiced
+ * where the patient is) and a pharmacy licensed to dispense there. Both must
+ * be true. California is excluded — our pharmacy network does not hold a CA
+ * non-resident license for patient-specific orders.
  */
-export const SERVICEABLE_STATES = ['NJ'];
+export const SERVICEABLE_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+];
 
 /** All US state abbreviations. Billing addresses only — never shipping. */
 export const STATES_AVAILABLE = [
