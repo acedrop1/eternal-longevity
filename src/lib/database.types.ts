@@ -294,6 +294,9 @@ export type Database = {
           paid_at: string | null;
           first_charge_cents: number | null;
           card_last4: string | null;
+          pay_token: string | null;
+          pay_token_expires: string | null;
+          paid_confirmed_at: string | null;
           tax_cents: number;
           created_at: string;
           updated_at: string;
@@ -319,6 +322,9 @@ export type Database = {
           paid_at?: string | null;
           first_charge_cents?: number | null;
           card_last4?: string | null;
+          pay_token?: string | null;
+          pay_token_expires?: string | null;
+          paid_confirmed_at?: string | null;
           tax_cents?: number;
           created_at?: string;
           updated_at?: string;
@@ -344,6 +350,9 @@ export type Database = {
           paid_at?: string | null;
           first_charge_cents?: number | null;
           card_last4?: string | null;
+          pay_token?: string | null;
+          pay_token_expires?: string | null;
+          paid_confirmed_at?: string | null;
           tax_cents?: number;
           created_at?: string;
           updated_at?: string;

@@ -281,6 +281,83 @@ export function orderConfirmationEmail(input: {
   };
 }
 
+/** Order received — nothing charged yet, prescriber is reviewing. */
+export function orderReceivedEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  items: { name: string; qty: number; amount: number }[];
+  total: number;
+}): { subject: string; html: string } {
+  const rows = input.items
+    .map(
+      (i) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#e5e5e5;font-size:14px;">${escapeHtml(
+          i.name,
+        )}${i.qty > 1 ? ` &times;${i.qty}` : ''}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#fff;font-size:14px;" align="right">$${(
+          i.amount / 100
+        ).toFixed(2)}</td>
+      </tr>`,
+    )
+    .join('');
+  return {
+    subject: `We received your order — ${input.orderNumber}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your order is in. Nothing charged yet.</h1>
+       <p style="margin:0 0 18px;">Thanks ${escapeHtml(
+         input.firstName,
+       )}. Your prescriber is reviewing your visit now. <strong style="color:#fff;">You have not been charged</strong> — if your treatment is approved we'll email you a secure link to pay, and if it isn't, you pay nothing.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;">
+         ${rows}
+         <tr>
+           <td style="padding:12px 0;color:#737373;font-size:13px;">Total if approved</td>
+           <td style="padding:12px 0;color:#d5a850;font-size:18px;font-weight:700;" align="right">$${(
+             input.total / 100
+           ).toFixed(2)}</td>
+         </tr>
+       </table>
+       <p style="color:#a3a3a3;font-size:13px;">Order reference <strong style="color:#e5e5e5;">${escapeHtml(
+         input.orderNumber,
+       )}</strong>. Questions? Just reply to this email.</p>`,
+    ),
+  };
+}
+
+/** Prescriber approved — here is the secure link to pay. */
+export function approvedPayNowEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  total: number;
+  payUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Approved — complete your order ${input.orderNumber}`,
+    html: shell(
+      `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">PRESCRIBER APPROVED</div>
+       <h1 style="margin:10px 0 14px;color:#fff;font-size:22px;">Hi ${escapeHtml(
+         input.firstName,
+       )}, your treatment was approved.</h1>
+       <p style="margin:0 0 18px;">Your prescriber reviewed your visit and approved your treatment. Complete payment below and your prescription goes straight to the pharmacy for compounding.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:0 0 18px;">
+         <tr><td style="padding:18px 20px;color:#e5e5e5;font-size:14px;">
+           <span style="color:#737373;font-size:13px;">Amount due</span><br/>
+           <span style="color:#d5a850;font-size:26px;font-weight:700;">$${(
+             input.total / 100
+           ).toFixed(2)}</span>
+         </td></tr>
+       </table>
+       <p style="margin:0 0 18px;">
+         <a href="${escapeHtml(
+           input.payUrl,
+         )}" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Complete payment</a>
+       </p>
+       <p style="color:#a3a3a3;font-size:13px;">This link is unique to order <strong style="color:#e5e5e5;">${escapeHtml(
+         input.orderNumber,
+       )}</strong> and expires in 7 days. Don't forward it.</p>`,
+    ),
+  };
+}
+
 export interface DailyReportStats {
   /** Human date the report covers, e.g. "Tuesday, 4 August 2026". */
   dateLabel: string;

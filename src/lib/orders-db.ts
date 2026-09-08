@@ -15,6 +15,8 @@
  */
 
 import { revalidatePath } from 'next/cache';
+import { issuePayLink } from '@/lib/pay-on-approval';
+import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 import {
@@ -273,9 +275,25 @@ export async function placeOrderAction(input: {
     'System',
     'system',
     'Order received',
-    'Your order is queued for review.',
+    'Nothing charged. Your prescriber is reviewing.',
     'pending-admin',
   );
+
+  // Confirm receipt and make the no-charge-yet promise explicit in writing.
+  if (user.email) {
+    const msg = orderReceivedEmail({
+      firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'there',
+      orderNumber,
+      items: input.lines.map((l) => ({
+        name: l.productName,
+        qty: l.quantity,
+        amount: Math.round(l.perCycle * 100),
+      })),
+      total: Math.round(input.total * 100),
+    });
+    await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
+  }
+
   revalidatePortal();
   return { ok: true, orderNumber };
 }
@@ -350,10 +368,15 @@ export async function signRxAction(
     id,
     user.name,
     'physician',
-    'Order confirmed',
-    note ?? 'Billing starts now.',
+    'Order approved',
+    note ?? 'Your prescriber approved your treatment.',
     'signed',
   );
+
+  // Approval is the moment payment becomes due — mint the member's pay link
+  // and email it. Never charge before this point.
+  await issuePayLink(orderNumber);
+
   revalidatePortal();
   return { ok: true };
 }

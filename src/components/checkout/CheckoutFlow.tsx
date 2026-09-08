@@ -363,7 +363,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   }
 
   async function handlePay() {
-    if (!emailValid || !shippingValid || !methodValid || !cardValid) return;
+    if (!emailValid || !shippingValid || !methodValid) return;
     setIsPaying(true);
 
     // Resolve the address used for this order. Either a saved one or the new form.
@@ -724,18 +724,17 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                   <SummaryRow label="Estimated tax" value={`$${tax}`} />
                   <div className="my-2 h-px bg-line" />
                   <SummaryRow
-                    label="Total due today"
+                    label="Total if approved"
                     value={`$${total}`}
                     emphasis
                   />
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-line bg-background px-4 py-3 text-xs text-foreground/55 leading-relaxed">
-                  As low as{' '}
+                <div className="mt-5 rounded-2xl border border-accent/25 bg-accent/[0.05] px-4 py-3 text-xs text-foreground/70 leading-relaxed">
                   <span className="font-semibold text-foreground">
-                    ${Math.round(total / 12)}/mo
+                    Nothing is charged today.
                   </span>{' '}
-                  with Affirm or Klarna · interest-free.
+                  You only pay if your prescriber approves your treatment.
                 </div>
 
                 <button
@@ -1115,231 +1114,43 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             </ContinueButton>
           </Section>
 
-          {/* === SECTION 4. PAYMENT === */}
+          {/* === SECTION 4. REVIEW & PLACE === */}
           <Section
             number="4"
-            title="Payment"
+            title="Review & place order"
             isOpen={open === 'payment'}
             isComplete={completed.payment}
-            summary={(() => {
-              if (!completed.payment) return '';
-              if (usingSavedCard) {
-                const c = profile.cards.find((x) => x.id === selectedCardId);
-                return c ? `${c.brand} ending in ${c.last4}` : '';
-              }
-              return `Card ending in ${card.number.replace(/\D/g, '').slice(-4)}`;
-            })()}
+            summary=""
             disabled={!completed.method}
             onEdit={() => setOpen('payment')}
             sectionRef={sectionRefs.payment}
           >
-            <div className="mb-4 rounded-2xl border border-line bg-background px-4 py-3 flex items-center gap-3">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-foreground/65"
-                aria-hidden
-              >
-                <rect x="2" y="5" width="20" height="14" rx="2" />
-                <line x1="2" y1="10" x2="22" y2="10" />
-              </svg>
-              <span className="text-sm font-medium text-foreground">
-                Card via Stripe
-              </span>
-              <span className="ml-auto text-[10px] tracking-widest text-foreground/45">
-                SECURED
-              </span>
+            <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
+              <p className="mb-1 text-[11px] tracking-widest text-accent">
+                NO PAYMENT DUE NOW
+              </p>
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                We don&apos;t take payment at checkout. Your prescriber reviews
+                your visit first — if your treatment is approved we&apos;ll
+                email you a secure link to pay, and if it isn&apos;t approved
+                you pay nothing.
+              </p>
             </div>
 
-            {/* Saved-card picker */}
-            {profile.cards.length > 0 && (
-              <div className="mb-5 space-y-2">
-                <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
-                  PAY WITH
-                </div>
-                {profile.cards.map((c) => {
-                  const isActive = selectedCardId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setSelectedCardId(c.id)}
-                      className={cn(
-                        'flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all',
-                        isActive
-                          ? 'border-accent bg-accent/5'
-                          : 'border-line bg-surface hover:border-foreground/30'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                          isActive ? 'border-accent' : 'border-line'
-                        )}
-                      >
-                        {isActive && (
-                          <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-                        )}
-                      </span>
-                      <span className="grid h-9 w-12 flex-shrink-0 place-items-center rounded-lg bg-foreground/10 text-[10px] font-bold tracking-widest text-foreground/75">
-                        {c.brand}
-                      </span>
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-foreground">
-                          •••• {c.last4}
-                          {c.isPrimary && (
-                            <span className="ml-2 rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest font-semibold">
-                              PRIMARY
-                            </span>
-                          )}
-                        </span>
-                        <span className="block text-xs text-foreground/55 mt-0.5">
-                          Exp {c.expMonth}/{c.expYear} · {c.nameOnCard}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => setSelectedCardId('new')}
-                  className={cn(
-                    'flex w-full items-center gap-4 rounded-2xl border-2 border-dashed px-5 py-4 text-left transition-all',
-                    selectedCardId === 'new'
-                      ? 'border-accent bg-accent/5'
-                      : 'border-line bg-background hover:border-foreground/30'
-                  )}
-                >
-                  <span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground/65 text-xs">
-                    +
-                  </span>
-                  <span className="text-sm font-medium text-foreground/85">
-                    Use a new card
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* New-card form */}
-            {(selectedCardId === 'new' || profile.cards.length === 0) && (
-            <div className="grid gap-4">
-              {/* Card number with inline brand chip */}
-              <div>
-                <FieldLabel htmlFor="card-num">CARD NUMBER</FieldLabel>
-                <div className="relative">
-                  <input
-                    ref={cardNumberRef}
-                    id="card-num"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="\d*"
-                    value={card.number}
-                    onChange={(e) => onCardChange(e.target.value)}
-                    autoComplete="cc-number"
-                    placeholder="1234 5678 9012 3456"
-                    className={cn(inputClass, 'pr-20 tracking-[0.04em]')}
-                  />
-                  {cardBrand && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-foreground/10 px-2 py-1 text-[10px] tracking-widest font-semibold text-foreground/75">
-                      {cardBrand}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="grid gap-4 grid-cols-2">
-                <div>
-                  <FieldLabel htmlFor="card-exp">EXPIRY (MM/YY)</FieldLabel>
-                  <input
-                    ref={expRef}
-                    id="card-exp"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="\d*"
-                    value={card.exp}
-                    onChange={(e) => onExpChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Allow Backspace to clear the slash and jump back a digit
-                      if (
-                        e.key === 'Backspace' &&
-                        card.exp.endsWith('/') &&
-                        (e.target as HTMLInputElement).selectionStart === card.exp.length
-                      ) {
-                        e.preventDefault();
-                        setCard((c) => ({ ...c, exp: c.exp.slice(0, -1) }));
-                      }
-                    }}
-                    autoComplete="cc-exp"
-                    placeholder="04/27"
-                    maxLength={5}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <FieldLabel htmlFor="card-cvc">CVC</FieldLabel>
-                  <input
-                    ref={cvcRef}
-                    id="card-cvc"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="\d*"
-                    value={card.cvc}
-                    onChange={(e) => onCvcChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Backspace at start of CVC jumps back to exp
-                      if (
-                        e.key === 'Backspace' &&
-                        card.cvc.length === 0
-                      ) {
-                        e.preventDefault();
-                        expRef.current?.focus();
-                      }
-                    }}
-                    autoComplete="cc-csc"
-                    placeholder="123"
-                    maxLength={4}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <div>
-                <FieldLabel htmlFor="card-name">NAME ON CARD</FieldLabel>
-                <input
-                  ref={cardNameRef}
-                  id="card-name"
-                  type="text"
-                  value={card.name}
-                  onChange={(e) =>
-                    setCard((c) => ({ ...c, name: e.target.value }))
-                  }
-                  onKeyDown={enterAdvance(handlePay)}
-                  autoComplete="cc-name"
-                  autoCapitalize="words"
-                  className={inputClass}
-                />
-              </div>
-
-              {/* Save this card for next time */}
-              <SaveToggle
-                label="Save this card for next time"
-                checked={saveCard}
-                onChange={setSaveCard}
-              />
+            <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
+              <span className="text-sm text-foreground/55">Total if approved</span>
+              <span className="text-xl font-semibold tabular-nums text-foreground">
+                ${total}
+              </span>
             </div>
-            )}
 
             <button
               type="button"
               onClick={handlePay}
-              disabled={!cardValid || isPaying}
+              disabled={isPaying}
               className={cn(
                 'mt-6 w-full rounded-full font-semibold py-3.5 text-base transition-colors inline-flex items-center justify-center gap-2',
-                cardValid && !isPaying
+                !isPaying
                   ? 'bg-accent text-black hover:bg-accent-soft'
                   : 'bg-foreground/15 text-foreground/40 cursor-not-allowed'
               )}
@@ -1350,12 +1161,11 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                   className="h-4 w-4 inline-block rounded-full border-2 border-black/30 border-t-black animate-spin"
                 />
               )}
-              {isPaying ? 'Processing…' : `Confirm order · $${total}`}
+              {isPaying ? 'Placing order…' : 'Place order'}
             </button>
             <p className="mt-3 text-center text-[11px] text-foreground/45">
-              You&apos;re only charged if a licensed prescriber approves your
-              treatment — declined orders are never billed. Pause or cancel
-              between cycles.
+              Placing an order costs nothing. You can pause or cancel between
+              cycles at any time.
             </p>
           </Section>
         </div>
