@@ -47,14 +47,19 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
 
   if (!order) return { ok: false, error: 'not_found' };
 
-  // Never submit the same order twice — a retry, a double click, or a webhook
-  // replay must not produce two prescriptions at the pharmacy.
+  /*
+   * Never submit the same order twice — a retry, a double click, or a webhook
+   * replay must not produce two prescriptions at the pharmacy. The reference
+   * is derived from the order number rather than the clock, so the check is
+   * per-order and the unique index on order_ref is the real backstop. Keying
+   * this on the member instead would silently skip every repeat order placed
+   * while their last one was still in flight.
+   */
+  const orderRef = `FUL-${order.order_number}`;
   const { data: existing } = await db
     .from('fulfillment_orders')
     .select('id')
-    .eq('user_id', order.user_id ?? '')
-    .in('status', ['draft', 'submitted', 'accepted', 'shipped'])
-    .limit(1)
+    .eq('order_ref', orderRef)
     .maybeSingle();
   if (existing) return { ok: true, submitted: false };
 
@@ -109,7 +114,6 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     return { ok: false, error: 'no_npi' };
   }
 
-  const orderRef = `FUL-${Date.now().toString(36).toUpperCase()}`;
   const { error: insErr } = await db.from('fulfillment_orders').insert({
     order_ref: orderRef,
     user_id: order.user_id,
