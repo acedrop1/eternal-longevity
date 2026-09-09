@@ -50,12 +50,17 @@ function validateStep(step: Step, answers: Answers): { ok: boolean; knockout?: s
     const v = answers[f.id];
     if (!valueIsPresent(f, v)) return { ok: false };
     if (f.type === 'date' && f.knockoutOn?.values.includes('under18') && typeof v === 'string') {
-      const dob = new Date(v);
+      // Date parses loose numeric strings — new Date('0210') is year 210, not
+      // NaN — so a half-typed birth date would compute an age of ~1800 and
+      // walk straight through the gate. Demand a complete ISO date.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return { ok: false };
+      const dob = new Date(`${v}T00:00:00`);
       if (Number.isNaN(dob.getTime())) return { ok: false };
       const now = new Date();
       let age = now.getFullYear() - dob.getFullYear();
       const m = now.getMonth() - dob.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+      if (age > 120) return { ok: false };
       if (age < 18) return { ok: false, knockout: f.knockoutOn.key };
       continue;
     }
