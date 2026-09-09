@@ -207,6 +207,7 @@ export function OrdersProvider({
           total: draft.total,
           shippingAddress: draft.shippingAddress,
           cardLast4: draft.cardLast4,
+          promoCode: draft.promoCode,
         }),
       );
       return order;

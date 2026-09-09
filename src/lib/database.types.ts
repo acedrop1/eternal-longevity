@@ -56,6 +56,48 @@ export type AccountStatus = 'active' | 'suspended' | 'deactivated';
 export type Database = {
   public: {
     Tables: {
+      promo_codes: {
+        Row: {
+          id: string;
+          code: string;
+          kind: string;
+          value: number;
+          max_redemptions: number | null;
+          redeemed_count: number;
+          expires_at: string | null;
+          active: boolean;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          kind?: string;
+          value: number;
+          max_redemptions?: number | null;
+          redeemed_count?: number;
+          expires_at?: string | null;
+          active?: boolean;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          kind?: string;
+          value?: number;
+          max_redemptions?: number | null;
+          redeemed_count?: number;
+          expires_at?: string | null;
+          active?: boolean;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -290,6 +332,8 @@ export type Database = {
           subtotal_cents: number;
           shipping_cents: number;
           total_cents: number;
+          promo_code: string | null;
+          discount_cents: number;
           stripe_payment_intent_id: string | null;
           shipping_address: Json | null;
           tracking_carrier: string | null;
@@ -318,6 +362,8 @@ export type Database = {
           subtotal_cents?: number;
           shipping_cents?: number;
           total_cents?: number;
+          promo_code?: string | null;
+          discount_cents?: number;
           stripe_payment_intent_id?: string | null;
           shipping_address?: Json | null;
           tracking_carrier?: string | null;
@@ -346,6 +392,8 @@ export type Database = {
           subtotal_cents?: number;
           shipping_cents?: number;
           total_cents?: number;
+          promo_code?: string | null;
+          discount_cents?: number;
           stripe_payment_intent_id?: string | null;
           shipping_address?: Json | null;
           tracking_carrier?: string | null;

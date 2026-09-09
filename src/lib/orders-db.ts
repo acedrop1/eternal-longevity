@@ -26,6 +26,7 @@ import {
 import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -213,6 +214,8 @@ export async function placeOrderAction(input: {
   total: number;
   shippingAddress: Order['shippingAddress'];
   cardLast4?: string;
+  /** Promotion code the member entered, if any. */
+  promoCode?: string;
 }): Promise<ActionResult & { orderNumber?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
@@ -230,6 +233,28 @@ export async function placeOrderAction(input: {
   const db = createSupabaseAdminClient();
   const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}`;
 
+  /*
+   * Re-check the code here rather than trusting the total the client sent.
+   * The browser computes a discounted total to display it; this is the number
+   * that gets charged, so it is derived server-side from the code itself.
+   */
+  const subtotalCents = Math.round(input.subtotal * 100);
+  const shippingCents = Math.round(input.shippingCost * 100);
+  const taxCents = Math.round(input.tax * 100);
+  let discountCents = 0;
+  let appliedCode: string | null = null;
+  if (input.promoCode) {
+    const check = await checkPromoAction(input.promoCode, subtotalCents);
+    if (check.ok && check.discountCents) {
+      discountCents = check.discountCents;
+      appliedCode = check.code ?? null;
+    }
+  }
+  const totalCents = Math.max(
+    0,
+    subtotalCents + shippingCents + taxCents - discountCents,
+  );
+
   const { data: order, error: insErr } = await db
     .from('orders')
     .insert({
@@ -239,10 +264,12 @@ export async function placeOrderAction(input: {
       member_name: user.name,
       member_email: user.email,
       ship_state: input.shippingAddress.state,
-      subtotal_cents: Math.round(input.subtotal * 100),
-      shipping_cents: Math.round(input.shippingCost * 100),
-      tax_cents: Math.round(input.tax * 100),
-      total_cents: Math.round(input.total * 100),
+      subtotal_cents: subtotalCents,
+      shipping_cents: shippingCents,
+      tax_cents: taxCents,
+      discount_cents: discountCents,
+      promo_code: appliedCode,
+      total_cents: totalCents,
       shipping_address: input.shippingAddress,
       card_last4: input.cardLast4 ?? null,
     })
@@ -253,6 +280,11 @@ export async function placeOrderAction(input: {
     console.error('[orders-db] placeOrder:', insErr?.message);
     return { ok: false, error: insErr?.message ?? 'insert_failed' };
   }
+
+  // Redeemed at order time, not at payment. An order can sit unpaid for seven
+  // days, and holding a limited code open that long lets one code be spent
+  // many times over.
+  if (appliedCode) await redeemPromo(appliedCode);
 
   if (input.lines.length) {
     await db.from('order_items').insert(

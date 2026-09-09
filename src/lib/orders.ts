@@ -65,6 +65,9 @@ export interface Order {
     zip: string;
   };
   cardLast4?: string;
+  /** Promotion code applied, and what it took off. Set by the server. */
+  promoCode?: string;
+  discount?: number;
   placedAt: number;
   status: OrderStatus;
   assignedToPhysicianId?: string;

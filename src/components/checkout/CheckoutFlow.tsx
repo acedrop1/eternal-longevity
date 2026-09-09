@@ -19,6 +19,7 @@ import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
+import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
 
 type SectionKey = 'email' | 'shipping' | 'method' | 'payment';
 
@@ -210,6 +211,11 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
     method: false,
     payment: false,
   });
+  // Promotion code. Validated server-side on apply; the server re-derives the
+  // discount at order time regardless of what we display here.
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<PromoCheck | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   // Mobile-only: collapsible order summary at top. Always expanded on lg+.
@@ -321,7 +327,20 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   const subtotal = hasCart ? cartSubtotal : fallbackLine.total;
   const shippingCost = SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.price ?? 0;
   const tax = Math.round(subtotal * 0.08);
-  const total = subtotal + shippingCost + tax;
+  const discount = promo?.ok ? (promo.discountCents ?? 0) / 100 : 0;
+  const total = Math.max(0, subtotal + shippingCost + tax - discount);
+
+  async function applyPromo() {
+    if (!promoInput.trim() || promoBusy) return;
+    setPromoBusy(true);
+    try {
+      setPromo(await checkPromoAction(promoInput, Math.round(subtotal * 100)));
+    } catch {
+      setPromo({ ok: false, error: 'Could not check that code.' });
+    } finally {
+      setPromoBusy(false);
+    }
+  }
 
   // --- Section-level validity ---
   const emailValid = isEmailValid(email);
@@ -485,6 +504,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
         zip: shippingAddressForOrder.zip,
       },
       cardLast4,
+      promoCode: promo?.ok ? promo.code : undefined,
     });
 
     // Clear the cart and route to success
@@ -735,6 +755,50 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
                     value={shippingCost === 0 ? 'Included' : `$${shippingCost}`}
                   />
                   <SummaryRow label="Estimated tax" value={`$${tax}`} />
+                  {promo?.ok && (
+                    <SummaryRow
+                      label={`Discount · ${promo.code}`}
+                      value={`-$${discount.toFixed(2)}`}
+                    />
+                  )}
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      aria-label="Promotion code"
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value.toUpperCase());
+                        setPromo(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void applyPromo();
+                        }
+                      }}
+                      placeholder="Promo code"
+                      className="min-w-0 flex-1 rounded-full border border-line bg-background px-4 py-2 text-sm uppercase tracking-wide text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyPromo}
+                      disabled={!promoInput.trim() || promoBusy}
+                      className="flex-none rounded-full border border-line px-4 py-2 text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-40"
+                    >
+                      {promoBusy ? '…' : 'Apply'}
+                    </button>
+                  </div>
+                  {promo && (
+                    <p
+                      className={cn(
+                        'mt-1.5 text-xs',
+                        promo.ok ? 'text-accent' : 'text-red-300',
+                      )}
+                    >
+                      {promo.ok ? `${promo.label} applied.` : promo.error}
+                    </p>
+                  )}
+
                   <div className="my-2 h-px bg-line" />
                   <SummaryRow
                     label="Total if approved"

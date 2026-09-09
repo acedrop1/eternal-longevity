@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   adminChargeOnce,
   adminCreateSubscription,
@@ -9,6 +9,12 @@ import {
   adminSendCardLink,
   type AdminBillingResult,
 } from '@/lib/admin-billing-actions';
+import {
+  createPromoAction,
+  listPromosAction,
+  togglePromoAction,
+  type PromoCode,
+} from '@/lib/promo-db';
 import { cn } from '@/lib/utils';
 
 export interface BillingCustomer {
@@ -186,7 +192,180 @@ export function AdminBilling({
           <RefundPanel />
         </div>
       )}
+
+      {/* Codes are not customer-specific, so this sits outside the selection. */}
+      <PromoPanel />
     </div>
+  );
+}
+
+function PromoPanel() {
+  const [codes, setCodes] = useState<PromoCode[]>([]);
+  const [code, setCode] = useState('');
+  const [kind, setKind] = useState<'percent' | 'fixed'>('percent');
+  const [value, setValue] = useState('');
+  const [maxRedemptions, setMax] = useState('');
+  const [expiresAt, setExpires] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<AdminBillingResult | null>(null);
+
+  const load = useCallback(() => {
+    void listPromosAction().then(setCodes);
+  }, []);
+  useEffect(load, [load]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await createPromoAction({
+        code,
+        kind,
+        value: Number(value) || 0,
+        maxRedemptions: maxRedemptions ? Number(maxRedemptions) : undefined,
+        expiresAt: expiresAt || undefined,
+      });
+      setResult(r);
+      if (r.ok) {
+        setCode('');
+        setValue('');
+        setMax('');
+        setExpires('');
+        load();
+      }
+    } catch {
+      setResult({ ok: false, message: 'Request failed. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggle(id: string, next: boolean) {
+    await togglePromoAction(id, next);
+    load();
+  }
+
+  return (
+    <Panel
+      eyebrow="PROMOTIONS"
+      title="Discount codes"
+      description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="promo-code" className={labelClass}>
+              CODE
+            </label>
+            <input
+              id="promo-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="LAUNCH20"
+              required
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="promo-value" className={labelClass}>
+              {kind === 'percent' ? 'PERCENT OFF (1–100)' : 'DOLLARS OFF'}
+            </label>
+            <div className="flex gap-2">
+              <select
+                aria-label="Discount type"
+                value={kind}
+                onChange={(e) => setKind(e.target.value as 'percent' | 'fixed')}
+                className={cn(inputClass, 'w-24 flex-none')}
+              >
+                <option value="percent">%</option>
+                <option value="fixed">$</option>
+              </select>
+              <input
+                id="promo-value"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                inputMode="decimal"
+                placeholder={kind === 'percent' ? '20' : '25.00'}
+                required
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="promo-max" className={labelClass}>
+              MAX USES — BLANK FOR UNLIMITED
+            </label>
+            <input
+              id="promo-max"
+              value={maxRedemptions}
+              onChange={(e) => setMax(e.target.value.replace(/\D/g, ''))}
+              inputMode="numeric"
+              placeholder="Unlimited"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="promo-expires" className={labelClass}>
+              EXPIRES — BLANK FOR NEVER
+            </label>
+            <input
+              id="promo-expires"
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpires(e.target.value)}
+              className={cn(inputClass, '[color-scheme:dark]')}
+            />
+          </div>
+        </div>
+        <SubmitButton busy={busy} label="Create code" />
+      </form>
+      <ResultBanner result={result} />
+
+      {codes.length > 0 && (
+        <div className="mt-6 space-y-2">
+          {codes.map((c) => {
+            const spent =
+              c.maxRedemptions !== null && c.redeemedCount >= c.maxRedemptions;
+            const expired =
+              !!c.expiresAt && new Date(c.expiresAt).getTime() < Date.now();
+            return (
+              <div
+                key={c.id}
+                className="flex items-center gap-3 rounded-2xl border border-line bg-background px-4 py-3"
+              >
+                <span className="font-mono text-sm font-semibold text-foreground">
+                  {c.code}
+                </span>
+                <span className="text-xs text-foreground/65">
+                  {c.kind === 'percent'
+                    ? `${c.value}% off`
+                    : `${money(c.value)} off`}
+                </span>
+                <span className="text-xs text-foreground/45">
+                  {c.redeemedCount}
+                  {c.maxRedemptions !== null ? ` / ${c.maxRedemptions}` : ''} used
+                  {expired ? ' · expired' : ''}
+                  {spent && !expired ? ' · spent' : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggle(c.id, !c.active)}
+                  className={cn(
+                    'ml-auto flex-none rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors',
+                    c.active
+                      ? 'border-accent/40 text-accent hover:bg-accent/10'
+                      : 'border-line text-foreground/50 hover:text-foreground',
+                  )}
+                >
+                  {c.active ? 'Active' : 'Off'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Panel>
   );
 }
 
