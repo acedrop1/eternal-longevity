@@ -71,9 +71,23 @@ async function getSupabaseSession(): Promise<SessionUser | null> {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, full_name, email')
+      .select('role, full_name, email, account_status')
       .eq('id', user.id)
       .single();
+
+    /*
+     * Suspending an account wrote a column that nothing ever read, so a
+     * suspended member kept every session, kept ordering, and only looked
+     * suspended in the admin list. Returning null here is what actually ends
+     * the session: every guarded page and every server action goes through
+     * getSession, so one check covers all of them.
+     */
+    if (
+      profile?.account_status === 'suspended' ||
+      profile?.account_status === 'deactivated'
+    ) {
+      return null;
+    }
 
     const role: Role = (profile?.role as Role) ?? 'member';
     return {
