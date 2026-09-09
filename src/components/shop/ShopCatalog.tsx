@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ProductVial } from '@/components/shop/ProductVial';
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -73,7 +73,7 @@ export function ShopCatalog({
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/45"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/65"
           >
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
@@ -91,7 +91,7 @@ export function ShopCatalog({
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full text-foreground/55 hover:bg-foreground/10 hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full text-foreground/72 hover:bg-foreground/10 hover:text-foreground transition-colors"
             >
               <svg
                 width="12"
@@ -140,9 +140,12 @@ export function ShopCatalog({
               className="relative block aspect-[5/6] overflow-hidden"
               style={{ background: p.swatch }}
             >
-              <ProductVial
-                product={p}
-                className="absolute inset-0 h-full w-full p-7 transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+              <Image
+                src={p.image}
+                alt={p.name}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover opacity-50 transition-transform duration-700 ease-out-expo group-hover:scale-105"
               />
               <div
                 aria-hidden
@@ -182,24 +185,24 @@ export function ShopCatalog({
             {/* Bottom row. Description, price, CTA */}
             <div className="flex flex-1 flex-col p-5 md:p-6">
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/65">
+                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78">
                   {DELIVERY_LABEL[p.delivery].toUpperCase()}
                 </span>
-                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/65">
+                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78">
                   {p.cycleLength.toUpperCase()}
                 </span>
               </div>
-              <p className="mb-5 text-sm text-foreground/70 leading-relaxed line-clamp-3">
+              <p className="mb-5 text-sm text-foreground/82 leading-relaxed line-clamp-3">
                 {p.shortDescription}
               </p>
               <div className="mt-auto">
                 <div className="mb-4">
-                  <div className="text-[10px] tracking-widest text-foreground/45">
+                  <div className="text-[10px] tracking-widest text-foreground/65">
                     {startPath ? 'FROM' : 'SUBSCRIBE FROM'}
                   </div>
                   <div className="text-lg font-semibold text-foreground tracking-tight">
                     ${Math.round(p.pricing.annual / 12)}
-                    <span className="text-sm text-foreground/55 font-normal">
+                    <span className="text-sm text-foreground/72 font-normal">
                       /mo
                     </span>
                   </div>
@@ -248,7 +251,7 @@ export function ShopCatalog({
 
       {products.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-foreground/55 mb-4">
+          <p className="text-foreground/72 mb-4">
             {query
               ? `No products match "${query}"${filter !== 'all' ? ' in this category' : ''}.`
               : 'No products in this category yet.'}
@@ -288,7 +291,7 @@ function Pill({
         'flex-shrink-0 rounded-full px-4 py-2 text-xs tracking-wider font-medium border transition-all',
         active
           ? 'bg-foreground text-background border-foreground'
-          : 'bg-surface text-foreground/70 border-line hover:border-foreground/30 hover:text-foreground'
+          : 'bg-surface text-foreground/82 border-line hover:border-foreground/30 hover:text-foreground'
       )}
     >
       {children}

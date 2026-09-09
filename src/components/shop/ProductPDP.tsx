@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductVial } from '@/components/shop/ProductVial';
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -42,7 +42,7 @@ function Fold({
         {title}
         <span
           aria-hidden
-          className="text-lg font-light leading-none text-foreground/40 transition-transform duration-200 group-open:rotate-45"
+          className="text-lg font-light leading-none text-foreground/60 transition-transform duration-200 group-open:rotate-45"
         >
           +
         </span>
@@ -71,24 +71,50 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
   return (
     <div className="space-y-12 md:space-y-20">
       {/* === PDP HERO. Two-column on desktop === */}
-      <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-        {/* The product itself, drawn — see ProductVial. */}
+      <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 xl:gap-20">
         <div
-          className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line px-8 py-12"
+          className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-line md:rounded-[2.5rem]"
           style={{
             background: product.swatch,
             boxShadow:
               '0 60px 120px -20px rgba(213,168,80,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
         >
-          <span className="absolute left-1/2 top-6 -translate-x-1/2 text-[10px] tracking-widest text-white/45">
-            ETERNAL LONGEVITY
-          </span>
-          <ProductVial product={product} className="h-full w-auto max-w-full drop-shadow-2xl" />
-          <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] tracking-widest text-white/45">
-            {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
-            {product.cycleLength.toUpperCase()}
-          </span>
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            priority
+            sizes="(max-width: 1024px) 92vw, 620px"
+            className="object-cover opacity-45"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/75"
+          />
+          <div className="relative flex h-full flex-col items-center justify-between p-6 text-center md:p-8">
+            <span className="text-[10px] tracking-widest text-white/65">
+              ETERNAL LONGEVITY
+            </span>
+            <div style={{ textShadow: '0 2px 16px rgba(0,0,0,0.65)' }}>
+              <div className="mb-2 text-[10px] tracking-widest text-accent">
+                {product.tagline.toUpperCase()}
+              </div>
+              <div
+                className="font-bold tracking-tight text-white"
+                style={{
+                  fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {product.name}
+              </div>
+            </div>
+            <span className="text-[10px] tracking-widest text-white/65">
+              {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
+              {product.cycleLength.toUpperCase()}
+            </span>
+          </div>
         </div>
 
         {/* Info column.
@@ -98,7 +124,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             button. This does that; everything else moved below or into a fold. */}
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="mb-3 flex items-center gap-2">
-            <p className="text-[11px] tracking-widest text-foreground/50">
+            <p className="text-[11px] tracking-widest text-foreground/70">
               {categoryLabel?.toUpperCase()}
             </p>
             {product.popular && (
@@ -118,7 +144,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
           >
             {product.name}
           </h1>
-          <p className="mb-7 text-base text-foreground/55">{product.tagline}</p>
+          <p className="mb-7 text-base text-foreground/72">{product.tagline}</p>
 
           {/* One price, big, the way they do it. */}
           <div className="mb-1 flex items-baseline gap-1.5">
@@ -129,10 +155,10 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               ${active.perMonth}
             </span>
             {active.key !== 'once' && (
-              <span className="text-lg text-foreground/45">/mo</span>
+              <span className="text-lg text-foreground/65">/mo</span>
             )}
           </div>
-          <p className="mb-6 text-[13px] text-foreground/50">
+          <p className="mb-6 text-sm text-foreground/70">
             {active.key === 'once'
               ? `One-time · $${active.total} · no subscription`
               : `Billed $${active.total} ${active.key === 'monthly' ? 'monthly' : active.key === 'quarterly' ? 'every 3 months' : 'once a year'} · free shipping · cancel anytime`}
@@ -151,7 +177,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                     'rounded-xl px-1 py-2.5 text-center transition-colors',
                     isActive
                       ? 'bg-accent text-black'
-                      : 'text-foreground/65 hover:bg-foreground/5'
+                      : 'text-foreground/78 hover:bg-foreground/5'
                   )}
                 >
                   <span className="block text-[11px] font-semibold leading-tight">
@@ -160,7 +186,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                   <span
                     className={cn(
                       'block text-[10px] leading-tight',
-                      isActive ? 'text-black/60' : 'text-foreground/40'
+                      isActive ? 'text-black/70' : 'text-foreground/60'
                     )}
                   >
                     {t.saveLabel ? t.saveLabel.replace('Save ', '-') : '\u00a0'}
@@ -188,7 +214,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             </button>
           )}
 
-          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px] text-foreground/60">
+          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px] text-foreground/75">
             {[
               'Only charged if approved',
               'Free cold-chain shipping',
@@ -204,13 +230,13 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             ))}
           </ul>
 
-          <p className="mt-7 text-sm leading-relaxed text-foreground/70">
+          <p className="mt-7 text-[15px] leading-[1.75] text-foreground/85">
             {product.longDescription}
           </p>
 
           {/* Sits with the claims, not only in the footer. Plain text now —
               as a bordered card it read as a third competing box. */}
-          <p className="mt-4 text-[11px] leading-relaxed text-foreground/40">
+          <p className="mt-4 text-xs leading-relaxed text-foreground/60">
             Compounded preparations are not FDA-approved. These statements have
             not been evaluated by the Food and Drug Administration, and this
             product is not intended to diagnose, treat, cure, or prevent any
@@ -218,7 +244,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             prescriber. Individual results vary.{' '}
             <Link
               href="/legal/compounded-medication"
-              className="text-foreground/60 underline underline-offset-2"
+              className="text-foreground/75 underline underline-offset-2"
             >
               Full disclosure
             </Link>
@@ -229,7 +255,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               the member had to scroll past to reach the next product. */}
           <div className="mt-8 divide-y divide-line border-y border-line">
             <Fold title="What it does" defaultOpen>
-              <p className="mb-3 text-foreground/55">
+              <p className="mb-3 text-foreground/72">
                 Best for: {product.bestFor}
               </p>
               <ul className="space-y-2.5">
@@ -254,7 +280,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             </Fold>
 
             <Fold title="Possible side effects">
-              <p className="mb-3 text-foreground/55">
+              <p className="mb-3 text-foreground/72">
                 Most are mild and dose-related.
               </p>
               <ul className="space-y-2.5">
@@ -268,7 +294,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             </Fold>
 
             <Fold title="Contraindications">
-              <p className="mb-3 text-foreground/55">
+              <p className="mb-3 text-foreground/72">
                 Tell your prescriber if any of these apply to you. Your intake
                 is screened against them before anything is approved.
               </p>
@@ -294,7 +320,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                     <span className="text-[11px] tabular-nums text-accent">0{i + 1}</span>
                     <span>
                       <span className="block font-semibold text-foreground">{t}</span>
-                      <span className="block text-foreground/60">{b}</span>
+                      <span className="block text-foreground/75">{b}</span>
                     </span>
                   </li>
                 ))}
@@ -309,7 +335,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
         <section>
           <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
+              <p className="mb-3 text-[11px] tracking-widest text-foreground/72">
                 05 / KEEP EXPLORING
               </p>
               <h2
@@ -342,9 +368,12 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                   className="relative aspect-[5/6] overflow-hidden"
                   style={{ background: r.swatch }}
                 >
-                  <ProductVial
-                    product={r}
-                    className="absolute inset-0 h-full w-full p-6 transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+                  <Image
+                    src={r.image}
+                    alt={r.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover opacity-50 transition-transform duration-700 ease-out-expo group-hover:scale-105"
                   />
                   <div
                     aria-hidden
@@ -360,7 +389,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                   </div>
                 </div>
                 <div className="p-5 flex items-center justify-between">
-                  <div className="text-sm text-foreground/65 truncate pr-2">
+                  <div className="text-sm text-foreground/78 truncate pr-2">
                     From ${Math.round(r.pricing.annual / 12)}/mo
                   </div>
                   <span
@@ -405,7 +434,7 @@ function StickySubscribeBar({
           <div className="truncate text-sm font-semibold text-foreground">
             {product.name}
           </div>
-          <div className="text-[11px] tracking-wider text-foreground/55">
+          <div className="text-[11px] tracking-wider text-foreground/72">
             {active.label.toUpperCase()} · ${active.perMonth}/MO
           </div>
         </div>
