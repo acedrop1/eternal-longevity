@@ -401,7 +401,7 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
 
       {/* Inline submit error (only on the final step) */}
       {submitError && (
-        <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="mt-6 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {submitError}
         </div>
       )}

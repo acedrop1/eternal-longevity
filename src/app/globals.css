@@ -77,14 +77,15 @@
  * the long-term path; these direct properties are the safety net).
  */
 .theme-light {
-  background-color: #F7F5F5 !important;
-  color: rgb(26 38 32);
+  background-color: #F5F2EC !important;
+  color: rgb(20 17 12);
 
-  --bg-rgb: 247 245 245;          /* #F7F5F5 off-white */
-  --fg-rgb: 26 38 32;             /* near-black with green undertone */
-  --muted-rgb: 107 124 112;       /* muted sage on light */
+  /* Warm cream, so the gold accent reads as gold and not as mustard. */
+  --bg-rgb: 245 242 236;          /* #F5F2EC cream */
+  --fg-rgb: 20 17 12;             /* #14110C warm near-black */
+  --muted-rgb: 110 102 90;        /* warm mid */
   --surface-rgb: 255 255 255;     /* card white */
-  --surface-raised-rgb: 240 238 232;
+  --surface-raised-rgb: 238 234 226;
   --line-rgb: 0 0 0;            /* line tint follows forest */
   --line-opacity: 0.10;
   --glass-bg: rgba(0, 0, 0, 0.04);
@@ -96,15 +97,15 @@
 /* Descendant overrides for the most-used Tailwind utilities so the light
  * theme reads correctly even without the variable-driven Tailwind config.
  * Cards, surfaces, borders, and text-foreground all flip. */
-.theme-light .bg-background      { background-color: #F7F5F5; }
-.theme-light .bg-background\/95  { background-color: rgb(247 245 245 / 0.95); }
-.theme-light .bg-background\/90  { background-color: rgb(247 245 245 / 0.90); }
-.theme-light .bg-background\/85  { background-color: rgb(247 245 245 / 0.85); }
-.theme-light .bg-background\/80  { background-color: rgb(247 245 245 / 0.80); }
-.theme-light .bg-background\/75  { background-color: rgb(247 245 245 / 0.75); }
-.theme-light .bg-background\/70  { background-color: rgb(247 245 245 / 0.70); }
-.theme-light .bg-background\/50  { background-color: rgb(247 245 245 / 0.50); }
-.theme-light .bg-background\/40  { background-color: rgb(247 245 245 / 0.40); }
+.theme-light .bg-background      { background-color: #F5F2EC; }
+.theme-light .bg-background\/95  { background-color: rgb(245 242 236 / 0.95); }
+.theme-light .bg-background\/90  { background-color: rgb(245 242 236 / 0.90); }
+.theme-light .bg-background\/85  { background-color: rgb(245 242 236 / 0.85); }
+.theme-light .bg-background\/80  { background-color: rgb(245 242 236 / 0.80); }
+.theme-light .bg-background\/75  { background-color: rgb(245 242 236 / 0.75); }
+.theme-light .bg-background\/70  { background-color: rgb(245 242 236 / 0.70); }
+.theme-light .bg-background\/50  { background-color: rgb(245 242 236 / 0.50); }
+.theme-light .bg-background\/40  { background-color: rgb(245 242 236 / 0.40); }
 .theme-light .bg-surface         { background-color: #FFFFFF; }
 .theme-light .bg-surface\/85     { background-color: rgb(255 255 255 / 0.85); }
 .theme-light .bg-surface\/80     { background-color: rgb(255 255 255 / 0.80); }

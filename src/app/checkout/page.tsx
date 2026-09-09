@@ -13,7 +13,7 @@ export default async function CheckoutPage() {
   if (user.role !== 'member') redirect(user.redirectTo);
 
   return (
-    <main className="relative min-h-screen bg-background">
+    <main className="theme-light relative min-h-screen bg-background text-foreground">
       <CheckoutFlow defaultEmail={user.email} defaultName={user.name} />
     </main>
   );

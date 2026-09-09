@@ -31,8 +31,9 @@ export default async function PayPage({ params }: PayPageProps) {
 
   return (
     <>
+      <div className="theme-light bg-background text-foreground">
       <Header />
-      <main className="bg-background min-h-screen px-6 pt-20 pb-16">
+      <main className="min-h-screen bg-background px-6 pb-16 pt-20 text-foreground">
         <div className="mx-auto max-w-lg">
           {!order ? (
             <div className="rounded-3xl border border-line bg-surface p-8 text-center">
@@ -195,6 +196,7 @@ export default async function PayPage({ params }: PayPageProps) {
           )}
         </div>
       </main>
+      </div>
       <Footer />
     </>
   );

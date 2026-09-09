@@ -15,8 +15,9 @@ export const metadata: Metadata = {
 export default function PublicShopPage() {
   return (
     <>
+      <div className="theme-light bg-background text-foreground">
       <Header />
-      <main className="bg-background">
+      <main className="bg-background text-foreground">
         {/* HERO */}
         <section className="relative isolate overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 px-6">
           <div
@@ -108,6 +109,7 @@ export default function PublicShopPage() {
           </div>
         </section>
       </main>
+      </div>
       <Footer />
     </>
   );

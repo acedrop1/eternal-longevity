@@ -21,8 +21,9 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const requested = slug ? getShopProduct(slug) : undefined;
   return (
     <>
+      <div className="theme-light bg-background text-foreground">
       <Header />
-      <main className="relative bg-background min-h-screen overflow-hidden">
+      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
         {/* Ambient hero video. Dimmed, anchored at the top, fades into bg */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] md:h-[70vh] -z-10">
           <LoopVideo src="/videos/4.mp4" className="absolute inset-0 w-full h-full" />
@@ -51,6 +52,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           }
         />
       </main>
+      </div>
       <Footer />
     </>
   );

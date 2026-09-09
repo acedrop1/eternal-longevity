@@ -74,7 +74,7 @@ function CardFields({
       <PaymentElement options={{ layout: 'tabs' }} />
 
       {error && (
-        <p className="mt-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       )}
@@ -165,7 +165,7 @@ export function PayForm({
 
   if (error) {
     return (
-      <p className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+      <p className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
         {error}
       </p>
     );
@@ -189,12 +189,14 @@ export function PayForm({
       options={{
         clientSecret,
         appearance: {
-          theme: 'night',
+          theme: 'stripe',
           variables: {
-            colorPrimary: '#d5a850',
-            colorBackground: '#0f0f0f',
-            colorText: '#e5e5e5',
+            colorPrimary: '#a88438',
+            colorBackground: '#ffffff',
+            colorText: '#14110c',
+            colorTextPlaceholder: '#9a9186',
             borderRadius: '14px',
+            fontSizeBase: '16px',
           },
         },
       }}
