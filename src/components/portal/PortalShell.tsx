@@ -68,8 +68,15 @@ export async function PortalShell({
   const navItems = await enrichNavWithCounts(nav, user.role);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* ============ TOP BAR. Always dark ============ */}
+    <div
+      className={cn(
+        'min-h-screen bg-background text-foreground',
+        // The theme has to sit on the root: a light body under a dark top bar
+        // and sidebar read as a cream panel floating in a black frame.
+        lightBody && 'theme-light'
+      )}
+    >
+      {/* ============ TOP BAR ============ */}
       <header className="sticky top-0 z-40 border-b border-line bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-6">
           <Link
@@ -144,11 +151,7 @@ export async function PortalShell({
 
         {/* Main content */}
         <main
-          className={cn(
-            'flex-1 min-w-0 min-h-[calc(100vh-3.5rem)]',
-            // theme-light flips bg/text/surface/line via CSS overrides
-            lightBody && 'theme-light bg-background text-foreground'
-          )}
+          className="flex-1 min-w-0 min-h-[calc(100vh-3.5rem)] bg-background text-foreground"
         >
           <div className="px-4 md:px-6 lg:px-8 py-8 md:py-10">{children}</div>
         </main>

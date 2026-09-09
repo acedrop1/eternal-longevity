@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { ProductPDP } from '@/components/shop/ProductPDP';
+import { ProductPDP, RelatedProducts } from '@/components/shop/ProductPDP';
 import { ProductPDPMobile } from '@/components/shop/ProductPDPMobile';
 import { getSession } from '@/lib/auth-server';
 import {
@@ -67,6 +67,9 @@ export default async function ShopProductPage({ params }: PageProps) {
       {/* Desktop: original PDP layout */}
       <div className="hidden md:block pb-16 lg:pb-0">
         <ProductPDP product={product} related={related} />
+        <div className="mt-16">
+          <RelatedProducts related={related} basePath="/portal/shop" />
+        </div>
       </div>
     </PortalShell>
   );

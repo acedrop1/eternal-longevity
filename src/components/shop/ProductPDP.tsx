@@ -357,9 +357,74 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
         </div>
       </section>
 
-      {/* === RELATED === */}
-      {related.length > 0 && (
-        <section>
+      {/* === STICKY BOTTOM SUBSCRIBE BAR === */}
+      <StickySubscribeBar
+        product={product}
+        active={active}
+        onSubscribe={handleAddToCart}
+        ctaHref={ctaHref}
+      />
+    </div>
+  );
+}
+
+function StickySubscribeBar({
+  product,
+  active,
+  onSubscribe,
+  ctaHref,
+}: {
+  product: ShopProduct;
+  active: CadenceTier;
+  onSubscribe: () => void;
+  ctaHref?: string;
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-background/95 backdrop-blur pb-safe lg:hidden">
+      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-foreground">
+            {product.name}
+          </div>
+          <div className="text-[11px] tracking-wider text-foreground/72">
+            {active.label.toUpperCase()} · ${active.perMonth}/MO
+          </div>
+        </div>
+        {ctaHref ? (
+          <Link
+            href={ctaHref}
+            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+          >
+            Get started →
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onSubscribe}
+            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+          >
+            Subscribe →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Related products, rendered by the page in its own section so the product
+ * block above can be light while this stays on the dark ground.
+ */
+export function RelatedProducts({
+  related,
+  basePath,
+}: {
+  related: ShopProduct[];
+  basePath: string;
+}) {
+  if (related.length === 0) return null;
+  return (
+<section>
           <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="mb-3 text-[11px] tracking-widest text-foreground/72">
@@ -430,58 +495,5 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             ))}
           </div>
         </section>
-      )}
-
-      {/* === STICKY BOTTOM SUBSCRIBE BAR === */}
-      <StickySubscribeBar
-        product={product}
-        active={active}
-        onSubscribe={handleAddToCart}
-        ctaHref={ctaHref}
-      />
-    </div>
-  );
-}
-
-function StickySubscribeBar({
-  product,
-  active,
-  onSubscribe,
-  ctaHref,
-}: {
-  product: ShopProduct;
-  active: CadenceTier;
-  onSubscribe: () => void;
-  ctaHref?: string;
-}) {
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-background/95 backdrop-blur pb-safe lg:hidden">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-foreground">
-            {product.name}
-          </div>
-          <div className="text-[11px] tracking-wider text-foreground/72">
-            {active.label.toUpperCase()} · ${active.perMonth}/MO
-          </div>
-        </div>
-        {ctaHref ? (
-          <Link
-            href={ctaHref}
-            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
-          >
-            Get started →
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={onSubscribe}
-            className="flex-shrink-0 rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
-          >
-            Subscribe →
-          </button>
-        )}
-      </div>
-    </div>
   );
 }

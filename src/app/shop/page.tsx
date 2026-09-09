@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function PublicShopPage() {
   return (
     <>
-      <div className="theme-light bg-background text-foreground">
       <Header />
       <main className="bg-background text-foreground">
         {/* HERO */}
@@ -109,7 +108,6 @@ export default function PublicShopPage() {
           </div>
         </section>
       </main>
-      </div>
       <Footer />
     </>
   );

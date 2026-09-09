@@ -256,38 +256,6 @@ export const STEPS: Step[] = [
 
 
   // -------------------------------------------------------------
-  // 05. HISTORY — split off the health screen so each step fits one phone
-  //     viewport without scrolling.
-  // -------------------------------------------------------------
-  {
-    id: 'history',
-    eyebrow: '05 / HISTORY',
-    heading: 'Anything on this list?',
-    body: 'Select all that apply. Your prescriber reads every one of these.',
-    fields: [
-      {
-        id: 'flags',
-        type: 'multi-select',
-        label: '',
-        options: [
-          { value: 'cardio', label: 'Cardiovascular event (heart attack, stroke, clot)' },
-          { value: 't1d', label: 'Type 1 diabetes' },
-          { value: 'autoimmune', label: 'Autoimmune condition' },
-          { value: 'endocrine', label: 'Thyroid / pituitary disorder' },
-          { value: 'surgery', label: 'Major surgery in the last 12 months' },
-          { value: 'none', label: 'None of the above' },
-        ],
-      },
-      {
-        id: 'notes',
-        type: 'text-long',
-        label: 'Medications, allergies, or anything else? (Optional)',
-        placeholder: 'e.g. Lisinopril 10mg daily · Allergic to penicillin',
-      },
-    ],
-  },
-
-  // -------------------------------------------------------------
   // 7. CONSENTS. Disclaimer list + master ack + optional SMS/research
   // (Pattern adapted from competitor intake. Read, then confirm.)
   // -------------------------------------------------------------
@@ -455,127 +423,65 @@ export const PRODUCT_KNOCKOUT = {
 export const CONDITIONS_STEP: Step = {
   id: 'conditions',
   eyebrow: 'MEDICAL HISTORY',
-  heading: 'Have you ever been diagnosed with any of the following?',
-  body: 'Select all that apply. Your answer will not automatically disqualify you — it gives the prescriber the context they need.',
+  heading: 'Ever been diagnosed with any of these?',
+  body: 'Ticking one does not disqualify you. It tells the prescriber what to weigh.',
   fields: [
     {
       id: 'conditions',
       type: 'multi-select',
-      label: 'Select all that apply.',
+      label: '',
       required: true,
+      // The previous list was a GLP-1 screen — gallstones, NAFLD, SIADH — for
+      // products no longer in the catalogue. These are the ones that actually
+      // change a decision on a growth-axis, repair or immune peptide.
       options: [
-        { value: 'sleep_apnea', label: 'Sleep apnea' },
-        { value: 'gallstones', label: 'Gallstones or gallbladder disease' },
-        { value: 'fatty_liver', label: 'Fatty liver disease (NAFLD / NASH)' },
-        { value: 'heart_disease', label: 'Heart disease' },
-        { value: 'stroke', label: 'Stroke' },
-        { value: 'pvd', label: 'Peripheral vascular disease' },
-        { value: 'metabolic', label: 'Metabolic syndrome' },
-        { value: 'heart_failure', label: 'Heart failure' },
-        { value: 'ckd', label: 'Chronic kidney disease (stage 3 or higher)' },
-        { value: 'cirrhosis', label: 'Cirrhosis' },
-        { value: 'siadh', label: 'SIADH' },
-        { value: 'ekg', label: 'EKG abnormalities' },
-        { value: 'thyroid', label: 'Thyroid condition' },
-        { value: 'hyperlipidemia', label: 'High cholesterol (hyperlipidemia)' },
-        { value: 'none', label: 'No, I have not been diagnosed with any of these' },
-      ],
-    },
-  ],
-};
-
-/** Medications and allergies, asked separately rather than as free text. */
-export const MEDS_STEP: Step = {
-  id: 'medications',
-  eyebrow: 'MEDICATIONS & ALLERGIES',
-  heading: 'What do you currently take?',
-  body: 'Include prescriptions, over-the-counter medicines, herbals and supplements. Interactions matter.',
-  fields: [
-    {
-      id: 'medications',
-      type: 'text-long',
-      label: 'List the medications, herbals and supplements you use, with the dose and why you take them.',
-      placeholder: 'e.g. Lisinopril 10mg daily — blood pressure',
-    },
-    {
-      id: 'allergies_any',
-      type: 'pill-grid',
-      label: 'Do you have any drug allergies?',
-      required: true,
-      options: YES_NO,
-    },
-    {
-      id: 'allergies_detail',
-      type: 'text-long',
-      label: 'If yes, list them and describe the reaction.',
-      placeholder: 'e.g. Penicillin — hives',
-    },
-  ],
-};
-
-/** Current symptoms. Context for the prescriber, never a knockout. */
-export const SYMPTOMS_STEP: Step = {
-  id: 'symptoms',
-  eyebrow: 'HOW YOU FEEL',
-  heading: 'Are you currently experiencing any of the following?',
-  body: 'Select all that apply.',
-  fields: [
-    {
-      id: 'symptoms',
-      type: 'multi-select',
-      label: 'Select all that apply.',
-      required: true,
-      options: [
-        { value: 'memory', label: 'Memory issues' },
-        { value: 'focus', label: 'Difficulty concentrating' },
-        { value: 'mood', label: 'Depression or anxiety' },
-        { value: 'sleep', label: 'Sleep disorders' },
-        { value: 'pain', label: 'Chronic pain' },
-        { value: 'fatigue', label: 'Fatigue or low energy' },
+        { value: 'cardio', label: 'Heart disease, heart attack, or stroke' },
+        { value: 't1d', label: 'Type 1 diabetes' },
+        { value: 'autoimmune', label: 'Autoimmune condition' },
+        { value: 'endocrine', label: 'Thyroid or pituitary disorder' },
+        { value: 'kidney_liver', label: 'Chronic kidney or liver disease' },
+        { value: 'surgery', label: 'Major surgery in the last 12 months' },
         { value: 'none', label: 'None of these' },
       ],
     },
   ],
 };
 
-/** Prior peptide / anti-aging treatment and how it went. */
-export const PRIOR_TREATMENT_STEP: Step = {
-  id: 'prior-treatment',
-  eyebrow: 'TREATMENT HISTORY',
-  heading: 'Have you had peptide or anti-aging treatment before?',
-  body: 'Includes NAD+, glutathione, GHK-Cu, B12, metformin and similar.',
+
+/** Medications and allergies, asked separately rather than as free text. */
+export const MEDS_STEP: Step = {
+  id: 'medications',
+  eyebrow: 'MEDICATIONS & ALLERGIES',
+  heading: 'What do you currently take?',
+  body: 'Prescriptions, over-the-counter, supplements. Interactions matter.',
   fields: [
     {
-      id: 'prior_treatment',
+      id: 'medications',
+      type: 'text-long',
+      label: 'Medications, herbals and supplements — with dose',
+      placeholder: 'e.g. Lisinopril 10mg daily — blood pressure',
+    },
+    {
+      id: 'allergies_any',
       type: 'pill-grid',
-      label: 'Have you received treatment like this before?',
+      label: 'Any drug allergies?',
       required: true,
       options: YES_NO,
     },
     {
-      id: 'prior_reaction',
+      id: 'allergies_detail',
       type: 'text-long',
-      label: 'If you had any negative reaction, describe it.',
-      placeholder: 'Leave blank if not applicable',
+      label: 'If yes — which, and what happened',
+      placeholder: 'e.g. Penicillin — hives',
     },
   ],
 };
 
-/** Free-text question for the prescriber, asked last before consents. */
-export const DOCTOR_QUESTION_STEP: Step = {
-  id: 'doctor-question',
-  eyebrow: 'ANYTHING ELSE',
-  heading: 'Any questions for the prescriber?',
-  body: 'Optional. Anything you write here goes with your file.',
-  fields: [
-    {
-      id: 'doctor_question',
-      type: 'text-long',
-      label: 'Your question (optional)',
-      placeholder: 'Leave blank if none',
-    },
-  ],
-};
+
+
+
+
+
 
 /**
  * Assemble the intake for this visitor.
@@ -599,7 +505,7 @@ export type IntakeProduct = {
  *   VISIT — the clinical portion, completed inside the portal after checkout
  *          ("Complete your visit"). Nothing is prescribed until it's done.
  */
-const VISIT_TOPLEVEL_IDS = new Set(['health', 'history']);
+const VISIT_TOPLEVEL_IDS = new Set(['health']);
 
 export function buildPreSteps(): Step[] {
   return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));
@@ -607,8 +513,10 @@ export function buildPreSteps(): Step[] {
 
 export function buildVisitSteps(product?: IntakeProduct): Step[] {
   const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
-  out.push(CONDITIONS_STEP, MEDS_STEP, SYMPTOMS_STEP, PRIOR_TREATMENT_STEP);
+  // Safety knockouts → history → meds → the product's own contraindications.
+  // Symptoms, prior-treatment and "any questions" were cut: none changed a
+  // decision, and the member can message the prescriber from the portal.
+  out.push(CONDITIONS_STEP, MEDS_STEP);
   if (product?.contraindications?.length) out.push(productScreeningStep(product));
-  out.push(DOCTOR_QUESTION_STEP);
   return out;
 }
