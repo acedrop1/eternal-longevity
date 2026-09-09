@@ -10,7 +10,15 @@ interface FieldRendererProps {
 }
 
 const inputBase =
-  'w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full min-w-0 rounded-2xl border border-line bg-surface px-4 py-3.5 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+
+/** (201) 887-8847 as you type. Stored digits are unaffected by the mask. */
+function formatPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`;
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
 
 export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
   switch (field.type) {
@@ -118,16 +126,44 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
         </div>
       );
 
-    case 'text-short':
+    case 'text-short': {
+      const isPhone = field.id === 'phone';
+      const isZip = field.id === 'zip';
       return (
         <input
-          type="text"
-          value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value)}
+          type={isPhone ? 'tel' : 'text'}
+          inputMode={isPhone || isZip ? 'numeric' : undefined}
+          autoComplete={
+            isPhone
+              ? 'tel'
+              : isZip
+                ? 'postal-code'
+                : field.id === 'first_name'
+                  ? 'given-name'
+                  : field.id === 'last_name'
+                    ? 'family-name'
+                    : undefined
+          }
+          maxLength={isPhone ? 14 : isZip ? 5 : undefined}
+          value={
+            isPhone
+              ? formatPhone((value as string) ?? '')
+              : ((value as string) ?? '')
+          }
+          onChange={(e) =>
+            onChange(
+              isPhone
+                ? e.target.value.replace(/\D/g, '').slice(0, 10)
+                : isZip
+                  ? e.target.value.replace(/\D/g, '').slice(0, 5)
+                  : e.target.value
+            )
+          }
           placeholder={field.placeholder}
           className={inputBase}
         />
       );
+    }
 
     case 'text-long':
       return (
@@ -140,16 +176,38 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
         />
       );
 
-    case 'date':
+    case 'date': {
+      const raw = String(value ?? '');
+      // Stored complete as ISO; stored as loose digits while still being typed.
+      const digits = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+        ? raw.slice(5, 7) + raw.slice(8, 10) + raw.slice(0, 4)
+        : raw.replace(/\D/g, '').slice(0, 8);
+      const shown =
+        digits.length <= 2
+          ? digits
+          : digits.length <= 4
+            ? `${digits.slice(0, 2)}/${digits.slice(2)}`
+            : `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
       return (
         <input
-          type="date"
-          value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          max={new Date().toISOString().slice(0, 10)}
-          className={cn(inputBase, '[color-scheme:dark]')}
+          type="text"
+          inputMode="numeric"
+          autoComplete="bday"
+          maxLength={10}
+          value={shown}
+          onChange={(e) => {
+            const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+            onChange(
+              d.length === 8
+                ? `${d.slice(4)}-${d.slice(0, 2)}-${d.slice(2, 4)}`
+                : d
+            );
+          }}
+          placeholder="MM / DD / YYYY"
+          className={inputBase}
         />
       );
+    }
 
     case 'number':
       return (

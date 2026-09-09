@@ -51,6 +51,7 @@ function validateStep(step: Step, answers: Answers): { ok: boolean; knockout?: s
     if (!valueIsPresent(f, v)) return { ok: false };
     if (f.type === 'date' && f.knockoutOn?.values.includes('under18') && typeof v === 'string') {
       const dob = new Date(v);
+      if (Number.isNaN(dob.getTime())) return { ok: false };
       const now = new Date();
       let age = now.getFullYear() - dob.getFullYear();
       const m = now.getMonth() - dob.getMonth();
@@ -378,7 +379,7 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
       {/* Fields */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-4">
         {currentStep.fields.map((f) => (
-          <div key={f.id} className={f.half ? 'col-span-1' : 'col-span-2'}>
+          <div key={f.id} className={f.half ? 'col-span-1 min-w-0' : 'col-span-2 min-w-0'}>
             {f.label && (
               <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
                 {f.label.toUpperCase()}
