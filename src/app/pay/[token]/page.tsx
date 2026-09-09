@@ -83,8 +83,9 @@ export default async function PayPage({ params }: PayPageProps) {
                 Complete your payment.
               </h1>
               <p className="mb-8 text-foreground/65 leading-relaxed">
-                Your prescriber approved your treatment. Once payment clears,
-                your prescription goes straight to the pharmacy for compounding.
+                Your prescriber approved your treatment, but the card you saved
+                could not be charged. Pay here and your prescription goes
+                straight to the pharmacy for compounding.
               </p>
 
               <div className="rounded-3xl border border-line bg-surface p-6">

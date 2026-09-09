@@ -20,6 +20,7 @@ import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
 import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
+import { CheckoutCardStep } from '@/components/checkout/CheckoutCardStep';
 
 type SectionKey = 'email' | 'shipping' | 'method' | 'payment';
 
@@ -55,6 +56,9 @@ type ShippingMethodId = (typeof SHIPPING_OPTIONS)[number]['id'];
 interface CheckoutFlowProps {
   defaultEmail: string;
   defaultName: string;
+  /** Empty when Stripe is unconfigured; the card step hides and the order
+   *  can still be placed, which keeps preview environments usable. */
+  stripePublishableKey?: string;
 }
 
 // ============================================================================
@@ -138,7 +142,11 @@ function isCvcValid(cvc: string) {
 // Main flow
 // ============================================================================
 
-export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
+export function CheckoutFlow({
+  defaultEmail,
+  defaultName,
+  stripePublishableKey,
+}: CheckoutFlowProps) {
   const router = useRouter();
   const { resolvedItems, subtotal: cartSubtotal, removeItem, clear: clearCart } = useCart();
   const { placeOrder } = useOrders();
@@ -216,6 +224,8 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   const [promoInput, setPromoInput] = useState('');
   const [promo, setPromo] = useState<PromoCheck | null>(null);
   const [promoBusy, setPromoBusy] = useState(false);
+  // The card is captured (not charged) before the order can be placed.
+  const [cardSaved, setCardSaved] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   // Mobile-only: collapsible order summary at top. Always expanded on lg+.
@@ -395,6 +405,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
 
   async function handlePay() {
     if (!termsAccepted) return;
+    if (stripePublishableKey && !cardSaved) return;
     if (!emailValid || !shippingValid || !methodValid) return;
     setIsPaying(true);
 
@@ -1204,15 +1215,29 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
           >
             <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
               <p className="mb-1 text-[11px] tracking-widest text-accent">
-                NO PAYMENT DUE NOW
+                NOT CHARGED UNTIL APPROVED
               </p>
               <p className="text-sm text-foreground/80 leading-relaxed">
-                We don&apos;t take payment at checkout. Your prescriber reviews
-                your visit first — if your treatment is approved we&apos;ll
-                email you a secure link to pay, and if it isn&apos;t approved
-                you pay nothing.
+                Your card is saved now but not charged. Your prescriber reviews
+                your visit first — if they approve, this card is charged and
+                your order goes to the pharmacy. If they decline, it is never
+                charged.
               </p>
             </div>
+
+            {stripePublishableKey && (
+              <div className="mt-4">
+                <p className="mb-2.5 text-[10px] tracking-widest text-foreground/50">
+                  PAYMENT METHOD
+                </p>
+                <CheckoutCardStep
+                  publishableKey={stripePublishableKey}
+                  amountLabel={`$${total}`}
+                  saved={cardSaved}
+                  onSaved={() => setCardSaved(true)}
+                />
+              </div>
+            )}
 
             <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
               <span className="text-sm text-foreground/55">Total if approved</span>
@@ -1256,10 +1281,10 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
             <button
               type="button"
               onClick={handlePay}
-              disabled={isPaying || !termsAccepted}
+              disabled={isPaying || !termsAccepted || (!!stripePublishableKey && !cardSaved)}
               className={cn(
                 'mt-6 w-full rounded-full font-semibold py-3.5 text-base transition-colors inline-flex items-center justify-center gap-2',
-                !isPaying && termsAccepted
+                !isPaying && termsAccepted && (!stripePublishableKey || cardSaved)
                   ? 'bg-accent text-black hover:bg-accent-soft'
                   : 'bg-foreground/15 text-foreground/40 cursor-not-allowed'
               )}

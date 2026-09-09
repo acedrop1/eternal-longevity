@@ -440,7 +440,7 @@ export function orderReceivedEmail(input: {
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your order is in. Nothing charged yet.</h1>
        <p style="margin:0 0 18px;">Thanks ${escapeHtml(
          input.firstName,
-       )}. Your prescriber is reviewing your visit now. <strong style="color:#fff;">You have not been charged</strong> — if your treatment is approved we'll email you a secure link to pay, and if it isn't, you pay nothing.</p>
+       )}. Your prescriber is reviewing your visit now. <strong style="color:#fff;">You have not been charged</strong> — if your treatment is approved we'll email you a receipt, and if it isn't, you pay nothing.</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;">
          ${rows}
          <tr>
@@ -457,7 +457,13 @@ export function orderReceivedEmail(input: {
   };
 }
 
-/** Prescriber approved — here is the secure link to pay. */
+/**
+ * Fallback only. The card saved at checkout is charged automatically on
+ * approval; this goes out when that charge fails — expired card, insufficient
+ * funds, a bank that wants the cardholder present. It has to explain why they
+ * are being asked to pay when they already gave us a card, or it reads like a
+ * mistake.
+ */
 export function approvedPayNowEmail(input: {
   firstName: string;
   orderNumber: string;
@@ -465,13 +471,14 @@ export function approvedPayNowEmail(input: {
   payUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Approved — complete your order ${input.orderNumber}`,
+    subject: `Approved — your card needs a second look (${input.orderNumber})`,
     html: shell(
       `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">PRESCRIBER APPROVED</div>
        <h1 style="margin:10px 0 14px;color:#fff;font-size:22px;">Hi ${escapeHtml(
          input.firstName,
        )}, your treatment was approved.</h1>
-       <p style="margin:0 0 18px;">Your prescriber reviewed your visit and approved your treatment. Complete payment below and your prescription goes straight to the pharmacy for compounding.</p>
+       <p style="margin:0 0 18px;">Your prescriber reviewed your visit and approved your treatment. We tried the card you saved at checkout and it didn&rsquo;t go through &mdash; often an expiry date or a bank hold, rather than anything wrong on your end.</p>
+       <p style="margin:0 0 18px;">Pay below and your prescription goes straight to the pharmacy for compounding.</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:0 0 18px;">
          <tr><td style="padding:18px 20px;color:#e5e5e5;font-size:14px;">
            <span style="color:#737373;font-size:13px;">Amount due</span><br/>

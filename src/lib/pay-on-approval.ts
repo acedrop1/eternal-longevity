@@ -288,3 +288,114 @@ export async function createPayIntentAction(token: string): Promise<{
 
   return { ok: true, clientSecret: intent.client_secret ?? undefined };
 }
+
+/**
+ * Charge the card the member saved at checkout, now that a prescriber has
+ * approved. Called from signRxAction.
+ *
+ * The card lives on the Stripe customer rather than on the order, so a member
+ * who replaced their card between ordering and approval is charged the current
+ * one rather than a dead token.
+ *
+ * If the charge fails — expired card, insufficient funds, a bank that wants
+ * the cardholder present — we fall back to emailing the pay link. A failed
+ * charge must not dead-end an approved prescription.
+ */
+export async function chargeOnApproval(orderNumber: string): Promise<{
+  ok: boolean;
+  charged?: boolean;
+  error?: string;
+}> {
+  if (!stripeConfigured() || !supabaseAdminConfigured()) {
+    return { ok: false, error: 'not_configured' };
+  }
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select(
+      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state',
+    )
+    .eq('order_number', orderNumber)
+    .maybeSingle();
+
+  if (!order) return { ok: false, error: 'not_found' };
+  if (order.paid_confirmed_at) return { ok: true, charged: false };
+
+  const amount = order.total_cents ?? 0;
+  if (amount <= 0) return { ok: false, error: 'invalid_amount' };
+  if (!order.member_email) return { ok: false, error: 'no_email' };
+
+  const stripe = getStripe();
+  const customerId = await getOrCreateStripeCustomer({
+    userId: order.user_id,
+    email: order.member_email,
+    name: order.member_name ?? undefined,
+  });
+
+  // Prefer the card the member set as default; otherwise the most recent.
+  const [methods, customer] = await Promise.all([
+    stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
+    stripe.customers.retrieve(customerId),
+  ]);
+  const preferred =
+    customer && !('deleted' in customer)
+      ? (customer.invoice_settings?.default_payment_method as string | null)
+      : null;
+  const paymentMethodId =
+    (preferred && methods.data.find((m) => m.id === preferred)?.id) ??
+    methods.data[0]?.id;
+
+  if (!paymentMethodId) {
+    // Nothing saved — the emailed link is the only way through.
+    await issuePayLink(orderNumber);
+    return { ok: true, charged: false, error: 'no_card_on_file' };
+  }
+
+  const addr = (order.shipping_address ?? {}) as Record<string, string>;
+  try {
+    const intent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      customer: customerId,
+      payment_method: paymentMethodId,
+      // The member is not at the keyboard — they authorised this at checkout.
+      off_session: true,
+      confirm: true,
+      description: `Care program — order ${order.order_number}`,
+      receipt_email: order.member_email,
+      shipping: addr.line1
+        ? {
+            name: addr.fullName || order.member_name || 'Member',
+            address: {
+              line1: addr.line1,
+              line2: addr.line2 || undefined,
+              city: addr.city || undefined,
+              state: addr.state || order.ship_state || undefined,
+              postal_code: addr.zip || undefined,
+              country: 'US',
+            },
+          }
+        : undefined,
+      metadata: { order_number: order.order_number, order_id: order.id },
+    });
+
+    await db
+      .from('orders')
+      .update({ stripe_payment_intent_id: intent.id })
+      .eq('id', order.id);
+
+    // The webhook marks it paid — one code path owns that transition whether
+    // the charge happened here or through the pay link.
+    return { ok: true, charged: intent.status === 'succeeded' };
+  } catch (err) {
+    // Card declined, expired, or the bank wants the cardholder present.
+    // Hand them a link rather than leaving an approved order stranded.
+    await issuePayLink(orderNumber);
+    return {
+      ok: true,
+      charged: false,
+      error: err instanceof Error ? err.message : 'charge_failed',
+    };
+  }
+}

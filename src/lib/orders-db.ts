@@ -15,7 +15,7 @@
  */
 
 import { revalidatePath } from 'next/cache';
-import { issuePayLink } from '@/lib/pay-on-approval';
+import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
@@ -407,7 +407,10 @@ export async function signRxAction(
 
   // Approval is the moment payment becomes due — mint the member's pay link
   // and email it. Never charge before this point.
-  await issuePayLink(orderNumber);
+  // The member saved a card at checkout and authorised exactly this: charge
+  // once a prescriber approves. chargeOnApproval falls back to emailing a pay
+  // link if the card fails, so an approved order is never stranded.
+  await chargeOnApproval(orderNumber);
 
   revalidatePortal();
   return { ok: true };

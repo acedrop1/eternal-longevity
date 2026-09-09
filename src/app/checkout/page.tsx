@@ -14,7 +14,15 @@ export default async function CheckoutPage() {
 
   return (
     <main className="relative min-h-screen bg-background">
-      <CheckoutFlow defaultEmail={user.email} defaultName={user.name} />
+      <CheckoutFlow
+        defaultEmail={user.email}
+        defaultName={user.name}
+        stripePublishableKey={
+          (process.env.STRIPE_PUBLISHABLE_KEY ?? '').startsWith('pk_')
+            ? (process.env.STRIPE_PUBLISHABLE_KEY as string)
+            : ''
+        }
+      />
     </main>
   );
 }
