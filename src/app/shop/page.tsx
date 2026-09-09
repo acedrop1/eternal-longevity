@@ -69,7 +69,7 @@ export default function PublicShopPage() {
 
         {/* CATALOG */}
         <section className="px-4 md:px-6 pb-24 md:pb-32">
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 xl:max-w-[84rem] 2xl:max-w-[92rem]">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 xl:max-w-[88rem] xl:px-10 2xl:max-w-[104rem] 2xl:px-14">
             <ShopCatalog
               items={PUBLIC_PRODUCTS}
               categories={PUBLIC_CATEGORIES}

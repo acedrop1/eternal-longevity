@@ -71,7 +71,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
   return (
     <div className="space-y-12 md:space-y-20">
       {/* === PDP HERO. Two-column on desktop === */}
-      <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 xl:gap-20">
+      <section className="grid gap-8 md:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(380px,470px)] lg:gap-12 xl:gap-16">
         <div
           className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-line md:rounded-[2.5rem]"
           style={{
@@ -164,8 +164,10 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               : `Billed $${active.total} ${active.key === 'monthly' ? 'monthly' : active.key === 'quarterly' ? 'every 3 months' : 'once a year'} · free shipping · cancel anytime`}
           </p>
 
-          {/* Compact segmented control instead of four tall rows. */}
-          <div className="mb-6 grid grid-cols-4 gap-1.5 rounded-2xl border border-line bg-surface p-1.5">
+          {/* Every option carries its own price. Before this it read
+              "Quarterly -9%" with no number — the member had to select an
+              option to find out what it cost. */}
+          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {tiers.map((t) => {
               const isActive = t.key === selectedTier;
               return (
@@ -173,24 +175,43 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                   key={t.key}
                   type="button"
                   onClick={() => setSelectedTier(t.key)}
+                  aria-pressed={isActive}
                   className={cn(
-                    'rounded-xl px-1 py-2.5 text-center transition-colors',
+                    'rounded-2xl border px-3 py-3.5 text-left transition-all',
                     isActive
-                      ? 'bg-accent text-black'
-                      : 'text-foreground/78 hover:bg-foreground/5'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-line bg-surface hover:border-foreground/25'
                   )}
                 >
-                  <span className="block text-[11px] font-semibold leading-tight">
-                    {t.key === 'once' ? 'Once' : t.label}
+                  <span className="mb-1.5 flex items-center gap-1.5">
+                    <span
+                      className={cn(
+                        'grid h-3.5 w-3.5 flex-none place-items-center rounded-full border',
+                        isActive ? 'border-accent' : 'border-foreground/30'
+                      )}
+                    >
+                      {isActive && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
+                    </span>
+                    <span className="text-[12px] font-semibold text-foreground">
+                      {t.key === 'once' ? 'One-time' : t.label}
+                    </span>
                   </span>
-                  <span
-                    className={cn(
-                      'block text-[10px] leading-tight',
-                      isActive ? 'text-black/70' : 'text-foreground/60'
+                  <span className="block text-lg font-semibold tabular-nums text-foreground">
+                    ${t.perMonth}
+                    {t.key !== 'once' && (
+                      <span className="text-xs font-normal text-foreground/60">/mo</span>
                     )}
-                  >
-                    {t.saveLabel ? t.saveLabel.replace('Save ', '-') : '\u00a0'}
                   </span>
+                  <span className="mt-0.5 block text-[11px] text-foreground/60">
+                    {t.key === 'once' ? 'no subscription' : `$${t.total} billed`}
+                  </span>
+                  {t.saveLabel ? (
+                    <span className="mt-1.5 inline-block rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-accent">
+                      {t.saveLabel.toUpperCase()}
+                    </span>
+                  ) : (
+                    <span className="mt-1.5 block h-[17px]" aria-hidden />
+                  )}
                 </button>
               );
             })}
