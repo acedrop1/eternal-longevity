@@ -165,7 +165,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             {[
               'Third-party tested',
               '503A compounded',
-              product.fdaApproved ? 'FDA-approved active' : 'Cold-chain shipped',
+              'Cold-chain shipped',
             ].map((t) => (
               <span
                 key={t}
@@ -178,6 +178,23 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
 
           <p className="mb-6 text-foreground/75 leading-relaxed">
             {product.longDescription}
+          </p>
+
+          {/* Sits with the claims, not only in the footer: a reviewer reading
+              this page should not have to scroll to find the qualification. */}
+          <p className="mb-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[11px] leading-relaxed text-foreground/50">
+            Compounded preparations are not FDA-approved. These statements have
+            not been evaluated by the Food and Drug Administration, and this
+            product is not intended to diagnose, treat, cure, or prevent any
+            disease. Prescription only, following review by a licensed
+            prescriber. Individual results vary.{' '}
+            <Link
+              href="/legal/compounded-medication"
+              className="text-accent underline underline-offset-2"
+            >
+              Read the full disclosure
+            </Link>
+            .
           </p>
 
           {/* Best for callout */}

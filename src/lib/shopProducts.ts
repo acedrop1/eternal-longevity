@@ -94,13 +94,13 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'Copper-tripeptide that signals tissue remodeling. Excellent for skin, hair, and connective tissue.',
     longDescription:
-      'GHK-Cu is a naturally occurring copper-binding tripeptide. Its levels decline sharply with age; restoring them activates wound healing, collagen synthesis, and antioxidant defense. Works systemically (SQ) or as a topical for skin-focused use.',
+      'GHK-Cu is a naturally occurring copper-binding tripeptide whose levels decline with age. Laboratory and animal work has studied its role in tissue remodelling, collagen synthesis, and antioxidant activity. It is offered here for skin and connective-tissue support in healthy adults, not to treat any skin or wound condition. Works systemically (SQ) or as a topical.',
     bestFor: 'Members focused on skin quality, hair health, or visible signs of aging.',
     benefits: [
-      'Increases collagen and elastin synthesis',
-      'Improves skin firmness and texture',
+      'Studied for collagen and elastin synthesis',
+      'Members report firmer skin texture',
       'Supports hair follicle health',
-      'Antioxidant and anti-inflammatory action',
+      'Studied for antioxidant activity',
     ],
     whatsIncluded: [
       '12 weeks of compounded GHK-Cu (2 mg/week SQ)',
@@ -136,14 +136,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Pulsatile GH Release',
     category: 'growth',
     shortDescription:
-      'The clean GH-axis stack. Pulsatile release that mimics a healthy 25-year-old without elevating cortisol.',
+      'The clean GH-axis stack. Pulsatile release, without the cortisol shift seen elsewhere.',
     longDescription:
-      'CJC-1295 is a GHRH analog that extends growth-hormone pulses; Ipamorelin is a ghrelin mimetic that triggers them. Combined, they produce sustained IGF-1 increases and improved recovery, sleep, and body composition. Without the prolactin or cortisol shifts seen with other secretagogues.',
+      'CJC-1295 is a GHRH analog that extends growth-hormone pulses; Ipamorelin is a ghrelin mimetic that triggers them. Together they are studied for sustained IGF-1 response, and members commonly report better recovery and sleep depth over a cycle. Studied without the prolactin or cortisol shifts seen with other secretagogues.',
     bestFor: 'Members 30+ optimizing recovery, sleep depth, and lean body composition.',
     benefits: [
-      'Increased IGF-1 and sustained GH AUC',
-      'Deeper sleep, especially slow-wave sleep',
-      'Improved body composition over the cycle',
+      'Studied for IGF-1 response and GH AUC',
+      'Members commonly report deeper slow-wave sleep',
+      'Studied for body composition over a cycle',
       'No cortisol or prolactin elevation',
     ],
     whatsIncluded: [
@@ -186,9 +186,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Sermorelin is the 1–29 fragment of natural GHRH. Half-life is short, which produces a more physiological GH pulse than longer-acting analogs. A good first step into the GH-axis category, often used 12–16 weeks at bedtime.',
     bestFor: 'First-time peptide members wanting a conservative GH-axis protocol.',
     benefits: [
-      'Increases natural GH release',
-      'Improves sleep quality',
-      'Supports lean mass over time',
+      'Studied for natural GH release',
+      'Members commonly report better sleep quality',
+      'Studied for lean-mass support over time',
       'Shorter half-life reduces side-effect risk',
     ],
     whatsIncluded: [
@@ -222,18 +222,18 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'tesamorelin',
     name: 'Tesamorelin',
-    tagline: 'Visceral Fat Reduction',
+    tagline: 'GHRH Analog',
     category: 'growth',
     shortDescription:
-      'FDA-approved GHRH analog with the strongest human data for reducing visceral adipose tissue.',
+      'The GHRH analog with the deepest human research record. Compounded, not the branded product.',
     longDescription:
-      'Tesamorelin is the GHRH analog with the strongest clinical record for reducing visceral fat in middle-aged adults. Originally FDA-approved for HIV-related lipodystrophy, it has well-documented off-label efficacy with measurable improvements in lipid profile and waist circumference over 12–24 weeks.',
-    bestFor: 'Members 40+ with stubborn visceral fat or metabolic-syndrome flags on labs.',
+      'Tesamorelin as a molecule is FDA-approved under the brand name Egrifta for one specific indication. What we dispense is a compounded preparation, which is not FDA-approved and is prescribed off-label. Published trials in the approved population studied visceral fat and lipid measures over 12–24 weeks; those results were obtained in that population with the branded product, and they are not a promise of what you will experience.',
+    bestFor: 'Members 40+ discussing body-composition goals with a prescriber.',
     benefits: [
-      'Reduces visceral adipose tissue',
-      'Improves triglycerides and HDL',
-      'Increases IGF-1 sustainably',
-      'Strong human RCT evidence',
+      'Studied for visceral adipose tissue',
+      'Studied for triglyceride and HDL measures',
+      'Acts on the GH/IGF-1 axis',
+      'The deepest human trial record in this category',
     ],
     whatsIncluded: [
       '16 weeks of compounded Tesamorelin (1 mg/day SQ)',
@@ -275,14 +275,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Calm Focus, No Sedation',
     category: 'cognitive',
     shortDescription:
-      'A nasal peptide that reduces anxiety and improves working memory without sedation or dependence.',
+      'A nasal peptide studied for stress tolerance and working memory, without sedation or dependence.',
     longDescription:
-      'Selank is a synthetic analog of tuftsin. Russian research shows anxiolytic effects comparable to benzodiazepines with no sedation, no tolerance, and no withdrawal. Members report calmer focus and better stress tolerance within the first two weeks.',
-    bestFor: 'Members with high-stress work demands looking for cognitive support without sedation.',
+      'Selank is a synthetic analog of tuftsin. Russian research has studied it for stress response and cognition, reporting no sedation, no tolerance, and no withdrawal in the populations examined. Members commonly describe calmer focus within the first two weeks. It is not a treatment for any diagnosed condition, and it is not a substitute for care you may need from your own physician.',
+    bestFor: 'Members with high-stress work demands exploring cognitive support without sedation.',
     benefits: [
-      'Reduces anxiety without sedation',
-      'Improves working memory',
-      'Supports BDNF expression',
+      'Studied for stress tolerance, without sedation',
+      'Studied for working-memory performance',
+      'Studied for BDNF expression',
       'No tolerance or withdrawal',
     ],
     whatsIncluded: [
@@ -315,15 +315,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Cognitive Performance',
     category: 'cognitive',
     shortDescription:
-      'ACTH fragment with stimulant-like cognitive effects. Without the crash or dependency.',
+      'An ACTH fragment studied for focus and recall. No stimulant crash, no dependency.',
     longDescription:
-      'Semax is a heptapeptide derived from ACTH (4-10). Originally developed in Russia for stroke recovery, it has gained traction as a cognitive enhancer. Members report sustained focus, faster recall, and improved verbal fluency. Best taken in the morning to avoid sleep interference.',
+      'Semax is a heptapeptide derived from ACTH (4-10), developed in Russia and studied there across several neurological settings. In this catalogue it is offered only for cognitive support in healthy adults, not as a treatment for any neurological condition. Members commonly report sustained focus and faster recall. Best taken in the morning to avoid sleep interference.',
     bestFor: 'Members in demanding mental work who want focus without stimulant side effects.',
     benefits: [
-      'Improves attention and working memory',
-      'Increases BDNF and NGF',
+      'Studied for attention and working memory',
+      'Studied for BDNF and NGF expression',
       'No stimulant side-effect profile',
-      'Used in stroke recovery clinical settings',
+      'A long clinical research history in Russia',
     ],
     whatsIncluded: [
       '12 weeks of Semax nasal spray (300 mcg/spray, 2 sprays/day AM)',
@@ -358,14 +358,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Libido & Arousal',
     category: 'sexual',
     shortDescription:
-      'A melanocortin-receptor agonist that acts on the CNS to restore libido in both men and women.',
+      'A melanocortin-receptor agonist acting centrally rather than vascularly. Used as needed.',
     longDescription:
-      'PT-141 (Bremelanotide) works through the central melanocortin system. Not the vascular pathway that PDE-5 inhibitors target. That means it addresses desire itself, not just function. FDA-approved as Vyleesi for premenopausal women; well-documented off-label use in men.',
-    bestFor: 'Members experiencing reduced libido that conventional approaches have not addressed.',
+      'PT-141 (bremelanotide) works through the central melanocortin system rather than the vascular pathway PDE-5 inhibitors target. Bremelanotide is FDA-approved under the brand name Vyleesi for one specific indication in premenopausal women; what we dispense is a compounded preparation, which is not FDA-approved, and use in men is off-label. Whether it is appropriate for you is a question for your prescriber.',
+    bestFor: 'Members raising libido concerns with a prescriber.',
     benefits: [
-      'Increases sexual desire (not just performance)',
+      'Acts on desire pathways, not vascular ones',
       'Works centrally via melanocortin receptors',
-      'Effective in both men and women',
+      'Studied in both men and women',
       'Used as-needed, not daily',
     ],
     whatsIncluded: [
@@ -407,11 +407,11 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'A four-amino acid peptide studied for telomerase activation and pineal-gland support.',
     longDescription:
-      'Epitalon (Epithalon) is a tetrapeptide developed at the St. Petersburg Institute of Bioregulation and Gerontology. Long-running Russian studies report telomere lengthening, improved sleep architecture, and immune support. Cycles are short. Three weeks. Repeated 2–3 times per year.',
+      'Epitalon (Epithalon) is a tetrapeptide developed at the St. Petersburg Institute of Bioregulation and Gerontology. Long-running Russian studies have examined it for telomerase activity and sleep architecture. That work is early, largely from a single research group, and has not been replicated at scale in the West — treat the evidence as preliminary rather than settled. Cycles are short. Three weeks. Repeated 2–3 times per year.',
     bestFor: 'Members 45+ focused on long-horizon longevity protocols.',
     benefits: [
       'Studied for telomerase activation',
-      'Supports melatonin rhythm via pineal gland',
+      'Studied for melatonin rhythm via the pineal gland',
       'Short, intermittent dosing cycles',
       'Well-tolerated profile',
     ],
