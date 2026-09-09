@@ -17,13 +17,13 @@ const MECHANISMS = [
     n: '01',
     title: 'Growth-hormone axis',
     body:
-      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile, physiological GH release. Matching how a healthy 25-year-old body naturally cycles, without flooding the system.',
+      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile GH release, closer to how the body naturally cycles, without flooding the system.',
   },
   {
     n: '02',
     title: 'Tissue repair',
     body:
-      'Restorative peptides like KPV and GHK-Cu modulate inflammation and signal tissue remodeling. Supporting recovery across joints, skin, and connective tissue.',
+      'Restorative peptides like KPV and GHK-Cu are studied for tissue-remodelling signals. Explored for recovery across joints, skin, and connective tissue.',
   },
   {
     n: '03',
@@ -67,22 +67,22 @@ const EVIDENCE = [
     peptide: 'CJC-1295 / Ipamorelin',
     headline: 'GH pulse amplification, no cortisol shift',
     summary:
-      'In healthy adults, combined dosing produced sustained increases in IGF-1 and GH AUC across an eight-week window without elevating prolactin or cortisol. The cleanest pulsatile profile in this class.',
+      'Trials in healthy adults have studied combined dosing for IGF-1 response and GH AUC across an eight-week window, reporting no elevation of prolactin or cortisol. Results in a trial population are not a prediction of your own.',
     note: 'Multiple Phase 1/2 trials, peer-reviewed.',
   },
   {
     peptide: 'GHK-Cu',
     headline: 'Collagen synthesis & tissue remodeling',
     summary:
-      'A naturally occurring copper tripeptide whose levels decline with age. Restoring it activates wound healing, collagen production, and antioxidant defense, with a long record in dermatological research.',
+      'A naturally occurring copper tripeptide whose levels decline with age. Laboratory and dermatological research has studied its role in collagen production, tissue remodelling and antioxidant activity.',
     note: 'Established in dermatology; systemic evidence emerging.',
   },
   {
     peptide: 'Tesamorelin',
-    headline: 'Visceral fat reduction, sustained',
+    headline: 'The deepest human trial record in this class',
     summary:
-      'FDA-approved for HIV-associated lipodystrophy, with strong off-label evidence for visceral adipose reduction in middle-aged adults. Paired with measurable improvements in lipid profile.',
-    note: 'FDA-approved indication; off-label use is common.',
+      'Tesamorelin is FDA-approved under the brand name Egrifta for one specific indication. The preparation we dispense is compounded, is not FDA-approved, and is prescribed off-label. Trials in the approved population studied visceral adipose and lipid measures.',
+    note: 'The branded product is approved; the compounded preparation is not.',
   },
 ];
 

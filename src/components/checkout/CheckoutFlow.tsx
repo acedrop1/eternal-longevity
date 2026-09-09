@@ -210,6 +210,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
     method: false,
     payment: false,
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   // Mobile-only: collapsible order summary at top. Always expanded on lg+.
   const [summaryExpanded, setSummaryExpanded] = useState(false);
@@ -374,6 +375,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
   }
 
   async function handlePay() {
+    if (!termsAccepted) return;
     if (!emailValid || !shippingValid || !methodValid) return;
     setIsPaying(true);
 
@@ -1155,13 +1157,45 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
               </span>
             </div>
 
+            <label className="mt-5 flex cursor-pointer gap-3 rounded-2xl border border-line bg-background px-4 py-3.5 text-[13px] leading-relaxed text-foreground/85">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 flex-none accent-[#d5a850]"
+              />
+              <span>
+                I am 18 or older and a New Jersey resident, the health
+                information I provided is accurate and complete, and I agree to
+                the{' '}
+                <Link href="/legal/terms" className="text-accent underline underline-offset-2" target="_blank">
+                  Terms of Service
+                </Link>
+                ,{' '}
+                <Link href="/legal/consent" className="text-accent underline underline-offset-2" target="_blank">
+                  Informed Consent
+                </Link>
+                ,{' '}
+                <Link href="/legal/refunds" className="text-accent underline underline-offset-2" target="_blank">
+                  Refund Policy
+                </Link>{' '}
+                and{' '}
+                <Link href="/legal/privacy" className="text-accent underline underline-offset-2" target="_blank">
+                  Privacy Policy
+                </Link>
+                . I understand this order is a request for a prescriber to
+                review, not a guarantee of one, and that nothing is charged
+                unless my treatment is approved.
+              </span>
+            </label>
+
             <button
               type="button"
               onClick={handlePay}
-              disabled={isPaying}
+              disabled={isPaying || !termsAccepted}
               className={cn(
                 'mt-6 w-full rounded-full font-semibold py-3.5 text-base transition-colors inline-flex items-center justify-center gap-2',
-                !isPaying
+                !isPaying && termsAccepted
                   ? 'bg-accent text-black hover:bg-accent-soft'
                   : 'bg-foreground/15 text-foreground/40 cursor-not-allowed'
               )}

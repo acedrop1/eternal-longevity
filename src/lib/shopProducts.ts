@@ -13,14 +13,18 @@ export type ShopCategory =
   | 'metabolic'
   | 'cognitive'
   | 'sexual'
-  | 'longevity';
+  | 'longevity'
+  | 'immune'
+  | 'skin-hair';
 
 export const SHOP_CATEGORIES: { key: ShopCategory; label: string }[] = [
   { key: 'recovery', label: 'Recovery & repair' },
   { key: 'growth', label: 'Growth hormone' },
   { key: 'cognitive', label: 'Cognitive' },
   { key: 'sexual', label: 'Sexual health' },
-  { key: 'longevity', label: 'Longevity & skin' },
+  { key: 'immune', label: 'Immune support' },
+  { key: 'skin-hair', label: 'Skin & hair' },
+  { key: 'longevity', label: 'Longevity' },
 ];
 
 export type DeliveryForm = 'sq' | 'im' | 'oral' | 'nasal' | 'topical';
@@ -90,7 +94,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     id: 'ghk-cu',
     name: 'GHK-Cu',
     tagline: 'Skin & Connective Tissue',
-    category: 'recovery',
+    category: 'skin-hair',
     shortDescription:
       'Copper-tripeptide that signals tissue remodeling. Excellent for skin, hair, and connective tissue.',
     longDescription:
@@ -616,7 +620,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     id: 'thymosin-alpha-1',
     name: 'Thymosin Alpha-1',
     tagline: 'Immune Modulation',
-    category: 'longevity',
+    category: 'immune',
     shortDescription:
       'A thymic peptide studied for immune signalling. The most clinically documented peptide in this catalogue outside the GH axis.',
     longDescription:
@@ -740,13 +744,13 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'kpv',
     name: 'KPV',
-    tagline: 'Gut & Tissue Support',
-    category: 'recovery',
+    tagline: 'Immune & Gut Signalling',
+    category: 'immune',
     shortDescription:
       'A three–amino acid fragment of alpha-MSH. The smallest peptide in the catalogue.',
     longDescription:
       'KPV is the C-terminal tripeptide of alpha-melanocyte-stimulating hormone. Preclinical work has studied it for gut-lining and tissue signalling; human evidence is limited. Frequently run with BPC-157 in gut-focused protocols. Offered for general recovery support in healthy adults, not to treat any gastrointestinal or inflammatory condition.',
-    bestFor: 'Members running a gut-focused recovery protocol, usually alongside BPC-157.',
+    bestFor: 'Members running a gut or immune protocol, often alongside BPC-157.',
     benefits: [
       'Studied for gut-lining signalling',
       'Studied for tissue and skin support',
@@ -866,7 +870,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     id: 'klow',
     name: 'KLOW',
     tagline: 'The Four-Peptide Blend',
-    category: 'recovery',
+    category: 'skin-hair',
     shortDescription:
       'GHK-Cu, BPC-157, KPV and TB-500 compounded into one vial. The most complete recovery formulation we carry.',
     longDescription:

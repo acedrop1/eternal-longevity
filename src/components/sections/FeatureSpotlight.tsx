@@ -19,13 +19,13 @@ import { cn } from '@/lib/utils';
 const FEATURES = [
   {
     title: 'Recovery',
-    body: 'Accelerate soft tissue repair and reduce inflammation. Train harder, recover faster, prevent injury. Backed by structured cycles and clinical-grade compounds.',
+    body: 'Peptides studied for soft-tissue repair and recovery between hard training blocks. Structured cycles, compounded to prescription, with check-ins along the way.',
     label: '01',
     image: '/images/8.jpg', // core / athletic
   },
   {
     title: 'Performance',
-    body: 'Enhance growth hormone signaling and improve body composition. Designed for cycle-based training and metabolic optimization, with clear dosing and ongoing check-ins.',
+    body: 'Protocols built around the growth-hormone axis and body composition. Cycle-based, with clear dosing and ongoing check-ins.',
     label: '02',
     image: '/images/7.jpg', // stretching / strength
   },
