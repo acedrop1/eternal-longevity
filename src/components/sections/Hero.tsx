@@ -18,6 +18,10 @@ export function Hero() {
         key="hero-video"
         className="absolute inset-0 h-full w-full object-cover"
         src="/2.mp4"
+        // Without a poster the hero is black until the first frame decodes,
+        // and the browser has nothing to paint as the largest contentful
+        // element. The still is 8x smaller than the video and lands first.
+        poster="/2-poster.jpg"
         autoPlay
         muted
         loop
