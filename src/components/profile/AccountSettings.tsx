@@ -225,6 +225,7 @@ function Field({
         {label}
       </label>
       <input
+        aria-label={label}
         type={type}
         value={value}
         autoComplete={autoComplete}

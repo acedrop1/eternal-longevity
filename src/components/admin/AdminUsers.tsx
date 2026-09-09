@@ -86,6 +86,7 @@ export function AdminUsers({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <input
+            aria-label="Search users by name or email"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -381,6 +382,7 @@ function AddUserPanel({
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <input
+          aria-label="New user full name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Full name"
@@ -388,6 +390,7 @@ function AddUserPanel({
           className={inputClass}
         />
         <input
+          aria-label="New user email address"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

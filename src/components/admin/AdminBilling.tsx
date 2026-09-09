@@ -141,6 +141,7 @@ export function AdminBilling({
         ) : (
           <div>
             <input
+              aria-label="Search customers by name or email"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -391,6 +392,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
         <div>
           <label className={labelClass}>PROTOCOL / PRODUCT NAME</label>
           <input
+            aria-label="Protocol or product name"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
             placeholder="GHK-Cu"
@@ -402,6 +404,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
           <div>
             <label className={labelClass}>AMOUNT (USD)</label>
             <input
+              aria-label="Subscription amount in US dollars"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
@@ -473,6 +476,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
         <div>
           <label className={labelClass}>AMOUNT (USD)</label>
           <input
+            aria-label="Charge amount in US dollars"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
@@ -484,6 +488,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
         <div>
           <label className={labelClass}>DESCRIPTION</label>
           <input
+            aria-label="Charge description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Cycle 2 — GHK-Cu"

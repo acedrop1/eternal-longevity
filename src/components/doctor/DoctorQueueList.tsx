@@ -447,6 +447,7 @@ function ActiveCaseRow({
                 TRACKING NUMBER
               </label>
               <input
+                aria-label="Tracking number"
                 type="text"
                 value={tracking}
                 onChange={(e) => setTracking(e.target.value)}

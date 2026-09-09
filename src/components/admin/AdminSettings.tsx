@@ -181,6 +181,7 @@ function PrescriberCard({
             PRESCRIBER NAME
           </label>
           <input
+            aria-label="Prescriber name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Dr. Bader"
@@ -192,6 +193,7 @@ function PrescriberCard({
             NPI (10 DIGITS)
           </label>
           <input
+            aria-label="Prescriber NPI, 10 digits"
             value={npi}
             onChange={(e) => setNpi(e.target.value.replace(/\D/g, '').slice(0, 10))}
             inputMode="numeric"

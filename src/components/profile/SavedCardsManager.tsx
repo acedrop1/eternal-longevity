@@ -134,6 +134,7 @@ export function SavedCardsManager() {
                 CARD NUMBER
               </label>
               <input
+                aria-label="Card number"
                 type="text"
                 inputMode="numeric"
                 value={draft.number}
@@ -150,6 +151,7 @@ export function SavedCardsManager() {
                   EXPIRY
                 </label>
                 <input
+                  aria-label="Card expiry, MM/YY"
                   type="text"
                   inputMode="numeric"
                   maxLength={5}
@@ -166,6 +168,7 @@ export function SavedCardsManager() {
                   CVC
                 </label>
                 <input
+                  aria-label="Card security code"
                   type="text"
                   inputMode="numeric"
                   maxLength={4}
@@ -186,6 +189,7 @@ export function SavedCardsManager() {
                 NAME ON CARD
               </label>
               <input
+                aria-label="Name on card"
                 type="text"
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}

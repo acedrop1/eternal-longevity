@@ -194,6 +194,7 @@ function SignCard({
               PROTOCOL NAME
             </label>
             <input
+              aria-label="Protocol name"
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
               placeholder="GHK-Cu — 12-week course"

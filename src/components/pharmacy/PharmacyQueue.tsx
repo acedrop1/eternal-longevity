@@ -220,6 +220,7 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
                 TRACKING NUMBER
               </label>
               <input
+                aria-label="Tracking number"
                 value={tracking}
                 onChange={(e) => setTracking(e.target.value)}
                 placeholder="1Z…"

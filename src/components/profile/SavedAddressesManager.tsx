@@ -279,6 +279,7 @@ function Field({
         {label}
       </label>
       <input
+        aria-label={label}
         type={type}
         inputMode={inputMode}
         value={value}
