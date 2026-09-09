@@ -227,6 +227,12 @@ textarea {
   input,
   select,
   textarea {
-    font-size: 16px;
+    /* !important on purpose. Tailwind writes font-size through utility
+       classes like .text-sm, and a class (0,1,0) outranks a bare element
+       selector (0,0,1) — so without this the rule ships, loses, and the page
+       still zooms. Raising specificity with :not() chains would work too but
+       breaks the moment someone adds a new utility. This is a hard platform
+       constraint, not a style preference, so it wins outright. */
+    font-size: 16px !important;
   }
 }
