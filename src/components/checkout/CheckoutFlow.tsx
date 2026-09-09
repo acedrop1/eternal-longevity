@@ -1219,13 +1219,13 @@ export function CheckoutFlow({
           >
             <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
               <p className="mb-1 text-[11px] tracking-widest text-accent">
-                HELD, NOT CHARGED
+                REFUNDED IF NOT APPROVED
               </p>
               <p className="text-sm text-foreground/80 leading-relaxed">
-                We place a hold for this amount now — it may show as pending,
-                but nothing is taken. Your prescriber reviews your visit first:
-                if they approve, the hold becomes the charge. If they decline,
-                it is released and vanishes from your statement.
+                You pay now and your prescriber reviews your visit next. If
+                they approve, your prescription goes straight to the pharmacy.
+                If they decide this treatment isn&apos;t right for you, you are
+                refunded in full automatically and nothing ships.
               </p>
             </div>
 

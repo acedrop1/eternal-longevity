@@ -15,8 +15,7 @@
  */
 
 import { revalidatePath } from 'next/cache';
-import { chargeOnApproval } from '@/lib/pay-on-approval';
-import { captureOrderAuth, releaseOrderAuth } from '@/lib/order-auth';
+import { refundDeclinedOrder } from '@/lib/order-payment';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -380,8 +379,8 @@ export async function denyOrderAction(
   const db = createSupabaseAdminClient();
   await db.from('orders').update({ status: 'denied-admin', admin_note: note }).eq('id', id);
   await appendUpdate(id, user.name, 'admin', 'Declined', note, 'denied-admin');
-  // Nothing will be charged, so free the hold now.
-  await releaseOrderAuth(orderNumber);
+  // Denied before review — return the money now.
+  await refundDeclinedOrder(orderNumber);
   revalidatePortal();
   return { ok: true };
 }
@@ -417,32 +416,13 @@ export async function signRxAction(
     'signed',
   );
 
-  // Approval is the moment payment becomes due — mint the member's pay link
-  // and email it. Never charge before this point.
   /*
-   * Capture the hold placed at checkout. The funds were confirmed and reserved
-   * then, so this cannot fail for insufficient funds — which is the whole
-   * reason the prescriber never has to think about payment.
-   *
-   * If the hold aged out before he got to it, chargeOnApproval is the fallback:
-   * it charges the saved card, and emails a pay link if even that fails.
+   * No payment step here. The member paid at checkout, so signing is purely
+   * the clinical act — which is the point of taking the money up front: the
+   * prescriber never meets a declined card, and the order can go to the
+   * pharmacy the second he signs.
    */
-  const captured = await captureOrderAuth(orderNumber);
-  const paid =
-    captured.ok && captured.captured
-      ? true
-      : (await chargeOnApproval(orderNumber)).charged === true;
-
-  /*
-   * Straight to Kaduceus, on the capture result rather than on the order's
-   * paid_confirmed_at — that column is written by the Stripe webhook, which
-   * arrives asynchronously and will usually not have landed yet.
-   *
-   * If the money did not actually move, the order stops here. It is signed and
-   * unpaid, the member has a pay link, and the webhook will submit it once
-   * they use it.
-   */
-  if (paid) await autoSubmitToPharmacy(orderNumber);
+  await autoSubmitToPharmacy(orderNumber);
 
   revalidatePortal();
   return { ok: true };
@@ -462,10 +442,9 @@ export async function declineClinicalAction(
   await db.from('orders').update({ status: 'declined-clinical', physician_note: note }).eq('id', id);
   await appendUpdate(id, user.name, 'physician', 'Declined', note, 'declined-clinical');
 
-  // Let the money go immediately. A declined member should not watch a pending
-  // charge sit on their statement for a week waiting for the network to expire
-  // it — that is the moment they call their bank.
-  await releaseOrderAuth(orderNumber);
+  // Refund in full, immediately. The checkout copy promises exactly this, and
+  // a promise that waits on someone remembering to click refund is not one.
+  await refundDeclinedOrder(orderNumber);
   revalidatePortal();
   return { ok: true };
 }

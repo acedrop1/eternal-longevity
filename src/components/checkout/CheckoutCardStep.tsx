@@ -8,19 +8,15 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { createOrderAuthAction } from '@/lib/order-auth';
+import { createOrderAuthAction } from '@/lib/order-payment';
 
 /**
- * Authorisation at checkout — money held, not taken.
+ * Payment at checkout.
  *
- * A saved card proves the card exists; it does not prove the money is there.
- * This places a real hold for the full amount, so the funds are confirmed and
- * reserved before a prescriber ever sees the order. Approve captures the hold;
- * decline releases it.
- *
- * The member does see a pending line for the full amount in the meantime. That
- * is the cost of the guarantee, and the copy below says so rather than letting
- * them discover it on their statement.
+ * The money settles here, so the prescriber never meets a declined card and
+ * the member gets a real receipt straight away rather than a pending line they
+ * have to interpret. If the prescriber declines, the refund is automatic and
+ * immediate — which is what the copy below promises.
  */
 function CardCapture({
   onSaved,
@@ -78,14 +74,16 @@ function CardCapture({
         disabled={!stripe || busy}
         className="mt-5 w-full rounded-full bg-accent py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {busy ? 'Authorising…' : `Authorise ${amountLabel} and continue`}
+        {busy ? 'Processing…' : `Pay ${amountLabel} and continue`}
       </button>
 
       <p className="mt-3 text-center text-[11px] leading-relaxed text-foreground/50">
-        We place a hold for {amountLabel} — you may see it as pending, but{' '}
-        <strong className="text-foreground/70">nothing is taken yet</strong>. If
-        your prescriber approves, the hold becomes the charge. If they decline,
-        it is released and disappears.
+        Charged now. If your prescriber decides this treatment is not right for
+        you,{' '}
+        <strong className="text-foreground/70">
+          you are refunded in full
+        </strong>{' '}
+        and nothing ships.
       </p>
     </form>
   );
@@ -139,8 +137,8 @@ export function CheckoutCardStep({
           ✓
         </span>
         <p className="text-sm text-foreground/85">
-          {amountLabel} authorised and held. It becomes a charge only if your
-          prescriber approves — otherwise it is released.
+          {amountLabel} paid. Refunded in full if your prescriber does not
+          approve your treatment.
         </p>
       </div>
     );
