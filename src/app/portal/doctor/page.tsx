@@ -97,16 +97,39 @@ export default async function DoctorPortalPage() {
             Welcome back, {user.name.split(' ').slice(-1)[0]}.
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-foreground/65">
-            Every intake an admin has approved appears here. Sign a prescription
-            to release it for fulfillment, or decline with a clinical note.
+            Orders arrive here the moment a member checks out. Signing charges
+            their card and sends the prescription to the pharmacy; declining
+            charges nothing.
           </p>
         </div>
       </div>
 
-      {/* Intake sign-off and the order queue are separate workstreams — the
-          doctor needs both once orders are Supabase-backed. */}
-      {live && <DoctorSignQueue intakes={intakes} />}
       <DoctorQueueList doctorName={user.name} />
+
+      {/*
+        Standalone assessments — someone who filled in the visit form without
+        buying — are a separate, rarer stream that still goes through admin
+        review first. It gets its own heading only when it has something in
+        it, so an empty second queue never pads the page.
+      */}
+      {live && intakes.length > 0 && (
+        <section className="mt-10">
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-1 text-[11px] tracking-widest text-sky-300">
+                STANDALONE ASSESSMENTS
+              </p>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                No order attached
+              </h2>
+            </div>
+            <span className="text-[11px] tracking-widest text-foreground/45">
+              {intakes.length} {intakes.length === 1 ? 'CASE' : 'CASES'}
+            </span>
+          </div>
+          <DoctorSignQueue intakes={intakes} />
+        </section>
+      )}
     </PortalShell>
   );
 }

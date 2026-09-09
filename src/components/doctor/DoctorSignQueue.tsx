@@ -40,18 +40,14 @@ export function DoctorSignQueue({
 }) {
   const [rows, setRows] = useState(intakes);
 
-  if (rows.length === 0) {
-    return (
-      <div className="rounded-3xl border border-line bg-surface p-10 text-center">
-        <h2 className="mb-2 text-lg font-semibold tracking-tight text-foreground">
-          Queue is clear
-        </h2>
-        <p className="text-sm text-foreground/65">
-          Approved intakes appear here for sign-off.
-        </p>
-      </div>
-    );
-  }
+  /*
+   * Renders nothing when empty. Standalone assessments are a second, much
+   * quieter stream than shop orders, and its own "queue is clear" card sat
+   * above the real queue's identical card — two empty states stacked, telling
+   * the prescriber the same thing twice. The page owns the heading and only
+   * mounts this when there is something in it.
+   */
+  if (rows.length === 0) return null;
 
   return (
     <div className="space-y-3">

@@ -61,7 +61,7 @@ export default async function DoctorHistoryPage() {
   if (!user) redirect('/login');
   if (user.role !== 'doctor') redirect(user.redirectTo);
 
-  const RX_LOG = await loadSignedRx();
+  const signed = await loadSignedRx();
 
   return (
     <PortalShell
@@ -75,7 +75,7 @@ export default async function DoctorHistoryPage() {
     >
       <div className="mb-10">
         <p className="mb-2 text-[11px] tracking-widest text-sky-300">
-          MY SIGNED RX · {RX_LOG.length} TOTAL
+          MY SIGNED RX · {signed.length} TOTAL
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
@@ -84,34 +84,20 @@ export default async function DoctorHistoryPage() {
           Your prescription log.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Every prescription you&apos;ve signed or declined. Tap a row to see
-          the underlying intake, labs, and clinical team notes.
+          Every prescription you&apos;ve signed or declined, newest first.
         </p>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {['All', 'Active', 'Completed', 'Declined', 'This week'].map((f, i) => (
-          <button
-            key={f}
-            type="button"
-            className={cn(
-              'rounded-full px-4 py-2 text-xs tracking-wider font-medium border transition-all',
-              i === 0
-                ? 'border-foreground/30 bg-foreground/10 text-foreground'
-                : 'border-line bg-surface text-foreground/65 hover:border-foreground/30'
-            )}
-          >
-            {f}
-          </button>
-        ))}
-        <button
-          type="button"
-          className="ml-auto rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/65 hover:text-foreground hover:border-foreground/30"
-        >
-          EXPORT CSV →
-        </button>
-      </div>
-
+      {signed.length === 0 ? (
+        <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+          <h2 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
+            Nothing signed yet
+          </h2>
+          <p className="mx-auto max-w-md text-xs leading-relaxed text-foreground/55">
+            Prescriptions you approve or decline are logged here permanently.
+          </p>
+        </div>
+      ) : (
       <div className="rounded-3xl border border-line bg-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -126,7 +112,7 @@ export default async function DoctorHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {RX_LOG.map((r) => {
+              {signed.map((r) => {
                 const theme = STATUS_THEME[r.status];
                 return (
                   <tr
@@ -166,6 +152,7 @@ export default async function DoctorHistoryPage() {
           </table>
         </div>
       </div>
+      )}
 
       <p className="mt-6 text-center">
         <Link

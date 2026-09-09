@@ -59,8 +59,8 @@ export default async function DoctorProfilePage() {
           {user.name}
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Your contact info, licensure, and signing preferences. Changes are
-          audited and routed to the compliance team for review.
+          Your contact details and licensure, and how the system reaches you
+          when an order needs signing. To change anything here, email support.
         </p>
       </div>
 
@@ -106,72 +106,54 @@ export default async function DoctorProfilePage() {
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-soft"
-            >
-              + Add a state license
-            </button>
+            <p className="mt-4 text-xs leading-relaxed text-foreground/45">
+              Licensure sets the states we can ship to. Email support to add
+              one — it has to be verified against the state board before the
+              site will accept orders from there.
+            </p>
           </section>
 
           <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
-            <h2 className="mb-5 text-lg font-semibold tracking-tight text-foreground">
-              Signing preferences
+            <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
+              How you're notified
             </h2>
-            <div className="space-y-2">
-              <Toggle
-                title="Auto-sign clean intakes"
-                body="If no red flags appear in the intake and labs, automatically apply your signature after a 30-second hold window."
-                on={false}
+            <p className="mb-5 text-sm leading-relaxed text-foreground/55">
+              Not settings — this is what the system does. Nothing here can be
+              switched off, because nothing ships without your signature.
+            </p>
+            <ul className="space-y-2">
+              <Fact
+                title="Every new order emails and texts you"
+                body="Sent the moment a member checks out, to the address and number above. There is no admin step in front of you."
               />
-              <Toggle
-                title="Email me when a new escalated case lands"
-                body="An email is sent within 60 seconds of an escalated case appearing in the queue."
-                on={true}
+              <Fact
+                title="Nothing is signed on your behalf"
+                body="Every prescription waits for you. There is no automatic signing, and no case times out into an approval."
               />
-              <Toggle
-                title="SMS me when queue exceeds 10"
-                body="Single SMS when the queue crosses 10 cases awaiting review."
-                on={true}
+              <Fact
+                title="Signing charges the card and sends the Rx"
+                body="Approving releases the order to the pharmacy and charges the card the member saved at checkout. Declining charges nothing."
               />
-            </div>
+            </ul>
           </section>
         </div>
 
         {/* === SIDEBAR === */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="mb-2 text-[10px] tracking-widest text-sky-300">
-              SIGNING WINDOW
-            </div>
-            <div className="text-sm font-medium text-foreground">
-              Mon – Fri · 9a – 6p ET
-            </div>
-            <p className="text-xs text-foreground/55 mt-1 leading-relaxed">
-              You can sign outside this window, but cases routed to you only
-              count toward your TAT during signing hours.
-            </p>
-            <button
-              type="button"
-              className="mt-3 text-[11px] tracking-widest text-accent hover:text-accent-soft"
-            >
-              EDIT WINDOW →
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
               SUPPORT
             </div>
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Issue with a case or queue routing? Email{' '}
+              Something wrong with a case, or a member you need to reach?
+              Email{' '}
               <a
                 href="mailto:support@etlongevity.com"
                 className="text-accent hover:text-accent-soft"
               >
                 support@etlongevity.com
-              </a>{' '}
-              or page on-call ops via Slack.
+              </a>
+              .
             </p>
           </div>
         </aside>
@@ -193,22 +175,19 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Toggle({ title, body, on }: { title: string; body: string; on: boolean }) {
+function Fact({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-background p-4">
+    <li className="flex gap-3 rounded-2xl border border-line bg-background p-4">
+      <span
+        aria-hidden
+        className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-accent"
+      />
       <div className="min-w-0">
         <div className="text-sm font-medium text-foreground">{title}</div>
-        <p className="text-xs text-foreground/55 mt-0.5 leading-relaxed">{body}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+          {body}
+        </p>
       </div>
-      <button
-        type="button"
-        aria-pressed={on}
-        className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${on ? 'bg-accent' : 'bg-foreground/15'}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground transition-transform ${on ? 'translate-x-5' : 'translate-x-0.5'}`}
-        />
-      </button>
-    </div>
+    </li>
   );
 }

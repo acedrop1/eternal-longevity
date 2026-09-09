@@ -36,14 +36,16 @@ export default async function DoctorMessagesPage() {
         { label: 'Profile', href: '/portal/doctor/profile' },
       ]}
     >
+      {/* Same eyebrow colour and heading scale as Queue, Profile and Signed Rx
+          — this page used to run a size larger in a different accent. */}
       <div className="mb-8">
-        <p className="mb-2 text-[11px] tracking-widest text-accent">
+        <p className="mb-2 text-[11px] tracking-widest text-sky-300">
           MEMBER MESSAGES
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
           style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
+            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
             letterSpacing: '-0.02em',
             lineHeight: 1.05,
           }}

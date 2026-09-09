@@ -48,7 +48,7 @@ export function DoctorQueueList({ doctorName }: DoctorQueueListProps) {
         {queue.length === 0 ? (
           <EmptySection
             title="Queue is clear"
-            body="New cases appear here once an admin approves them."
+            body="New orders appear here as soon as a member checks out."
           />
         ) : (
           <div className="space-y-3">
