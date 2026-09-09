@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
+import { ProductVial } from '@/components/shop/ProductVial';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -140,12 +140,9 @@ export function ShopCatalog({
               className="relative block aspect-[5/6] overflow-hidden"
               style={{ background: p.swatch }}
             >
-              <Image
-                src={p.image}
-                alt={p.name}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover opacity-45 transition-all duration-[1.6s] ease-out-expo group-hover:scale-105 group-hover:opacity-65"
+              <ProductVial
+                product={p}
+                className="absolute inset-0 h-full w-full p-7 transition-transform duration-500 ease-out group-hover:scale-[1.04]"
               />
               <div
                 aria-hidden

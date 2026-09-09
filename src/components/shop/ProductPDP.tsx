@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { ProductVial } from '@/components/shop/ProductVial';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   cadenceTiersForProduct,
   DELIVERY_LABEL,
+  SHOP_CATEGORIES,
   type CadenceTier,
   type ShopProduct,
 } from '@/lib/shopProducts';
@@ -63,6 +64,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
 
   const active = tiers.find((t) => t.key === selectedTier) ?? defaultTier;
 
+  const categoryLabel = SHOP_CATEGORIES.find((c) => c.key === product.category)?.label;
   const { addItem } = useCart();
   const handleAddToCart = () => addItem(product.id, selectedTier);
 
@@ -70,71 +72,44 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
     <div className="space-y-12 md:space-y-20">
       {/* === PDP HERO. Two-column on desktop === */}
       <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-        {/* One image. A thumbnail strip on a vial that looks the same from
-            every angle was four clicks that told the member nothing. */}
+        {/* The product itself, drawn — see ProductVial. */}
         <div
-          className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
+          className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line px-8 py-12"
           style={{
             background: product.swatch,
             boxShadow:
               '0 60px 120px -20px rgba(213,168,80,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
         >
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            priority
-            sizes="(max-width: 1024px) 90vw, 640px"
-            className="object-cover opacity-40"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/80"
-          />
-          <div className="relative flex h-full flex-col items-center justify-between p-6 md:p-8 text-center">
-            <span className="text-[10px] tracking-widest text-white/70">
-              ETERNAL LONGEVITY
-            </span>
-            <div style={{ textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}>
-              <div className="mb-2 text-[10px] tracking-widest text-accent">
-                {product.tagline.toUpperCase()}
-              </div>
-              <div
-                className="font-bold tracking-tight text-white"
-                style={{
-                  fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {product.name}
-              </div>
-            </div>
-            <div className="text-[10px] tracking-widest text-white/55">
-              {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
-              {product.cycleLength.toUpperCase()}
-            </div>
-          </div>
+          <span className="absolute left-1/2 top-6 -translate-x-1/2 text-[10px] tracking-widest text-white/45">
+            ETERNAL LONGEVITY
+          </span>
+          <ProductVial product={product} className="h-full w-auto max-w-full drop-shadow-2xl" />
+          <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] tracking-widest text-white/45">
+            {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
+            {product.cycleLength.toUpperCase()}
+          </span>
         </div>
 
-        {/* Info column */}
+        {/* Info column.
+            Was: chips, title, tagline, more chips, paragraph, disclaimer box,
+            best-for box, four tall cadence rows — eight stacked blocks before
+            the member saw a price. Both competitors lead with the price and one
+            button. This does that; everything else moved below or into a fold. */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="mb-3 flex items-center gap-2">
+            <p className="text-[11px] tracking-widest text-foreground/50">
+              {categoryLabel?.toUpperCase()}
+            </p>
             {product.popular && (
-              <span className="inline-flex items-center rounded-full bg-accent/95 text-black px-2.5 py-1 text-[10px] tracking-widest font-semibold">
+              <span className="rounded-full bg-accent/95 px-2 py-0.5 text-[10px] font-semibold tracking-widest text-black">
                 POPULAR
               </span>
             )}
-            <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] tracking-wider text-foreground/70">
-              {DELIVERY_LABEL[product.delivery].toUpperCase()}
-            </span>
-            <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] tracking-wider text-foreground/70">
-              {product.cycleLength.toUpperCase()}
-            </span>
           </div>
 
           <h1
-            className="mb-2 font-semibold tracking-tight text-foreground"
+            className="mb-1.5 font-semibold tracking-tight text-foreground"
             style={{
               fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
               letterSpacing: '-0.025em',
@@ -143,31 +118,99 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
           >
             {product.name}
           </h1>
-          <p className="mb-5 text-base text-accent">{product.tagline}</p>
+          <p className="mb-7 text-base text-foreground/55">{product.tagline}</p>
 
-          {/* Factual quality strip. No rating until real reviews exist. */}
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            {[
-              'Third-party tested',
-              '503A compounded',
-              'Cold-chain shipped',
-            ].map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] tracking-wider text-foreground/70"
-              >
-                {t.toUpperCase()}
-              </span>
-            ))}
+          {/* One price, big, the way they do it. */}
+          <div className="mb-1 flex items-baseline gap-1.5">
+            <span
+              className="font-semibold tabular-nums tracking-tight text-foreground"
+              style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}
+            >
+              ${active.perMonth}
+            </span>
+            {active.key !== 'once' && (
+              <span className="text-lg text-foreground/45">/mo</span>
+            )}
+          </div>
+          <p className="mb-6 text-[13px] text-foreground/50">
+            {active.key === 'once'
+              ? `One-time · $${active.total} · no subscription`
+              : `Billed $${active.total} ${active.key === 'monthly' ? 'monthly' : active.key === 'quarterly' ? 'every 3 months' : 'once a year'} · free shipping · cancel anytime`}
+          </p>
+
+          {/* Compact segmented control instead of four tall rows. */}
+          <div className="mb-6 grid grid-cols-4 gap-1.5 rounded-2xl border border-line bg-surface p-1.5">
+            {tiers.map((t) => {
+              const isActive = t.key === selectedTier;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setSelectedTier(t.key)}
+                  className={cn(
+                    'rounded-xl px-1 py-2.5 text-center transition-colors',
+                    isActive
+                      ? 'bg-accent text-black'
+                      : 'text-foreground/65 hover:bg-foreground/5'
+                  )}
+                >
+                  <span className="block text-[11px] font-semibold leading-tight">
+                    {t.key === 'once' ? 'Once' : t.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'block text-[10px] leading-tight',
+                      isActive ? 'text-black/60' : 'text-foreground/40'
+                    )}
+                  >
+                    {t.saveLabel ? t.saveLabel.replace('Save ', '-') : '\u00a0'}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          <p className="mb-6 text-foreground/75 leading-relaxed">
+          {/* CTA. Members add to cart; public visitors start the assessment. */}
+          {ctaHref ? (
+            <Link
+              href={ctaHref}
+              className="block w-full rounded-full bg-accent py-4 text-center text-base font-semibold text-black transition-colors hover:bg-accent-soft"
+            >
+              Start assessment →
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="block w-full rounded-full bg-accent py-4 text-center text-base font-semibold text-black transition-colors hover:bg-accent-soft"
+            >
+              {active.key === 'once' ? 'Buy once' : 'Subscribe'} →
+            </button>
+          )}
+
+          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[12px] text-foreground/60">
+            {[
+              'Only charged if approved',
+              'Free cold-chain shipping',
+              'Third-party tested',
+              'Cancel anytime',
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-1.5">
+                <span className="text-accent" aria-hidden>
+                  ✓
+                </span>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-7 text-sm leading-relaxed text-foreground/70">
             {product.longDescription}
           </p>
 
-          {/* Sits with the claims, not only in the footer: a reviewer reading
-              this page should not have to scroll to find the qualification. */}
-          <p className="mb-6 rounded-2xl border border-line bg-surface px-4 py-3 text-[11px] leading-relaxed text-foreground/50">
+          {/* Sits with the claims, not only in the footer. Plain text now —
+              as a bordered card it read as a third competing box. */}
+          <p className="mt-4 text-[11px] leading-relaxed text-foreground/40">
             Compounded preparations are not FDA-approved. These statements have
             not been evaluated by the Food and Drug Administration, and this
             product is not intended to diagnose, treat, cure, or prevent any
@@ -175,126 +218,20 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             prescriber. Individual results vary.{' '}
             <Link
               href="/legal/compounded-medication"
-              className="text-accent underline underline-offset-2"
+              className="text-foreground/60 underline underline-offset-2"
             >
-              Read the full disclosure
+              Full disclosure
             </Link>
             .
           </p>
-
-          {/* Best for callout */}
-          <div className="mb-8 rounded-2xl border border-line bg-surface p-4 md:p-5">
-            <div className="mb-1.5 text-[10px] tracking-widest text-accent">
-              BEST FOR
-            </div>
-            <p className="text-sm text-foreground/85 leading-relaxed">
-              {product.bestFor}
-            </p>
-          </div>
-
-          {/* Cadence picker (Oura "Subscribe & save" pattern) */}
-          <div className="mb-5">
-            <div className="mb-3 text-[10px] tracking-widest text-foreground/55">
-              CHOOSE A CADENCE
-            </div>
-            <div className="space-y-2">
-              {tiers.map((t) => {
-                const isActive = t.key === selectedTier;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => setSelectedTier(t.key)}
-                    className={cn(
-                      'flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all',
-                      isActive
-                        ? 'border-accent bg-accent/5'
-                        : 'border-line bg-surface hover:border-foreground/30'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                        isActive ? 'border-accent' : 'border-line'
-                      )}
-                    >
-                      {isActive && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-accent" />
-                      )}
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-foreground">
-                          {t.label}
-                        </span>
-                        {t.saveLabel && (
-                          <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest font-semibold">
-                            {t.saveLabel.toUpperCase()}
-                          </span>
-                        )}
-                      </span>
-                      <span className="block text-xs text-foreground/55 mt-0.5">
-                        {t.description}
-                      </span>
-                    </span>
-                    <span className="flex-shrink-0 text-right">
-                      <span className="block text-base font-semibold text-foreground tabular-nums">
-                        ${t.perMonth}
-                        {t.key !== 'once' && (
-                          <span className="text-xs text-foreground/55 font-normal">
-                            /mo
-                          </span>
-                        )}
-                      </span>
-                      <span className="block text-[10px] tracking-wider text-foreground/45 mt-0.5">
-                        {t.key === 'once' ? 'one time' : `$${t.total} total`}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* CTA. Members add to cart; public visitors start the assessment. */}
-          {ctaHref ? (
-            <Link
-              href={ctaHref}
-              className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
-            >
-              Get started. {active.key === 'once' ? `$${active.total}` : `From $${active.perMonth}/mo`} →
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base text-center hover:bg-accent-soft transition-colors"
-            >
-              {active.key === 'once' ? `Buy once. $${active.total}` : `Subscribe. $${active.perMonth}/mo`} →
-            </button>
-          )}
-          <p className="mt-3 text-center text-[11px] text-foreground/45">
-            {ctaHref
-              ? 'Complete a short assessment to order · Compounded and third-party tested before it ships'
-              : 'Compounded and third-party tested before it ships · Cancel between cycles'}
-          </p>
-
-          {/* Inline reassurance row */}
-          <ul className="mt-6 grid gap-2 text-xs text-foreground/65">
-            <li className="flex items-start gap-2">
-              <span className="text-accent" aria-hidden>·</span>
-              <span>503A pharmacy. Cold-chain shipping. Tracked.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-accent" aria-hidden>·</span>
-              <span>Pause or cancel anytime through the portal.</span>
-            </li>
-          </ul>
 
           {/* Detail folds. Everything that used to be four full-width sections
               the member had to scroll past to reach the next product. */}
           <div className="mt-8 divide-y divide-line border-y border-line">
             <Fold title="What it does" defaultOpen>
+              <p className="mb-3 text-foreground/55">
+                Best for: {product.bestFor}
+              </p>
               <ul className="space-y-2.5">
                 {product.benefits.map((b, i) => (
                   <li key={i} className="flex items-start gap-2.5">
@@ -405,12 +342,9 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                   className="relative aspect-[5/6] overflow-hidden"
                   style={{ background: r.swatch }}
                 >
-                  <Image
-                    src={r.image}
-                    alt={r.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover opacity-45 transition-all duration-[1.6s] ease-out-expo group-hover:scale-105"
+                  <ProductVial
+                    product={r}
+                    className="absolute inset-0 h-full w-full p-6 transition-transform duration-500 ease-out group-hover:scale-[1.05]"
                   />
                   <div
                     aria-hidden
