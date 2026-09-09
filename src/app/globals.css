@@ -3,47 +3,15 @@
 @tailwind utilities;
 
 /*
- * Proxima Nova @font-face declarations
+ * Proxima Nova is not licensed for this site, and the .woff2 files were never
+ * added to /public/fonts. The @font-face rules that used to sit here pointed
+ * at five files that 404'd on every single page load — five failed round
+ * trips, on every page, forever, while Mulish quietly did all the rendering.
  *
- * The actual .woff2 files live in /public/fonts/ — drop them in there
- * and these rules pick them up automatically. Until then, the Mulish
- * fallback (loaded via next/font in layout.tsx) takes over.
+ * The family name is still first in the Tailwind stack (see tailwind.config),
+ * so if the licence is ever bought, dropping the files in and restoring these
+ * five rules is all it takes. Until then, asking for them is pure cost.
  */
-@font-face {
-  font-family: 'ProximaNova';
-  src: url('/fonts/ProximaNova-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'ProximaNova';
-  src: url('/fonts/ProximaNova-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'ProximaNova';
-  src: url('/fonts/ProximaNova-Semibold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'ProximaNova';
-  src: url('/fonts/ProximaNova-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'ProximaNova';
-  src: url('/fonts/ProximaNova-Extrabold.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
 
 :root {
   --font-proxima: 'ProximaNova';
