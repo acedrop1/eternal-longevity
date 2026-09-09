@@ -61,7 +61,15 @@ export async function createOrderAuthAction(amountCents: number): Promise<{
   const intent = await getStripe().setupIntents.create({
     customer: customerId,
     usage: 'off_session',
-    automatic_payment_methods: { enabled: true },
+    /*
+     * Cards only, deliberately — not automatic_payment_methods. This whole
+     * model rests on charging the saved credential off-session once the
+     * prescriber approves, and every method enabled in the dashboard that
+     * cannot be charged that way is a member who saves something, waits for
+     * approval, and then gets a pay link instead of a shipped order. Apple Pay
+     * and Google Pay still appear: they are wallets that hand back a card.
+     */
+    payment_method_types: ['card'],
   });
 
   return {
