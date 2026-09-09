@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
@@ -103,15 +104,12 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
         <div>
           <AuthLabel htmlFor="signup-password">PASSWORD</AuthLabel>
-          <input
+          <PasswordField
             id="signup-password"
             name="password"
-            type="password"
             placeholder="At least 8 characters"
             autoComplete="new-password"
             minLength={8}
-            required
-            className={authInputClass}
           />
         </div>
 

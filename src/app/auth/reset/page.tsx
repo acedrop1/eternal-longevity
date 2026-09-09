@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import { PasswordField } from '@/components/auth/PasswordField';
 import { updatePasswordAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
@@ -59,15 +60,12 @@ export default async function ResetPasswordPage({
 
         <div>
           <AuthLabel htmlFor="new-password">NEW PASSWORD</AuthLabel>
-          <input
+          <PasswordField
             id="new-password"
             name="password"
-            type="password"
             placeholder="At least 8 characters"
             autoComplete="new-password"
             minLength={8}
-            required
-            className={authInputClass}
           />
         </div>
 

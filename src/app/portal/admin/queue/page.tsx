@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { formatDate as fmtDate } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminQueueList } from '@/components/admin/AdminQueueList';
@@ -27,16 +28,6 @@ const ADMIN_NAV = [
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
-function fmtDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
 
 function flattenAnswers(answers: unknown): { label: string; value: string }[] {
   if (!answers || typeof answers !== 'object') return [];

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { formatPhone } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
@@ -147,7 +148,7 @@ export default async function AdminPharmacyPage() {
             CONTACT
           </div>
           <Field label="Address" value={PHARMACY.address} />
-          <Field label="Phone" value={PHARMACY.phone} />
+          <Field label="Phone" value={formatPhone(PHARMACY.phone)} />
           <Field label="Website" value={PHARMACY.website} />
           <Field label="Licensing" value={PHARMACY.license} />
           <Field label="Catalog" value={PHARMACY.catalog} />

@@ -5,6 +5,7 @@ import { useMemberProfile } from './MemberProfileProvider';
 import { formatAddressOneLine } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
+import { formatPhone } from '@/lib/format';
 
 interface NewAddressDraft {
   label: string;
@@ -95,7 +96,7 @@ export function SavedAddressesManager() {
                 {formatAddressOneLine(a)}
               </p>
               {a.phone && (
-                <p className="text-xs text-foreground/55 mt-0.5">{a.phone}</p>
+                <p className="text-xs text-foreground/55 mt-0.5">{formatPhone(a.phone)}</p>
               )}
             </div>
             <div className="flex flex-shrink-0 gap-2">

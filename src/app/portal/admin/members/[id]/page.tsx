@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ageFrom, formatDate as fmtDate, formatPhone } from '@/lib/format';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -67,16 +68,6 @@ function demoDetail(id: string): MemberDetail {
   };
 }
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 async function loadDetail(id: string): Promise<MemberDetail | null> {
   if (!supabaseAdminConfigured()) return demoDetail(id);
@@ -191,8 +182,17 @@ export default async function MemberDetailPage({ params }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Account */}
         <Section title="Account">
-          <Row label="Phone" value={detail.phone ?? '—'} />
-          <Row label="Date of birth" value={fmtDate(detail.dob)} />
+          <Row label="Phone" value={formatPhone(detail.phone) || '—'} />
+          <Row
+            label="Date of birth"
+            value={
+              detail.dob
+                ? `${fmtDate(detail.dob)}${
+                    ageFrom(detail.dob) !== null ? ` · ${ageFrom(detail.dob)}` : ''
+                  }`
+                : '—'
+            }
+          />
           <Row label="Member since" value={detail.joinedAt} />
         </Section>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import { PasswordField } from '@/components/auth/PasswordField';
 import { DemoCredentials } from '@/components/auth/DemoCredentials';
 import { loginAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
@@ -80,14 +81,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               FORGOT?
             </Link>
           </div>
-          <input
+          <PasswordField
             id="login-password"
             name="password"
-            type="password"
             placeholder="Your password"
             autoComplete="current-password"
-            required
-            className={authInputClass}
           />
         </div>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { formatDate as fmtDate } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DoctorQueueList } from '@/components/doctor/DoctorQueueList';
@@ -16,16 +17,6 @@ export const metadata: Metadata = {
   title: 'Clinical Queue',
 };
 
-function fmtDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
 
 function flattenAnswers(answers: unknown): { label: string; value: string }[] {
   if (!answers || typeof answers !== 'object') return [];
