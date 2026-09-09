@@ -88,7 +88,15 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
 
     case 'pill-grid':
       return (
-        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3">
+        <div
+          className={cn(
+            'grid gap-2 sm:grid-cols-3',
+            (field.options?.length ?? 0) === 3 &&
+              (field.options ?? []).every((o) => o.label.length <= 10)
+              ? 'grid-cols-3'
+              : 'grid-cols-2'
+          )}
+        >
           {field.options?.map((opt) => {
             const selected = value === opt.value;
             return (
@@ -97,7 +105,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 type="button"
                 onClick={() => onChange(opt.value)}
                 className={cn(
-                  'rounded-2xl border px-4 py-3.5 text-base font-medium transition-all',
+                  'rounded-2xl border px-3 py-3 text-[15px] font-medium transition-all',
                   selected
                     ? 'border-accent bg-accent/10 text-foreground'
                     : 'border-line bg-surface text-foreground/75 hover:border-foreground/30'
