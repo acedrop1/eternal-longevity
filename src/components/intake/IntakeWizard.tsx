@@ -430,7 +430,7 @@ function Shell({
     <div
       className={
         compact
-          ? 'relative mx-auto flex max-w-2xl flex-col pb-6 pt-4'
+          ? 'relative mx-auto flex w-full max-w-2xl flex-col overflow-x-hidden pb-0 pt-2'
           : 'relative mx-auto flex h-[100svh] max-w-2xl flex-col px-5 pb-5 pt-20 md:px-6 md:pt-24'
       }
     >
@@ -448,10 +448,23 @@ function Shell({
         </div>
       </div>
 
-      {/* The only region that may scroll — and most steps fit without it. */}
-      <div className="min-h-0 flex-1 overflow-y-auto pb-2">{children}</div>
+      {/* Owns the viewport at /start, so it scrolls itself; inside the portal
+          the page scrolls and the footer sticks instead. */}
+      <div className={compact ? 'pb-2' : 'min-h-0 flex-1 overflow-y-auto pb-2'}>
+        {children}
+      </div>
 
-      {footer && <div className="flex-none pt-4">{footer}</div>}
+      {footer && (
+        <div
+          className={
+            compact
+              ? 'sticky bottom-0 z-10 -mx-1 flex-none border-t border-line bg-background/95 px-1 pb-3 pt-3 backdrop-blur'
+              : 'flex-none pt-4'
+          }
+        >
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
