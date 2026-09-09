@@ -130,11 +130,11 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
     <div className="md:hidden -mx-6 -mt-8 relative bg-background">
       {/* ===== 1) STICKY GALLERY ===== */}
       <div
-        className="sticky top-0 z-0 w-full overflow-hidden bg-surface"
-        style={{ height: '70svh', minHeight: 460 }}
+        className="sticky top-0 z-0 w-full bg-background px-4 pt-[76px] pb-2"
+        style={{ height: '64svh', minHeight: 440 }}
       >
         <div
-          className="relative h-full w-full"
+          className="relative h-full w-full overflow-hidden rounded-[1.75rem] border border-line"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -187,7 +187,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
 
           {/* Dot indicators */}
           {slides.length > 1 && (
-            <div className="absolute bottom-[88px] left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+            <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
               {slides.map((_, i) => (
                 <button
                   key={i}
