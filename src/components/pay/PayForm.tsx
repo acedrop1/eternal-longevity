@@ -27,15 +27,25 @@ const ERRORS: Record<string, string> = {
   invalid_amount: 'We could not read the amount for this order.',
 };
 
-function CardFields({ amountLabel }: { amountLabel: string }) {
+function CardFields({
+  amountLabel,
+  cadenceLabel,
+  orderNumber,
+}: {
+  amountLabel: string;
+  cadenceLabel: string;
+  orderNumber: string;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const recurring = cadenceLabel.toLowerCase() !== 'one-time';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!stripe || !elements || submitting) return;
+    if (!stripe || !elements || submitting || !authorized) return;
 
     setSubmitting(true);
     setError(null);
@@ -69,9 +79,39 @@ function CardFields({ amountLabel }: { amountLabel: string }) {
         </p>
       )}
 
+      {/* Card-network subscription rules: amount, frequency, cancel terms,
+          and explicit consent — all before the button enables. */}
+      <label className="mt-5 flex cursor-pointer gap-3 rounded-2xl border border-line bg-background px-4 py-3.5 text-[13px] leading-relaxed text-foreground/85">
+        <input
+          type="checkbox"
+          checked={authorized}
+          onChange={(e) => setAuthorized(e.target.checked)}
+          className="mt-1 h-4 w-4 flex-none accent-[#d5a850]"
+        />
+        <span>
+          <span className="mb-1 block text-[10px] tracking-widest text-foreground/50">
+            BILLING AUTHORIZATION
+          </span>
+          I authorize <strong className="text-foreground">{amountLabel} today</strong> for
+          order {orderNumber}
+          {recurring ? (
+            <>
+              , on the <strong className="text-foreground">{cadenceLabel.toLowerCase()} plan</strong>.
+              Each refill is billed only after my prescriber approves that
+              cycle, using this card, until I cancel. I can{' '}
+              <strong className="text-foreground">cancel anytime</strong> from my account.
+            </>
+          ) : (
+            <> as a one-time purchase.</>
+          )}{' '}
+          My prescriber has already approved this treatment; if a future cycle
+          is not approved, I am not charged for it.
+        </span>
+      </label>
+
       <button
         type="submit"
-        disabled={!stripe || submitting}
+        disabled={!stripe || submitting || !authorized}
         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-base font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting && (
@@ -80,7 +120,7 @@ function CardFields({ amountLabel }: { amountLabel: string }) {
             className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
           />
         )}
-        {submitting ? 'Processing…' : `Pay ${amountLabel}`}
+        {submitting ? 'Processing…' : `Pay ${amountLabel} — Start treatment`}
       </button>
 
       <p className="mt-3 text-center text-[11px] text-foreground/45">
@@ -94,10 +134,14 @@ export function PayForm({
   token,
   publishableKey,
   amountLabel,
+  cadenceLabel,
+  orderNumber,
 }: {
   token: string;
   publishableKey: string;
   amountLabel: string;
+  cadenceLabel: string;
+  orderNumber: string;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +199,11 @@ export function PayForm({
         },
       }}
     >
-      <CardFields amountLabel={amountLabel} />
+      <CardFields
+        amountLabel={amountLabel}
+        cadenceLabel={cadenceLabel}
+        orderNumber={orderNumber}
+      />
     </Elements>
   );
 }

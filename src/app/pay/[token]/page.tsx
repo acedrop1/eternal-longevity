@@ -91,21 +91,38 @@ export default async function PayPage({ params }: PayPageProps) {
                 <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
                   ORDER {order.orderNumber}
                 </p>
-                <ul className="mb-5 space-y-2 border-b border-line pb-5">
+                <ul className="mb-4 space-y-1.5">
                   {order.items.map((it, i) => (
                     <li
                       key={`${it.name}-${i}`}
-                      className="flex items-baseline justify-between gap-4 text-sm"
+                      className="text-sm font-semibold text-foreground"
                     >
-                      <span className="text-foreground/85">
-                        {it.name}
-                        {it.qty > 1 ? ` ×${it.qty}` : ''}
-                      </span>
+                      {it.name}
+                      {it.qty > 1 ? ` ×${it.qty}` : ''}
                     </li>
                   ))}
                 </ul>
+                {/* The charge is a care program; the drug is one component of it. */}
+                <dl className="mb-5 space-y-2 border-y border-line py-4 text-sm">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-foreground/65">Medication + physician care</dt>
+                    <dd className="tabular-nums text-foreground">
+                      ${(order.totalCents / 100).toFixed(2)}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-foreground/65">Ongoing prescriber messaging</dt>
+                    <dd className="text-accent">Included</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-foreground/65">Cold-chain shipping</dt>
+                    <dd className="text-accent">Free</dd>
+                  </div>
+                </dl>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm text-foreground/55">Amount due</span>
+                  <span className="text-sm text-foreground/55">
+                    Due today · {order.cadenceLabel} plan
+                  </span>
                   <span className="text-2xl font-semibold tabular-nums text-foreground">
                     ${(order.totalCents / 100).toFixed(2)}
                   </span>
@@ -121,6 +138,8 @@ export default async function PayPage({ params }: PayPageProps) {
                     token={token}
                     publishableKey={publishableKey}
                     amountLabel={`$${(order.totalCents / 100).toFixed(2)}`}
+                    cadenceLabel={order.cadenceLabel}
+                    orderNumber={order.orderNumber}
                   />
                 ) : (
                   <>
@@ -139,7 +158,37 @@ export default async function PayPage({ params }: PayPageProps) {
                 )}
               </div>
 
-              <p className="mt-6 text-center text-xs text-foreground/40">
+              {/* What happens next — sets the expectation that stops "where is my order" disputes. */}
+              <div className="mt-6 rounded-3xl border border-line bg-surface p-6">
+                <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
+                  WHAT HAPPENS NEXT
+                </p>
+                <ol className="grid gap-4 sm:grid-cols-3">
+                  {[
+                    ['Payment clears', 'Your card is charged once, now.'],
+                    ['Prescription sent', 'Your signed Rx goes to our licensed 503A pharmacy the same day.'],
+                    ['Shipped to you', 'Compounded, tested, and shipped cold-chain. Tracking lands in your inbox.'],
+                  ].map(([t, d], i) => (
+                    <li key={t} className="flex gap-3">
+                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-black">
+                        {i + 1}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-semibold text-foreground">{t}</span>
+                        <span className="block text-xs text-foreground/55 leading-relaxed">{d}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <p className="mt-6 text-center text-xs leading-relaxed text-foreground/45">
+                Your prescriber has already approved this order, so nothing here
+                is charged on spec. Future cycles are billed only after each one
+                is approved; a cycle that isn&apos;t approved is never charged.
+                Cancel anytime from your account.
+              </p>
+              <p className="mt-3 text-center text-xs text-foreground/40">
                 This link is unique to your order and expires in seven days.
               </p>
             </>

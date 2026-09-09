@@ -31,6 +31,8 @@ export interface PayableOrder {
   memberName: string;
   totalCents: number;
   items: { name: string; qty: number }[];
+  /** 'Monthly' | 'Quarterly' | 'Annual' | 'One-time' — drives the billing consent copy. */
+  cadenceLabel: string;
   alreadyPaid: boolean;
 }
 
@@ -102,7 +104,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
 
   const { data: items } = await db
     .from('order_items')
-    .select('product_name, quantity')
+    .select('product_name, quantity, cadence_label')
     .eq('order_id', order.id);
 
   return {
@@ -113,6 +115,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
       name: i.product_name,
       qty: i.quantity ?? 1,
     })),
+    cadenceLabel: items?.[0]?.cadence_label ?? 'Monthly',
     alreadyPaid: Boolean(order.paid_confirmed_at),
   };
 }
@@ -251,6 +254,9 @@ export async function createPayIntentAction(token: string): Promise<{
       order_number: order.order_number,
       order_id: order.id,
     },
+    // Keep the card on file for approved refills; the member consents to
+    // this explicitly on the pay form before the button enables.
+    setup_future_usage: 'off_session',
     automatic_payment_methods: { enabled: true },
   });
 
