@@ -7,6 +7,8 @@ import type { AccountStatus } from '@/lib/database.types';
 import {
   adminCreateUser,
   adminSetUserStatus,
+  adminSetUserRole,
+  adminSendPasswordEmail,
   type AdminUserResult,
 } from '@/lib/admin-users-actions';
 import { cn } from '@/lib/utils';
@@ -66,6 +68,10 @@ export function AdminUsers({
       );
     });
   }, [rows, filter, query]);
+
+  function patchRole(id: string, role: Role) {
+    setRows((curr) => curr.map((u) => (u.id === id ? { ...u, role } : u)));
+  }
 
   function patchStatus(id: string, status: AccountStatus) {
     setRows((curr) =>
@@ -160,7 +166,7 @@ export function AdminUsers({
                 </tr>
               ) : (
                 visible.map((u) => (
-                  <UserRow key={u.id} user={u} onStatus={patchStatus} />
+                  <UserRow key={u.id} user={u} onStatus={patchStatus} onRole={patchRole} />
                 ))
               )}
             </tbody>
@@ -176,9 +182,11 @@ export function AdminUsers({
 function UserRow({
   user,
   onStatus,
+  onRole,
 }: {
   user: AdminUserRow;
   onStatus: (id: string, status: AccountStatus) => void;
+  onRole: (id: string, role: Role) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -252,7 +260,51 @@ function UserRow({
         {error && <p className="mt-1 text-[11px] text-red-300">{error}</p>}
       </td>
       <td className="px-4 py-4 text-right md:px-6">
-        <div className="inline-flex flex-wrap justify-end gap-1.5">
+        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+          {/* Role had no control anywhere in the app — adminSetUserRole existed
+              and nothing called it, so the only way to make someone a doctor
+              was editing the database by hand. */}
+          <select
+            aria-label={`Role for ${user.name}`}
+            value={user.role}
+            disabled={busy}
+            onChange={async (e) => {
+              const next = e.target.value as Role;
+              if (next === user.role) return;
+              if (
+                !window.confirm(
+                  `Change ${user.name} from ${user.role} to ${next}? This changes what they can see and do.`,
+                )
+              ) {
+                return;
+              }
+              setBusy(true);
+              setError(null);
+              const res = await adminSetUserRole({ userId: user.id, role: next });
+              if (!res.ok) setError(res.message);
+              else onRole(user.id, next);
+              setBusy(false);
+            }}
+            className="rounded-full border border-line bg-background px-2.5 py-1 text-[11px] text-foreground/80 focus:border-accent focus:outline-none disabled:opacity-40"
+          >
+            <option value="member">member</option>
+            <option value="doctor">doctor</option>
+            <option value="admin">admin</option>
+          </select>
+
+          <ActionButton
+            busy={busy}
+            label="Send password email"
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              const res = await adminSendPasswordEmail({ userId: user.id });
+              setError(res.ok ? null : res.message);
+              if (res.ok) window.alert(res.message);
+              setBusy(false);
+            }}
+          />
+
           {user.status !== 'active' && (
             <ActionButton
               busy={busy}
