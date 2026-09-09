@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Prescription Policy | Eternal Longevity',
+  title: 'Prescription Policy',
   description: 'A prescription is issued only after a licensed prescriber reviews your intake. Ordering and paying do not produce one.',
 };
 

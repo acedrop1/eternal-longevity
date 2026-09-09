@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Shipping & Delivery Policy | Eternal Longevity',
+  title: 'Shipping & Delivery Policy',
   description:
     'How long orders take, how they ship, where we deliver, and what to do if a package is late, lost, or damaged.',
 };

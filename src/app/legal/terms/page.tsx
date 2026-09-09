@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Eternal Longevity',
+  title: 'Terms of Service',
   description: 'The agreement that governs your use of Eternal Longevity.',
 };
 

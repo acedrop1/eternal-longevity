@@ -5,7 +5,7 @@ import { requestPasswordResetAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Reset password | Eternal Longevity',
+  title: 'Reset password',
 };
 
 interface ForgotPageProps {

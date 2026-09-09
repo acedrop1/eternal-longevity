@@ -5,7 +5,7 @@ import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Create account | Eternal Longevity',
+  title: 'Create account',
   description: 'Create your Eternal Longevity account.',
 };
 

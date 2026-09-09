@@ -5,7 +5,7 @@ import { ShopCatalog } from '@/components/shop/ShopCatalog';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Shop | Eternal Longevity',
+  title: 'Shop',
   description: 'Browse our full peptide catalog. Third-party tested, 503A compounded.',
 };
 

@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Compounded Medication Disclosure | Eternal Longevity',
+  title: 'Compounded Medication Disclosure',
   description: 'What compounded means, why these preparations are not FDA-approved, and what off-label prescribing is.',
 };
 

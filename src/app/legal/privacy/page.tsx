@@ -9,7 +9,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Eternal Longevity',
+  title: 'Privacy Policy',
   description: 'How we collect, use, and protect your health and personal information.',
 };
 

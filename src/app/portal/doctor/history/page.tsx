@@ -7,7 +7,7 @@ import { listOrders } from '@/lib/orders-db';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Signed Rx | Eternal Longevity',
+  title: 'Signed Rx',
 };
 
 interface SignedRx {

@@ -5,7 +5,7 @@ import { updatePasswordAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Set a new password | Eternal Longevity',
+  title: 'Set a new password',
 };
 
 interface ResetPageProps {

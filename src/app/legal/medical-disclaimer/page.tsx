@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Medical Disclaimer | Eternal Longevity',
+  title: 'Medical Disclaimer',
   description: 'What our clinical relationship with you covers, what it does not, and why this is not a substitute for your own doctor.',
 };
 

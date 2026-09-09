@@ -9,7 +9,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Refund Policy | Eternal Longevity',
+  title: 'Refund Policy',
   description: 'When refunds are issued, when they are not, and how to request one.',
 };
 

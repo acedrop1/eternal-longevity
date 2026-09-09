@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Cancellation Policy | Eternal Longevity',
+  title: 'Cancellation Policy',
   description: 'How to cancel a subscription or an order, what it costs, and when it takes effect.',
 };
 

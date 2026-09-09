@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 import { listMyMessages } from '@/lib/messages-db';
 
 export const metadata: Metadata = {
-  title: 'Messages | Eternal Longevity',
+  title: 'Messages',
 };
 
 export default async function MemberMessagesPage() {

@@ -13,7 +13,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Contact | Eternal Longevity',
+  title: 'Contact',
   description: 'Get in touch with our team. We answer everything within one business day.',
 };
 

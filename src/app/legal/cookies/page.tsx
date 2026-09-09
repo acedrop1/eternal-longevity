@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Cookie Notice | Eternal Longevity',
+  title: 'Cookie Notice',
   description: 'The cookies this site sets — all of them strictly necessary — and the tracking we deliberately do not do.',
 };
 

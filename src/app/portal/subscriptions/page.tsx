@@ -12,7 +12,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { getShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
-  title: 'Subscriptions | Eternal Longevity',
+  title: 'Subscriptions',
 };
 
 

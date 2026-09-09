@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'State Availability | Eternal Longevity',
+  title: 'State Availability',
   description: 'Where we can legally prescribe and ship, and why the list is short.',
 };
 

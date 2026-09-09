@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Physician Profile | Eternal Longevity',
+  title: 'Physician Profile',
 };
 
 /**

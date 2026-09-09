@@ -13,7 +13,7 @@ import {
 } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
-  title: 'Fulfillment | Eternal Longevity',
+  title: 'Fulfillment',
 };
 
 const ADMIN_NAV = [

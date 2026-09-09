@@ -10,7 +10,7 @@ import {
 } from '@/lib/messages-db';
 
 export const metadata: Metadata = {
-  title: 'Messages | Eternal Longevity',
+  title: 'Messages',
 };
 
 export default async function DoctorMessagesPage() {

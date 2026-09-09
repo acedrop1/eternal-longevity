@@ -5,7 +5,7 @@ import { AccountSettings } from '@/components/profile/AccountSettings';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Account | Eternal Longevity',
+  title: 'Account',
 };
 
 export default async function AccountPage() {

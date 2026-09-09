@@ -8,7 +8,7 @@ import { listOrders } from '@/lib/orders-db';
 import { STATUS_LABEL } from '@/lib/orders';
 
 export const metadata: Metadata = {
-  title: 'Portal | Eternal Longevity',
+  title: 'Portal',
 };
 
 /**

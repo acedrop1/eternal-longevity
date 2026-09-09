@@ -9,7 +9,7 @@ import {
 } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
-  title: 'Admin | Eternal Longevity',
+  title: 'Admin',
 };
 
 interface Overview {

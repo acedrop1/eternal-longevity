@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Adverse Event Reporting | Eternal Longevity',
+  title: 'Adverse Event Reporting',
   description: 'How to report a side effect or reaction to us and to the FDA.',
 };
 

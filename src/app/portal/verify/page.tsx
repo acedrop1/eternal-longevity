@@ -6,7 +6,7 @@ import { IdVerificationForm } from '@/components/portal/IdVerificationForm';
 import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
-  title: 'Verify ID | Eternal Longevity',
+  title: 'Verify ID',
 };
 
 const ACCEPTED_DOCS = [

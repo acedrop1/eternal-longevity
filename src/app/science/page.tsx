@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
 import { LoopVideo } from '@/components/ui/LoopVideo';
 
 export const metadata: Metadata = {
-  title: 'The Science | Eternal Longevity',
+  title: 'The Science',
   description:
     'How peptides work. The mechanisms, evidence, and standards behind every Eternal Longevity protocol.',
 };

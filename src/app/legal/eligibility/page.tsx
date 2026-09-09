@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Patient Eligibility | Eternal Longevity',
+  title: 'Patient Eligibility',
   description: 'Completing an intake is not approval, and paying is not approval. What qualifying actually depends on.',
 };
 

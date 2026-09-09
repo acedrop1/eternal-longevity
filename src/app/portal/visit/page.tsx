@@ -8,7 +8,7 @@ import { getPendingVisit } from '@/lib/intake-actions';
 import { getShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
-  title: 'Complete Your Visit | Eternal Longevity',
+  title: 'Complete Your Visit',
 };
 
 /**

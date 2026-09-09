@@ -8,7 +8,7 @@ import { LoopVideo } from '@/components/ui/LoopVideo';
 import { FAQAccordion } from '@/components/faq/FAQAccordion';
 
 export const metadata: Metadata = {
-  title: 'Questions, Answered | Eternal Longevity',
+  title: 'Questions, Answered',
   description:
     'How Eternal Longevity works. Eligibility, protocols, pricing, and safety questions answered.',
 };

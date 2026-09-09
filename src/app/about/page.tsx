@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
 import { LoopVideo } from '@/components/ui/LoopVideo';
 
 export const metadata: Metadata = {
-  title: 'About | Eternal Longevity',
+  title: 'About',
   description:
     'Why Eternal Longevity exists, who built it, and the principles behind every protocol we ship.',
 };

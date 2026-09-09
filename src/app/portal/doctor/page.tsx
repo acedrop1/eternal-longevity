@@ -13,7 +13,7 @@ import {
 } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
-  title: 'Clinical Queue | Eternal Longevity',
+  title: 'Clinical Queue',
 };
 
 function fmtDate(iso: string): string {

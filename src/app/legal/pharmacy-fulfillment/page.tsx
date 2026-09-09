@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Pharmacy Fulfillment | Eternal Longevity',
+  title: 'Pharmacy Fulfillment',
   description: 'Which pharmacy fills your prescription, how it is regulated, and how to verify its licence yourself.',
 };
 

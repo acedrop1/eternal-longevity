@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Pharmacy | Eternal Longevity',
+  title: 'Pharmacy',
 };
 
 const ADMIN_NAV = [

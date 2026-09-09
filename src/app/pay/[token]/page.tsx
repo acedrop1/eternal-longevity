@@ -7,7 +7,7 @@ import { PayForm } from '@/components/pay/PayForm';
 import { stripeConfigured } from '@/lib/stripe';
 
 export const metadata: Metadata = {
-  title: 'Complete your payment | Eternal Longevity',
+  title: 'Complete your payment',
   robots: { index: false, follow: false },
 };
 

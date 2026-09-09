@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 
 export const metadata: Metadata = {
-  title: 'Order confirmed | Eternal Longevity',
+  title: 'Order confirmed',
 };
 
 export default async function CheckoutSuccessPage() {

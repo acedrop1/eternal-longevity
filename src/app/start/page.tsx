@@ -6,7 +6,7 @@ import { LoopVideo } from '@/components/ui/LoopVideo';
 import { getShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
-  title: 'Start Your Assessment | Eternal Longevity',
+  title: 'Start Your Assessment',
   description:
     'Order your peptide protocol with a quick 3-minute profile. Compounded, third-party tested, shipped to your door.',
 };

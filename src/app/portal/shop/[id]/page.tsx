@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const p = getShopProduct(id);
-  if (!p) return { title: 'Shop | Eternal Longevity' };
+  if (!p) return { title: 'Shop' };
   return {
     title: `${p.name}. Eternal Longevity`,
     description: p.shortDescription,

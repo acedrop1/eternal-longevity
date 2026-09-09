@@ -9,7 +9,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Informed Consent & Product Acknowledgement | Eternal Longevity',
+  title: 'Informed Consent & Product Acknowledgement',
   description: 'What you acknowledge when ordering compounded peptide protocols, including risks and limitations.',
 };
 

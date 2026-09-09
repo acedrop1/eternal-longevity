@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Member record | Eternal Longevity',
+  title: 'Member record',
 };
 
 const ADMIN_NAV = [

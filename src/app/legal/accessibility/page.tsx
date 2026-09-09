@@ -8,7 +8,7 @@ import {
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Accessibility Statement | Eternal Longevity',
+  title: 'Accessibility Statement',
   description: 'Our commitment to WCAG 2.1 Level AA, known gaps, and how to tell us about a barrier.',
 };
 

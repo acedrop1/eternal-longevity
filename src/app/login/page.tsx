@@ -6,7 +6,7 @@ import { loginAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Log in | Eternal Longevity',
+  title: 'Log in',
   description: 'Access your portal.',
 };
 
