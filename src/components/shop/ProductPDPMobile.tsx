@@ -131,7 +131,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
     <div className="md:hidden -mx-6 -mt-8 relative bg-background">
       {/* ===== 1) STICKY GALLERY ===== */}
       <div
-        className="sticky top-0 z-0 w-full bg-background px-4 pt-[76px] pb-2"
+        className="sticky top-0 z-0 w-full bg-black px-4 pt-[76px] pb-2"
         style={{ height: '64svh', minHeight: 440 }}
       >
         <div
@@ -592,14 +592,14 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           bottom: 'max(12px, env(safe-area-inset-bottom))',
         }}
       >
-        <div className="rounded-2xl bg-surface-raised border border-line p-3 shadow-2xl backdrop-blur-md">
+        <div className="rounded-2xl border border-white/10 bg-black p-3 shadow-2xl">
           {/* Top row: tappable summary */}
           <button
             type="button"
             onClick={scrollToPlan}
-            className="mb-2.5 flex w-full items-center justify-between gap-2 rounded-full bg-background/60 px-4 py-2 text-left transition-colors hover:bg-background/80"
+            className="mb-2.5 flex w-full items-center justify-between gap-2 rounded-full bg-white/10 px-4 py-2 text-left transition-colors hover:bg-white/15"
           >
-            <span className="flex items-center gap-2 text-[12px] tracking-wider text-foreground/80">
+            <span className="flex items-center gap-2 text-[12px] tracking-wider text-white/80">
               <svg
                 width="12"
                 height="12"
@@ -615,17 +615,17 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
               </svg>
               {active.label} · {product.cycleLength}
             </span>
-            <span className="text-[11px] underline-offset-2 text-foreground/60 underline">
+            <span className="text-[11px] underline-offset-2 text-white/60 underline">
               Change
             </span>
           </button>
           {/* Bottom row: price + Add to Cart */}
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
-              <div className="text-[10px] tracking-wider text-foreground/50">
+              <div className="text-[10px] tracking-wider text-white/50">
                 TOTAL
               </div>
-              <div className="text-lg font-semibold text-foreground">
+              <div className="text-lg font-semibold text-white">
                 ${active.total}
               </div>
             </div>
