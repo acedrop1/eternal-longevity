@@ -1,4 +1,12 @@
 import Link from 'next/link';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  SUPPORT_PHONE_HREF,
+  SUPPORT_HOURS,
+} from '@/lib/site';
 
 const COL_LINKS = [
   {
@@ -26,6 +34,7 @@ const COL_LINKS = [
       { label: 'Privacy Policy', href: '/legal/privacy' },
       { label: 'Consent Policy', href: '/legal/consent' },
       { label: 'Refund Policy', href: '/legal/refunds' },
+      { label: 'Shipping Policy', href: '/legal/shipping' },
     ],
   },
 ];
@@ -57,6 +66,32 @@ export function Footer() {
                 HIPAA COMPLIANT
               </span>
             </div>
+
+            {/* Legal name, postal address and a way to reach a human — the
+                merchant details a cardholder (and an underwriter) looks for. */}
+            <address className="mt-6 space-y-1 text-xs not-italic text-foreground/50 leading-relaxed">
+              <p className="text-foreground/70">{BUSINESS_LEGAL_NAME}</p>
+              <p>{BUSINESS_ADDRESS}</p>
+              <p>
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
+              </p>
+              {SUPPORT_PHONE && (
+                <p>
+                  <a
+                    href={SUPPORT_PHONE_HREF}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {SUPPORT_PHONE}
+                  </a>{' '}
+                  · {SUPPORT_HOURS}
+                </p>
+              )}
+            </address>
           </div>
 
           {COL_LINKS.map((col) => (
@@ -82,7 +117,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col gap-4 border-t border-line pt-6 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-foreground/40">
-            © {new Date().getFullYear()} Eternal Longevity. All rights reserved.
+            © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
             Eternal Longevity offers premium peptide protocols strictly for

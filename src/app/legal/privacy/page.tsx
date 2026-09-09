@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  STATEMENT_DESCRIPTOR,
+  SERVICE_AREA,
+} from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Eternal Longevity',
@@ -80,14 +87,14 @@ export default function PrivacyPage() {
         {
           heading: 'Your Rights',
           paragraphs: [
-            'Depending on where you live, you may have the right to access, correct, port, or delete your personal information; to opt out of certain disclosures; and to lodge a complaint with a supervisory authority. To exercise these rights, email support@etlongevity.com. We will verify your identity before fulfilling the request.',
+            'Depending on where you live, you may have the right to access, correct, port, or delete your personal information; to opt out of certain disclosures; and to lodge a complaint with a supervisory authority. To exercise these rights, email ${SUPPORT_EMAIL}. We will verify your identity before fulfilling the request.',
             'Requests for health-related records are handled in accordance with applicable law.',
           ],
         },
         {
           heading: 'Children',
           paragraphs: [
-            'Our service is intended for adults 18 and older. We do not knowingly collect personal information from children. If you believe a child has provided us with information, please email support@etlongevity.com and we will delete it.',
+            'Our service is intended for adults 18 and older. We do not knowingly collect personal information from children. If you believe a child has provided us with information, please email ${SUPPORT_EMAIL} and we will delete it.',
           ],
         },
         {
@@ -105,7 +112,7 @@ export default function PrivacyPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions or concerns? Email support@etlongevity.com or write to Privacy Officer, Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
+            `Questions or concerns? Email ${SUPPORT_EMAIL} or write to Privacy Officer, ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
           ],
         },
       ]}
@@ -113,6 +120,7 @@ export default function PrivacyPage() {
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
         { label: 'Refund Policy', href: '/legal/refunds' },
+        { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
       ]}
     />
   );

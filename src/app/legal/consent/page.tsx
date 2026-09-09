@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  STATEMENT_DESCRIPTOR,
+  SERVICE_AREA,
+} from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Informed Consent & Product Acknowledgement | Eternal Longevity',
@@ -18,7 +25,7 @@ export default function ConsentPolicyPage() {
           heading: 'What This Acknowledgement Covers',
           paragraphs: [
             'When you order a compounded peptide protocol from Eternal Longevity, your order is submitted to a licensed 503A pharmacy that compounds and fulfills it. This document explains what you are acknowledging when you place that order, including that nothing here is medical advice and that you are responsible for consulting your own healthcare provider before use.',
-            'Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. Product availability varies by state, and we can only serve states where our prescriber is licensed.',
+            `Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. We serve ${SERVICE_AREA} only: our prescriber is licensed there and our partner pharmacy is registered to dispense there. Orders with a shipping address in any other state are rejected at checkout.`,
           ],
         },
         {
@@ -82,7 +89,7 @@ export default function ConsentPolicyPage() {
         {
           heading: 'Withdrawing Consent',
           paragraphs: [
-            'You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email support@etlongevity.com. Withdrawal of consent will stop future orders but does not erase records already created.',
+            `You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email ${SUPPORT_EMAIL}. Withdrawal of consent will stop future orders but does not erase records already created.`,
           ],
         },
         {
@@ -94,7 +101,7 @@ export default function ConsentPolicyPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions about this acknowledgement? Email support@etlongevity.com or support@etlongevity.com for order questions.',
+            `Questions about this acknowledgement? Email ${SUPPORT_EMAIL}, or write to ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
           ],
         },
       ]}
@@ -102,6 +109,7 @@ export default function ConsentPolicyPage() {
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Refund Policy', href: '/legal/refunds' },
+        { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
       ]}
     />
   );

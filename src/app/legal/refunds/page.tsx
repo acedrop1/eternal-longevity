@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  STATEMENT_DESCRIPTOR,
+  SERVICE_AREA,
+} from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Refund Policy | Eternal Longevity',
@@ -31,7 +38,7 @@ export default function RefundsPage() {
         {
           heading: 'Damaged or Lost Shipments',
           paragraphs: [
-            'If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at support@etlongevity.com with photos. We will replace the affected vials at no cost.',
+            `If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at ${SUPPORT_EMAIL} with photos. We will replace the affected vials at no cost.`,
             'If a shipment is lost in transit and the carrier confirms loss, we will resend the order at no cost.',
           ],
         },
@@ -58,13 +65,14 @@ export default function RefundsPage() {
         {
           heading: 'Disputes',
           paragraphs: [
-            'If you believe a charge is in error, contact us at support@etlongevity.com before initiating a chargeback. We aim to resolve billing disputes within five business days. Initiating a chargeback without first contacting us may delay resolution.',
+            `Charges from us appear on your statement as ${STATEMENT_DESCRIPTOR}. If you do not recognise a charge, that is us — check your order history in the member portal before anything else.`,
+          `If you believe a charge is in error, contact us at ${SUPPORT_EMAIL} before initiating a chargeback. We aim to resolve billing disputes within five business days, and we would rather refund you directly than argue with your bank. Initiating a chargeback without first contacting us only delays resolution.`,
           ],
         },
         {
           heading: 'How to Request a Refund',
           paragraphs: [
-            'Eligible refund requests can be made by emailing support@etlongevity.com with your order number and a brief description of the issue. Refunds are processed to the original payment method within 5–10 business days of approval.',
+            `Eligible refund requests can be made by emailing ${SUPPORT_EMAIL} with your order number and a brief description of the issue. Refunds are processed to the original payment method within 5–10 business days of approval.`,
           ],
         },
         {
@@ -76,7 +84,7 @@ export default function RefundsPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions? Email support@etlongevity.com (orders), support@etlongevity.com (billing), or write to Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
+            `Questions? Email ${SUPPORT_EMAIL} or write to ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
           ],
         },
       ]}
@@ -84,6 +92,7 @@ export default function RefundsPage() {
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
+        { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
       ]}
     />
   );

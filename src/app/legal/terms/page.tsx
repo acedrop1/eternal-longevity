@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/legal/LegalLayout';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  STATEMENT_DESCRIPTOR,
+} from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | Eternal Longevity',
@@ -38,8 +44,24 @@ export default function TermsPage() {
         {
           heading: 'Pricing & Billing',
           paragraphs: [
-            'Pricing for each protocol is shown on the relevant product page at the time of checkout. Subscriptions auto-renew on the cadence selected (monthly, quarterly, or annually) until cancelled. You may pause or cancel at any time between cycles through your member portal.',
-            'All payments are processed by a third-party payment processor. We do not store full payment card information on our servers. Taxes and shipping are included unless otherwise stated at checkout.',
+            'Pricing for each protocol is shown on the relevant product page at the time of checkout, in U.S. dollars. Taxes and shipping are included; there are no membership fees, consultation fees, or other charges beyond the price shown.',
+            'All payments are processed by Stripe, a PCI-DSS Level 1 service provider. We do not receive or store your full card number.',
+          ],
+        },
+        {
+          heading: 'When You Are Charged',
+          paragraphs: [
+            'Placing an order does not charge you. No payment method is collected at checkout. Your order is first reviewed by a licensed prescriber, and only if that prescriber approves it do we email you a secure link to pay. If your order is declined, or you simply never use the link, you are never charged anything.',
+            'Because approval comes first, the charge you authorise on that payment page is taken immediately when you submit it — there is no separate hold or later capture.',
+            `Charges from us appear on your statement as ${STATEMENT_DESCRIPTOR}. Neither the name of any medication nor the word “peptide” appears on your statement, your bank records, or any receipt we send.`,
+          ],
+        },
+        {
+          heading: 'Subscriptions & Cancellation',
+          paragraphs: [
+            'If you select a recurring cadence, your subscription renews on that cadence — monthly, quarterly, or annually — until you cancel. You authorise each renewal when you check the billing authorisation box on the payment page, and we email you before a renewal is billed.',
+            'Every renewal is still subject to prescriber review. A cycle your prescriber does not approve is not compounded, not shipped, and not charged.',
+            `You may cancel at any time, effective immediately, from the Subscriptions page of your member portal, or by emailing ${SUPPORT_EMAIL}. There is no cancellation fee, no minimum term, and no requirement to call anyone. Cancelling stops all future charges; it does not refund a cycle the pharmacy has already prepared. See our Refund Policy.`,
           ],
         },
         {
@@ -83,7 +105,8 @@ export default function TermsPage() {
         {
           heading: 'Governing Law',
           paragraphs: [
-            'These terms are governed by the laws of the State of Delaware, without regard to its conflict-of-laws principles. Any dispute arising under these terms shall be resolved by binding arbitration administered by JAMS in accordance with its rules then in effect, except that you may bring qualifying claims in small-claims court.',
+            'These terms are governed by the laws of the State of New Jersey, without regard to its conflict-of-laws principles. Any dispute arising under these terms shall be resolved by binding arbitration administered by JAMS in accordance with its rules then in effect, seated in Passaic County, New Jersey, except that you may bring qualifying claims in small-claims court.',
+            'Nothing in these terms limits any right you have under the New Jersey Consumer Fraud Act or any other right that cannot be waived by agreement.',
           ],
         },
         {
@@ -95,7 +118,7 @@ export default function TermsPage() {
         {
           heading: 'Contact',
           paragraphs: [
-            'Questions about these terms? Email support@etlongevity.com or write to Eternal Longevity LLC, 825 Riverview Dr, Floor 2, Totowa, NJ 07512.',
+            `Questions about these terms? Email ${SUPPORT_EMAIL} or write to ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
           ],
         },
       ]}
@@ -103,6 +126,7 @@ export default function TermsPage() {
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
         { label: 'Refund Policy', href: '/legal/refunds' },
+        { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
       ]}
     />
   );

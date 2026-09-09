@@ -3,6 +3,14 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
+import {
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_ADDRESS,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  SUPPORT_HOURS,
+  STATEMENT_DESCRIPTOR,
+} from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Contact | Eternal Longevity',
@@ -21,13 +29,28 @@ const TOPICS = [
 const CONTACT_ROWS = [
   {
     eyebrow: 'SUPPORT',
-    title: 'support@etlongevity.com',
+    title: SUPPORT_EMAIL,
     body: 'Orders, protocols, billing, press and partnerships. Replies within one business day.',
   },
+  // Only rendered when a real number is configured — see SUPPORT_PHONE.
+  ...(SUPPORT_PHONE
+    ? [
+        {
+          eyebrow: 'PHONE',
+          title: SUPPORT_PHONE,
+          body: `Speak to our team ${SUPPORT_HOURS}. For billing questions, have your order number ready.`,
+        },
+      ]
+    : []),
   {
     eyebrow: 'MAILING ADDRESS',
-    title: 'Eternal Longevity LLC',
-    body: '825 Riverview Dr, Floor 2, Totowa, NJ 07512',
+    title: BUSINESS_LEGAL_NAME,
+    body: BUSINESS_ADDRESS,
+  },
+  {
+    eyebrow: 'ON YOUR STATEMENT',
+    title: STATEMENT_DESCRIPTOR,
+    body: 'Charges from us appear under this name. No medication name ever appears on your statement.',
   },
 ];
 
