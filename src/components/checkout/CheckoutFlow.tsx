@@ -32,10 +32,21 @@ interface ShippingForm {
   phone: string;
 }
 
+/**
+ * The pharmacy dispatches every patient-specific order on an expedited
+ * cold-chain service; there is no slower tier to sell, because peptides should
+ * not spend five days in a truck. We absorb the carrier cost rather than bill
+ * it, so the price on the product page is the price charged — which is also
+ * what the pay page and the shipping policy promise. Left as a list so a
+ * second tier can come back without rewiring the section.
+ */
 const SHIPPING_OPTIONS = [
-  { id: 'standard', label: 'Standard cold-chain', eta: '3–5 business days', price: 0 },
-  { id: 'express', label: 'Express cold-chain', eta: '2 business days', price: 25 },
-  { id: 'saturday', label: 'Saturday delivery', eta: 'This Saturday', price: 45 },
+  {
+    id: 'expedited',
+    label: 'Expedited cold-chain',
+    eta: '1–2 business days after dispatch',
+    price: 0,
+  },
 ] as const;
 
 type ShippingMethodId = (typeof SHIPPING_OPTIONS)[number]['id'];
@@ -185,7 +196,7 @@ export function CheckoutFlow({ defaultEmail, defaultName }: CheckoutFlowProps) {
     phone: '',
   });
   const [shippingMethod, setShippingMethod] =
-    useState<ShippingMethodId>('standard');
+    useState<ShippingMethodId>('expedited');
   const [card, setCard] = useState({
     number: '',
     exp: '',

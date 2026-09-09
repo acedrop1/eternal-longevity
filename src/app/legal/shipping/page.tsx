@@ -42,21 +42,29 @@ export default function ShippingPage() {
           bullets: [
             'Prescriber review — within 24 hours of you submitting your order, and usually the same business day. Nothing is charged during this stage.',
             'Payment — you receive a secure payment link once your prescriber approves. The link is valid for 7 days.',
-            'Compounding at the pharmacy — 1 to 3 business days after payment clears. Your medication is prepared individually; it is not pulled off a shelf.',
-            'Transit — 1 to 3 business days once the carrier picks it up.',
+            'Compounding and dispatch — your prescription reaches the pharmacy as soon as payment clears. Orders that clear before 4:00 p.m. ET are compounded and dispatched the same business day; orders after that cutoff, or on a weekend or federal holiday, go out the next business day.',
+            'Transit — 1 to 2 business days on an expedited cold-chain service.',
           ],
         },
         {
           heading: 'Total Delivery Estimate',
           paragraphs: [
-            'From payment to your door, expect 2 to 6 business days for most orders. Orders paid after 2:00 p.m. ET, on a weekend, or on a federal holiday begin compounding the next business day.',
-            'Refill orders on an active subscription follow the same timeline, and we begin the prescriber review ahead of your refill date so that shipments do not gap.',
+            'From payment to your door, expect 1 to 3 business days for most orders. Your medication is compounded individually for you — it is not pulled off a shelf — which is why the clock starts at payment rather than at checkout.',
+            'Shipping is expedited on every order and included in the price. There is no shipping charge at checkout, no standard tier, and no upgrade to buy.',
+            'Refill orders on an active subscription follow the same timeline, and we begin the prescriber review ahead of your refill date so shipments do not gap.',
+          ],
+        },
+        {
+          heading: 'Beyond-Use Date & Testing',
+          paragraphs: [
+            'Compounded preparations carry a beyond-use date rather than a manufacturer expiry. Ours is typically 90 days from the date of compounding, and the date is printed on the vial label. Do not use a vial past its beyond-use date, and do not order more than you will use within it.',
+            `A certificate of analysis for the lot your order was compounded from is available on request — email ${SUPPORT_EMAIL} with your order number.`,
           ],
         },
         {
           heading: 'Cold-Chain Handling',
           paragraphs: [
-            'Peptides are temperature-sensitive. Orders ship in an insulated container with a cold pack, by an expedited service, and are not held over a weekend in a carrier facility. Shipping is included in the price of every order — there is no separate shipping charge at checkout.',
+            'Peptides are temperature-sensitive. Orders ship in an insulated container with a cold pack, on an expedited service, and are timed so they are not sitting in a carrier facility over a weekend.',
             'Refrigerate your vials on arrival. If a package arrives warm to the touch, or the cold pack is fully thawed and the vials are at room temperature, do not use the contents. Photograph the package as it arrived and contact us the same day.',
           ],
         },

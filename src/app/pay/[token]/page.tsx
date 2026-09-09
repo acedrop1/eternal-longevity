@@ -166,8 +166,8 @@ export default async function PayPage({ params }: PayPageProps) {
                 <ol className="grid gap-4 sm:grid-cols-3">
                   {[
                     ['Payment clears', 'Your card is charged once, now.'],
-                    ['Prescription sent', 'Your signed Rx goes to our licensed 503A pharmacy the same day.'],
-                    ['Shipped to you', 'Compounded, tested, and shipped cold-chain. Tracking lands in your inbox.'],
+                    ['Compounded for you', 'Your signed Rx reaches our licensed 503A pharmacy immediately. Paid before 4p ET, it goes out the same day.'],
+                    ['At your door', 'Expedited cold-chain, 1–2 business days. Tracking lands in your inbox.'],
                   ].map(([t, d], i) => (
                     <li key={t} className="flex gap-3">
                       <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-black">
