@@ -579,6 +579,9 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         </Section>
       </div>
 
+      {/* Space for the floating bar, so the last card is never trapped under it. */}
+      <div aria-hidden className="h-36" />
+
       {/* ===== 3) FLOATING BOTTOM CTA BAR (mobile only, fades in when inline CTA out of view) ===== */}
       <div
         aria-hidden={!showFloater}
@@ -592,7 +595,13 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           bottom: 'max(12px, env(safe-area-inset-bottom))',
         }}
       >
-        <div className="rounded-2xl border border-line bg-surface-raised p-3 shadow-2xl">
+        <div
+          className="rounded-2xl border border-white/[0.12] bg-[#1c1c1c] p-3"
+          style={{
+            boxShadow:
+              '0 -1px 0 rgba(255,255,255,0.05) inset, 0 18px 40px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(0,0,0,0.6)',
+          }}
+        >
           {/* Top row: tappable summary */}
           <button
             type="button"
