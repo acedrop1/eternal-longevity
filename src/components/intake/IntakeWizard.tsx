@@ -319,6 +319,14 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
         </ol>
       )}
 
+      {/* Carrier rules want the SMS disclosure beside the number, not buried
+          in a consent stack three screens later. */}
+      {currentStep.smsDisclaimer && (
+        <p className="mb-8 max-w-2xl rounded-2xl border border-line bg-surface px-5 py-4 text-[11px] leading-relaxed text-foreground/60">
+          {currentStep.smsDisclaimer}
+        </p>
+      )}
+
       {/* Fields */}
       <div className="space-y-6">
         {currentStep.fields.map((f) => (

@@ -69,6 +69,8 @@ export type Step = {
   heading: string;
   /** Optional support copy */
   body?: string;
+  /** Carrier-required SMS disclosure, rendered under the phone field. */
+  smsDisclaimer?: string;
   /** Optional list of read-only acknowledgement statements shown above the
    *  fields. Used on the consents step for the legal disclaimer block. */
   disclaimers?: string[];
@@ -85,41 +87,15 @@ const YES_NO: Option[] = [
 
 export const STEPS: Step[] = [
   // -------------------------------------------------------------
-  // 1. GOALS
-  // -------------------------------------------------------------
-  {
-    id: 'goals',
-    eyebrow: '01 / GOALS',
-    heading: 'What are you focused on?',
-    body: 'Pick everything that applies. Takes about a minute.',
-    fields: [
-      {
-        id: 'goals',
-        type: 'multi-select',
-        label: '',
-        required: true,
-        options: [
-          { value: 'recovery', label: 'Muscle growth & recovery' },
-          { value: 'fat-loss', label: 'Fat loss / metabolic' },
-          { value: 'energy', label: 'Energy & longevity' },
-          { value: 'sleep', label: 'Sleep quality' },
-          { value: 'sex', label: 'Sexual health / libido' },
-          { value: 'cognition', label: 'Cognition & focus' },
-          { value: 'joints', label: 'Joint & injury recovery' },
-          { value: 'skin', label: 'Skin & aging' },
-        ],
-      },
-    ],
-  },
-
-  // -------------------------------------------------------------
-  // 2. ABOUT YOU (age + sex)
+  // 1. ABOUT YOU — name, DOB, phone, ZIP, sex. Nothing else belongs here.
   // -------------------------------------------------------------
   {
     id: 'about',
-    eyebrow: '02 / ABOUT YOU',
+    eyebrow: '01 / ABOUT YOU',
     heading: 'A few quick facts.',
     body: 'We use this to tailor your protocol options.',
+    smsDisclaimer:
+      'By entering your phone number and continuing, you consent to Eternal Longevity calling or sending text messages to you for the purpose of verifying your phone number, ensuring patient safety, and for any other lawful purposes related to your Eternal Longevity account and use of our services. This includes cart reminders, promotions, order confirmations, shipment notifications, and messages from your prescriber. You must be 18 or older to opt in. Message and data rates may apply. Message frequency varies. Reply HELP for assistance or STOP to opt out.',
     fields: [
       {
         id: 'first_name',
@@ -144,6 +120,20 @@ export const STEPS: Step[] = [
         knockoutOn: { values: ['under18'], key: 'under18' },
       },
       {
+        id: 'phone',
+        type: 'text-short',
+        label: 'Mobile number',
+        placeholder: '(201) 555-0100',
+        required: true,
+      },
+      {
+        id: 'zip',
+        type: 'text-short',
+        label: 'ZIP code',
+        placeholder: '07512',
+        required: true,
+      },
+      {
         id: 'sex',
         type: 'pill-grid',
         label: 'Sex assigned at birth',
@@ -162,7 +152,7 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'email-capture',
-    eyebrow: '03 / STAY IN TOUCH',
+    eyebrow: '02 / STAY IN TOUCH',
     heading: "We'll send your protocol here.",
     body: "If you don't finish today, we'll save your progress.",
     isEmailCapture: true,
@@ -182,7 +172,7 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'body',
-    eyebrow: '04 / BODY SNAPSHOT',
+    eyebrow: '03 / BODY SNAPSHOT',
     heading: 'Enter your height and weight.',
     body: 'The doctor uses this for dosing — exact numbers, not ranges.',
     fields: [
@@ -217,42 +207,11 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 5. LIFESTYLE (just the two that matter for routing)
-  // -------------------------------------------------------------
-  {
-    id: 'lifestyle',
-    eyebrow: '05 / LIFESTYLE',
-    heading: 'How active are you?',
-    fields: [
-      {
-        id: 'exercise',
-        type: 'pill-grid',
-        label: 'Exercise frequency',
-        required: true,
-        options: [
-          { value: 'sedentary', label: 'Sedentary' },
-          { value: '1-2', label: '1–2× / week' },
-          { value: '3-4', label: '3–4× / week' },
-          { value: '5+', label: '5+× / week' },
-        ],
-      },
-      {
-        id: 'sleep_quality',
-        type: 'slider',
-        label: 'Sleep quality (1–10)',
-        required: true,
-        min: 1,
-        max: 10,
-      },
-    ],
-  },
-
-  // -------------------------------------------------------------
   // 6. HEALTH SCREEN (knockouts + flags + meds/allergies, one step)
   // -------------------------------------------------------------
   {
     id: 'health',
-    eyebrow: '06 / HEALTH SCREEN',
+    eyebrow: '04 / HEALTH SCREEN',
     heading: 'A few important screening questions.',
     body: 'Honest answers protect you. Used to match you with suitable protocols.',
     fields: [
@@ -314,7 +273,7 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'consents',
-    eyebrow: '07 / CONSENTS',
+    eyebrow: '05 / CONSENTS',
     heading: 'By submitting this form, I acknowledge:',
     body: "Take a moment to review the statements below. You'll confirm with the single acknowledgement at the bottom.",
     disclaimers: [
@@ -343,17 +302,10 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'account',
-    eyebrow: '08 / CREATE ACCOUNT',
+    eyebrow: '06 / CREATE ACCOUNT',
     heading: 'Last step. Set up your portal.',
     body: 'Your account is how you review your protocol, message your care team, and check out securely. Your shipping address is collected at checkout.',
     fields: [
-      {
-        id: 'phone',
-        type: 'text-short',
-        label: 'Mobile number',
-        placeholder: '(201) 555-0100',
-        required: true,
-      },
       {
         id: 'account',
         type: 'account-creation',
@@ -627,7 +579,7 @@ export type IntakeProduct = {
  *   VISIT — the clinical portion, completed inside the portal after checkout
  *          ("Complete your visit"). Nothing is prescribed until it's done.
  */
-const VISIT_TOPLEVEL_IDS = new Set(['lifestyle', 'health']);
+const VISIT_TOPLEVEL_IDS = new Set(['health']);
 
 export function buildPreSteps(): Step[] {
   return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));

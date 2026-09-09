@@ -52,7 +52,8 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
   const active = tiers.find((t) => t.key === selectedTier) ?? defaultTier;
 
   // ---------- Carousel ----------
-  const slides = product.gallery.slice(0, 3);
+  // One image per product. The carousel was three crops of the same shot.
+  const slides = [product.image];
   const [slideIdx, setSlideIdx] = useState(0);
   const [paused, setPaused] = useState(false);
 
