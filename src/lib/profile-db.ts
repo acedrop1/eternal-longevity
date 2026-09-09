@@ -122,9 +122,24 @@ export async function saveCartAction(items: CartItem[]): Promise<Result> {
   const db = await createSupabaseServerClient();
   const { error } = await db
     .from('profiles')
-    .update({ cart: items as unknown as Json })
+    .update({
+      cart: items as unknown as Json,
+      // Stamp the change so the recovery job can tell a cart that went quiet
+      // from one that was never touched, and clear any earlier nudge so a
+      // later abandonment can be reminded once more.
+      cart_updated_at: new Date().toISOString(),
+      cart_reminder_at: null,
+    } as ProfileUpdate)
     .eq('id', user.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    // The columns arrive with migration 0008; until it is applied, saving the
+    // cart itself still has to work.
+    const { error: fallback } = await db
+      .from('profiles')
+      .update({ cart: items as unknown as Json })
+      .eq('id', user.id);
+    if (fallback) return { ok: false, error: fallback.message };
+  }
   return { ok: true };
 }
 

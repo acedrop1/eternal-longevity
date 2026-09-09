@@ -70,6 +70,8 @@ export type Database = {
           two_factor_enabled: boolean;
           notification_prefs: Json;
           cart: Json;
+          cart_updated_at: string | null;
+          cart_reminder_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -86,6 +88,8 @@ export type Database = {
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           cart?: Json;
+          cart_updated_at?: string | null;
+          cart_reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -102,6 +106,8 @@ export type Database = {
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
           cart?: Json;
+          cart_updated_at?: string | null;
+          cart_reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -201,6 +207,7 @@ export type Database = {
           status: IntakeStatus;
           assigned_doctor_id: string | null;
           review_notes: string | null;
+          reminder_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -213,6 +220,7 @@ export type Database = {
           status?: IntakeStatus;
           assigned_doctor_id?: string | null;
           review_notes?: string | null;
+          reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -225,6 +233,7 @@ export type Database = {
           status?: IntakeStatus;
           assigned_doctor_id?: string | null;
           review_notes?: string | null;
+          reminder_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

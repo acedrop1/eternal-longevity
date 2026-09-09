@@ -287,6 +287,82 @@ export function orderConfirmationEmail(input: {
  * nothing happens without a decision — so the member has to be told when the
  * decision is no, and told that they were not charged.
  */
+/** The one call-to-action button style, repeated inline in every template. */
+function button(label: string, href: string): string {
+  return `<a href="${escapeHtml(
+    href,
+  )}" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">${escapeHtml(
+    label,
+  )}</a>`;
+}
+
+/* ------------------------- funnel recovery ------------------------------- */
+
+/**
+ * One nudge for a member who left a full cart.
+ *
+ * Deliberately restrained: the items, the honest reassurance that ordering
+ * costs nothing until a prescriber approves, one link, and a real way to stop
+ * hearing from us. It is sent once per abandonment and never again for the
+ * same cart.
+ */
+export function abandonedCartEmail(input: {
+  firstName: string;
+  items: { name: string; cadence: string }[];
+  cartUrl: string;
+}): { subject: string; html: string } {
+  const first = input.items[0]?.name ?? 'your protocol';
+  const rows = input.items
+    .map(
+      (i) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#e5e5e5;font-size:14px;">${escapeHtml(
+          i.name,
+        )}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #262626;color:#9a9a9a;font-size:13px;" align="right">${escapeHtml(
+          i.cadence,
+        )}</td>
+      </tr>`,
+    )
+    .join('');
+  return {
+    subject: `Still thinking about ${first}?`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">You left something in your cart.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(
+         input.firstName,
+       )} — this is still saved for you.</p>
+       <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">${rows}</table>
+       <p style="margin:0 0 22px;">Placing the order does not charge you. A licensed prescriber reviews it first, and only if they approve do we send a secure link to pay.</p>
+       ${button('Pick up where you left off', input.cartUrl)}
+       <p style="margin:22px 0 0;color:#8a8a8a;font-size:12px;">Do not want reminders like this? Turn them off under Notifications in your account.</p>`,
+    ),
+  };
+}
+
+/**
+ * One nudge for someone whose visit is unfinished.
+ *
+ * Worth more than the cart nudge: they already gave us an email, a history and
+ * an intent, and are blocked on a step they may not realise is outstanding.
+ */
+export function unfinishedVisitEmail(input: {
+  firstName: string;
+  visitUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: 'Your visit is one step from a prescriber',
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your visit is not finished yet.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(
+         input.firstName,
+       )} — your account is set up, but a prescriber cannot review anything until the medical questions are answered. It is four short screens and takes about a minute.</p>
+       <p style="margin:0 0 22px;">Nothing is charged for completing it, and nothing is charged unless a prescriber approves your treatment.</p>
+       ${button('Finish your visit', input.visitUrl)}
+       <p style="margin:22px 0 0;color:#8a8a8a;font-size:12px;">If you have changed your mind, you can ignore this — we will not send another.</p>`,
+    ),
+  };
+}
+
 export function declinedEmail(input: {
   firstName: string;
   reason?: string;
