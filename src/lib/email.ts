@@ -329,6 +329,32 @@ export function refundedEmail(input: {
   };
 }
 
+/** A visit cleared automated screening and is waiting on the prescriber. */
+export function newVisitForDoctorEmail(input: {
+  firstName: string;
+  memberName: string;
+  orderNumber: string;
+  queueUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Visit ready for review — ${input.memberName} (${input.orderNumber})`,
+    html: shell(
+      `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">CLINICAL QUEUE</div>
+       <h1 style="margin:10px 0 14px;color:#fff;font-size:22px;">A visit is waiting for you.</h1>
+       <p style="margin:0 0 18px;">Dr. ${escapeHtml(
+         input.firstName,
+       )} — <strong style="color:#fff;">${escapeHtml(
+         input.memberName,
+       )}</strong> has completed their intake and their order cleared automated screening. Order ${escapeHtml(
+         input.orderNumber,
+       )}.</p>
+       <p style="margin:0 0 18px;">The screening checks addresses, duplicates and payment risk only. Every clinical decision is yours.</p>
+       ${button('Open the clinical queue', input.queueUrl)}
+       <p style="margin:22px 0 0;color:#8a8a8a;font-size:12px;">The member is not charged until you sign.</p>`,
+    ),
+  };
+}
+
 /* ------------------------- funnel recovery ------------------------------- */
 
 /**

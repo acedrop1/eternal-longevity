@@ -27,6 +27,7 @@ import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
+import { autoScreenOrder } from '@/lib/auto-screen';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -285,6 +286,18 @@ export async function placeOrderAction(input: {
   // days, and holding a limited code open that long lets one code be spent
   // many times over.
   if (appliedCode) await redeemPromo(appliedCode);
+
+  /*
+   * Screen it immediately. This is the admin step done by machine: address
+   * and duplicate checks, then Claude for the ambiguous rest. It releases to
+   * the prescriber and notifies them, or holds it for a human — and it never
+   * makes a clinical decision.
+   *
+   * Deliberately not awaited into the caller's critical path beyond this
+   * point: a screening failure must not fail the order the member just
+   * placed. autoScreenOrder swallows its own errors and holds on doubt.
+   */
+  await autoScreenOrder(orderNumber);
 
   if (input.lines.length) {
     await db.from('order_items').insert(
