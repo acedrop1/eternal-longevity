@@ -268,15 +268,13 @@ export const STEPS: Step[] = [
       {
         id: 'flags',
         type: 'multi-select',
-        label: 'Any of the following? Select all that apply.',
+        label: '',
         options: [
           { value: 'cardio', label: 'Cardiovascular event (heart attack, stroke, clot)' },
           { value: 't1d', label: 'Type 1 diabetes' },
           { value: 'autoimmune', label: 'Autoimmune condition' },
-          { value: 'mental', label: 'Mental-health condition' },
           { value: 'endocrine', label: 'Thyroid / pituitary disorder' },
           { value: 'surgery', label: 'Major surgery in the last 12 months' },
-          { value: 'prior-peptides', label: 'Prior peptide / hormone use' },
           { value: 'none', label: 'None of the above' },
         ],
       },

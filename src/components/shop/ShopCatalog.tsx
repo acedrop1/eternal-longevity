@@ -127,11 +127,11 @@ export function ShopCatalog({
       </div>
 
       {/* Product grid */}
-      <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => (
           <div
             key={p.id}
-            className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
+            className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl sm:rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}
           >
             {/* Image header on swatch */}
@@ -160,7 +160,7 @@ export function ShopCatalog({
               )}
 
               {/* Centered name overlay */}
-              <div className="relative flex h-full flex-col items-center justify-end p-6 text-center">
+              <div className="relative flex h-full flex-col items-center justify-end p-3 text-center sm:p-6">
                 <span className="text-[10px] tracking-widest text-white/65 mb-2">
                   ETERNAL LONGEVITY
                 </span>
@@ -171,7 +171,7 @@ export function ShopCatalog({
                   <div
                     className="font-bold tracking-tight text-white"
                     style={{
-                      fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+                      fontSize: 'clamp(1.15rem, 4.5vw, 2.25rem)',
                       letterSpacing: '-0.02em',
                       lineHeight: 1,
                     }}
@@ -183,20 +183,21 @@ export function ShopCatalog({
             </Link>
 
             {/* Bottom row. Description, price, CTA */}
-            <div className="flex flex-1 flex-col p-5 md:p-6">
-              <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78">
+            <div className="flex min-w-0 flex-1 flex-col p-3.5 sm:p-5 md:p-6">
+              {/* One chip on a phone; the cycle length repeats the hero. */}
+              <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[9px] tracking-wider text-foreground/78 sm:text-[10px]">
                   {DELIVERY_LABEL[p.delivery].toUpperCase()}
                 </span>
-                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78">
+                <span className="hidden rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78 sm:inline">
                   {p.cycleLength.toUpperCase()}
                 </span>
               </div>
-              <p className="mb-5 text-sm text-foreground/82 leading-relaxed line-clamp-3">
+              <p className="mb-4 text-[12px] leading-relaxed text-foreground/82 line-clamp-2 sm:mb-5 sm:text-sm sm:line-clamp-3">
                 {p.shortDescription}
               </p>
               <div className="mt-auto">
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="text-[10px] tracking-widest text-foreground/65">
                     {startPath ? 'FROM' : 'SUBSCRIBE FROM'}
                   </div>
@@ -209,16 +210,16 @@ export function ShopCatalog({
                 </div>
 
                 {startPath ? (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <Link
                       href={`${startPath}?product=${p.id}`}
-                      className="flex-1 rounded-full bg-accent px-4 py-2.5 text-center text-xs font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft"
+                      className="flex-1 rounded-full bg-accent px-3 py-2.5 text-center text-xs font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft"
                     >
                       Get started
                     </Link>
                     <Link
                       href={`${basePath}/${p.id}`}
-                      className="flex-1 rounded-full border border-line bg-background px-4 py-2.5 text-center text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
+                      className="flex-1 rounded-full border border-line bg-background px-3 py-2.5 text-center text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
                     >
                       Learn more
                     </Link>
