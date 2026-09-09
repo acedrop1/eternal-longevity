@@ -112,28 +112,28 @@
 .theme-light .bg-surface\/85     { background-color: rgb(255 255 255 / 0.85); }
 .theme-light .bg-surface\/80     { background-color: rgb(255 255 255 / 0.80); }
 .theme-light .bg-surface-raised  { background-color: #F0EEE6; }
-.theme-light .text-foreground    { color: rgb(26 38 32); }
-.theme-light .text-foreground\/85 { color: rgb(26 38 32 / 0.85); }
-.theme-light .text-foreground\/80 { color: rgb(26 38 32 / 0.80); }
-.theme-light .text-foreground\/75 { color: rgb(26 38 32 / 0.75); }
-.theme-light .text-foreground\/70 { color: rgb(26 38 32 / 0.70); }
-.theme-light .text-foreground\/65 { color: rgb(26 38 32 / 0.65); }
-.theme-light .text-foreground\/60 { color: rgb(26 38 32 / 0.60); }
-.theme-light .text-foreground\/55 { color: rgb(26 38 32 / 0.55); }
-.theme-light .text-foreground\/50 { color: rgb(26 38 32 / 0.50); }
-.theme-light .text-foreground\/45 { color: rgb(26 38 32 / 0.45); }
-.theme-light .text-foreground\/40 { color: rgb(26 38 32 / 0.40); }
-.theme-light .text-foreground\/30 { color: rgb(26 38 32 / 0.30); }
+.theme-light .text-foreground    { color: rgb(20 17 12); }
+.theme-light .text-foreground\/85 { color: rgb(20 17 12 / 0.85); }
+.theme-light .text-foreground\/80 { color: rgb(20 17 12 / 0.80); }
+.theme-light .text-foreground\/75 { color: rgb(20 17 12 / 0.75); }
+.theme-light .text-foreground\/70 { color: rgb(20 17 12 / 0.70); }
+.theme-light .text-foreground\/65 { color: rgb(20 17 12 / 0.65); }
+.theme-light .text-foreground\/60 { color: rgb(20 17 12 / 0.60); }
+.theme-light .text-foreground\/55 { color: rgb(20 17 12 / 0.55); }
+.theme-light .text-foreground\/50 { color: rgb(20 17 12 / 0.50); }
+.theme-light .text-foreground\/45 { color: rgb(20 17 12 / 0.45); }
+.theme-light .text-foreground\/40 { color: rgb(20 17 12 / 0.40); }
+.theme-light .text-foreground\/30 { color: rgb(20 17 12 / 0.30); }
 .theme-light .border-line         { border-color: rgb(0 0 0 / 0.10); }
-.theme-light .border-foreground\/20 { border-color: rgb(26 38 32 / 0.20); }
-.theme-light .border-foreground\/30 { border-color: rgb(26 38 32 / 0.30); }
-.theme-light .placeholder-foreground\/30::placeholder { color: rgb(26 38 32 / 0.30); }
+.theme-light .border-foreground\/20 { border-color: rgb(20 17 12 / 0.20); }
+.theme-light .border-foreground\/30 { border-color: rgb(20 17 12 / 0.30); }
+.theme-light .placeholder-foreground\/30::placeholder { color: rgb(20 17 12 / 0.30); }
 .theme-light .ring-line           { --tw-ring-color: rgb(0 0 0 / 0.10); }
-.theme-light .ring-foreground\/30 { --tw-ring-color: rgb(26 38 32 / 0.30); }
+.theme-light .ring-foreground\/30 { --tw-ring-color: rgb(20 17 12 / 0.30); }
 /* Subtle dark overlays used in dark theme don't translate — soften them */
-.theme-light .bg-foreground\/5  { background-color: rgb(26 38 32 / 0.05); }
-.theme-light .bg-foreground\/10 { background-color: rgb(26 38 32 / 0.10); }
-.theme-light .bg-foreground\/15 { background-color: rgb(26 38 32 / 0.15); }
+.theme-light .bg-foreground\/5  { background-color: rgb(20 17 12 / 0.05); }
+.theme-light .bg-foreground\/10 { background-color: rgb(20 17 12 / 0.10); }
+.theme-light .bg-foreground\/15 { background-color: rgb(20 17 12 / 0.15); }
 
 @layer base {
   html {
