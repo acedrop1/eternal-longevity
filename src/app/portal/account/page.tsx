@@ -45,7 +45,15 @@ export default async function AccountPage() {
         </p>
       </div>
 
-      <AccountSettings userName={user.name} userEmail={user.email} />
+      <AccountSettings
+        userName={user.name}
+        userEmail={user.email}
+        stripePublishableKey={
+          (process.env.STRIPE_PUBLISHABLE_KEY ?? '').startsWith('pk_')
+            ? (process.env.STRIPE_PUBLISHABLE_KEY as string)
+            : ''
+        }
+      />
     </PortalShell>
   );
 }

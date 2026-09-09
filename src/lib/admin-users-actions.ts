@@ -1,5 +1,7 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 /**
  * Admin user management.
  *
@@ -16,7 +18,12 @@ import {
   supabaseAdminConfigured,
 } from './supabase/admin';
 import { SITE_URL } from './site';
-import { sendEmail, welcomeEmail, emailConfigured } from './email';
+import {
+  sendEmail,
+  welcomeEmail,
+  passwordResetEmail,
+  emailConfigured,
+} from './email';
 import { randomInt } from 'crypto';
 
 export interface AdminUserResult {
@@ -209,5 +216,58 @@ export async function adminSetUserRole(input: {
     return { ok: true, message: `Role changed to ${input.role}.` };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
+  }
+}
+
+/**
+ * Send a set-your-password email to any account — member, doctor or pharmacy.
+ *
+ * This is how a doctor or a pharmacy user gets in the first time: admin
+ * creates the account, then sends this instead of inventing a password and
+ * reading it down the phone. It is also the fix for "I never got the email".
+ *
+ * The link goes through our own /auth/confirm route in our own branded email,
+ * so nothing arrives looking like it came from Supabase.
+ */
+export async function adminSendPasswordEmail(input: {
+  userId: string;
+}): Promise<AdminUserResult> {
+  const actor = await getSession();
+  if (!actor || actor.role !== 'admin') {
+    return { ok: false, message: 'Not authorised.' };
+  }
+  if (!supabaseAdminConfigured()) {
+    return { ok: false, message: 'Database is not configured.' };
+  }
+
+  const db = createSupabaseAdminClient();
+  const { data: profile } = await db
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', input.userId)
+    .maybeSingle();
+
+  if (!profile?.email) {
+    return { ok: false, message: 'That account has no email address.' };
+  }
+
+  try {
+    const { data, error } = await db.auth.admin.generateLink({
+      type: 'recovery',
+      email: profile.email,
+    });
+    if (error || !data?.properties?.hashed_token) {
+      return { ok: false, message: error?.message ?? 'Could not create a link.' };
+    }
+
+    const link = `${SITE_URL}/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery&next=/auth/reset`;
+    const msg = passwordResetEmail(link);
+    await sendEmail({ to: profile.email, subject: msg.subject, html: msg.html });
+    return { ok: true, message: `Password email sent to ${profile.email}.` };
+  } catch (err) {
+    return {
+      ok: false,
+      message: err instanceof Error ? err.message : 'Could not send the email.',
+    };
   }
 }

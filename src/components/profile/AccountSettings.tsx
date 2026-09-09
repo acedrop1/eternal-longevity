@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { useMemberProfile } from './MemberProfileProvider';
 import { SavedAddressesManager } from './SavedAddressesManager';
+import { StripeCardsManager } from './StripeCardsManager';
 import { SavedCardsManager } from './SavedCardsManager';
 import {
   DEFAULT_NOTIFICATIONS,
@@ -251,9 +252,12 @@ function Field({
 export function AccountSettings({
   userName,
   userEmail,
+  stripePublishableKey,
 }: {
   userName: string;
   userEmail: string;
+  /** Empty when Stripe is not configured for this environment. */
+  stripePublishableKey?: string;
 }) {
   const { profile, patchProfile } = useMemberProfile();
 
@@ -349,7 +353,13 @@ export function AccountSettings({
           title="Payment methods"
           description="Cards saved here pre-fill at checkout. We never store the full number. Only the brand and last four for display."
         >
-          <SavedCardsManager />
+          {/* Real cards go through Stripe. The local-only manager remains as
+              the fallback so a preview environment without keys still renders. */}
+          {stripePublishableKey ? (
+            <StripeCardsManager publishableKey={stripePublishableKey} />
+          ) : (
+            <SavedCardsManager />
+          )}
         </SectionCard>
         <SectionCard
           id="addresses"
