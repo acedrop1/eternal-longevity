@@ -276,8 +276,21 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
 
   // === In progress. Render current step ===
   if (!currentStep) return null;
+  // Enter advances, the way it does in any real form. The wizard is not a
+  // <form> (Continue is a click handler), so nothing did this for free.
+  // Textareas keep Enter for newlines; buttons keep it for activation.
+  function onKeyDownCapture(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    const el = e.target as HTMLElement | null;
+    const tag = el?.tagName;
+    if (tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') return;
+    e.preventDefault();
+    if (validation.ok && !isPending) handleContinue();
+  }
+
   return (
     <Shell
+      onKeyDown={onKeyDownCapture}
       progressPct={progressPct}
       stepIdx={status.stepIdx}
       total={total}
@@ -417,8 +430,10 @@ function Shell({
   total,
   compact,
   footer,
+  onKeyDown,
 }: {
   children: React.ReactNode;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   progressPct: number;
   stepIdx?: number;
   total?: number;
@@ -428,6 +443,7 @@ function Shell({
 }) {
   return (
     <div
+      onKeyDown={onKeyDown}
       className={
         compact
           ? 'relative mx-auto flex w-full max-w-2xl flex-col overflow-x-hidden pb-0 pt-2'
