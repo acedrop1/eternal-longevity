@@ -219,6 +219,28 @@ textarea {
 }
 
 
+/* Chrome, Safari and every password manager repaint an autofilled field with
+   their own near-white background and near-black text. On a black form that
+   flips the field to light while the icons drawn on top of it — the password
+   eye toggle — stay light and vanish. The background can't be set directly on
+   an autofilled input, so the long-standing workaround is an inset box-shadow
+   thick enough to cover the field. autofill-dark */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: rgb(var(--fg-rgb)) !important;
+  caret-color: rgb(var(--fg-rgb));
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--bg-rgb)) inset !important;
+  box-shadow: 0 0 0 1000px rgb(var(--bg-rgb)) inset !important;
+  /* Chrome fades the yellow in over this many seconds; a long delay means it
+     never arrives. */
+  transition: background-color 100000s ease-in-out 0s;
+}
+
+
 /* iOS Safari zooms the viewport whenever a focused input is smaller than 16px,
    which is why tapping the shop search jumped the whole page. Twenty-one
    inputs were under that threshold; forcing the floor here fixes them all and
