@@ -355,28 +355,6 @@ export function newVisitForDoctorEmail(input: {
   };
 }
 
-/** No usable card, so the order never reached the prescriber. */
-export function cardNeededEmail(input: {
-  firstName: string;
-  orderNumber: string;
-  accountUrl: string;
-}): { subject: string; html: string } {
-  return {
-    subject: `Add a card to finish order ${input.orderNumber}`,
-    html: shell(
-      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We need a card before your review.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(
-         input.firstName,
-       )} — your order is saved, but the card on your account either is not there or expires too soon for us to charge it when your prescriber approves.</p>
-       <p style="margin:0 0 22px;">Add a card and we will send your visit straight to the prescriber. <strong style="color:#fff;">Nothing is charged until they approve.</strong></p>
-       ${button('Add a card', input.accountUrl)}
-       <p style="margin:22px 0 0;color:#8a8a8a;font-size:12px;">Order ${escapeHtml(
-         input.orderNumber,
-       )}. Reply to this email if you would rather we sort it out with you.</p>`,
-    ),
-  };
-}
-
 /** A signed prescription whose charge failed. Goes to the team, not the doctor. */
 export function chargeFailedInternalEmail(input: {
   orderNumber: string;

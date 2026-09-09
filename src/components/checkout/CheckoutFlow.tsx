@@ -226,6 +226,9 @@ export function CheckoutFlow({
   const [promoBusy, setPromoBusy] = useState(false);
   // The card is captured (not charged) before the order can be placed.
   const [cardSaved, setCardSaved] = useState(false);
+  // The authorisation holding the funds; the order is tied to it so the
+  // prescriber's signature captures this exact hold.
+  const [authIntentId, setAuthIntentId] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   // Mobile-only: collapsible order summary at top. Always expanded on lg+.
@@ -516,6 +519,7 @@ export function CheckoutFlow({
       },
       cardLast4,
       promoCode: promo?.ok ? promo.code : undefined,
+      authIntentId: authIntentId ?? undefined,
     });
 
     // Clear the cart and route to success
@@ -1215,13 +1219,13 @@ export function CheckoutFlow({
           >
             <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
               <p className="mb-1 text-[11px] tracking-widest text-accent">
-                NOT CHARGED UNTIL APPROVED
+                HELD, NOT CHARGED
               </p>
               <p className="text-sm text-foreground/80 leading-relaxed">
-                Your card is saved now but not charged. Your prescriber reviews
-                your visit first — if they approve, this card is charged and
-                your order goes to the pharmacy. If they decline, it is never
-                charged.
+                We place a hold for this amount now — it may show as pending,
+                but nothing is taken. Your prescriber reviews your visit first:
+                if they approve, the hold becomes the charge. If they decline,
+                it is released and vanishes from your statement.
               </p>
             </div>
 
@@ -1233,8 +1237,10 @@ export function CheckoutFlow({
                 <CheckoutCardStep
                   publishableKey={stripePublishableKey}
                   amountLabel={`$${total}`}
+                  amountCents={Math.round(total * 100)}
                   saved={cardSaved}
                   onSaved={() => setCardSaved(true)}
+                  onAuthorized={setAuthIntentId}
                 />
               </div>
             )}

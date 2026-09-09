@@ -208,6 +208,7 @@ export function OrdersProvider({
           shippingAddress: draft.shippingAddress,
           cardLast4: draft.cardLast4,
           promoCode: draft.promoCode,
+          authIntentId: draft.authIntentId,
         }),
       );
       return order;

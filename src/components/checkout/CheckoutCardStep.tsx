@@ -8,18 +8,19 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { createSetupIntentAction } from '@/lib/cards';
+import { createOrderAuthAction } from '@/lib/order-auth';
 
 /**
- * Card capture at checkout — saved, not charged.
+ * Authorisation at checkout — money held, not taken.
  *
- * A SetupIntent stores the card against the Stripe customer without moving
- * money and without putting a pending authorisation on the member's statement.
- * When the prescriber signs, the order charges that card off-session.
+ * A saved card proves the card exists; it does not prove the money is there.
+ * This places a real hold for the full amount, so the funds are confirmed and
+ * reserved before a prescriber ever sees the order. Approve captures the hold;
+ * decline releases it.
  *
- * The alternative — an authorisation hold — was rejected deliberately: holds
- * show as a pending charge for days and expire after seven, so a prescriber
- * who takes a week to review would leave the charge un-capturable.
+ * The member does see a pending line for the full amount in the meantime. That
+ * is the cost of the guarantee, and the copy below says so rather than letting
+ * them discover it on their statement.
  */
 function CardCapture({
   onSaved,
@@ -46,12 +47,15 @@ function CardCapture({
       return;
     }
 
-    const { error: confirmErr } = await stripe.confirmSetup({
+    const { error: confirmErr } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
     });
     if (confirmErr) {
-      setError(confirmErr.message ?? 'We could not save that card.');
+      setError(
+        confirmErr.message ??
+          'We could not authorise that card. Try another one.',
+      );
       setBusy(false);
       return;
     }
@@ -74,12 +78,14 @@ function CardCapture({
         disabled={!stripe || busy}
         className="mt-5 w-full rounded-full bg-accent py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {busy ? 'Saving…' : 'Save card and continue'}
+        {busy ? 'Authorising…' : `Authorise ${amountLabel} and continue`}
       </button>
 
       <p className="mt-3 text-center text-[11px] leading-relaxed text-foreground/50">
-        Nothing is charged now. If your prescriber approves your treatment,
-        this card is charged {amountLabel}. If they decline, it never is.
+        We place a hold for {amountLabel} — you may see it as pending, but{' '}
+        <strong className="text-foreground/70">nothing is taken yet</strong>. If
+        your prescriber approves, the hold becomes the charge. If they decline,
+        it is released and disappears.
       </p>
     </form>
   );
@@ -88,13 +94,18 @@ function CardCapture({
 export function CheckoutCardStep({
   publishableKey,
   amountLabel,
+  amountCents,
   saved,
   onSaved,
+  onAuthorized,
 }: {
   publishableKey: string;
   amountLabel: string;
+  amountCents: number;
   saved: boolean;
   onSaved: () => void;
+  /** The PaymentIntent holding the funds, so the order can be tied to it. */
+  onAuthorized: (paymentIntentId: string) => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,15 +118,19 @@ export function CheckoutCardStep({
   useEffect(() => {
     if (saved) return;
     let cancelled = false;
-    createSetupIntentAction().then((res) => {
+    createOrderAuthAction(amountCents).then((res) => {
       if (cancelled) return;
-      if (res.ok && res.clientSecret) setClientSecret(res.clientSecret);
-      else setError('Card entry is unavailable right now.');
+      if (res.ok && res.clientSecret) {
+        setClientSecret(res.clientSecret);
+        onAuthorized(res.paymentIntentId ?? '');
+      } else {
+        setError('Card entry is unavailable right now.');
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [saved]);
+  }, [saved, amountCents, onAuthorized]);
 
   if (saved) {
     return (
@@ -124,8 +139,8 @@ export function CheckoutCardStep({
           ✓
         </span>
         <p className="text-sm text-foreground/85">
-          Card saved. You&apos;ll be charged {amountLabel} only if your
-          prescriber approves.
+          {amountLabel} authorised and held. It becomes a charge only if your
+          prescriber approves — otherwise it is released.
         </p>
       </div>
     );

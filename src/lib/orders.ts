@@ -67,6 +67,8 @@ export interface Order {
   cardLast4?: string;
   /** Promotion code applied, and what it took off. Set by the server. */
   promoCode?: string;
+  /** The authorisation holding this order's funds. */
+  authIntentId?: string;
   discount?: number;
   placedAt: number;
   status: OrderStatus;

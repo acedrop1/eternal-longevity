@@ -16,6 +16,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
+import { captureOrderAuth, releaseOrderAuth } from '@/lib/order-auth';
 import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
@@ -217,6 +218,8 @@ export async function placeOrderAction(input: {
   cardLast4?: string;
   /** Promotion code the member entered, if any. */
   promoCode?: string;
+  /** The manual-capture PaymentIntent holding the funds. */
+  authIntentId?: string;
 }): Promise<ActionResult & { orderNumber?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
@@ -273,6 +276,8 @@ export async function placeOrderAction(input: {
       total_cents: totalCents,
       shipping_address: input.shippingAddress,
       card_last4: input.cardLast4 ?? null,
+      // The hold placed at checkout. Signing captures exactly this.
+      stripe_payment_intent_id: input.authIntentId ?? null,
     })
     .select('id')
     .single();
@@ -374,6 +379,8 @@ export async function denyOrderAction(
   const db = createSupabaseAdminClient();
   await db.from('orders').update({ status: 'denied-admin', admin_note: note }).eq('id', id);
   await appendUpdate(id, user.name, 'admin', 'Declined', note, 'denied-admin');
+  // Nothing will be charged, so free the hold now.
+  await releaseOrderAuth(orderNumber);
   revalidatePortal();
   return { ok: true };
 }
@@ -411,10 +418,18 @@ export async function signRxAction(
 
   // Approval is the moment payment becomes due — mint the member's pay link
   // and email it. Never charge before this point.
-  // The member saved a card at checkout and authorised exactly this: charge
-  // once a prescriber approves. chargeOnApproval falls back to emailing a pay
-  // link if the card fails, so an approved order is never stranded.
-  await chargeOnApproval(orderNumber);
+  /*
+   * Capture the hold placed at checkout. The funds were confirmed and reserved
+   * then, so this cannot fail for insufficient funds — which is the whole
+   * reason the prescriber never has to think about payment.
+   *
+   * If the hold aged out before he got to it, chargeOnApproval is the fallback:
+   * it charges the saved card, and emails a pay link if even that fails.
+   */
+  const captured = await captureOrderAuth(orderNumber);
+  if (!captured.ok || !captured.captured) {
+    await chargeOnApproval(orderNumber);
+  }
 
   revalidatePortal();
   return { ok: true };
@@ -433,6 +448,11 @@ export async function declineClinicalAction(
   const db = createSupabaseAdminClient();
   await db.from('orders').update({ status: 'declined-clinical', physician_note: note }).eq('id', id);
   await appendUpdate(id, user.name, 'physician', 'Declined', note, 'declined-clinical');
+
+  // Let the money go immediately. A declined member should not watch a pending
+  // charge sit on their statement for a week waiting for the network to expire
+  // it — that is the moment they call their bank.
+  await releaseOrderAuth(orderNumber);
   revalidatePortal();
   return { ok: true };
 }
