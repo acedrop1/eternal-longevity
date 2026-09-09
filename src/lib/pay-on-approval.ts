@@ -194,7 +194,7 @@ export async function createPayIntentAction(token: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id',
+      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id, shipping_address, ship_state',
     )
     .eq('pay_token', token)
     .maybeSingle();
@@ -242,10 +242,30 @@ export async function createPayIntentAction(token: string): Promise<{
       })
     : undefined;
 
+  // Radar can only judge what it is given. Without a shipping address on the
+  // intent, every address-based rule silently matches nothing and Stripe's own
+  // model is working half blind. Send it.
+  const addr = (order.shipping_address ?? {}) as Record<string, string>;
+  const shipping = addr.line1
+    ? {
+        name: addr.fullName || order.member_name || 'Member',
+        address: {
+          line1: addr.line1,
+          line2: addr.line2 || undefined,
+          city: addr.city || undefined,
+          state: addr.state || order.ship_state || undefined,
+          postal_code: addr.zip || undefined,
+          country: 'US',
+        },
+      }
+    : undefined;
+
   const intent = await stripe.paymentIntents.create({
     amount,
     currency: 'usd',
     customer: customerId,
+    shipping,
+    receipt_email: order.member_email ?? undefined,
     // Neutral naming — peptide names never reach the card statement or
     // dispute record. No statement_descriptor_suffix: the account carries no
     // shortened descriptor, so a suffix would be dropped and the charge would
