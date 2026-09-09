@@ -95,7 +95,7 @@ export default function AboutPage() {
       <Header />
       <main className="relative bg-background">
         {/* ============ HERO ============ */}
-        <section className="relative px-6 pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
+        <section className="relative px-6 pt-20 pb-14 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/3 right-0 h-[60vh] w-[60vh] translate-x-1/3 rounded-full bg-accent/[0.08] blur-[120px]"
@@ -156,7 +156,7 @@ export default function AboutPage() {
         </section>
 
         {/* ============ NUMBERS ============ */}
-        <section className="relative px-6 py-16 md:py-24 bg-surface">
+        <section className="relative px-6 py-16 md:py-16 bg-surface">
           <div className="mx-auto max-w-6xl">
             <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
               {NUMBERS.map((n, i) => (
@@ -183,7 +183,7 @@ export default function AboutPage() {
         </section>
 
         {/* ============ THESIS ============ */}
-        <section className="relative px-6 py-24 md:py-32">
+        <section className="relative px-6 py-16 md:py-14">
           <div className="mx-auto max-w-6xl grid gap-12 lg:grid-cols-[1fr_1.3fr] lg:gap-20">
             <FadeIn>
               <div>
@@ -228,9 +228,9 @@ export default function AboutPage() {
         </section>
 
         {/* ============ VALUES ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface">
+        <section className="relative px-6 py-16 md:py-14 bg-surface">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   03 / PRINCIPLES
@@ -272,9 +272,9 @@ export default function AboutPage() {
         </section>
 
         {/* ============ TIMELINE ============ */}
-        <section className="relative px-6 py-24 md:py-32">
+        <section className="relative px-6 py-16 md:py-14">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   04 / TIMELINE
@@ -351,9 +351,9 @@ export default function AboutPage() {
         </section>
 
         {/* ============ TEAM ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface">
+        <section className="relative px-6 py-16 md:py-14 bg-surface">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   05 / TEAM
@@ -412,7 +412,7 @@ export default function AboutPage() {
         </section>
 
         {/* ============ QUOTE. Video bg ============ */}
-        <section className="relative px-6 py-24 md:py-32 overflow-hidden">
+        <section className="relative px-6 py-16 md:py-14 overflow-hidden">
           <LoopVideo
             src="/videos/3.mp4"
             className="absolute inset-0 w-full h-full"
@@ -454,7 +454,7 @@ export default function AboutPage() {
         </section>
 
         {/* ============ FOOT CTA ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface overflow-hidden">
+        <section className="relative px-6 py-16 md:py-14 bg-surface overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"

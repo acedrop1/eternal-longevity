@@ -14,7 +14,7 @@ export default function PdpLoading() {
           className="w-full"
           style={{ height: '70svh', minHeight: 460 }}
         />
-        <div className="px-6 -mt-7 pb-32 relative bg-background rounded-t-[1.5rem]">
+        <div className="px-6 -mt-7 pb-14 relative bg-background rounded-t-[1.5rem]">
           <Shimmer className="mx-auto mb-5 h-1 w-10 rounded-full" />
           <Shimmer className="mb-4 h-6 w-2/3 rounded-full" />
           <Shimmer className="mb-2 h-10 w-1/2" />

@@ -271,89 +271,13 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
   // === In progress. Render current step ===
   if (!currentStep) return null;
   return (
-    <Shell progressPct={progressPct} stepIdx={status.stepIdx} total={total} compact={compact}>
-      {product && (
-        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-3">
-          <span className="text-[10px] tracking-widest text-accent">
-            STARTING
-          </span>
-          <span className="text-sm font-semibold text-foreground">
-            {product.name}
-          </span>
-          <span className="hidden sm:inline text-xs text-foreground/55">
-            {product.tagline}
-          </span>
-        </div>
-      )}
-      <div className="mb-2">
-        <p className="text-[11px] tracking-widest text-accent">
-          {`${String(status.stepIdx + 1).padStart(2, '0')} / ${currentStep.eyebrow.replace(/^\d+\s*\/\s*/, '')}`}
-        </p>
-      </div>
-      <h2
-        className="mb-3 font-semibold tracking-tight text-foreground"
-        style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', letterSpacing: '-0.02em', lineHeight: 1.1 }}
-      >
-        {currentStep.heading}
-      </h2>
-      {currentStep.body && (
-        <p className="mb-8 text-foreground/65 leading-relaxed max-w-xl">{currentStep.body}</p>
-      )}
-
-      {/* Disclaimer list. Read-only acknowledgement statements (consent step) */}
-      {currentStep.disclaimers && currentStep.disclaimers.length > 0 && (
-        <ol className="mb-8 space-y-3 rounded-2xl border border-line bg-surface p-5 md:p-6">
-          {currentStep.disclaimers.map((d, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className="mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent text-[10px] font-semibold tabular-nums"
-              >
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="text-sm text-foreground/85 leading-relaxed">
-                {d}
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {/* Carrier rules want the SMS disclosure beside the number, not buried
-          in a consent stack three screens later. */}
-      {currentStep.smsDisclaimer && (
-        <p className="mb-8 max-w-2xl rounded-2xl border border-line bg-surface px-5 py-4 text-[11px] leading-relaxed text-foreground/60">
-          {currentStep.smsDisclaimer}
-        </p>
-      )}
-
-      {/* Fields */}
-      <div className="space-y-6">
-        {currentStep.fields.map((f) => (
-          <div key={f.id}>
-            {f.label && (
-              <label className="mb-2 block text-xs tracking-wider text-foreground/60">
-                {f.label.toUpperCase()}
-              </label>
-            )}
-            <FieldRenderer
-              field={f}
-              value={answers[f.id]}
-              onChange={(v) => setField(f.id, v)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Inline submit error (only on the final step) */}
-      {submitError && (
-        <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {submitError}
-        </div>
-      )}
-
-      {/* Nav buttons */}
-      <div className="mt-10 flex items-center justify-between gap-3">
+    <Shell
+      progressPct={progressPct}
+      stepIdx={status.stepIdx}
+      total={total}
+      compact={compact}
+      footer={
+        <div className="flex items-center justify-between gap-3">
         <button
           onClick={handleBack}
           disabled={status.stepIdx === 0 || isPending}
@@ -387,6 +311,95 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
             : 'Continue →'}
         </button>
       </div>
+      }
+    >
+      {product && (
+        <div className="mb-4 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-2.5">
+          <span className="text-[10px] tracking-widest text-accent">
+            STARTING
+          </span>
+          <span className="text-sm font-semibold text-foreground">
+            {product.name}
+          </span>
+          <span className="hidden sm:inline text-xs text-foreground/55">
+            {product.tagline}
+          </span>
+        </div>
+      )}
+      <div className="mb-2">
+        <p className="text-[11px] tracking-widest text-accent">
+          {`${String(status.stepIdx + 1).padStart(2, '0')} / ${currentStep.eyebrow.replace(/^\d+\s*\/\s*/, '')}`}
+        </p>
+      </div>
+      <h2
+        className="mb-2 font-semibold tracking-tight text-foreground"
+        style={{ fontSize: 'clamp(1.5rem, 3.2vw, 2.25rem)', letterSpacing: '-0.02em', lineHeight: 1.1 }}
+      >
+        {currentStep.heading}
+      </h2>
+      {currentStep.body && (
+        <p className="mb-5 text-sm text-foreground/70 leading-relaxed max-w-xl">{currentStep.body}</p>
+      )}
+
+      {/* Disclaimer list. Read-only acknowledgement statements (consent step) */}
+      {currentStep.disclaimers && currentStep.disclaimers.length > 0 && (
+        <ol className="mb-5 max-h-[38svh] space-y-2.5 overflow-y-auto rounded-2xl border border-line bg-surface p-4 md:p-5">
+          {currentStep.disclaimers.map((d, i) => (
+            <li key={i} className="flex items-start gap-3">
+              <span
+                aria-hidden
+                className="mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-accent/10 text-accent text-[10px] font-semibold tabular-nums"
+              >
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className="text-sm text-foreground/85 leading-relaxed">
+                {d}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {/* Carrier rules want the SMS disclosure beside the number, not buried
+          in a consent stack three screens later. */}
+      {currentStep.smsDisclaimer && (
+        <details className="mb-5 rounded-2xl border border-line bg-surface px-4 py-3">
+          <summary className="cursor-pointer list-none text-[11px] leading-relaxed text-foreground/60 marker:hidden">
+            By continuing you agree to receive calls and texts from us. Message
+            and data rates may apply. Reply STOP to opt out.{' '}
+            <span className="text-accent underline underline-offset-2">Read in full</span>
+          </summary>
+          <p className="mt-3 text-[11px] leading-relaxed text-foreground/55">
+            {currentStep.smsDisclaimer}
+          </p>
+        </details>
+      )}
+
+      {/* Fields */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+        {currentStep.fields.map((f) => (
+          <div key={f.id} className={f.half ? 'col-span-1' : 'col-span-2'}>
+            {f.label && (
+              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
+                {f.label.toUpperCase()}
+              </label>
+            )}
+            <FieldRenderer
+              field={f}
+              value={answers[f.id]}
+              onChange={(v) => setField(f.id, v)}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Inline submit error (only on the final step) */}
+      {submitError && (
+        <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {submitError}
+        </div>
+      )}
+
     </Shell>
   );
 }
@@ -397,17 +410,26 @@ function Shell({
   stepIdx,
   total,
   compact,
+  footer,
 }: {
   children: React.ReactNode;
   progressPct: number;
   stepIdx?: number;
   total?: number;
   compact?: boolean;
+  /** Pinned to the foot of the viewport so Continue never scrolls away. */
+  footer?: React.ReactNode;
 }) {
   return (
-    <div className={compact ? 'relative mx-auto max-w-2xl pb-16 pt-6' : 'relative mx-auto max-w-2xl px-6 pb-32 pt-28 md:pt-36'}>
+    <div
+      className={
+        compact
+          ? 'relative mx-auto flex max-w-2xl flex-col pb-6 pt-4'
+          : 'relative mx-auto flex h-[100svh] max-w-2xl flex-col px-5 pb-5 pt-20 md:px-6 md:pt-24'
+      }
+    >
       {/* Progress bar */}
-      <div className={compact ? "mb-8 py-2" : "sticky top-20 z-10 mb-10 -mx-6 px-6 py-4 bg-background/80 backdrop-blur"}>
+      <div className={compact ? "mb-5 py-1" : "mb-5 flex-none"}>
         <div className="flex items-center justify-between mb-2 text-[11px] tracking-wider text-foreground/55">
           <span>{stepIdx !== undefined && total !== undefined ? `Step ${stepIdx + 1} of ${total}` : 'Complete'}</span>
           <span>{progressPct}%</span>
@@ -420,7 +442,10 @@ function Shell({
         </div>
       </div>
 
-      {children}
+      {/* The only region that may scroll — and most steps fit without it. */}
+      <div className="min-h-0 flex-1 overflow-y-auto pb-2">{children}</div>
+
+      {footer && <div className="flex-none pt-4">{footer}</div>}
     </div>
   );
 }

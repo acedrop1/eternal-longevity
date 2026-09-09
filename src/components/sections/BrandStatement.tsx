@@ -58,7 +58,7 @@ export function BrandStatement() {
   return (
     <section
       ref={ref}
-      className="relative bg-background px-6 pt-32 pb-40 md:pt-40 md:pb-48"
+      className="relative bg-background px-6 pt-20 pb-40 md:pt-24 md:pb-48"
     >
       <div className="mx-auto max-w-6xl">
         {/* Eyebrow pill */}
@@ -122,7 +122,7 @@ export function BrandStatement() {
         </p>
 
         {/* CTA pill (Saki "Meet Saki" pattern) */}
-        <div className="mt-16 flex justify-center">
+        <div className="mt-10 flex justify-center">
           <a
             href="/about"
             className="pill bg-foreground text-background px-8 py-3 text-base font-semibold hover:bg-accent hover:text-background transition-colors"

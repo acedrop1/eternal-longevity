@@ -2,7 +2,7 @@ import { Shimmer } from '@/components/skeletons/Shimmer';
 
 export default function LoginLoading() {
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center px-6 py-20">
+    <main className="min-h-screen bg-background flex items-center justify-center px-6 py-14">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-10 flex justify-center">

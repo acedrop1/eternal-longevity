@@ -56,7 +56,7 @@ const COL_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-line bg-background px-6 py-16 md:py-20">
+    <footer className="border-t border-line bg-background px-6 py-16 md:py-14">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
@@ -130,7 +130,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-line pt-6 md:flex-row md:items-center md:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-line pt-6 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-foreground/40">
             © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>

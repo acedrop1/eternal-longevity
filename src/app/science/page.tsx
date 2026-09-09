@@ -115,7 +115,7 @@ export default function SciencePage() {
       <Header />
       <main className="relative bg-background">
         {/* ============ HERO ============ */}
-        <section className="relative px-6 pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
+        <section className="relative px-6 pt-20 pb-14 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/4 left-1/2 h-[50vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
@@ -166,7 +166,7 @@ export default function SciencePage() {
 
             {/* Ambient hero video. Subtle ribbon under the CTA */}
             <FadeIn delay={500}>
-              <div className="relative mt-16 md:mt-20">
+              <div className="relative mt-10 md:mt-20">
                 <LoopVideo
                   src="/videos/3.mp4"
                   className="aspect-[21/9] md:aspect-[24/9] w-full rounded-3xl border border-line"
@@ -181,9 +181,9 @@ export default function SciencePage() {
         </section>
 
         {/* ============ MECHANISMS ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface">
+        <section className="relative px-6 py-16 md:py-14 bg-surface">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   02 / MECHANISMS
@@ -234,9 +234,9 @@ export default function SciencePage() {
         </section>
 
         {/* ============ EVIDENCE ============ */}
-        <section className="relative px-6 py-24 md:py-32">
+        <section className="relative px-6 py-16 md:py-14">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 grid gap-8 md:grid-cols-2 md:items-end">
+            <div className="mb-10 grid gap-8 md:grid-cols-2 md:items-end">
               <FadeIn>
                 <div>
                   <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
@@ -304,7 +304,7 @@ export default function SciencePage() {
         </section>
 
         {/* ============ LAB STRIP. Editorial image triplet ============ */}
-        <section className="relative px-6 pb-24 md:pb-32">
+        <section className="relative px-6 pb-16 md:pb-20">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-3 md:grid-cols-3 md:gap-5">
               {[
@@ -338,13 +338,13 @@ export default function SciencePage() {
         </section>
 
         {/* ============ STANDARDS ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface overflow-hidden">
+        <section className="relative px-6 py-16 md:py-14 bg-surface overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute top-1/2 right-0 h-[40vh] w-[40vh] -translate-y-1/2 translate-x-1/3 rounded-full bg-accent/[0.06] blur-[100px]"
           />
           <div className="relative mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   04 / STANDARDS
@@ -404,9 +404,9 @@ export default function SciencePage() {
         </section>
 
         {/* ============ PRINCIPLES ============ */}
-        <section className="relative px-6 py-24 md:py-32">
+        <section className="relative px-6 py-16 md:py-14">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-16 max-w-3xl">
+            <div className="mb-10 max-w-3xl">
               <FadeIn>
                 <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
                   05 / PRINCIPLES
@@ -451,7 +451,7 @@ export default function SciencePage() {
         </section>
 
         {/* ============ FOOT CTA. Ambient video bg ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface overflow-hidden">
+        <section className="relative px-6 py-16 md:py-14 bg-surface overflow-hidden">
           {/* Background video, dimmed */}
           <LoopVideo
             src="/videos/4.mp4"

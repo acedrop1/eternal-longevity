@@ -65,7 +65,7 @@ export default async function ShopProductPage({ params }: PageProps) {
       <ProductPDPMobile product={product} />
 
       {/* Desktop: original PDP layout */}
-      <div className="hidden md:block pb-24 lg:pb-0">
+      <div className="hidden md:block pb-16 lg:pb-0">
         <ProductPDP product={product} related={related} />
       </div>
     </PortalShell>

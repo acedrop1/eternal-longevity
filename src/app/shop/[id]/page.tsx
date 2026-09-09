@@ -51,7 +51,7 @@ export default async function PublicProductPage({ params }: PageProps) {
           <ProductPDPMobile product={product} ctaHref={`/start?product=${product.id}`} />
 
           {/* Desktop */}
-          <div className="hidden md:block pb-24 lg:pb-16">
+          <div className="hidden md:block pb-16 lg:pb-16">
             <ProductPDP
               product={product}
               related={related}

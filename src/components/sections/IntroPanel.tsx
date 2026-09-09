@@ -205,7 +205,7 @@ export function IntroPanel() {
           </div>
 
           {/* ===== 3) Brand-statement paragraph (word-by-word reveal) ===== */}
-          <div ref={statementRef} className="relative px-6 py-20 md:px-12 md:py-28">
+          <div ref={statementRef} className="relative px-6 py-14 md:px-12 md:py-28">
             {/* Eyebrow pill */}
             <div className="mb-10 flex justify-center">
               <span className="pill glass text-[11px] tracking-widest text-white/70 px-5">

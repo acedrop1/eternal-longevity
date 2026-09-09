@@ -96,9 +96,9 @@ export function Science() {
             03 / THE SCIENCE
           </div>
 
-          <div className="mx-auto h-full max-w-7xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-28 md:pt-32">
+          <div className="mx-auto h-full max-w-7xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-20 md:pt-20">
             {/* Left rail. Numbered indicators */}
-            <div className="md:col-span-1 flex md:flex-col items-start md:items-start justify-start gap-3 md:gap-6 md:pt-32">
+            <div className="md:col-span-1 flex md:flex-col items-start md:items-start justify-start gap-3 md:gap-6 md:pt-20">
               {CHAPTERS.map((_, i) => (
                 <div key={i} className="flex items-center md:flex-col md:items-start gap-2">
                   <span

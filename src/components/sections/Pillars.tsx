@@ -42,7 +42,7 @@ export function Pillars() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(0);
 
   return (
-    <section className="relative bg-background px-6 py-32 md:py-40">
+    <section className="relative bg-background px-6 py-14 md:py-16">
       {/* Atmospheric top spotlight */}
       <div
         aria-hidden
@@ -66,7 +66,7 @@ export function Pillars() {
         </FadeIn>
 
         <FadeIn delay={220}>
-          <p className="mb-16 max-w-xl text-foreground/55 leading-relaxed">
+          <p className="mb-10 max-w-xl text-foreground/55 leading-relaxed">
             Expertly formulated peptide therapy, engineered around three
             non-negotiables.
           </p>

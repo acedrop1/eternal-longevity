@@ -46,7 +46,7 @@ export default function FAQPage() {
       <Header />
       <main className="relative bg-background">
         {/* ============ HERO ============ */}
-        <section className="relative px-6 pt-28 pb-16 md:pt-40 md:pb-24 overflow-hidden">
+        <section className="relative px-6 pt-20 pb-16 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
@@ -80,7 +80,7 @@ export default function FAQPage() {
         </section>
 
         {/* ============ ACCORDION ============ */}
-        <section className="relative px-6 pb-16 md:pb-24">
+        <section className="relative px-6 pb-16 md:pb-16">
           <div className="mx-auto max-w-4xl">
             <FadeIn>
               <FAQAccordion />
@@ -89,7 +89,7 @@ export default function FAQPage() {
         </section>
 
         {/* ============ EDITORIAL DIVIDER. Wide image with caption ============ */}
-        <section className="relative px-6 pb-24 md:pb-32">
+        <section className="relative px-6 pb-16 md:pb-20">
           <div className="mx-auto max-w-7xl">
             <FadeIn>
               <figure className="relative overflow-hidden rounded-3xl border border-line">
@@ -123,7 +123,7 @@ export default function FAQPage() {
         </section>
 
         {/* ============ QUICK LINKS ============ */}
-        <section className="relative px-6 py-24 md:py-32 bg-surface">
+        <section className="relative px-6 py-16 md:py-14 bg-surface">
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 max-w-3xl">
               <FadeIn>
@@ -178,7 +178,7 @@ export default function FAQPage() {
         </section>
 
         {/* ============ FOOT CTA. Ambient video bg ============ */}
-        <section className="relative px-6 py-24 md:py-32 overflow-hidden">
+        <section className="relative px-6 py-16 md:py-14 overflow-hidden">
           <LoopVideo
             src="/videos/4.mp4"
             className="absolute inset-0 w-full h-full"

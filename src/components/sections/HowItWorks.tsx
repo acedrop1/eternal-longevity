@@ -14,7 +14,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="relative bg-surface px-6 py-32 md:py-40">
+    <section className="relative bg-surface px-6 py-14 md:py-16">
       <div className="mx-auto max-w-6xl">
         <FadeIn>
           <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
@@ -24,7 +24,7 @@ export function HowItWorks() {
 
         <FadeIn delay={120}>
           <h2
-            className="mb-16 max-w-3xl text-4xl md:text-6xl font-semibold tracking-tight"
+            className="mb-10 max-w-3xl text-4xl md:text-6xl font-semibold tracking-tight"
             style={{ letterSpacing: '-0.02em', lineHeight: 1 }}
           >
             Five steps. No friction.

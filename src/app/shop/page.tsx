@@ -18,7 +18,7 @@ export default function PublicShopPage() {
       <Header />
       <main className="bg-background">
         {/* HERO */}
-        <section className="relative isolate overflow-hidden pt-32 pb-12 md:pt-40 md:pb-16 px-6">
+        <section className="relative isolate overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 px-6">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/3 left-1/2 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
@@ -68,7 +68,7 @@ export default function PublicShopPage() {
         </section>
 
         {/* CATALOG */}
-        <section className="px-4 md:px-6 pb-24 md:pb-32">
+        <section className="px-4 md:px-6 pb-16 md:pb-20">
           <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 xl:max-w-[88rem] xl:px-10 2xl:max-w-[104rem] 2xl:px-14">
             <ShopCatalog
               items={PUBLIC_PRODUCTS}

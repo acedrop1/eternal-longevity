@@ -69,7 +69,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
   const handleAddToCart = () => addItem(product.id, selectedTier);
 
   return (
-    <div className="space-y-12 md:space-y-20">
+    <div className="space-y-8 md:space-y-14">
       {/* === PDP HERO. Two-column on desktop === */}
       <section className="grid items-start gap-8 md:gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
         <div

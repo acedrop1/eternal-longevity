@@ -37,7 +37,7 @@ export function AuthShell({
           className="pointer-events-none absolute -top-1/4 left-1/2 h-[50vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
         />
 
-        <section className="relative px-6 pt-32 pb-24 md:pt-40">
+        <section className="relative px-6 pt-20 pb-16 md:pt-24">
           <div className="mx-auto max-w-md">
             <FadeIn>
               <div className="text-center mb-10">

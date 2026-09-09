@@ -21,7 +21,7 @@ const FEATURES = [
 
 export function Comparison() {
   return (
-    <section className="relative overflow-hidden bg-background px-6 py-32 md:py-40">
+    <section className="relative overflow-hidden bg-background px-6 py-14 md:py-16">
       {/* Atmospheric streaks (POUCH water-streak vibe, gold dashes) */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <span className="absolute top-[8%] left-[15%] h-px w-24 bg-accent/20 rotate-[20deg]" />

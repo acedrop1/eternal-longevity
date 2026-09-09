@@ -26,7 +26,7 @@ export function Gallery() {
   const shift = (progress - 0.5) * 60; // -30 → +30 px range
 
   return (
-    <section ref={ref} className="relative bg-background px-6 py-32 md:py-40 overflow-hidden">
+    <section ref={ref} className="relative bg-background px-6 py-14 md:py-16 overflow-hidden">
       <div className="mx-auto max-w-7xl">
         <FadeIn>
           <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
@@ -46,7 +46,7 @@ export function Gallery() {
         </FadeIn>
 
         <FadeIn delay={220}>
-          <p className="mb-16 max-w-xl text-foreground/55 leading-relaxed">
+          <p className="mb-10 max-w-xl text-foreground/55 leading-relaxed">
             Every vial passes through a chain of custody you can see: licensed
             compounding, lab verification, then your door.
           </p>

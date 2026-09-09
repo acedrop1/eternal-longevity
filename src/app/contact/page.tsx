@@ -60,7 +60,7 @@ export default function ContactPage() {
       <Header />
       <main className="relative bg-background">
         {/* ============ HERO ============ */}
-        <section className="relative px-6 pt-28 pb-16 md:pt-40 md:pb-24 overflow-hidden">
+        <section className="relative px-6 pt-20 pb-16 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
@@ -97,7 +97,7 @@ export default function ContactPage() {
         </section>
 
         {/* ============ FORM + INFO ============ */}
-        <section className="relative px-6 pb-24 md:pb-32">
+        <section className="relative px-6 pb-16 md:pb-20">
           <div className="mx-auto max-w-6xl grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
             {/* === FORM === */}
             <FadeIn>

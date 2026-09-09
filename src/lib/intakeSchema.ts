@@ -55,6 +55,8 @@ export type Field = {
   placeholder?: string;
   options?: Option[];
   required?: boolean;
+  /** Render at half width so two short fields share a row on a phone. */
+  half?: boolean;
   min?: number;
   max?: number;
   /** For knockout: if the user picks one of these values, fire the named knockout */
@@ -100,6 +102,7 @@ export const STEPS: Step[] = [
       {
         id: 'first_name',
         type: 'text-short',
+        half: true,
         label: 'First name',
         placeholder: 'First name',
         required: true,
@@ -107,6 +110,7 @@ export const STEPS: Step[] = [
       {
         id: 'last_name',
         type: 'text-short',
+        half: true,
         label: 'Last name',
         placeholder: 'Last name',
         required: true,
@@ -122,6 +126,7 @@ export const STEPS: Step[] = [
       {
         id: 'phone',
         type: 'text-short',
+        half: true,
         label: 'Mobile number',
         placeholder: '(201) 555-0100',
         required: true,
@@ -129,6 +134,7 @@ export const STEPS: Step[] = [
       {
         id: 'zip',
         type: 'text-short',
+        half: true,
         label: 'ZIP code',
         placeholder: '07512',
         required: true,
@@ -179,6 +185,7 @@ export const STEPS: Step[] = [
       {
         id: 'height_ft',
         type: 'number',
+        half: true,
         label: 'Height — feet',
         placeholder: '5',
         required: true,
@@ -188,6 +195,7 @@ export const STEPS: Step[] = [
       {
         id: 'height_in',
         type: 'number',
+        half: true,
         label: 'Height — inches',
         placeholder: '10',
         required: true,
@@ -243,6 +251,20 @@ export const STEPS: Step[] = [
         options: YES_NO,
         knockoutOn: { values: ['yes'], key: 'organ' },
       },
+    ],
+  },
+
+
+  // -------------------------------------------------------------
+  // 05. HISTORY — split off the health screen so each step fits one phone
+  //     viewport without scrolling.
+  // -------------------------------------------------------------
+  {
+    id: 'history',
+    eyebrow: '05 / HISTORY',
+    heading: 'Anything on this list?',
+    body: 'Select all that apply. Your prescriber reads every one of these.',
+    fields: [
       {
         id: 'flags',
         type: 'multi-select',
@@ -273,7 +295,7 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'consents',
-    eyebrow: '05 / CONSENTS',
+    eyebrow: '06 / CONSENTS',
     heading: 'By submitting this form, I acknowledge:',
     body: "Take a moment to review the statements below. You'll confirm with the single acknowledgement at the bottom.",
     disclaimers: [
@@ -302,7 +324,7 @@ export const STEPS: Step[] = [
   // -------------------------------------------------------------
   {
     id: 'account',
-    eyebrow: '06 / CREATE ACCOUNT',
+    eyebrow: '07 / CREATE ACCOUNT',
     heading: 'Last step. Set up your portal.',
     body: 'Your account is how you review your protocol, message your care team, and check out securely. Your shipping address is collected at checkout.',
     fields: [
@@ -579,7 +601,7 @@ export type IntakeProduct = {
  *   VISIT — the clinical portion, completed inside the portal after checkout
  *          ("Complete your visit"). Nothing is prescribed until it's done.
  */
-const VISIT_TOPLEVEL_IDS = new Set(['health']);
+const VISIT_TOPLEVEL_IDS = new Set(['health', 'history']);
 
 export function buildPreSteps(): Step[] {
   return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));

@@ -20,7 +20,7 @@ export default function StartLoading() {
       </header>
 
       {/* Body: eyebrow, headline, fields */}
-      <div className="mx-auto max-w-2xl px-6 pt-32 pb-32">
+      <div className="mx-auto max-w-2xl px-6 pt-20 pb-14">
         <Shimmer className="mb-3 h-3 w-24" />
         <Shimmer className="mb-4 h-10 w-3/4" />
         <Shimmer className="mb-12 h-4 w-2/3" />

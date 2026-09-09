@@ -49,7 +49,7 @@ export function LegalLayout({
       <Header />
       <main className="relative bg-background">
         {/* ============ HERO ============ */}
-        <section className="relative px-6 pt-28 pb-12 md:pt-40 md:pb-16 overflow-hidden">
+        <section className="relative px-6 pt-20 pb-12 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
@@ -86,7 +86,7 @@ export function LegalLayout({
         </section>
 
         {/* ============ ARTICLE ============ */}
-        <section className="relative px-6 pb-24 md:pb-32">
+        <section className="relative px-6 pb-16 md:pb-20">
           <div className="mx-auto max-w-6xl grid gap-10 lg:grid-cols-[1fr_3fr] lg:gap-16">
             {/* === TOC === */}
             <aside className="hidden lg:block">
@@ -113,7 +113,7 @@ export function LegalLayout({
             </aside>
 
             {/* === BODY === */}
-            <article className="space-y-12">
+            <article className="space-y-8">
               {sections.map((s, i) => (
                 <FadeIn key={s.heading} delay={i * 60}>
                   <section id={slug(s.heading)} className="scroll-mt-28">
@@ -148,7 +148,7 @@ export function LegalLayout({
               {/* Related links */}
               {related.length > 0 && (
                 <FadeIn delay={400}>
-                  <div className="mt-16 rounded-3xl border border-line bg-surface p-6 md:p-8">
+                  <div className="mt-10 rounded-3xl border border-line bg-surface p-6 md:p-8">
                     <p className="mb-4 text-[10px] tracking-widest text-foreground/50">
                       RELATED DOCUMENTS
                     </p>
