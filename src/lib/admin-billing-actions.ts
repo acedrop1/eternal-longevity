@@ -7,6 +7,7 @@
  * No raw card data is ever accepted — customers add cards on Stripe-hosted
  * pages; these actions work purely with Stripe IDs.
  */
+import { revalidatePath } from 'next/cache';
 import { getSession } from './auth-server';
 import {
   billingConfigured,
@@ -16,8 +17,11 @@ import {
   refundPayment,
   type BillingInterval,
 } from './billing';
-import { createSupabaseAdminClient } from './supabase/admin';
-import { sendEmail } from './email';
+import {
+  createSupabaseAdminClient,
+  supabaseAdminConfigured,
+} from './supabase/admin';
+import { refundedEmail, sendEmail } from './email';
 
 export interface AdminBillingResult {
   ok: boolean;
@@ -212,6 +216,105 @@ export async function adminRefund(input: {
       input.amountDollars ? Math.round(input.amountDollars * 100) : undefined,
     );
     return { ok: true, message: `Refund ${status}.` };
+  } catch (err) {
+    return { ok: false, message: errorMessage(err) };
+  }
+}
+
+/**
+ * Refund an order by its order number.
+ *
+ * The panel that takes a raw `pi_...` id is fine for a one-off, but it makes
+ * the operator go to Stripe, find the payment, copy the id and come back —
+ * which is most of the work they were trying to avoid. The order already
+ * carries its PaymentIntent, so refunding from the order is one click.
+ *
+ * The refund is recorded on the order timeline and the paid flag is cleared on
+ * a full refund, so the member's own order page tells the same story as Stripe.
+ */
+export async function adminRefundOrder(input: {
+  orderNumber: string;
+  amountDollars?: number;
+  reason?: string;
+}): Promise<AdminBillingResult> {
+  const blocked = await guard();
+  if (blocked) return blocked;
+  if (!supabaseAdminConfigured()) {
+    return { ok: false, message: 'Database is not configured.' };
+  }
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select(
+      'id, order_number, total_cents, member_email, member_name, stripe_payment_intent_id, paid_confirmed_at',
+    )
+    .eq('order_number', input.orderNumber.trim())
+    .maybeSingle();
+
+  if (!order) return { ok: false, message: 'No order with that number.' };
+  if (!order.stripe_payment_intent_id) {
+    return {
+      ok: false,
+      message: 'That order has no payment to refund — nothing was ever charged.',
+    };
+  }
+  if (!order.paid_confirmed_at) {
+    return {
+      ok: false,
+      message: 'That order is not marked paid. Check Stripe before refunding.',
+    };
+  }
+
+  const cents = input.amountDollars
+    ? Math.round(input.amountDollars * 100)
+    : undefined;
+  if (cents !== undefined && (cents <= 0 || cents > (order.total_cents ?? 0))) {
+    return { ok: false, message: 'Refund amount must be between $0 and the order total.' };
+  }
+
+  try {
+    const { status } = await refundPayment(order.stripe_payment_intent_id, cents);
+    const full = cents === undefined || cents === order.total_cents;
+
+    await db.from('order_updates').insert({
+      order_id: order.id,
+      label: full ? 'Refunded in full' : `Refunded $${(cents! / 100).toFixed(2)}`,
+      body: input.reason?.trim() || null,
+      author: 'Admin',
+      author_role: 'admin',
+    });
+
+    // Only a full refund un-pays the order; a partial one leaves it paid.
+    if (full) {
+      await db
+        .from('orders')
+        .update({ paid_confirmed_at: null })
+        .eq('id', order.id);
+    }
+
+    if (order.member_email) {
+      const msg = refundedEmail({
+        firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
+        orderNumber: order.order_number,
+        amount: cents ?? order.total_cents ?? 0,
+        full,
+        reason: input.reason?.trim() || undefined,
+      });
+      try {
+        await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
+      } catch {
+        // The money has already moved — a failed receipt must not look like a
+        // failed refund.
+      }
+    }
+
+    revalidatePath('/portal/admin/fulfillment');
+    revalidatePath('/portal/orders');
+    return {
+      ok: true,
+      message: `Refund ${status} for ${order.order_number}.`,
+    };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
   }

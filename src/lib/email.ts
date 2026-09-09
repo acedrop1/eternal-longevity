@@ -296,6 +296,39 @@ function button(label: string, href: string): string {
   )}</a>`;
 }
 
+/** Sent when an order is refunded, in full or in part. */
+export function refundedEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  amount: number;
+  full: boolean;
+  reason?: string;
+}): { subject: string; html: string } {
+  const amt = `$${(input.amount / 100).toFixed(2)}`;
+  return {
+    subject: `Refund issued — ${input.orderNumber}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We have refunded ${escapeHtml(
+        amt,
+      )}.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(
+         input.firstName,
+       )} — we have issued ${
+         input.full ? 'a full refund' : `a partial refund of ${escapeHtml(amt)}`
+       } on order ${escapeHtml(input.orderNumber)}.</p>
+       ${
+         input.reason
+           ? `<p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(
+               input.reason,
+             )}</p>`
+           : ''
+       }
+       <p style="margin:0 0 18px;">It goes back to the card you paid with. Banks usually post it within 5–10 business days — it is out of our hands once Stripe sends it.</p>
+       <p style="margin:0;">Questions? Just reply to this email.</p>`,
+    ),
+  };
+}
+
 /* ------------------------- funnel recovery ------------------------------- */
 
 /**

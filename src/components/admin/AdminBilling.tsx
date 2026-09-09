@@ -5,6 +5,7 @@ import {
   adminChargeOnce,
   adminCreateSubscription,
   adminRefund,
+  adminRefundOrder,
   adminSendCardLink,
   type AdminBillingResult,
 } from '@/lib/admin-billing-actions';
@@ -497,28 +498,41 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
 }
 
 function RefundPanel() {
-  const [paymentId, setPaymentId] = useState('');
+  const [ref, setRef] = useState('');
   const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AdminBillingResult | null>(null);
+
+  // An operator has the order number — it is on the confirmation email, the
+  // member's order page and the support ticket. Requiring a pi_ id meant
+  // going to Stripe first, which is most of the work they wanted to skip.
+  // A pasted pi_ still works, so nothing that used to is broken.
+  const trimmed = ref.trim();
+  const isStripeId = trimmed.startsWith('pi_');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const partial = amount.trim()
       ? ` ${money(Math.round((Number(amount) || 0) * 100))} of`
       : ' all of';
-    if (!window.confirm(`Refund${partial} payment ${paymentId.trim()}?`)) {
+    if (!window.confirm(`Refund${partial} ${trimmed}? This cannot be undone.`)) {
       return;
     }
     setBusy(true);
     setResult(null);
+    const amountDollars = amount.trim() ? Number(amount) || 0 : undefined;
     try {
       setResult(
-        await adminRefund({
-          paymentIntentId: paymentId,
-          amountDollars: amount.trim() ? Number(amount) || 0 : undefined,
-        }),
+        isStripeId
+          ? await adminRefund({ paymentIntentId: trimmed, amountDollars })
+          : await adminRefundOrder({
+              orderNumber: trimmed,
+              amountDollars,
+              reason: reason.trim() || undefined,
+            }),
       );
+      if (!isStripeId) setReason('');
     } catch {
       setResult({ ok: false, message: 'Request failed. Please try again.' });
     } finally {
@@ -529,25 +543,35 @@ function RefundPanel() {
   return (
     <Panel
       eyebrow="REFUND"
-      title="Refund a payment"
-      description="Refund a Stripe payment in full, or enter an amount for a partial refund."
+      title="Refund an order"
+      description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Stripe pi_ id still works for anything without an order."
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className={labelClass}>STRIPE PAYMENT ID</label>
+          <label htmlFor="refund-ref" className={labelClass}>
+            ORDER NUMBER
+          </label>
           <input
-            value={paymentId}
-            onChange={(e) => setPaymentId(e.target.value)}
-            placeholder="pi_3Q..."
+            id="refund-ref"
+            value={ref}
+            onChange={(e) => setRef(e.target.value)}
+            placeholder="EL-1042"
             required
             className={inputClass}
           />
+          {isStripeId && (
+            <p className="mt-1.5 text-xs text-foreground/55">
+              Refunding a raw Stripe payment — this will not appear on the
+              member&apos;s order timeline.
+            </p>
+          )}
         </div>
         <div>
-          <label className={labelClass}>
+          <label htmlFor="refund-amount" className={labelClass}>
             AMOUNT (USD) — LEAVE BLANK FOR FULL REFUND
           </label>
           <input
+            id="refund-amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
@@ -555,6 +579,20 @@ function RefundPanel() {
             className={inputClass}
           />
         </div>
+        {!isStripeId && (
+          <div>
+            <label htmlFor="refund-reason" className={labelClass}>
+              REASON (SHOWN ON THE ORDER TIMELINE)
+            </label>
+            <input
+              id="refund-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Damaged in transit"
+              className={inputClass}
+            />
+          </div>
+        )}
         <SubmitButton busy={busy} label="Issue refund" tone="danger" />
       </form>
       <ResultBanner result={result} />
