@@ -829,12 +829,6 @@ export function CheckoutFlow({
                   You only pay if your prescriber approves your treatment.
                 </div>
 
-                <button
-                  type="button"
-                  className="mt-5 w-full text-left text-[11px] tracking-wider text-accent hover:text-accent-soft"
-                >
-                  ADD PROMO CODE OR GIFT CARD →
-                </button>
               </div>
             </div>
           </div>

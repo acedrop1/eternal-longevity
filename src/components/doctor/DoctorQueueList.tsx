@@ -226,12 +226,6 @@ function DoctorQueueRow({
           >
             Decline
           </button>
-          <button
-            type="button"
-            className="rounded-full border border-line bg-background text-foreground/65 font-medium px-4 py-2 text-xs hover:text-foreground hover:border-foreground/30 transition-colors"
-          >
-            Request more info
-          </button>
         </div>
       )}
 
