@@ -247,9 +247,10 @@ export async function createPayIntentAction(token: string): Promise<{
     currency: 'usd',
     customer: customerId,
     // Neutral naming — peptide names never reach the card statement or
-    // dispute record.
+    // dispute record. No statement_descriptor_suffix: the account carries no
+    // shortened descriptor, so a suffix would be dropped and the charge would
+    // not match what our Terms and Contact page tell members to expect.
     description: `Care program — order ${order.order_number}`,
-    statement_descriptor_suffix: 'CARE',
     metadata: {
       order_number: order.order_number,
       order_id: order.id,

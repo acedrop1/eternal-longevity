@@ -45,11 +45,13 @@ export const BUSINESS_ADDRESS = '825 Riverview Dr, Floor 2, Totowa, NJ 07512';
 export const SUPPORT_EMAIL = 'support@etlongevity.com';
 
 /**
- * Set SUPPORT_PHONE in Vercel to the number Stripe has on the account. Until
- * it is set, every phone block on the site hides itself rather than print a
- * number nobody answers.
+ * Must stay identical to the phone on the Stripe account — a customer-service
+ * number that differs between the site and the merchant record is a routine
+ * reason a restricted-business account gets held. Overridable by env so the
+ * number can change without a deploy.
  */
-export const SUPPORT_PHONE = process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '';
+export const SUPPORT_PHONE =
+  process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '(212) 344-4247';
 
 /** tel: href for SUPPORT_PHONE — digits only, +1 prefixed. */
 export const SUPPORT_PHONE_HREF = SUPPORT_PHONE
@@ -59,11 +61,13 @@ export const SUPPORT_PHONE_HREF = SUPPORT_PHONE
 export const SUPPORT_HOURS = 'Mon–Fri, 9a–6p ET';
 
 /**
- * Exactly what a member sees on their card statement: the account prefix set
- * in Stripe, then the per-charge suffix we attach in pay-on-approval.ts.
- * Stripe joins them with "* " and caps the pair at 22 characters.
+ * Exactly what a member sees on their card statement — the descriptor set on
+ * the Stripe account, verbatim. We deliberately attach no per-charge suffix:
+ * a suffix is only appended when the account also has a *shortened* descriptor
+ * configured, and is silently dropped otherwise, which would leave this page
+ * promising a string that never appears on anyone's statement.
  */
-export const STATEMENT_DESCRIPTOR = 'ET LONGEVITY* CARE';
+export const STATEMENT_DESCRIPTOR = 'ET LONGEVITY';
 
 /** The only state we are licensed to sell into today. */
 export const SERVICE_AREA = 'New Jersey';
