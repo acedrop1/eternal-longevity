@@ -20,7 +20,12 @@ import {
 } from '@/lib/supabase/admin';
 import { getSession } from '@/lib/auth-server';
 import { SITE_URL } from '@/lib/site';
-import { approvedPayNowEmail, sendEmail } from '@/lib/email';
+import {
+  approvedPayNowEmail,
+  chargeFailedInternalEmail,
+  sendEmail,
+  SUPPORT_EMAIL,
+} from '@/lib/email';
 import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
 
@@ -389,13 +394,38 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
     // the charge happened here or through the pay link.
     return { ok: true, charged: intent.status === 'succeeded' };
   } catch (err) {
-    // Card declined, expired, or the bank wants the cardholder present.
-    // Hand them a link rather than leaving an approved order stranded.
+    const reason = err instanceof Error ? err.message : 'charge_failed';
+
+    // The member gets a way to pay. The prescriber does not hear about this —
+    // his work is finished and a declined card is not a clinical matter.
     await issuePayLink(orderNumber);
-    return {
-      ok: true,
-      charged: false,
-      error: err instanceof Error ? err.message : 'charge_failed',
-    };
+
+    await db.from('order_updates').insert({
+      order_id: order.id,
+      label: 'Charge failed after approval',
+      body: `${reason} Member emailed a payment link. Will not ship until paid.`,
+      author: 'System',
+      author_role: 'system',
+    });
+
+    // Somebody has to know a signed prescription is sitting unpaid.
+    const alert = chargeFailedInternalEmail({
+      orderNumber: order.order_number,
+      memberName: order.member_name ?? 'Member',
+      memberEmail: order.member_email,
+      amount,
+      reason,
+    });
+    try {
+      await sendEmail({
+        to: SUPPORT_EMAIL,
+        subject: alert.subject,
+        html: alert.html,
+      });
+    } catch {
+      // The order timeline already records it.
+    }
+
+    return { ok: true, charged: false, error: reason };
   }
 }

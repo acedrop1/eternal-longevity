@@ -355,6 +355,56 @@ export function newVisitForDoctorEmail(input: {
   };
 }
 
+/** No usable card, so the order never reached the prescriber. */
+export function cardNeededEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  accountUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Add a card to finish order ${input.orderNumber}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We need a card before your review.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(
+         input.firstName,
+       )} — your order is saved, but the card on your account either is not there or expires too soon for us to charge it when your prescriber approves.</p>
+       <p style="margin:0 0 22px;">Add a card and we will send your visit straight to the prescriber. <strong style="color:#fff;">Nothing is charged until they approve.</strong></p>
+       ${button('Add a card', input.accountUrl)}
+       <p style="margin:22px 0 0;color:#8a8a8a;font-size:12px;">Order ${escapeHtml(
+         input.orderNumber,
+       )}. Reply to this email if you would rather we sort it out with you.</p>`,
+    ),
+  };
+}
+
+/** A signed prescription whose charge failed. Goes to the team, not the doctor. */
+export function chargeFailedInternalEmail(input: {
+  orderNumber: string;
+  memberName: string;
+  memberEmail: string;
+  amount: number;
+  reason: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Charge failed on a SIGNED order — ${input.orderNumber}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">A signed prescription did not get paid.</h1>
+       <p style="margin:0 0 18px;">The prescriber approved <strong style="color:#fff;">${escapeHtml(
+         input.orderNumber,
+       )}</strong> and the saved card was declined. The member has been emailed a payment link; the prescriber has not been told and does not need to be.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:0 0 18px;">
+         <tr><td style="padding:16px 20px;color:#e5e5e5;font-size:14px;">
+           <strong style="color:#fff;">${escapeHtml(input.memberName)}</strong><br/>
+           <span style="color:#a3a3a3;">${escapeHtml(input.memberEmail)}</span><br/>
+           <span style="color:#a3a3a3;">Amount:</span> $${(input.amount / 100).toFixed(2)}<br/>
+           <span style="color:#a3a3a3;">Stripe said:</span> ${escapeHtml(input.reason)}
+         </td></tr>
+       </table>
+       <p style="margin:0;color:#a3a3a3;font-size:13px;"><strong style="color:#e5e5e5;">This order will not ship.</strong> Submitting to the pharmacy is blocked until it is paid.</p>`,
+    ),
+  };
+}
+
 /* ------------------------- funnel recovery ------------------------------- */
 
 /**

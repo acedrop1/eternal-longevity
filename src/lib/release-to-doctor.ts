@@ -18,11 +18,17 @@
  */
 
 import { revalidatePath } from 'next/cache';
+import { getStripe, stripeConfigured } from '@/lib/stripe';
+import { getOrCreateStripeCustomer } from '@/lib/billing';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { sendEmail, newVisitForDoctorEmail } from '@/lib/email';
+import {
+  sendEmail,
+  newVisitForDoctorEmail,
+  cardNeededEmail,
+} from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 
@@ -49,6 +55,46 @@ function addressNotes(shippingAddress: unknown): string[] {
 }
 
 /**
+ * Is there a card that will still be chargeable when the prescriber signs?
+ *
+ * The point is to keep an unpayable order out of Dr. Elder's queue entirely.
+ * Signing is a clinical act — once he has done it there is a prescription in
+ * the world, and discovering only then that the card is dead means his work is
+ * wasted and someone has to go back to the member. Better to never show it to
+ * him.
+ *
+ * Expiry is checked against next month, not today: a card expiring in three
+ * days will very likely be dead by the time a review finishes.
+ */
+async function usableCard(userId: string | null, email: string | null, name: string | null) {
+  if (!stripeConfigured() || !email) return { ok: false, reason: 'no_stripe' };
+
+  const stripe = getStripe();
+  const customerId = await getOrCreateStripeCustomer({
+    userId: userId ?? '',
+    email,
+    name: name ?? undefined,
+  });
+  const methods = await stripe.paymentMethods.list({
+    customer: customerId,
+    type: 'card',
+  });
+  if (methods.data.length === 0) return { ok: false, reason: 'no_card' };
+
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const live = methods.data.filter((m) => {
+    const c = m.card;
+    if (!c) return false;
+    // exp_month is 1-12; a card is good through the end of its month.
+    return new Date(c.exp_year, c.exp_month, 1) > cutoff;
+  });
+  if (live.length === 0) return { ok: false, reason: 'expired' };
+
+  return { ok: true, reason: 'ok' };
+}
+
+/**
  * Send a new order to the prescriber and tell him about it.
  * Called from placeOrderAction.
  */
@@ -61,12 +107,57 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, status, shipping_address')
+    .select(
+      'id, order_number, user_id, member_name, member_email, status, shipping_address',
+    )
     .eq('order_number', orderNumber)
     .maybeSingle();
 
   if (!order) return { ok: false, error: 'not_found' };
   if (order.status !== 'pending-admin') return { ok: true };
+
+  // Never put an order the card cannot pay for in front of the prescriber.
+  const card = await usableCard(
+    order.user_id,
+    order.member_email,
+    order.member_name,
+  );
+  if (!card.ok && card.reason !== 'no_stripe') {
+    const why =
+      card.reason === 'expired'
+        ? 'The saved card expires too soon to charge on approval.'
+        : 'No usable card is saved for this member.';
+
+    await db.from('orders').update({ admin_note: why }).eq('id', order.id);
+    await db.from('order_updates').insert({
+      order_id: order.id,
+      label: 'Held before review — payment method',
+      body: `${why} The prescriber has not been notified.`,
+      author: 'System',
+      author_role: 'system',
+    });
+
+    if (order.member_email) {
+      const first = (order.member_name ?? '').trim().split(/\s+/)[0] || 'there';
+      const msg = cardNeededEmail({
+        firstName: first,
+        orderNumber: order.order_number,
+        accountUrl: `${SITE_URL}/portal/account`,
+      });
+      try {
+        await sendEmail({
+          to: order.member_email,
+          subject: msg.subject,
+          html: msg.html,
+        });
+      } catch {
+        // Best effort; the order is already annotated for a human.
+      }
+    }
+
+    revalidatePath('/portal/admin/queue');
+    return { ok: true, error: card.reason };
+  }
 
   const notes = addressNotes(order.shipping_address);
 

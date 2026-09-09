@@ -57,6 +57,32 @@ export async function submitToPharmacy(
       .maybeSingle();
     if (!rx) return { ok: false, message: 'Prescription not found.' };
 
+    /*
+     * Do not ship what has not been paid for.
+     *
+     * A prescription can be signed and the card can still fail afterwards —
+     * expired, declined, insufficient funds. Nothing else in the chain checked
+     * this, so an unpaid but signed order could be sent to the pharmacy and
+     * dispensed. The prescriber's signature says the treatment is appropriate;
+     * it says nothing about whether the money arrived.
+     */
+    const { data: paidOrder } = await db
+      .from('orders')
+      .select('order_number, paid_confirmed_at')
+      .eq('user_id', rx.user_id)
+      .not('paid_confirmed_at', 'is', null)
+      .order('paid_confirmed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!paidOrder) {
+      return {
+        ok: false,
+        message:
+          'This member has no paid order. The prescription is signed but the charge has not settled — check the order before submitting.',
+      };
+    }
+
     const { data: patient } = await db
       .from('profiles')
       .select('full_name, date_of_birth')
