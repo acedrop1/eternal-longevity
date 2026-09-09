@@ -25,8 +25,35 @@ interface ProductPDPProps {
   related: ShopProduct[];
 }
 
+/** Collapsible detail row. Native <details> — no state, no library. */
+function Fold({
+  title,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details open={defaultOpen} className="group py-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-foreground marker:hidden">
+        {title}
+        <span
+          aria-hidden
+          className="text-lg font-light leading-none text-foreground/40 transition-transform duration-200 group-open:rotate-45"
+        >
+          +
+        </span>
+      </summary>
+      <div className="pt-3 text-sm leading-relaxed text-foreground/80">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHref }: ProductPDPProps) {
-  const [activeImage, setActiveImage] = useState(0);
   const tiers = cadenceTiersForProduct(product);
   const defaultTier =
     tiers.find((t) => t.key === 'quarterly') ?? tiers[0];
@@ -35,7 +62,6 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
   );
 
   const active = tiers.find((t) => t.key === selectedTier) ?? defaultTier;
-  const heroImage = product.gallery[activeImage] ?? product.image;
 
   const { addItem } = useCart();
   const handleAddToCart = () => addItem(product.id, selectedTier);
@@ -44,90 +70,49 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
     <div className="space-y-12 md:space-y-20">
       {/* === PDP HERO. Two-column on desktop === */}
       <section className="grid gap-8 md:gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-        {/* Gallery */}
-        <div className="grid grid-cols-[68px_1fr] md:grid-cols-[88px_1fr] gap-3 md:gap-4">
-          {/* Thumbnails. Miniature packaging cards matching the hero */}
-          <div className="flex flex-col gap-2 md:gap-3">
-            {product.gallery.map((src, i) => (
-              <button
-                key={src + i}
-                type="button"
-                onClick={() => setActiveImage(i)}
-                aria-label={`Show image ${i + 1}`}
-                style={{
-                  background: `linear-gradient(180deg, ${product.swatch} 0%, var(--bg, #000000) 100%)`,
-                }}
-                className={cn(
-                  'relative aspect-square overflow-hidden rounded-xl transition-all duration-300 ease-out-expo',
-                  i === activeImage
-                    ? 'ring-2 ring-accent ring-offset-2 ring-offset-background'
-                    : 'ring-1 ring-line opacity-80 hover:opacity-100'
-                )}
-              >
-                <Image
-                  src={src}
-                  alt=""
-                  fill
-                  sizes="88px"
-                  className="object-cover opacity-40"
-                />
-                <div
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/70"
-                />
-                <span
-                  className="absolute inset-0 flex items-center justify-center text-[10px] font-bold tracking-widest text-accent"
-                  style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}
-                >
-                  EL
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Hero. Packaging-style */}
+        {/* One image. A thumbnail strip on a vial that looks the same from
+            every angle was four clicks that told the member nothing. */}
+        <div
+          className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
+          style={{
+            background: product.swatch,
+            boxShadow:
+              '0 60px 120px -20px rgba(213,168,80,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
+          }}
+        >
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            priority
+            sizes="(max-width: 1024px) 90vw, 640px"
+            className="object-cover opacity-40"
+          />
           <div
-            className="relative aspect-[4/5] overflow-hidden rounded-[2.25rem] md:rounded-[2.75rem] border border-line"
-            style={{
-              background: product.swatch,
-              boxShadow:
-                '0 60px 120px -20px rgba(213,168,80,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
-            }}
-          >
-            <Image
-              src={heroImage}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 1024px) 90vw, 640px"
-              className="object-cover opacity-40 transition-opacity duration-700 ease-out-expo"
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/80"
-            />
-            <div className="relative flex h-full flex-col items-center justify-between p-6 md:p-8 text-center">
-              <span className="text-[10px] tracking-widest text-white/70">
-                ETERNAL LONGEVITY
-              </span>
-              <div style={{ textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}>
-                <div className="mb-2 text-[10px] tracking-widest text-accent">
-                  {product.tagline.toUpperCase()}
-                </div>
-                <div
-                  className="font-bold tracking-tight text-white"
-                  style={{
-                    fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  {product.name}
-                </div>
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/80"
+          />
+          <div className="relative flex h-full flex-col items-center justify-between p-6 md:p-8 text-center">
+            <span className="text-[10px] tracking-widest text-white/70">
+              ETERNAL LONGEVITY
+            </span>
+            <div style={{ textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}>
+              <div className="mb-2 text-[10px] tracking-widest text-accent">
+                {product.tagline.toUpperCase()}
               </div>
-              <div className="text-[10px] tracking-widest text-white/55">
-                {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
-                {product.cycleLength.toUpperCase()}
+              <div
+                className="font-bold tracking-tight text-white"
+                style={{
+                  fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {product.name}
               </div>
+            </div>
+            <div className="text-[10px] tracking-widest text-white/55">
+              {DELIVERY_LABEL[product.delivery].toUpperCase()} ·{' '}
+              {product.cycleLength.toUpperCase()}
             </div>
           </div>
         </div>
@@ -305,191 +290,81 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               <span>Pause or cancel anytime through the portal.</span>
             </li>
           </ul>
-        </div>
-      </section>
 
-      {/* === BENEFITS === */}
-      <section className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
-        <div>
-          <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-            01 / WHAT IT DOES
-          </p>
-          <h2
-            className="font-semibold tracking-tight text-foreground"
-            style={{
-              fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
-            }}
-          >
-            Engineered for outcomes.
-          </h2>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {product.benefits.map((b, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-line bg-surface p-5"
-            >
-              <div className="mb-3 inline-flex items-center justify-center h-7 w-7 rounded-full bg-accent/10 text-accent">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <p className="text-sm text-foreground/85 leading-relaxed">
-                {b}
+          {/* Detail folds. Everything that used to be four full-width sections
+              the member had to scroll past to reach the next product. */}
+          <div className="mt-8 divide-y divide-line border-y border-line">
+            <Fold title="What it does" defaultOpen>
+              <ul className="space-y-2.5">
+                {product.benefits.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 h-1 w-1 flex-none rounded-full bg-accent" aria-hidden />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </Fold>
+
+            <Fold title="What's included">
+              <ul className="space-y-2.5">
+                {product.whatsIncluded.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 h-1 w-1 flex-none rounded-full bg-accent" aria-hidden />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </Fold>
+
+            <Fold title="Possible side effects">
+              <p className="mb-3 text-foreground/55">
+                Most are mild and dose-related.
               </p>
-            </div>
-          ))}
-        </div>
-      </section>
+              <ul className="space-y-2.5">
+                {product.sideEffects.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 h-1 w-1 flex-none rounded-full bg-foreground/30" aria-hidden />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </Fold>
 
-      {/* === WHAT'S INCLUDED === */}
-      <section className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
-        <div>
-          <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-            02 / WHAT&apos;S INCLUDED
-          </p>
-          <h2
-            className="font-semibold tracking-tight text-foreground"
-            style={{
-              fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
-            }}
-          >
-            In every shipment.
-          </h2>
-        </div>
-        <ul className="space-y-2">
-          {product.whatsIncluded.map((item, i) => (
-            <li
-              key={i}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface p-4 md:p-5"
-            >
-              <span className="text-sm text-foreground/85">{item}</span>
-              <span className="text-[10px] tracking-widest text-foreground/45">
-                INCLUDED
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* === SAFETY: side effects + contraindications === */}
-      <section className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
-        <div>
-          <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-            03 / SAFETY
-          </p>
-          <h2
-            className="font-semibold tracking-tight text-foreground"
-            style={{
-              fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
-            }}
-          >
-            What to know first.
-          </h2>
-          <p className="mt-4 text-sm text-foreground/55 leading-relaxed">
-            Most effects are mild and dose-related. Share your full history in
-            your profile so anything here can be ruled out before you order.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-line bg-surface p-5 md:p-6">
-            <p className="mb-3 text-[10px] tracking-widest text-foreground/45">
-              POSSIBLE SIDE EFFECTS
-            </p>
-            <ul className="space-y-2">
-              {product.sideEffects.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2.5 text-sm text-foreground/80 leading-relaxed"
-                >
-                  <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-foreground/40" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-accent/25 bg-accent/[0.04] p-5 md:p-6">
-            <p className="mb-3 text-[10px] tracking-widest text-accent">
-              DO NOT USE IF
-            </p>
-            <ul className="space-y-2">
-              {product.contraindications.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2.5 text-sm text-foreground/85 leading-relaxed"
-                >
-                  <span aria-hidden className="mt-2 h-1 w-1 flex-shrink-0 rounded-full bg-accent/70" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="sm:col-span-2 text-xs text-foreground/45 leading-relaxed">
-            This list is not exhaustive and is not medical advice. Talk to your
-            own healthcare provider about your history and any medications you
-            take before starting a protocol. Seek immediate care for symptoms
-            such as difficulty breathing, swelling of the face or throat, or
-            severe abdominal pain.
-          </p>
-        </div>
-      </section>
-
-      {/* === HOW IT WORKS === */}
-      <section className="rounded-3xl border border-line bg-surface px-6 py-12 md:px-12 md:py-16">
-        <p className="mb-3 text-[11px] tracking-widest text-foreground/55">
-          04 / FROM SUBSCRIBE TO SHIP
-        </p>
-        <h2
-          className="mb-10 max-w-2xl font-semibold tracking-tight text-foreground"
-          style={{
-            fontSize: 'clamp(1.75rem, 4vw, 3rem)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.02,
-          }}
-        >
-          The flow, end to end.
-        </h2>
-        <ol className="grid gap-4 md:grid-cols-4">
-          {[
-            { n: '01', t: 'Subscribe', b: 'Pick the cadence and confirm.' },
-            { n: '02', t: 'Quality review', b: 'Checked against your intake.' },
-            { n: '03', t: 'Pharmacy compounds', b: 'Within 48 hours of your order.' },
-            { n: '04', t: 'Cold-chain ships', b: 'Tracked, signature required.' },
-          ].map((s) => (
-            <li
-              key={s.n}
-              className="rounded-2xl border border-line bg-background p-5"
-            >
-              <div className="mb-3 text-[10px] tracking-widest text-accent">
-                {s.n}
-              </div>
-              <div className="mb-1 text-base font-semibold tracking-tight text-foreground">
-                {s.t}
-              </div>
-              <p className="text-xs text-foreground/65 leading-relaxed">
-                {s.b}
+            <Fold title="Contraindications">
+              <p className="mb-3 text-foreground/55">
+                Tell your prescriber if any of these apply to you. Your intake
+                is screened against them before anything is approved.
               </p>
-            </li>
-          ))}
-        </ol>
+              <ul className="space-y-2.5">
+                {product.contraindications.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 h-1 w-1 flex-none rounded-full bg-foreground/30" aria-hidden />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </Fold>
+
+            <Fold title="How it works">
+              <ol className="space-y-3">
+                {[
+                  ['Order', 'Pick a cadence. Nothing is charged.'],
+                  ['Prescriber review', 'Within 24 hours, against your intake.'],
+                  ['Pay if approved', 'A secure link, only once approved.'],
+                  ['Compounded and shipped', 'Same day before 4p ET, then 1–2 days cold-chain.'],
+                ].map(([t, b], i) => (
+                  <li key={t} className="flex gap-3">
+                    <span className="text-[11px] tabular-nums text-accent">0{i + 1}</span>
+                    <span>
+                      <span className="block font-semibold text-foreground">{t}</span>
+                      <span className="block text-foreground/60">{b}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </Fold>
+          </div>
+        </div>
       </section>
 
       {/* === RELATED === */}
