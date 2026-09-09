@@ -11,12 +11,11 @@ import {
 import { createOrderAuthAction } from '@/lib/order-payment';
 
 /**
- * Payment at checkout.
+ * Card capture at checkout — saved, not charged.
  *
- * The money settles here, so the prescriber never meets a declined card and
- * the member gets a real receipt straight away rather than a pending line they
- * have to interpret. If the prescriber declines, the refund is automatic and
- * immediate — which is what the copy below promises.
+ * Nothing moves here and nothing appears on the member's statement. When the
+ * prescriber approves, this card is charged off-session; if they decline it
+ * never is, so there is no refund to issue and no processing fee lost.
  */
 function CardCapture({
   onSaved,
@@ -43,15 +42,12 @@ function CardCapture({
       return;
     }
 
-    const { error: confirmErr } = await stripe.confirmPayment({
+    const { error: confirmErr } = await stripe.confirmSetup({
       elements,
       redirect: 'if_required',
     });
     if (confirmErr) {
-      setError(
-        confirmErr.message ??
-          'We could not authorise that card. Try another one.',
-      );
+      setError(confirmErr.message ?? 'We could not save that card.');
       setBusy(false);
       return;
     }
@@ -74,16 +70,13 @@ function CardCapture({
         disabled={!stripe || busy}
         className="mt-5 w-full rounded-full bg-accent py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {busy ? 'Processing…' : `Pay ${amountLabel} and continue`}
+        {busy ? 'Saving…' : 'Save card and continue'}
       </button>
 
       <p className="mt-3 text-center text-[11px] leading-relaxed text-foreground/50">
-        Charged now. If your prescriber decides this treatment is not right for
-        you,{' '}
-        <strong className="text-foreground/70">
-          you are refunded in full
-        </strong>{' '}
-        and nothing ships.
+        <strong className="text-foreground/70">Nothing is charged now.</strong>{' '}
+        If your prescriber approves your treatment, this card is charged{' '}
+        {amountLabel}. If they decide it is not right for you, it never is.
       </p>
     </form>
   );
@@ -137,8 +130,8 @@ export function CheckoutCardStep({
           ✓
         </span>
         <p className="text-sm text-foreground/85">
-          {amountLabel} paid. Refunded in full if your prescriber does not
-          approve your treatment.
+          Card saved. You are charged {amountLabel} only if your prescriber
+          approves — never before, and never if they decline.
         </p>
       </div>
     );

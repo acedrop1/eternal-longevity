@@ -1,26 +1,21 @@
 'use server';
 
 /**
- * Charge at checkout; refund in full if the prescriber declines.
+ * Save the card at checkout; charge it when the prescriber approves.
  *
- * This is the model the category runs on, and the reason for it is that every
- * alternative moves a failure later in the process. Saving a card meant the
- * charge could fail after a prescription was signed. Holding the funds fixed
- * that but put a pending line on the member's statement for days and expired
- * after seven, so a slow review left an uncapturable order.
+ * The member enters a card and is not charged. When Dr. Elder signs, that card
+ * is billed off-session — which is exactly what they authorised at checkout.
+ * A decline charges nothing, so there is nothing to refund.
  *
- * Paying at checkout has neither problem: the money is settled before anyone
- * looks at the order, the member gets a real receipt immediately, and there is
- * no second payment step to fail.
+ * The alternative was charging up front and refunding declines. It is simpler
+ * to reason about, but Stripe keeps roughly 2.9% + 30c on every refund, so
+ * each decline would cost about \$5.50 with no revenue — and a visible refund
+ * rate is exactly what underwriting reads as risk on a restricted business.
+ * Not charging in the first place avoids both.
  *
- * What it costs is the processing fee on a decline — Stripe keeps roughly
- * 2.9% + 30c on a refund. That is the price of the simplicity, and it is only
- * worth paying while declines stay rare. If the decline rate climbs, the
- * authorisation model is the thing to go back to.
- *
- * The refund is automatic and immediate on decline. Nobody should have to
- * remember to issue it, and a member who was told 'refunded in full' should
- * not be waiting on a human.
+ * `refundDeclinedOrder` stays for the case where money did move and has to
+ * come back: an admin denial after payment, or a charge that succeeded on an
+ * order later declined.
  */
 
 import { getStripe, stripeConfigured } from '@/lib/stripe';
@@ -33,10 +28,16 @@ import {
 } from '@/lib/supabase/admin';
 
 /**
- * Create the payment the member confirms at checkout.
+ * Create the setup the member confirms at checkout.
  *
- * `setup_future_usage` saves the card in the same step, so refills do not
- * need a second card entry.
+ * A SetupIntent stores the card against the Stripe customer without moving
+ * money and without a pending line on their statement. `usage: 'off_session'`
+ * tells Stripe the card will be charged later with nobody at the keyboard, so
+ * it collects the right authentication now rather than failing the charge
+ * after a prescription has been signed.
+ *
+ * `amountCents` is unused by the SetupIntent itself and kept only so the
+ * caller can keep passing the order total for display.
  */
 export async function createOrderAuthAction(amountCents: number): Promise<{
   ok: boolean;
@@ -57,19 +58,15 @@ export async function createOrderAuthAction(amountCents: number): Promise<{
     name: user.name,
   });
 
-  const intent = await getStripe().paymentIntents.create({
-    amount: Math.round(amountCents),
-    currency: 'usd',
+  const intent = await getStripe().setupIntents.create({
     customer: customerId,
-    setup_future_usage: 'off_session',
-    description: 'Care program — pending prescriber review',
+    usage: 'off_session',
     automatic_payment_methods: { enabled: true },
   });
 
   return {
     ok: true,
     clientSecret: intent.client_secret ?? undefined,
-    paymentIntentId: intent.id,
   };
 }
 

@@ -519,7 +519,7 @@ export function CheckoutFlow({
       },
       cardLast4,
       promoCode: promo?.ok ? promo.code : undefined,
-      authIntentId: authIntentId ?? undefined,
+      authIntentId: authIntentId || undefined,
     });
 
     // Clear the cart and route to success
@@ -1219,13 +1219,13 @@ export function CheckoutFlow({
           >
             <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
               <p className="mb-1 text-[11px] tracking-widest text-accent">
-                REFUNDED IF NOT APPROVED
+                NOT CHARGED UNTIL APPROVED
               </p>
               <p className="text-sm text-foreground/80 leading-relaxed">
-                You pay now and your prescriber reviews your visit next. If
-                they approve, your prescription goes straight to the pharmacy.
-                If they decide this treatment isn&apos;t right for you, you are
-                refunded in full automatically and nothing ships.
+                Your card is saved now but not charged. Your prescriber reviews
+                your visit first — if they approve, this card is charged and
+                your prescription goes straight to the pharmacy. If they decide
+                this treatment isn&apos;t right for you, it is never charged.
               </p>
             </div>
 

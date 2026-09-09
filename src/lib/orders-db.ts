@@ -16,6 +16,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
+import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -417,12 +418,13 @@ export async function signRxAction(
   );
 
   /*
-   * No payment step here. The member paid at checkout, so signing is purely
-   * the clinical act — which is the point of taking the money up front: the
-   * prescriber never meets a declined card, and the order can go to the
-   * pharmacy the second he signs.
+   * The member saved a card at checkout and authorised exactly this: charge
+   * once a prescriber approves. Ship only if the money actually moved — a
+   * failed charge emails a pay link and alerts the team, and the webhook
+   * submits to the pharmacy once that link is used.
    */
-  await autoSubmitToPharmacy(orderNumber);
+  const charge = await chargeOnApproval(orderNumber);
+  if (charge.charged) await autoSubmitToPharmacy(orderNumber);
 
   revalidatePortal();
   return { ok: true };
