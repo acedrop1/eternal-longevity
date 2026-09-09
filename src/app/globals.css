@@ -88,10 +88,8 @@
   --surface-raised-rgb: 238 234 226;
   --line-rgb: 0 0 0;            /* line tint follows forest */
   --line-opacity: 0.10;
-  /* Solid enough that the fixed header pill stays legible when it scrolls
-     over a dark section below the light product block. */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-strong: rgba(255, 255, 255, 0.85);
+  --glass-bg: rgba(0, 0, 0, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-border-strong: rgba(0, 0, 0, 0.10);
 }

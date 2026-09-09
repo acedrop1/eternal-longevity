@@ -58,7 +58,7 @@ interface PortalShellProps {
 export async function PortalShell({
   user,
   nav = [],
-  bodyTheme = 'light',
+  bodyTheme = 'dark',
   children,
 }: PortalShellProps) {
   const theme = ROLE_THEME[user.role];

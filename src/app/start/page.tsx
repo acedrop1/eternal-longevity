@@ -21,7 +21,6 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const requested = slug ? getShopProduct(slug) : undefined;
   return (
     <>
-      <div className="theme-light bg-background text-foreground">
       <Header />
       <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
         {/* Ambient hero video. Dimmed, anchored at the top, fades into bg */}
@@ -52,7 +51,6 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           }
         />
       </main>
-      </div>
       <Footer />
     </>
   );
