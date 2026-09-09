@@ -24,7 +24,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
   switch (field.type) {
     case 'multi-select':
       return (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div role="group" aria-label={field.label || 'Select all that apply'} className="grid gap-2 sm:grid-cols-2">
           {field.options?.map((opt) => {
             const selected = Array.isArray(value) && (value as string[]).includes(opt.value);
             return (
@@ -97,6 +97,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     case 'pill-grid':
       return (
         <div
+          role="radiogroup"
+          aria-label={field.label || 'Choose an option'}
           className={cn(
             'grid gap-2 sm:grid-cols-3',
             (field.options?.length ?? 0) === 3 &&
@@ -131,6 +133,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
       const isZip = field.id === 'zip';
       return (
         <input
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           type={isPhone ? 'tel' : 'text'}
           inputMode={isPhone || isZip ? 'numeric' : undefined}
           autoComplete={
@@ -168,6 +172,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     case 'text-long':
       return (
         <textarea
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
@@ -190,6 +196,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
             : `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
       return (
         <input
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           type="text"
           inputMode="numeric"
           autoComplete="bday"
@@ -212,6 +220,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     case 'number':
       return (
         <input
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           type="number"
           value={(value as number | string) ?? ''}
           onChange={(e) => {
@@ -237,7 +247,9 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
       return (
         <div>
           <input
-            type="range"
+            id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
+          type="range"
             min={field.min}
             max={field.max}
             value={num}
@@ -256,6 +268,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     case 'email':
       return (
         <input
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           type="email"
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
@@ -267,6 +281,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     case 'password':
       return (
         <input
+          id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
           type="password"
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
@@ -369,7 +385,9 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
           <div>
             <label className="mb-1.5 block text-xs tracking-wider text-foreground/60">PASSWORD</label>
             <input
-              type="password"
+              id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
+          type="password"
               value={acc.password ?? ''}
               onChange={(e) => onChange({ ...acc, password: e.target.value })}
               placeholder="Create a password"
@@ -379,7 +397,9 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
           <div>
             <label className="mb-1.5 block text-xs tracking-wider text-foreground/60">CONFIRM PASSWORD</label>
             <input
-              type="password"
+              id={`fld-${field.id}`}
+          aria-label={field.label || undefined}
+          type="password"
               value={acc.confirm ?? ''}
               onChange={(e) => onChange({ ...acc, confirm: e.target.value })}
               placeholder="Same password"
