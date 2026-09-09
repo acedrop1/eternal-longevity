@@ -925,54 +925,64 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
 
 /** Cadence helper. Return per-month price and discount label. */
 export interface CadenceTier {
-  key: 'monthly' | 'quarterly' | 'annual' | 'once';
+  key: 'monthly' | 'quarterly' | 'once';
   label: string;
   description: string;
   total: number;
   perMonth: number;
   saveLabel?: string;
+  /** What the plan actually includes, shown under the selected option. */
+  breakdown: string[];
 }
 
 export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
   const m = p.pricing.monthly;
   const q = p.pricing.quarterly;
-  const a = p.pricing.annual;
   const qPerMonth = Math.round(q / 3);
-  const aPerMonth = Math.round(a / 12);
   const qSave = Math.round((1 - q / (m * 3)) * 100);
-  const aSave = Math.round((1 - a / (m * 12)) * 100);
   return [
     {
       key: 'monthly',
       label: 'Monthly',
-      description: 'Billed every month · Cancel anytime',
+      description: 'Billed monthly · Cancel anytime',
       total: m,
       perMonth: m,
+      breakdown: [
+        'Billed monthly, shipped monthly',
+        'Every refill re-reviewed by your prescriber',
+        'Adjust your refill date whenever you like',
+        'Pause or cancel before the next billing date',
+        'Ongoing prescriber messaging throughout',
+      ],
     },
     {
       key: 'quarterly',
       label: 'Quarterly',
-      description: 'Billed every 3 months · Cancel between cycles',
+      description: 'Billed every 3 months · Ships every 3 months',
       total: q,
       perMonth: qPerMonth,
       saveLabel: qSave > 0 ? `Save ${qSave}%` : undefined,
-    },
-    {
-      key: 'annual',
-      label: 'Annual',
-      description: 'Billed once a year · Best value',
-      total: a,
-      perMonth: aPerMonth,
-      saveLabel: aSave > 0 ? `Save ${aSave}%` : undefined,
+      breakdown: [
+        'Billed every 3 months, shipped every 3 months',
+        'Every refill re-reviewed by your prescriber',
+        'Adjust your refill date whenever you like',
+        'Pause or cancel before the next billing date',
+        'Ongoing prescriber messaging throughout',
+      ],
     },
     {
       key: 'once',
-      label: 'One-time purchase',
-      description: 'Single order · No subscription',
-      // ponytail: flat $20 premium over the monthly rate, mirroring the
-      // competitor's spread; tune per-product if merch wants finer control.
+      label: 'One-time',
+      description: 'A single order · No subscription',
+      // ponytail: flat $20 premium over the monthly rate; tune per product if
+      // merch ever wants finer control.
       total: m + 20,
       perMonth: m + 20,
+      breakdown: [
+        'One order, one charge, nothing recurring',
+        'Reviewed by a prescriber like any other order',
+        'Order again whenever you want more',
+      ],
     },
   ];
 }

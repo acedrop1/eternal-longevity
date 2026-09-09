@@ -272,7 +272,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           </span>
           {active.saveLabel && (
             <span className="text-base text-foreground/40 line-through">
-              ${product.pricing.monthly * (active.key === 'quarterly' ? 3 : active.key === 'annual' ? 12 : 1)}
+              ${product.pricing.monthly * (active.key === 'quarterly' ? 3 : 1)}
             </span>
           )}
           <span className="text-2xl font-semibold tracking-tight text-foreground">

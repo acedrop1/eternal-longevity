@@ -5,7 +5,7 @@
  * reference them without importing a 'use client' module.
  */
 
-export type Cadence = 'monthly' | 'quarterly' | 'annual' | 'once';
+export type Cadence = 'monthly' | 'quarterly' | 'once';
 
 export interface CartItem {
   productId: string;

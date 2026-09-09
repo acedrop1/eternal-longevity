@@ -216,7 +216,7 @@ export function ShopCatalog({
                     {startPath ? 'FROM' : 'SUBSCRIBE FROM'}
                   </div>
                   <div className="text-lg font-semibold text-foreground tracking-tight">
-                    ${Math.round(p.pricing.annual / 12)}
+                    ${Math.round(p.pricing.quarterly / 3)}
                     <span className="text-sm text-foreground/72 font-normal">
                       /mo
                     </span>

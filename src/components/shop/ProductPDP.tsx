@@ -167,7 +167,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
           {/* Every option carries its own price. Before this it read
               "Quarterly -9%" with no number — the member had to select an
               option to find out what it cost. */}
-          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mb-3 grid grid-cols-3 gap-2">
             {tiers.map((t) => {
               const isActive = t.key === selectedTier;
               return (
@@ -216,6 +216,23 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
               );
             })}
           </div>
+
+          {/* What the selected plan actually includes. The prices alone do not
+              say whether medication ships monthly or quarterly, and that is
+              the thing people actually want to know. */}
+          <ul className="mb-6 space-y-2 rounded-2xl border border-line bg-surface px-4 py-3.5">
+            {active.breakdown.map((line) => (
+              <li
+                key={line}
+                className="flex items-start gap-2.5 text-[13px] leading-relaxed text-foreground/80"
+              >
+                <span aria-hidden className="mt-[3px] flex-none text-accent">
+                  ✓
+                </span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
 
           {/* CTA. Members add to cart; public visitors start the assessment. */}
           {ctaHref ? (
@@ -482,7 +499,7 @@ export function RelatedProducts({
                 </div>
                 <div className="p-5 flex items-center justify-between">
                   <div className="text-sm text-foreground/78 truncate pr-2">
-                    From ${Math.round(r.pricing.annual / 12)}/mo
+                    From ${Math.round(r.pricing.quarterly / 3)}/mo
                   </div>
                   <span
                     aria-hidden
