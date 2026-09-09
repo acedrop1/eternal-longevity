@@ -282,6 +282,31 @@ export function orderConfirmationEmail(input: {
 }
 
 /** Order received — nothing charged yet, prescriber is reviewing. */
+/**
+ * Sent when a prescriber declines. The whole promise of this service is that
+ * nothing happens without a decision — so the member has to be told when the
+ * decision is no, and told that they were not charged.
+ */
+export function declinedEmail(input: {
+  firstName: string;
+  reason?: string;
+}): { subject: string; html: string } {
+  return {
+    subject: 'About your Eternal Longevity visit',
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your prescriber could not approve this treatment.</h1>
+       <p style="margin:0 0 18px;">Thanks ${escapeHtml(input.firstName)}. A licensed prescriber reviewed your visit and decided this treatment is not appropriate for you right now. That is a clinical decision, and it is made to keep you safe.</p>
+       <p style="margin:0 0 18px;"><strong style="color:#fff;">You have not been charged anything.</strong> There is no payment link and no order to cancel.</p>
+       ${
+         input.reason
+           ? `<p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(input.reason)}</p>`
+           : ''
+       }
+       <p style="margin:0 0 18px;">If you would like to talk it through, reply to this email or message us from your portal. We would also encourage you to raise it with your own physician.</p>`,
+    ),
+  };
+}
+
 export function orderReceivedEmail(input: {
   firstName: string;
   orderNumber: string;

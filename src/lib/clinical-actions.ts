@@ -92,11 +92,14 @@ export async function declineIntake(input: {
   }
   try {
     const db = createSupabaseAdminClient();
-    const { error } = await db
+    const { data: intake, error } = await db
       .from('intake_submissions')
       .update({ status: 'declined', review_notes: input.note.trim() })
-      .eq('id', input.intakeId);
+      .eq('id', input.intakeId)
+      .select('email, answers')
+      .maybeSingle();
     if (error) return { ok: false, message: error.message };
+    await notifyDeclined(intake, input.note);
     return { ok: true, message: 'Intake declined.' };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
@@ -181,6 +184,31 @@ export async function signPrescription(input: {
   }
 }
 
+
+/**
+ * Tell the member their visit was declined.
+ *
+ * The clinical note is written for the chart, not for the patient, so it is
+ * deliberately not forwarded — the email says a prescriber decided against it
+ * and that nothing was charged, and invites them to reply.
+ */
+async function notifyDeclined(
+  intake: { email?: string | null; answers?: unknown } | null,
+  _clinicalNote: string,
+): Promise<void> {
+  const email = intake?.email;
+  if (!email) return;
+  const answers = (intake?.answers ?? {}) as Record<string, unknown>;
+  const firstName =
+    (typeof answers.first_name === 'string' && answers.first_name.trim()) || 'there';
+  const msg = declinedEmail({ firstName });
+  try {
+    await sendEmail({ to: email, subject: msg.subject, html: msg.html });
+  } catch {
+    // A failed notification must not roll back the clinical decision.
+  }
+}
+
 /** A physician declines an approved intake on clinical grounds. */
 export async function declineClinically(input: {
   intakeId: string;
@@ -193,11 +221,14 @@ export async function declineClinically(input: {
   }
   try {
     const db = createSupabaseAdminClient();
-    const { error } = await db
+    const { data: intake, error } = await db
       .from('intake_submissions')
       .update({ status: 'declined', review_notes: input.note.trim() })
-      .eq('id', input.intakeId);
+      .eq('id', input.intakeId)
+      .select('email, answers')
+      .maybeSingle();
     if (error) return { ok: false, message: error.message };
+    await notifyDeclined(intake, input.note);
     return { ok: true, message: 'Intake declined on clinical review.' };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
