@@ -9,6 +9,7 @@
  * status; an approved intake is what surfaces in the physician's queue.
  */
 import { getSession } from './auth-server';
+import { declinedEmail, sendEmail } from './email';
 import type { Json } from './database.types';
 import {
   createSupabaseAdminClient,
