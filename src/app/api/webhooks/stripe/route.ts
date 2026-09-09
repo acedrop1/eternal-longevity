@@ -24,6 +24,7 @@ import {
   orderConfirmationEmail,
   sendEmail,
 } from '@/lib/email';
+import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -98,6 +99,22 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         .eq('stripe_payment_intent_id', pi.id);
       await addOrderUpdate(db, pi.id, 'Payment received', 'Your card was charged successfully.');
       await sendOrderConfirmation(db, pi.id);
+
+      /*
+       * Covers the order that was signed while unpaid and settled later
+       * through the emailed link. autoSubmitToPharmacy is idempotent, so the
+       * normal path — where signing already submitted it — does nothing here.
+       */
+      {
+        const { data: o } = await db
+          .from('orders')
+          .select('order_number, status')
+          .eq('stripe_payment_intent_id', pi.id)
+          .maybeSingle();
+        if (o?.order_number && o.status !== 'pending-admin') {
+          await autoSubmitToPharmacy(o.order_number);
+        }
+      }
       break;
     }
 

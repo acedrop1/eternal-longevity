@@ -17,6 +17,7 @@
 import { revalidatePath } from 'next/cache';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { captureOrderAuth, releaseOrderAuth } from '@/lib/order-auth';
+import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { orderReceivedEmail, sendEmail } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
@@ -427,9 +428,21 @@ export async function signRxAction(
    * it charges the saved card, and emails a pay link if even that fails.
    */
   const captured = await captureOrderAuth(orderNumber);
-  if (!captured.ok || !captured.captured) {
-    await chargeOnApproval(orderNumber);
-  }
+  const paid =
+    captured.ok && captured.captured
+      ? true
+      : (await chargeOnApproval(orderNumber)).charged === true;
+
+  /*
+   * Straight to Kaduceus, on the capture result rather than on the order's
+   * paid_confirmed_at — that column is written by the Stripe webhook, which
+   * arrives asynchronously and will usually not have landed yet.
+   *
+   * If the money did not actually move, the order stops here. It is signed and
+   * unpaid, the member has a pay link, and the webhook will submit it once
+   * they use it.
+   */
+  if (paid) await autoSubmitToPharmacy(orderNumber);
 
   revalidatePortal();
   return { ok: true };
