@@ -128,7 +128,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
   const handleAddToCart = () => addItem(product.id, selectedTier);
 
   return (
-    <div className="md:hidden -mx-6 -mt-8 relative bg-background">
+    <div className="relative -mx-4 -mt-8 bg-background sm:-mx-6 md:hidden">
       {/* ===== 1) STICKY GALLERY ===== */}
       <div
         className="sticky top-0 z-0 w-full bg-background px-4 pt-[76px] pb-2"

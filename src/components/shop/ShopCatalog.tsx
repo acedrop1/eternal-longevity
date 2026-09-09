@@ -60,7 +60,21 @@ export function ShopCatalog({
     <div>
       {/* Search + Category pill row. Sticky on scroll.
           On mobile the portal header has a sub-nav row, so sticky-top is higher. */}
-      <div className="sticky top-[100px] md:top-14 z-30 -mx-4 md:-mx-6 mb-10 bg-background/90 backdrop-blur py-3 md:py-4 px-4 md:px-6 border-b border-line">
+      {/* Search + category filter.
+          Was a full-bleed bar pulled outside its container with -mx-4, which
+          made the page wider than the viewport — and with overflow-x:clip on
+          the root that surplus was sliced off rather than scrolled, taking the
+          right edge of every card with it.
+          Now an inset frosted panel: fixed to the bottom on a phone, where the
+          thumb is and where it stops covering the cards, and sticky at the top
+          from md where a filter bar belongs. */}
+      <div
+        className={cn(
+          'z-40 rounded-2xl border border-white/[0.10] bg-background/70 px-3 py-3 backdrop-blur-xl',
+          'fixed inset-x-3 bottom-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.9)]',
+          'md:static md:inset-x-auto md:bottom-auto md:sticky md:top-16 md:mb-10 md:px-4 md:py-4 md:shadow-none',
+        )}
+      >
         {/* Search input */}
         <div className="mb-3 relative">
           <svg
@@ -110,7 +124,7 @@ export function ShopCatalog({
           )}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           <Pill active={filter === 'all'} onClick={() => setFilter('all')}>
             All products
           </Pill>
@@ -127,7 +141,7 @@ export function ShopCatalog({
       </div>
 
       {/* Product grid */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 pb-40 sm:gap-4 md:gap-6 md:pb-0 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => (
           <div
             key={p.id}
