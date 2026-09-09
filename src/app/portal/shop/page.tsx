@@ -47,26 +47,6 @@ export default async function ShopPage() {
           or annually. And cancel between cycles, never mid-cycle.
         </p>
 
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { icon: '⚕', label: 'Third-party tested' },
-            { icon: '✓', label: '503A pharmacy' },
-            { icon: '◯', label: '99%+ purity' },
-            { icon: '⤴', label: 'Cold-chain shipping' },
-          ].map((t) => (
-            <div
-              key={t.label}
-              className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2"
-            >
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-foreground/5 text-accent text-xs">
-                {t.icon}
-              </span>
-              <span className="text-[11px] tracking-wider text-foreground/70">
-                {t.label.toUpperCase()}
-              </span>
-            </div>
-          ))}
-        </div>
       </header>
 
       <ShopCatalog />
