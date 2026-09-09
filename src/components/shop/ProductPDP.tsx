@@ -71,9 +71,9 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
   return (
     <div className="space-y-12 md:space-y-20">
       {/* === PDP HERO. Two-column on desktop === */}
-      <section className="grid gap-8 md:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(380px,470px)] lg:gap-12 xl:gap-16">
+      <section className="grid items-start gap-8 md:gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
         <div
-          className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-line md:rounded-[2.5rem]"
+          className="relative mx-auto aspect-[4/5] w-full max-w-[460px] overflow-hidden rounded-[2rem] border border-line md:rounded-[2.5rem] lg:mx-0 lg:max-w-none xl:max-w-[560px]"
           style={{
             background: product.swatch,
             boxShadow:
@@ -272,10 +272,15 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             .
           </p>
 
-          {/* Detail folds. Everything that used to be four full-width sections
-              the member had to scroll past to reach the next product. */}
-          <div className="mt-8 divide-y divide-line border-y border-line">
-            <Fold title="What it does" defaultOpen>
+        </div>
+      </section>
+
+      {/* Detail, spread across the width rather than stacked in a 470px
+          column the member had to scroll to read. Two columns from lg, so
+          every fold is visible at once and opening one barely moves the page. */}
+      <section className="grid gap-x-12 gap-y-0 border-y border-line lg:grid-cols-2">
+        <div className="divide-y divide-line">
+  <Fold title="What it does" defaultOpen>
               <p className="mb-3 text-foreground/72">
                 Best for: {product.bestFor}
               </p>
@@ -313,8 +318,10 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                 ))}
               </ul>
             </Fold>
+        </div>
+        <div className="divide-y divide-line border-t border-line lg:border-t-0">
 
-            <Fold title="Contraindications">
+            <Fold title="Contraindications" defaultOpen>
               <p className="mb-3 text-foreground/72">
                 Tell your prescriber if any of these apply to you. Your intake
                 is screened against them before anything is approved.
@@ -347,7 +354,6 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
                 ))}
               </ol>
             </Fold>
-          </div>
         </div>
       </section>
 
