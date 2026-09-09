@@ -29,12 +29,27 @@ const COL_LINKS = [
   {
     title: 'Legal',
     links: [
-      { label: 'Compliance', href: '/compliance' },
       { label: 'Terms of Service', href: '/legal/terms' },
       { label: 'Privacy Policy', href: '/legal/privacy' },
-      { label: 'Consent Policy', href: '/legal/consent' },
+      { label: 'Cookie Notice', href: '/legal/cookies' },
+      { label: 'Informed Consent', href: '/legal/consent' },
       { label: 'Refund Policy', href: '/legal/refunds' },
-      { label: 'Shipping Policy', href: '/legal/shipping' },
+      { label: 'Cancellation Policy', href: '/legal/cancellation' },
+      { label: 'Shipping & Delivery', href: '/legal/shipping' },
+      { label: 'Accessibility', href: '/legal/accessibility' },
+    ],
+  },
+  {
+    title: 'Medical & Safety',
+    links: [
+      { label: 'Medical Disclaimer', href: '/legal/medical-disclaimer' },
+      { label: 'Prescription Policy', href: '/legal/prescription-policy' },
+      { label: 'Patient Eligibility', href: '/legal/eligibility' },
+      { label: 'Compounded Medication', href: '/legal/compounded-medication' },
+      { label: 'Adverse Event Reporting', href: '/legal/adverse-events' },
+      { label: 'Pharmacy Fulfillment', href: '/legal/pharmacy-fulfillment' },
+      { label: 'State Availability', href: '/legal/state-availability' },
+      { label: 'Compliance', href: '/compliance' },
     ],
   },
 ];
@@ -43,7 +58,7 @@ export function Footer() {
   return (
     <footer className="border-t border-line bg-background px-6 py-16 md:py-20">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-12 md:grid-cols-[1.5fr_repeat(3,1fr)]">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
             <div className="mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -120,10 +135,14 @@ export function Footer() {
             © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
-            Eternal Longevity offers premium peptide protocols strictly for
-            health optimization. Not a substitute for primary care. Prescription
-            required; ships from a licensed 503A pharmacy. Currently available
-            to New Jersey residents. 18+.
+            Prescriptions are written by a New Jersey&ndash;licensed physician
+            following clinical review, and dispensed by an independently
+            licensed, FDA-registered 503A compounding pharmacy. Eternal
+            Longevity is not a pharmacy. Compounded medications are not
+            FDA-approved. These statements have not been evaluated by the Food
+            and Drug Administration; these products are not intended to
+            diagnose, treat, cure, or prevent any disease. Not a substitute for
+            primary care. Available to New Jersey residents only. 18+.
           </p>
         </div>
       </div>
