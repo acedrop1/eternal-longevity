@@ -36,7 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     >
       <form
         action={loginAction}
-        className="rounded-3xl border border-line bg-surface/85 backdrop-blur p-6 md:p-8 space-y-5"
+        className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
       >
         {notice === 'check-email' && (
           <div className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">

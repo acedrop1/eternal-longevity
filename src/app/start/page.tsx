@@ -36,7 +36,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
         {/* Subtle gold halo top */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[100px]"
+          className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[100px]"
         />
 
         <IntakeWizard

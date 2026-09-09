@@ -20,7 +20,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   if (!supabaseConfigured) {
     return (
       <AuthShell eyebrow="GET STARTED" title="Create your account.">
-        <div className="rounded-3xl border border-line bg-surface/85 backdrop-blur p-6 md:p-8 text-center space-y-4">
+        <div className="rounded-3xl border border-line bg-surface p-6 md:p-8 text-center space-y-4">
           <p className="text-sm text-foreground/70 leading-relaxed">
             Account sign-up turns on once the backend is connected. For now you
             can explore the portal with a demo login.
@@ -61,7 +61,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     >
       <form
         action={signupAction}
-        className="rounded-3xl border border-line bg-surface/85 backdrop-blur p-6 md:p-8 space-y-5"
+        className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
       >
         {error === 'invalid' && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">

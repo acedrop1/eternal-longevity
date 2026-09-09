@@ -25,7 +25,7 @@ export default function GlobalError({
     <main className="relative min-h-screen bg-background overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-1/4 left-1/2 h-[60vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
+        className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[60vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
       />
 
       <section className="relative mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 text-center pt-20 pb-16">

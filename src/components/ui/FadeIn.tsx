@@ -32,7 +32,7 @@ export function FadeIn({
   return (
     <Component
       ref={ref as React.RefObject<HTMLDivElement>}
-      className={cn('will-change-transform', className)}
+      className={className}
       style={{
         opacity: inView ? 1 : 0,
         transform: inView ? 'translateY(0)' : `translateY(${y}px)`,

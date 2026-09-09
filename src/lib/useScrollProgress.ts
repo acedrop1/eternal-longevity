@@ -20,22 +20,35 @@ export function useScrollProgress(
     const el = ref.current;
     if (!el) return;
 
-    const update = () => {
+    let raf = 0;
+    let last = -1;
+    const measure = () => {
+      raf = 0;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
+      // Off screen: nothing to drive, so do not touch React state at all.
+      if (rect.bottom < 0 || rect.top > vh) return;
       const startOffset = offset.start ?? 0;
       const endOffset = offset.end ?? 0;
       // 0 when top of el = bottom of viewport; 1 when bottom of el = top of viewport
       const total = rect.height + vh - startOffset - endOffset;
       const scrolled = vh - rect.top - startOffset;
       const p = Math.min(1, Math.max(0, scrolled / total));
+      // Sub-pixel scroll deltas do not deserve a re-render.
+      if (Math.abs(p - last) < 0.002) return;
+      last = p;
       setProgress(p);
     };
+    // Coalesce the burst of scroll events into one measurement per frame.
+    const update = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
 
-    update();
+    measure();
     window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     return () => {
+      if (raf) cancelAnimationFrame(raf);
       window.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
     };

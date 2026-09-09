@@ -21,7 +21,7 @@ export default async function ForgotPasswordPage({
   if (!supabaseConfigured) {
     return (
       <AuthShell eyebrow="ACCOUNT" title="Reset your password.">
-        <div className="rounded-3xl border border-line bg-surface/85 backdrop-blur p-6 md:p-8 text-center space-y-4">
+        <div className="rounded-3xl border border-line bg-surface p-6 md:p-8 text-center space-y-4">
           <p className="text-sm text-foreground/70 leading-relaxed">
             Password reset turns on once the backend is connected. Until then,
             the portal uses demo logins — no password needed.
@@ -76,7 +76,7 @@ export default async function ForgotPasswordPage({
       ) : (
         <form
           action={requestPasswordResetAction}
-          className="rounded-3xl border border-line bg-surface/85 backdrop-blur p-6 md:p-8 space-y-5"
+          className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
         >
           <p className="text-sm text-foreground/65 leading-relaxed">
             Enter your account email and we&apos;ll send a link to set a new

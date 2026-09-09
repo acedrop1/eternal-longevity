@@ -98,7 +98,7 @@ export default function AboutPage() {
         <section className="relative px-6 pt-20 pb-14 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-1/3 right-0 h-[60vh] w-[60vh] translate-x-1/3 rounded-full bg-accent/[0.08] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -top-1/3 right-0 h-[60vh] w-[60vh] translate-x-1/3 rounded-full bg-accent/[0.08] blur-[120px]"
           />
           <div className="relative mx-auto max-w-6xl grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16 lg:items-end">
             <div>
@@ -423,7 +423,7 @@ export default function AboutPage() {
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
           />
           <div className="relative mx-auto max-w-4xl text-center">
             <FadeIn>
@@ -457,7 +457,7 @@ export default function AboutPage() {
         <section className="relative px-6 py-16 md:py-14 bg-surface overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
           />
           <div className="relative mx-auto max-w-3xl text-center">
             <FadeIn>

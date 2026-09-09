@@ -40,7 +40,7 @@ export default async function PublicProductPage({ params }: PageProps) {
           the way The Protocole drops into its dark step-by-step section. */}
       <div className="theme-light bg-background text-foreground">
       <Header />
-      <main className="bg-background pb-12 pt-24 text-foreground md:pb-16 md:pt-28">
+      <main className="bg-background pb-12 pt-0 text-foreground md:pb-16 md:pt-28">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 xl:max-w-[88rem] xl:px-10 2xl:max-w-[104rem] 2xl:px-14">
           <nav className="mb-8 hidden md:flex items-center gap-2 text-[11px] tracking-widest text-foreground/55">
             <Link href="/shop" className="hover:text-foreground transition-colors">

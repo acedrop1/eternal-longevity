@@ -83,11 +83,11 @@ export function Science() {
 
         {/* Faint ambient drops on the dark bg */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <span className="absolute top-[14%] right-[20%] h-3 w-3 rounded-full bg-accent/20 blur-[1px]" />
-          <span className="absolute top-[26%] right-[44%] h-2 w-2 rounded-full bg-foreground/10 blur-[1px]" />
-          <span className="absolute top-[58%] right-[16%] h-4 w-4 rounded-full bg-accent/15 blur-[2px]" />
-          <span className="absolute top-[72%] right-[36%] h-2 w-2 rounded-full bg-foreground/8 blur-[1px]" />
-          <span className="absolute top-[44%] right-[8%] h-2.5 w-2.5 rounded-full bg-accent/25 blur-[1px]" />
+          <span className="hidden md:block absolute top-[14%] right-[20%] h-3 w-3 rounded-full bg-accent/20 blur-[1px]" />
+          <span className="hidden md:block absolute top-[26%] right-[44%] h-2 w-2 rounded-full bg-foreground/10 blur-[1px]" />
+          <span className="hidden md:block absolute top-[58%] right-[16%] h-4 w-4 rounded-full bg-accent/15 blur-[2px]" />
+          <span className="hidden md:block absolute top-[72%] right-[36%] h-2 w-2 rounded-full bg-foreground/8 blur-[1px]" />
+          <span className="hidden md:block absolute top-[44%] right-[8%] h-2.5 w-2.5 rounded-full bg-accent/25 blur-[1px]" />
         </div>
 
         <div className="relative h-full px-6 md:px-12">

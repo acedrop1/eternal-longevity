@@ -21,7 +21,7 @@ export default function PublicShopPage() {
         <section className="relative isolate overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 px-6">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-1/3 left-1/2 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -top-1/3 left-1/2 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
           />
           <div className="relative mx-auto max-w-5xl text-center">
             <FadeIn>

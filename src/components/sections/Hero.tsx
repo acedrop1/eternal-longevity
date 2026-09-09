@@ -42,7 +42,7 @@ export function Hero() {
       {/* Drifting gold halo (Saki pattern) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-1/3 left-1/2 h-[80vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.05] blur-[120px] anim-halo"
+        className="hidden md:block pointer-events-none absolute -top-1/3 left-1/2 h-[80vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.05] blur-[120px] anim-halo"
       />
 
       {/* Content */}

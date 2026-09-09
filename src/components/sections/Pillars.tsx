@@ -46,7 +46,7 @@ export function Pillars() {
       {/* Atmospheric top spotlight */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-20 left-1/2 h-[40vh] w-[60vw] -translate-x-1/2 rounded-full bg-accent/[0.04] blur-[100px]"
+        className="hidden md:block pointer-events-none absolute -top-20 left-1/2 h-[40vh] w-[60vw] -translate-x-1/2 rounded-full bg-accent/[0.04] blur-[100px]"
       />
 
       <div className="relative mx-auto max-w-6xl">

@@ -118,7 +118,7 @@ export default function SciencePage() {
         <section className="relative px-6 pt-20 pb-14 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-1/4 left-1/2 h-[50vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[50vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
           />
           <div className="relative mx-auto max-w-5xl text-center">
             <FadeIn>
@@ -341,7 +341,7 @@ export default function SciencePage() {
         <section className="relative px-6 py-16 md:py-14 bg-surface overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute top-1/2 right-0 h-[40vh] w-[40vh] -translate-y-1/2 translate-x-1/3 rounded-full bg-accent/[0.06] blur-[100px]"
+            className="hidden md:block pointer-events-none absolute top-1/2 right-0 h-[40vh] w-[40vh] -translate-y-1/2 translate-x-1/3 rounded-full bg-accent/[0.06] blur-[100px]"
           />
           <div className="relative mx-auto max-w-6xl">
             <div className="mb-10 max-w-3xl">
@@ -463,7 +463,7 @@ export default function SciencePage() {
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
           />
           <div className="relative mx-auto max-w-3xl text-center">
             <FadeIn>

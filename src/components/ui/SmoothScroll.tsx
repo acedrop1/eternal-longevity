@@ -43,6 +43,11 @@ export function SmoothScroll() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
+    // Touch devices get native momentum and nothing else: no per-frame loop,
+    // no observer. Lenis only ever improved wheel and trackpad scrolling.
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      return;
+    }
 
     const lenis = new Lenis({
       lerp: 0.1, // weighted glide, still responsive to a fast flick

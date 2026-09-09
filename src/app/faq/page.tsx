@@ -49,7 +49,7 @@ export default function FAQPage() {
         <section className="relative px-6 pt-20 pb-16 md:pt-24 md:pb-16 overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.08] blur-[120px]"
           />
           <div className="relative mx-auto max-w-5xl text-center">
             <FadeIn>
@@ -189,7 +189,7 @@ export default function FAQPage() {
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
+            className="hidden md:block pointer-events-none absolute -bottom-1/4 left-1/2 h-[40vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
           />
           <div className="relative mx-auto max-w-3xl text-center">
             <FadeIn>
