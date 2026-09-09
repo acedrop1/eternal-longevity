@@ -15,7 +15,7 @@ const FEATURES = [
   { label: 'Tested for Purity & Sterility', ours: true, theirs: 'Maybe' },
   { label: 'Personalized Dosing', ours: true, theirs: false },
   { label: 'Concierge Support', ours: true, theirs: false },
-  { label: 'HIPAA-Compliant Records', ours: true, theirs: false },
+  { label: 'Private, Encrypted Records', ours: true, theirs: false },
   { label: 'Cold-Chain Shipping', ours: true, theirs: false },
 ];
 

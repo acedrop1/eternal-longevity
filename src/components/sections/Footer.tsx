@@ -63,7 +63,7 @@ export function Footer() {
                 LICENSED 503A PHARMACY
               </span>
               <span className="pill glass text-[10px] tracking-widest text-foreground/70 px-3 py-1.5">
-                HIPAA COMPLIANT
+                NO TRACKERS · NO DATA SOLD
               </span>
             </div>
 

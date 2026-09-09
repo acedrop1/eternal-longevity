@@ -59,11 +59,11 @@ const STANDARDS: StandardItem[] = [
     ),
   },
   {
-    name: 'HIPAA Compliant',
+    name: 'Private by Default',
     el: (
       <span className="text-lg md:text-xl italic tracking-tight leading-none">
-        <span className="font-black">HIPAA</span>
-        <span className="font-light"> compliant</span>
+        <span className="font-black">Private</span>
+        <span className="font-light"> by default</span>
       </span>
     ),
   },

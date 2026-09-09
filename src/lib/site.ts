@@ -58,8 +58,12 @@ export const SUPPORT_PHONE_HREF = SUPPORT_PHONE
 
 export const SUPPORT_HOURS = 'Mon–Fri, 9a–6p ET';
 
-/** Exactly what a member sees on their card statement. */
-export const STATEMENT_DESCRIPTOR = 'ETLONGEVITY CARE';
+/**
+ * Exactly what a member sees on their card statement: the account prefix set
+ * in Stripe, then the per-charge suffix we attach in pay-on-approval.ts.
+ * Stripe joins them with "* " and caps the pair at 22 characters.
+ */
+export const STATEMENT_DESCRIPTOR = 'ET LONGEVITY* CARE';
 
 /** The only state we are licensed to sell into today. */
 export const SERVICE_AREA = 'New Jersey';
