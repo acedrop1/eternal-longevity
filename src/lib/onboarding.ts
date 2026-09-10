@@ -1,8 +1,5 @@
 import { getSession } from '@/lib/auth-server';
-import {
-  createSupabaseAdminClient,
-  supabaseAdminConfigured,
-} from '@/lib/supabase/admin';
+import { intakeStateFor } from '@/lib/intake-status';
 import type { Order } from '@/lib/orders';
 
 export interface OnboardingStep {
@@ -34,23 +31,11 @@ export async function getOnboardingSteps(
 ): Promise<OnboardingStep[]> {
   const user = await getSession();
 
-  let intakeStatus: string | null = null;
-  if (user && supabaseAdminConfigured()) {
-    const db = createSupabaseAdminClient();
-    const { data } = await db
-      .from('intake_submissions')
-      .select('status')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    intakeStatus = data?.status ?? null;
-  }
-
+  const state = user ? await intakeStateFor(user.id) : 'none';
   // An intake exists at all — the pre-purchase questions and consents are in.
-  const intakeStarted = intakeStatus !== null;
+  const intakeStarted = state !== 'none';
   // The clinical visit is done once the intake is no longer waiting on it.
-  const visitDone = intakeStarted && intakeStatus !== 'awaiting_visit';
+  const visitDone = state === 'submitted';
 
   const hasShipping = orders.some((o) => Boolean(o.shippingAddress?.line1));
   const reviewed = orders.some((o) =>

@@ -5,6 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
+import { intakeStateFor } from '@/lib/intake-status';
 import { getShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
@@ -20,7 +21,10 @@ export default async function VisitPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const visit = await getPendingVisit();
+  const [visit, state] = await Promise.all([
+    getPendingVisit(),
+    intakeStateFor(user.id),
+  ]);
   const product = visit?.productId ? getShopProduct(visit.productId) : undefined;
 
   const nav = [
@@ -32,7 +36,7 @@ export default async function VisitPage() {
     { label: 'Account', href: '/portal/account' },
   ];
 
-  if (!visit) {
+  if (state === 'submitted') {
     return (
       <PortalShell user={user} nav={nav}>
         <div className="mx-auto max-w-xl pt-10 text-center">
@@ -58,7 +62,7 @@ export default async function VisitPage() {
     <PortalShell user={user} nav={nav}>
       <div className="mb-2">
         <p className="mb-2 text-[11px] tracking-widest text-accent">
-          REQUIRED BEFORE PRESCRIBER REVIEW
+          {visit ? 'REQUIRED BEFORE PRESCRIBER REVIEW' : 'REQUIRED BEFORE YOU CAN ORDER'}
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
@@ -70,7 +74,7 @@ export default async function VisitPage() {
         >
           Complete your visit
         </h1>
-        {visit.productName && (
+        {visit?.productName && (
           <p className="mt-2 text-sm text-foreground/55">
             For your {visit.productName} order.
           </p>

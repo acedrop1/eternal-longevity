@@ -86,32 +86,9 @@ export default async function MemberPortalPage() {
 
       <OnboardingChecklist steps={onboarding} />
 
-      {/* The one required action */}
-      {pendingVisit && (
-        <Link
-          href="/portal/visit"
-          className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-accent/40 bg-accent/[0.07] p-6 transition hover:bg-accent/[0.12]"
-        >
-          <div>
-            <p className="mb-1 flex items-center gap-2 text-[11px] tracking-widest text-accent">
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              REQUIRED
-            </p>
-            <p className="text-lg font-semibold text-foreground">
-              Complete your visit
-            </p>
-            <p className="mt-1 text-sm text-foreground/60">
-              A few health questions so your prescriber can review
-              {pendingVisit.productName ? ` your ${pendingVisit.productName} order` : ''}.
-              Takes about 3 minutes.
-            </p>
-          </div>
-          <span aria-hidden className="text-2xl text-accent">
-            →
-          </span>
-        </Link>
-      )}
-
+      {/* The visit used to get its own REQUIRED card here. The checklist
+          above already opens on whichever step is outstanding, so this was the
+          same call to action twice on one screen. */}
       {/* Latest order, one line */}
       {latest && (
         <Link

@@ -30,6 +30,7 @@ import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } fro
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
+import { canOrder } from '@/lib/intake-status';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -233,6 +234,16 @@ export async function placeOrderAction(input: {
   const shipState = (input.shippingAddress.state || '').toUpperCase();
   if (!SERVICEABLE_STATES.includes(shipState)) {
     return { ok: false, error: 'state_not_serviced' };
+  }
+
+  /*
+   * No completed medical intake, no order. The checkout page redirects before
+   * anyone gets this far, but a redirect is a convenience — this is the check
+   * that holds. Without it an order reaches the prescriber as a request to
+   * sign a prescription for someone he has no clinical record for.
+   */
+  if (!(await canOrder(user.id))) {
+    return { ok: false, error: 'intake_incomplete' };
   }
 
   const db = createSupabaseAdminClient();

@@ -190,7 +190,7 @@ export async function submitVisitAction(
   if (!supabaseAdminConfigured()) return { ok: true, caseId: 'demo' };
 
   const db = createSupabaseAdminClient();
-  const { data: intake } = await db
+  let { data: intake } = await db
     .from('intake_submissions')
     .select('id, case_id, answers')
     .eq('user_id', user.id)
@@ -198,7 +198,30 @@ export async function submitVisitAction(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!intake) return { ok: false, error: 'No open visit found.' };
+
+  /*
+   * Not everyone arrives through /start. An account created by an admin, or
+   * one that reached the portal another way, has no open intake at all — and
+   * used to hit a dead end that left them unable to give the prescriber
+   * anything. Open one for them here instead.
+   */
+  if (!intake) {
+    const { data: created, error: createErr } = await db
+      .from('intake_submissions')
+      .insert({
+        user_id: user.id,
+        email: user.email,
+        case_id: `case_${Math.random().toString(36).slice(2, 9)}`,
+        status: 'awaiting_visit',
+        answers: {} as unknown as Json,
+      })
+      .select('id, case_id, answers')
+      .single();
+    if (createErr || !created) {
+      return { ok: false, error: 'Could not start your visit. Try again.' };
+    }
+    intake = created;
+  }
 
   const merged = {
     ...((intake.answers ?? {}) as Record<string, unknown>),
