@@ -349,7 +349,7 @@ export default function AboutPage() {
           />
           <div className="relative mx-auto max-w-4xl text-center">
             <FadeIn>
-              <span className="inline-block text-7xl md:text-9xl leading-none text-accent/40 font-serif">
+              <span className="inline-block text-7xl md:text-9xl leading-none text-accent/40">
                 &ldquo;
               </span>
             </FadeIn>
@@ -366,11 +366,6 @@ export default function AboutPage() {
                 weeks. That single shift in time horizon changes every
                 decision: how we dose, how we measure, how we say no.
               </p>
-            </FadeIn>
-            <FadeIn delay={200}>
-              <div className="text-[11px] tracking-widest text-foreground/55">
-                HEAD OF FORMULATION
-              </div>
             </FadeIn>
           </div>
         </section>

@@ -32,7 +32,7 @@ const STANDARDS: StandardItem[] = [
     name: 'Third-Party Tested',
     el: (
       <span
-        className="font-serif font-bold text-lg md:text-xl leading-none"
+        className="font-bold text-lg md:text-xl leading-none"
         style={{ letterSpacing: '0.08em' }}
       >
         THIRD-PARTY TESTED
@@ -70,7 +70,7 @@ const STANDARDS: StandardItem[] = [
   {
     name: 'Cold-Chain Shipped',
     el: (
-      <span className="flex items-baseline gap-1.5 font-serif leading-none">
+      <span className="flex items-baseline gap-1.5 leading-none">
         <span className="text-xl md:text-2xl italic font-semibold">Cold-Chain</span>
         <span className="text-base md:text-lg font-bold tracking-tight">Shipped</span>
       </span>
@@ -79,7 +79,7 @@ const STANDARDS: StandardItem[] = [
   {
     name: 'Batch Documented',
     el: (
-      <span className="flex items-center gap-2 text-lg md:text-xl font-serif leading-none">
+      <span className="flex items-center gap-2 text-lg md:text-xl leading-none">
         <span
           aria-hidden
           className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"
@@ -92,7 +92,7 @@ const STANDARDS: StandardItem[] = [
     name: 'Compounded in the USA',
     el: (
       <span
-        className="font-serif font-bold text-lg md:text-xl leading-none"
+        className="font-bold text-lg md:text-xl leading-none"
         style={{ letterSpacing: '0.18em' }}
       >
         USA COMPOUNDED
