@@ -39,8 +39,7 @@ export function ClinicalBoard() {
               />
               {/* Sits inside the faded-out base of the portrait. */}
               <p className="-mt-14 px-6 pb-6 text-xs leading-relaxed text-foreground/55">
-                Osteopathic physician licensed in New Jersey. Prescriber of
-                record for every order placed through Eternal Longevity.
+                Prescriber of record &middot; New Jersey
               </p>
             </figure>
           </FadeIn>
@@ -62,17 +61,13 @@ export function ClinicalBoard() {
             <FadeIn delay={200}>
               <div className="max-w-xl space-y-4 leading-relaxed text-foreground/65">
                 <p>
-                  Dr. Elder practises endovascular medicine in Totowa, New
-                  Jersey, where he leads a vein and vascular program built on
-                  ultrasound-guided, minimally invasive procedures.
+                  A New Jersey&ndash;licensed osteopathic physician, and the
+                  prescriber of record for this practice.
                 </p>
                 <p>
-                  He owns this practice outright. There is no prescriber
-                  network, no rotating panel, and no algorithm that approves on
-                  his behalf — he reviews each intake himself and either issues
-                  a prescription or declines it with a clinical note. Nothing
-                  reaches the pharmacy without his signature, and nothing is
-                  charged unless he approves.
+                  He reads every intake himself. Nothing reaches the pharmacy
+                  without his signature, and nothing is charged unless he
+                  approves.
                 </p>
               </div>
             </FadeIn>
