@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
+import { getOnboardingSteps } from '@/lib/onboarding';
+import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
 import { listOrders } from '@/lib/orders-db';
 import { STATUS_LABEL } from '@/lib/orders';
 
@@ -25,6 +27,7 @@ export default async function MemberPortalPage() {
     getPendingVisit(),
     listOrders().catch(() => []),
   ]);
+  const onboarding = await getOnboardingSteps(orders);
   const latest = orders[0] ?? null;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
 
@@ -80,6 +83,8 @@ export default async function MemberPortalPage() {
               : 'Ready when you are.'}
         </p>
       </div>
+
+      <OnboardingChecklist steps={onboarding} />
 
       {/* The one required action */}
       {pendingVisit && (
