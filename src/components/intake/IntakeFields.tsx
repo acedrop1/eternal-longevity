@@ -379,7 +379,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
     }
 
     case 'account-creation': {
-      const acc = (value as { password?: string; confirm?: string; mfa?: boolean }) ?? {};
+      const acc = (value as { password?: string; confirm?: string }) ?? {};
       return (
         <div className="space-y-4">
           <div>
@@ -444,29 +444,6 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
               </li>
             )}
           </ul>
-          <button
-            type="button"
-            onClick={() => onChange({ ...acc, mfa: !acc.mfa })}
-            className={cn(
-              'flex w-full items-center justify-between rounded-2xl border px-4 py-3.5 text-left transition-all',
-              acc.mfa ? 'border-accent bg-accent/5' : 'border-line bg-surface'
-            )}
-          >
-            <span className="text-sm text-foreground/85">Enable two-factor authentication</span>
-            <span
-              className={cn(
-                'relative h-5 w-9 rounded-full transition-colors',
-                acc.mfa ? 'bg-accent' : 'bg-foreground/15'
-              )}
-            >
-              <span
-                className={cn(
-                  'absolute top-0.5 h-4 w-4 rounded-full bg-foreground transition-transform',
-                  acc.mfa ? 'translate-x-4' : 'translate-x-0.5'
-                )}
-              />
-            </span>
-          </button>
         </div>
       );
     }

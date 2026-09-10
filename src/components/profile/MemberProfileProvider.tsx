@@ -39,6 +39,11 @@ interface MemberProfileAPI {
   setPrimaryCard: (id: string) => void;
   /** Demo: reset to seed */
   resetProfile: () => void;
+  /**
+   * Set when a write to the server failed. Every mutation here is optimistic —
+   * the UI updates first — so without this a failed save still showed a tick.
+   */
+  syncError: string | null;
 }
 
 const MemberProfileContext = createContext<MemberProfileAPI | null>(null);
@@ -109,14 +114,23 @@ export function MemberProfileProvider({
   }, [profile, hydrated, live]);
 
   /** Fire a server action in live mode; local state already updated. */
+  const [syncError, setSyncError] = useState<string | null>(null);
+
   const sync = useCallback(
     (run: () => Promise<{ ok: boolean; error?: string }>) => {
       if (!live) return;
       void run()
         .then((r) => {
-          if (!r.ok) console.error('[profile] action failed:', r.error);
+          if (r.ok) setSyncError(null);
+          else {
+            console.error('[profile] action failed:', r.error);
+            setSyncError('Some changes could not be saved.');
+          }
         })
-        .catch((err) => console.error('[profile] action threw:', err));
+        .catch((err) => {
+          console.error('[profile] action threw:', err);
+          setSyncError('Some changes could not be saved.');
+        });
     },
     [live],
   );
@@ -248,6 +262,7 @@ export function MemberProfileProvider({
       removeCard,
       setPrimaryCard,
       resetProfile,
+      syncError,
     }),
     [
       profile,
@@ -260,6 +275,7 @@ export function MemberProfileProvider({
       removeCard,
       setPrimaryCard,
       resetProfile,
+      syncError,
     ]
   );
 

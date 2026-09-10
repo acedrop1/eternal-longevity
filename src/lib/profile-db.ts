@@ -53,7 +53,6 @@ export async function loadProfile(): Promise<MemberProfile | null> {
     fullName: row?.full_name ?? undefined,
     phone: row?.phone ?? undefined,
     dateOfBirth: row?.date_of_birth ?? undefined,
-    twoFactorEnabled: row?.two_factor_enabled ?? false,
     notifications: (row?.notification_prefs as Record<string, boolean>) ?? undefined,
     addresses: (addresses ?? []).map((a) => ({
       id: a.id,
@@ -154,7 +153,6 @@ export async function patchProfileAction(
   if (patch.fullName !== undefined) row.full_name = patch.fullName;
   if (patch.phone !== undefined) row.phone = patch.phone;
   if (patch.dateOfBirth !== undefined) row.date_of_birth = patch.dateOfBirth || null;
-  if (patch.twoFactorEnabled !== undefined) row.two_factor_enabled = patch.twoFactorEnabled;
   if (patch.notifications !== undefined)
     row.notification_prefs = patch.notifications as unknown as Json;
   if (!Object.keys(row).length) return { ok: true };

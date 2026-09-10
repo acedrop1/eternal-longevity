@@ -32,7 +32,6 @@ export interface MemberProfile {
   fullName?: string;
   phone?: string;
   dateOfBirth?: string;
-  twoFactorEnabled?: boolean;
   /** Keyed by NOTIFICATION_DEFS[].key */
   notifications?: Record<string, boolean>;
   addresses: SavedAddress[];
@@ -91,7 +90,6 @@ export const SEED_PROFILE: MemberProfile = {
   fullName: 'Alex Demo',
   phone: '(201) 555-0188',
   dateOfBirth: '',
-  twoFactorEnabled: false,
   notifications: { ...DEFAULT_NOTIFICATIONS },
   addresses: [],
   cards: [],

@@ -18,6 +18,11 @@ import {
   NOTIFICATION_DEFS,
 } from '@/lib/memberProfile';
 import { cn } from '@/lib/utils';
+import {
+  changePasswordAction,
+  requestDataExportAction,
+  requestAccountClosureAction,
+} from '@/lib/account-actions';
 
 /* ------------------------------------------------------------------ */
 /*  Section registry — drives the scroll-spy left nav                  */
@@ -259,7 +264,7 @@ export function AccountSettings({
   /** Empty when Stripe is not configured for this environment. */
   stripePublishableKey?: string;
 }) {
-  const { profile, patchProfile } = useMemberProfile();
+  const { profile, patchProfile, syncError } = useMemberProfile();
 
   /* ---- scroll-spy left nav ------------------------------------- */
   const [activeId, setActiveId] = useState<string>('profile');
@@ -293,6 +298,15 @@ export function AccountSettings({
   }, []);
 
   return (
+    <>
+      {/* Every write on this page is optimistic — the field updates before the
+          server answers — so a failure has to say so rather than leave a tick
+          standing over a change that never landed. */}
+      {syncError && (
+        <p className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          {syncError} Refresh the page and try again.
+        </p>
+      )}
     <div className="grid gap-6 lg:grid-cols-3">
       {/* ===================== LEFT NAV ===================== */}
       <aside className="lg:col-span-1">
@@ -375,6 +389,7 @@ export function AccountSettings({
         <PrivacySection userEmail={userEmail} />
       </div>
     </div>
+    </>
   );
 }
 
@@ -497,10 +512,8 @@ function ProfileSection({
 
 function PasswordSection() {
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
-  const { status, run } = useAction();
-  const twoFa = useAction();
-  const { profile, patchProfile } = useMemberProfile();
-  const twoFaOn = !!profile.twoFactorEnabled;
+  const [status, setStatus] = useState<ActionStatus>('idle');
+  const [error, setError] = useState<string | null>(null);
 
   const tooShort = pw.next.length > 0 && pw.next.length < 8;
   const mismatch = pw.confirm.length > 0 && pw.confirm !== pw.next;
@@ -509,16 +522,34 @@ function PasswordSection() {
     pw.next.length >= 8 &&
     pw.confirm === pw.next;
 
-  const handleUpdate = () => {
+  /*
+   * This used to clear the three fields, show a tick, and leave the password
+   * exactly as it was. It now actually changes it, and the current password is
+   * verified server-side before it will.
+   */
+  const handleUpdate = async () => {
     if (!valid || status !== 'idle') return;
-    run(() => setPw({ current: '', next: '', confirm: '' }));
+    setStatus('busy');
+    setError(null);
+    const res = await changePasswordAction({
+      current: pw.current,
+      next: pw.next,
+    });
+    if (res.ok) {
+      setPw({ current: '', next: '', confirm: '' });
+      setStatus('done');
+      setTimeout(() => setStatus('idle'), 2100);
+    } else {
+      setError(res.message ?? 'Could not update your password.');
+      setStatus('idle');
+    }
   };
 
   return (
     <SectionCard
       id="password"
-      title="Password & two-factor"
-      description="Use a unique password. Two-factor adds an extra layer."
+      title="Password"
+      description="Use a password you do not use anywhere else."
     >
       <div className="grid gap-5">
         <Field
@@ -554,45 +585,11 @@ function PasswordSection() {
         </div>
       </div>
 
-      {/* Two-factor row */}
-      <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-line bg-background p-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            Two-factor authentication
-            {twoFaOn && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] tracking-widest text-accent">
-                <Check className="h-2.5 w-2.5" />
-                ON
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-xs text-foreground/55">
-            Authenticator app or SMS code at sign-in.
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={twoFa.status !== 'idle'}
-          onClick={() =>
-            twoFa.run(() => patchProfile({ twoFactorEnabled: !twoFaOn }))
-          }
-          className={cn(
-            'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-medium tracking-wider transition-all duration-200 active:scale-[0.96]',
-            twoFaOn
-              ? 'border-line bg-surface text-foreground/70 hover:border-foreground/30 hover:text-foreground'
-              : 'border-accent/40 bg-accent/5 text-accent hover:bg-accent/10',
-          )}
-        >
-          {twoFa.status === 'busy' && <Spinner className="h-3 w-3" />}
-          {twoFa.status === 'busy'
-            ? twoFaOn
-              ? 'DISABLING'
-              : 'ENABLING'
-            : twoFaOn
-              ? 'DISABLE'
-              : 'ENABLE'}
-        </button>
-      </div>
+      {error && (
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          {error}
+        </p>
+      )}
 
       <div className="mt-6 flex justify-end">
         <SaveButton
@@ -709,9 +706,18 @@ function NotificationsSection({
 /* ================================================================== */
 
 function PrivacySection({ userEmail }: { userEmail: string }) {
-  const download = useAction(900, 6000);
+  const [exportStatus, setExportStatus] = useState<ActionStatus>('idle');
+  const [exportNote, setExportNote] = useState<string | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
-  const [closed, setClosed] = useState(false);
+  const [closedNote, setClosedNote] = useState<string | null>(null);
+
+  const requestExport = async () => {
+    if (exportStatus !== 'idle') return;
+    setExportStatus('busy');
+    const res = await requestDataExportAction();
+    setExportNote(res.message ?? null);
+    setExportStatus(res.ok ? 'done' : 'idle');
+  };
 
   return (
     <SectionCard
@@ -734,30 +740,28 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
             </div>
             <button
               type="button"
-              disabled={download.status !== 'idle'}
-              onClick={() => download.run(() => {})}
+              disabled={exportStatus !== 'idle'}
+              onClick={requestExport}
               className={cn(
                 'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-semibold tracking-widest transition-all duration-200 active:scale-[0.96]',
-                download.status === 'done'
+                exportStatus === 'done'
                   ? 'border-accent/40 bg-accent/10 text-accent'
                   : 'border-line bg-surface text-foreground/85 hover:border-foreground/30 hover:text-foreground',
               )}
             >
-              {download.status === 'busy' && <Spinner className="h-3 w-3" />}
-              {download.status === 'done' && <Check className="h-3 w-3" />}
-              {download.status === 'busy'
-                ? 'PREPARING'
-                : download.status === 'done'
+              {exportStatus === 'busy' && <Spinner className="h-3 w-3" />}
+              {exportStatus === 'done' && <Check className="h-3 w-3" />}
+              {exportStatus === 'busy'
+                ? 'SENDING'
+                : exportStatus === 'done'
                   ? 'REQUESTED'
                   : 'REQUEST'}
             </button>
           </div>
-          {download.status === 'done' && (
+          {exportNote && (
             <p className="mt-3 rounded-xl bg-accent/5 px-3 py-2 text-xs text-foreground/70">
-              We&apos;re assembling your export. A secure download link will be
-              emailed to{' '}
-              <span className="text-foreground/90">{userEmail}</span> within 24
-              hours.
+              {exportNote} We will send it to{' '}
+              <span className="text-foreground/90">{userEmail}</span>.
             </p>
           )}
         </div>
@@ -776,23 +780,21 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
             </div>
             <button
               type="button"
-              disabled={closed}
+              disabled={!!closedNote}
               onClick={() => setCloseOpen(true)}
               className={cn(
                 'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-semibold tracking-widest transition-all duration-200 active:scale-[0.96]',
-                closed
+                closedNote
                   ? 'cursor-default border-line bg-surface text-foreground/45'
                   : 'border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/10',
               )}
             >
-              {closed ? 'REQUESTED' : 'CLOSE ACCOUNT'}
+              {closedNote ? 'REQUESTED' : 'CLOSE ACCOUNT'}
             </button>
           </div>
-          {closed && (
+          {closedNote && (
             <p className="mt-3 rounded-xl bg-red-500/[0.06] px-3 py-2 text-xs text-foreground/70">
-              Account closure requested. Our team will confirm by email and
-              process it within 3 business days. You can keep using your
-              account until then.
+              {closedNote} You can keep using your account until then.
             </p>
           )}
         </div>
@@ -801,8 +803,11 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
       {closeOpen && (
         <CloseAccountModal
           onCancel={() => setCloseOpen(false)}
-          onConfirm={() => {
-            setClosed(true);
+          onConfirm={async () => {
+            const res = await requestAccountClosureAction();
+            setClosedNote(
+              res.message ?? 'Could not send that. Please email support.',
+            );
             setCloseOpen(false);
           }}
         />
@@ -870,7 +875,7 @@ function CloseAccountModal({
           <button
             type="button"
             disabled={status !== 'idle'}
-            onClick={() => run(onConfirm)}
+            onClick={() => run(() => { void onConfirm(); })}
             className="inline-flex min-w-[11rem] items-center justify-center gap-2 rounded-full bg-red-500/90 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-red-500 active:scale-[0.97] disabled:opacity-70"
           >
             {status === 'busy' && <Spinner />}

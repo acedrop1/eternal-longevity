@@ -93,7 +93,6 @@ export async function submitIntakeAction(
           .update({
             ...(fullName ? { full_name: fullName } : {}),
             ...(phone ? { phone } : {}),
-            ...(account.mfa ? { two_factor_enabled: true } : {}),
           })
           .eq('id', userId);
       } else if (authErr) {
