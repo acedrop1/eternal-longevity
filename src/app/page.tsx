@@ -8,7 +8,6 @@ import { ClinicalBoard } from '@/components/sections/ClinicalBoard';
 import { Comparison } from '@/components/sections/Comparison';
 import { FeatureSpotlight } from '@/components/sections/FeatureSpotlight';
 import { Footer } from '@/components/sections/Footer';
-import { StickyLeadCapture } from '@/components/lead-capture/StickyLeadCapture';
 import { SectionReveal } from '@/components/ui/SectionReveal';
 
 export default function Home() {
@@ -35,7 +34,6 @@ export default function Home() {
         <SectionReveal><FeatureSpotlight /></SectionReveal>     {/* Eight Sleep scroll-pinned spotlight */}
       </main>
       <Footer />
-      <StickyLeadCapture />
     </>
   );
 }
