@@ -24,7 +24,7 @@ const FACTS: { label: string; value: string }[] = [
   { label: 'Legal entity', value: 'Eternal Longevity' },
   { label: 'Business address', value: '825 Riverview Dr, Floor 2, Totowa, NJ 07512' },
   { label: 'Support', value: 'support@etlongevity.com' },
-  { label: 'Prescriber of record', value: 'Bader Elder, MD' },
+  { label: 'Prescriber of record', value: 'Bader Elder, DO' },
   { label: 'Prescriber licensure', value: 'New Jersey · License 25MB11925900' },
   { label: 'NPI', value: '1619538881' },
   { label: 'Compounding partner', value: 'Kaduceus Pharmacy, a licensed 503A compounder' },

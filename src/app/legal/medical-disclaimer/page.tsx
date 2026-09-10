@@ -23,7 +23,7 @@ export default function MedicalDisclaimerPage() {
         {
           heading: `Who Provides Your Care`,
           paragraphs: [
-            `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, MD, who is licensed to practise medicine in ${SERVICE_AREA} and who reviews and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
+            `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, DO, an osteopathic physician licensed to practise medicine and surgery in ${SERVICE_AREA}, who reviews and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
             `A prescriber–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by an independently licensed 503A compounding pharmacy.`,
           ],
         },

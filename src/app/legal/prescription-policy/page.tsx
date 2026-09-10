@@ -51,7 +51,7 @@ export default function PrescriptionPolicyPage() {
         {
           heading: `Who Prescribes`,
           paragraphs: [
-            `Prescriptions are written by Bader Elder, MD, licensed in ${SERVICE_AREA} (license 25MB11925900, NPI 1619538881). Our full prescriber and pharmacy details are on our Compliance page.`,
+            `Prescriptions are written by Bader Elder, DO, licensed to practise medicine and surgery in ${SERVICE_AREA} (license 25MB11925900, NPI 1619538881). Our full prescriber and pharmacy details are on our Compliance page.`,
           ],
         },
         {
