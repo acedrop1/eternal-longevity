@@ -18,3 +18,6 @@ echo
 echo "── portal sample data standing in for a query ─────────"
 python3 scripts/mockdata.py src/app/portal src/components/admin src/components/portal \
                            src/components/orders src/components/pharmacy src/components/doctor
+echo
+echo "── success messages with no server call (noisy — eyeball) ─"
+python3 scripts/theatre.py
