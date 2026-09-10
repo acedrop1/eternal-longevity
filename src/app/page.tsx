@@ -4,6 +4,7 @@ import { IntroPanel } from '@/components/sections/IntroPanel';
 import { Pillars } from '@/components/sections/Pillars';
 import { Science } from '@/components/sections/Science';
 import { HowItWorks } from '@/components/sections/HowItWorks';
+import { ClinicalBoard } from '@/components/sections/ClinicalBoard';
 import { Comparison } from '@/components/sections/Comparison';
 import { FeatureSpotlight } from '@/components/sections/FeatureSpotlight';
 import { Footer } from '@/components/sections/Footer';
@@ -26,6 +27,7 @@ export default function Home() {
         <SectionReveal><Pillars /></SectionReveal>              {/* Premium expandable rows */}
         <SectionReveal><Science /></SectionReveal>              {/* POUCH sticky-scroll science section */}
         <SectionReveal><HowItWorks /></SectionReveal>
+        <SectionReveal><ClinicalBoard /></SectionReveal>  {/* The named prescriber, straight after how it works */}
         {/* Testimonials intentionally omitted until real, permissioned member
             quotes exist. The component remains in components/sections for
             when they do — see its header comment. */}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
+import { ClinicalBoard } from '@/components/sections/ClinicalBoard';
 import { LoopVideo } from '@/components/ui/LoopVideo';
 
 export const metadata: Metadata = {
@@ -68,26 +69,6 @@ const TIMELINE = [
 ];
 
 // Names blanked pending Kirten's real team info.
-const TEAM = [
-  {
-    name: '',
-    role: 'Head of Formulation',
-    bio:
-      'Twelve years in peptide and integrative hormone formulation. Owns protocol design and formulation standards across our lineup.',
-  },
-  {
-    name: '',
-    role: 'Founder',
-    bio:
-      'Former operator at a longevity clinic; built Eternal Longevity to widen access without compromising the clinical bar.',
-  },
-  {
-    name: '',
-    role: 'Compounding Lead',
-    bio:
-      'Twenty years in 503A compounding. Owns lot-level quality control, third-party purity testing, and cold-chain logistics.',
-  },
-];
 
 export default function AboutPage() {
   return (
@@ -350,66 +331,7 @@ export default function AboutPage() {
           </FadeIn>
         </section>
 
-        {/* ============ TEAM ============ */}
-        <section className="relative px-6 py-16 md:py-14 bg-surface">
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-10 max-w-3xl">
-              <FadeIn>
-                <p className="mb-3 text-[11px] tracking-widest text-foreground/50">
-                  05 / TEAM
-                </p>
-              </FadeIn>
-              <FadeIn delay={120}>
-                <h2
-                  className="mb-5 font-semibold tracking-tight text-foreground"
-                  style={{
-                    fontSize: 'clamp(2rem, 4.5vw, 3.75rem)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.02,
-                  }}
-                >
-                  The people behind the protocols.
-                </h2>
-              </FadeIn>
-              <FadeIn delay={200}>
-                <p className="text-foreground/65 leading-relaxed">
-                  A small, deliberate team. A head of formulation who designs the
-                  protocols. A founder who keeps the operation honest. A
-                  compounding lead who treats every lot like it matters —
-                  because it does.
-                </p>
-              </FadeIn>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {TEAM.map((member, i) => (
-                <FadeIn key={member.role} delay={i * 120}>
-                  <div className="group h-full overflow-hidden rounded-3xl border border-line bg-background">
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-accent/5 to-transparent" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {/* Empty until real photos land. Show a subtle EL monogram
-                            placeholder so the slot still feels intentional. */}
-                        <span className="text-7xl font-semibold tracking-tight text-accent/30">
-                          EL
-                        </span>
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background to-transparent" />
-                    </div>
-                    <div className="p-6">
-                      <div className="mb-3 text-[11px] tracking-widest text-accent">
-                        {member.role.toUpperCase()}
-                      </div>
-                      <p className="text-sm text-foreground/65 leading-relaxed">
-                        {member.bio}
-                      </p>
-                    </div>
-                  </div>
-                </FadeIn>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ClinicalBoard />
 
         {/* ============ QUOTE. Video bg ============ */}
         <section className="relative px-6 py-16 md:py-14 overflow-hidden">
