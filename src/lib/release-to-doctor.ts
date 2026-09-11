@@ -22,7 +22,7 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { sendEmail, newVisitForDoctorEmail } from '@/lib/email';
+import { sendEmail, newVisitForDoctorEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 
@@ -94,7 +94,25 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
     author_role: 'system',
   });
 
-  await notifyDoctor(db, order.order_number, order.member_name ?? 'A member');
+  const memberName = order.member_name ?? 'A member';
+  await notifyDoctor(db, order.order_number, memberName);
+
+  /*
+   * The team gets a copy too. The prescriber owns the clinical decision, but
+   * somebody non-clinical has to notice when an order stalls, a charge fails,
+   * or nobody has looked at a case in a day.
+   */
+  try {
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `New order for review — ${order.order_number}`,
+      html: `<p><strong>${memberName}</strong> placed order ${order.order_number}.</p>
+             <p>It has gone straight to the prescriber. Nothing is charged until he signs.</p>
+             <p><a href="${SITE_URL}/portal/admin/queue">Open the admin queue</a></p>`,
+    });
+  } catch {
+    // The prescriber has already been paged; this copy is for visibility only.
+  }
 
   revalidatePath('/portal/admin/queue');
   revalidatePath('/portal/doctor');

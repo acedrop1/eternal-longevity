@@ -492,6 +492,29 @@ export function newIntakeForDoctorEmail(input: {
   };
 }
 
+/**
+ * Admin closes a visit for a non-clinical reason.
+ *
+ * This exists because the admin decline used to send `declinedEmail`, which
+ * tells the member "a licensed prescriber reviewed your visit and decided this
+ * treatment is not appropriate" — untrue when nobody clinical has looked at it,
+ * and it attributes a clinical decision to a prescriber who never made one.
+ */
+export function intakeClosedByTeamEmail(input: {
+  firstName: string;
+  reason: string;
+}): { subject: string; html: string } {
+  return {
+    subject: 'About your Eternal Longevity visit',
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We can&rsquo;t take this visit forward.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — our team has closed your visit before it reached a prescriber. This is not a medical decision and no prescriber has reviewed your information.</p>
+       <p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(input.reason)}</p>
+       <p style="margin:0 0 18px;"><strong style="color:#fff;">You have not been charged anything.</strong> If you think this is a mistake, reply to this email and we will take another look.</p>`,
+    ),
+  };
+}
+
 export function declinedEmail(input: {
   firstName: string;
   reason?: string;

@@ -11,6 +11,7 @@
 import { getSession } from './auth-server';
 import {
   declinedEmail,
+  intakeClosedByTeamEmail,
   intakeNeedsInfoEmail,
   newIntakeForDoctorEmail,
   sendEmail,
@@ -124,8 +125,8 @@ export async function declineIntake(input: {
       .select('email, answers')
       .maybeSingle();
     if (error) return { ok: false, message: error.message };
-    await notifyDeclined(intake, input.note);
-    return { ok: true, message: 'Intake declined.' };
+    await notifyClosedByTeam(intake, input.note.trim());
+    return { ok: true, message: 'Closed, and the member was told why.' };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
   }
@@ -287,6 +288,27 @@ async function notifyDoctorOfIntake(
         // Same.
       }
     }
+  }
+}
+
+/**
+ * An admin closing a visit is an administrative act, not a clinical one, so the
+ * member must not be told a prescriber decided anything.
+ */
+async function notifyClosedByTeam(
+  intake: { email?: string | null; answers?: unknown } | null,
+  reason: string,
+): Promise<void> {
+  const email = intake?.email;
+  if (!email) return;
+  const msg = intakeClosedByTeamEmail({
+    firstName: firstNameOf(intake?.answers),
+    reason,
+  });
+  try {
+    await sendEmail({ to: email, subject: msg.subject, html: msg.html });
+  } catch {
+    // A failed notification must not roll back the decision.
   }
 }
 
