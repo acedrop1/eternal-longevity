@@ -71,10 +71,11 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   if (order.status !== 'pending-admin') return { ok: true };
 
   /*
-   * No payment gate here any more. The order only exists because the
-   * authorisation succeeded at checkout — the funds are confirmed and already
-   * reserved, which is a stronger guarantee than checking a saved card would
-   * have been. The prescriber can sign without thinking about payment at all.
+   * No payment gate here. Checkout saves a card and reserves nothing, so the
+   * prescriber is not signing against confirmed funds — he is signing a
+   * clinical decision, and the charge is attempted afterwards. A card that
+   * fails then emails the member a pay link and alerts the team; the
+   * prescriber is never asked to think about payment.
    */
   const notes = addressNotes(order.shipping_address);
 
