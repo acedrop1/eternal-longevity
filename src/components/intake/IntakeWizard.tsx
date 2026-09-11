@@ -14,6 +14,7 @@ import {
   type Field,
 } from '@/lib/intakeSchema';
 import {
+  emailHasAccountAction,
   submitIntakeAction,
   submitVisitAction,
   declineVisitAction,
@@ -25,6 +26,7 @@ type Answers = Record<string, unknown>;
 type WizardStatus =
   | { kind: 'in-progress'; stepIdx: number }
   | { kind: 'knockout'; key: string }
+  | { kind: 'has-account' }
   | { kind: 'submitted' };
 
 function valueIsPresent(field: Field, v: unknown): boolean {
@@ -170,12 +172,32 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
             : await submitIntakeAction(safeAnswers);
         if (res.ok) {
           setStatus({ kind: 'submitted' });
+        } else if (res.error === 'account_exists') {
+          setStatus({ kind: 'has-account' });
         } else {
           setSubmitError(res.error ?? 'Something went wrong. Please try again.');
         }
       });
       return;
     }
+    /*
+     * Leaving the email step. If that address already has an account, stop here
+     * rather than letting them answer twenty more questions and lose them at
+     * submit.
+     */
+    if (steps[status.stepIdx]?.isEmailCapture) {
+      const typed = typeof answers.email === 'string' ? answers.email : '';
+      const nextIdx = status.stepIdx + 1;
+      startTransition(async () => {
+        if (await emailHasAccountAction(typed)) {
+          setStatus({ kind: 'has-account' });
+        } else {
+          setStatus({ kind: 'in-progress', stepIdx: nextIdx });
+        }
+      });
+      return;
+    }
+
     setStatus({ kind: 'in-progress', stepIdx: status.stepIdx + 1 });
   }
 
@@ -185,6 +207,37 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
     } else if (status.kind === 'knockout') {
       setStatus({ kind: 'in-progress', stepIdx: 0 });
     }
+  }
+
+  // === Already has an account ===
+  if (status.kind === 'has-account') {
+    return (
+      <Shell progressPct={100} compact={compact}>
+        <div className="mx-auto max-w-xl text-center">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight text-foreground">
+            You already have an account.
+          </h2>
+          <p className="mb-8 leading-relaxed text-foreground/65">
+            That email is registered with us. Sign in and your details are
+            already there — no need to fill this in again.
+          </p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/login"
+              className="rounded-full bg-accent px-7 py-3 font-semibold text-black transition-colors hover:bg-accent-soft"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/forgot-password"
+              className="text-sm text-foreground/60 transition-colors hover:text-foreground"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+        </div>
+      </Shell>
+    );
   }
 
   // === Knockout screen ===

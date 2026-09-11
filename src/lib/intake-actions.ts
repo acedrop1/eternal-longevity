@@ -24,6 +24,29 @@ import {
   SUPPORT_EMAIL,
 } from '@/lib/email';
 
+/**
+ * Is there already an account on this address?
+ *
+ * Called when the visitor leaves the email step, so they are sent to sign in
+ * before filling in a health history they would only lose. Returns false on any
+ * failure — this is a convenience, and the submit path holds the real guard.
+ */
+export async function emailHasAccountAction(email: string): Promise<boolean> {
+  const clean = email.trim().toLowerCase();
+  if (!clean.includes('@') || !supabaseAdminConfigured()) return false;
+  try {
+    const db = createSupabaseAdminClient();
+    const { data } = await db
+      .from('profiles')
+      .select('id')
+      .ilike('email', clean)
+      .maybeSingle();
+    return Boolean(data?.id);
+  } catch {
+    return false;
+  }
+}
+
 export interface IntakeSubmitResult {
   ok: boolean;
   /** Server-issued opaque ID used for the welcome email + portal link. */
@@ -96,13 +119,13 @@ export async function submitIntakeAction(
           })
           .eq('id', userId);
       } else if (authErr) {
-        // Email already registered — link the intake to the existing account.
-        const { data: existing } = await db
-          .from('profiles')
-          .select('id')
-          .ilike('email', email.trim())
-          .maybeSingle();
-        userId = existing?.id ?? null;
+        /*
+         * Email already registered. This used to look up that account and
+         * attach the intake to it — so anyone who knew your address could file
+         * a medical history against your record, and the person filling in the
+         * form believed they had signed up. Send them to sign in instead.
+         */
+        return { ok: false, error: 'account_exists' };
       }
     }
 
