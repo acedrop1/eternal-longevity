@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  approveIntake,
   declineIntake,
   requestIntakeInfo,
   type ClinicalResult,
@@ -165,15 +164,13 @@ function IntakeCard({
 
       {/* Actions */}
       {open === null && (
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => run(() => approveIntake(intake.id))}
-            className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
-          >
-            {busy ? 'Working…' : 'Send to prescriber'}
-          </button>
+        <div className="mt-5 border-t border-line pt-5">
+          <p className="mb-3 text-xs leading-relaxed text-foreground/50">
+            Nothing to approve here — an application is a medical record, not a
+            request for a prescription. This member can shop now, and the
+            prescriber reviews each order when it is placed.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={busy}
@@ -190,6 +187,7 @@ function IntakeCard({
           >
             Close &mdash; not eligible
           </button>
+          </div>
         </div>
       )}
 

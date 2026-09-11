@@ -103,6 +103,7 @@ export async function getOnboardingSteps(
       collects: [
         'Nothing from you. A licensed prescriber reviews your intake and either issues a prescription or declines with a clinical note.',
         'Your card is charged only if you are approved.',
+        'Every order is reviewed — a new product, or the same one again.',
       ],
       done: reviewed,
     },
