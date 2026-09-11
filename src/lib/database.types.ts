@@ -292,6 +292,10 @@ export type Database = {
           status: PrescriptionStatus;
           notes: string | null;
           signed_at: string | null;
+          order_id: string | null;
+          cadence: string | null;
+          expires_at: string | null;
+          refills_remaining: number;
           created_at: string;
           updated_at: string;
         };
@@ -305,6 +309,10 @@ export type Database = {
           status?: PrescriptionStatus;
           notes?: string | null;
           signed_at?: string | null;
+          order_id?: string | null;
+          cadence?: string | null;
+          expires_at?: string | null;
+          refills_remaining?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -318,6 +326,10 @@ export type Database = {
           status?: PrescriptionStatus;
           notes?: string | null;
           signed_at?: string | null;
+          order_id?: string | null;
+          cadence?: string | null;
+          expires_at?: string | null;
+          refills_remaining?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -499,6 +511,8 @@ export type Database = {
           cadence_label: string | null;
           per_cycle_cents: number;
           next_billing_date: string | null;
+          prescription_id: string | null;
+          last_charged_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -512,6 +526,8 @@ export type Database = {
           cadence_label?: string | null;
           per_cycle_cents?: number;
           next_billing_date?: string | null;
+          prescription_id?: string | null;
+          last_charged_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -525,6 +541,8 @@ export type Database = {
           cadence_label?: string | null;
           per_cycle_cents?: number;
           next_billing_date?: string | null;
+          prescription_id?: string | null;
+          last_charged_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

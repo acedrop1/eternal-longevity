@@ -31,6 +31,7 @@ import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
+import { writePrescriptionForOrder } from '@/lib/refills';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -434,6 +435,13 @@ export async function signRxAction(
    * failed charge emails a pay link and alerts the team, and the webhook
    * submits to the pharmacy once that link is used.
    */
+  /*
+   * The prescription is written before the money moves. It is the clinical
+   * record of what he just decided, and it is what a refill ships against —
+   * without it a plan reaches its second cycle with nothing to renew from.
+   */
+  await writePrescriptionForOrder(orderNumber);
+
   const charge = await chargeOnApproval(orderNumber);
   if (charge.charged) await autoSubmitToPharmacy(orderNumber);
 

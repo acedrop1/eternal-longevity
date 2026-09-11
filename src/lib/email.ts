@@ -515,6 +515,23 @@ export function intakeClosedByTeamEmail(input: {
   };
 }
 
+/** A plan has run out of prescription and needs the prescriber again. */
+export function planNeedsReviewEmail(input: {
+  firstName: string;
+  productName: string;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Your ${input.productName} plan needs a quick review`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Time for a check-in.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescription for ${escapeHtml(input.productName)} has reached the end of its term, so your plan is paused until your prescriber reviews it again.</p>
+       <p style="margin:0 0 18px;"><strong style="color:#fff;">You have not been charged</strong> and nothing has shipped. Open your portal and confirm nothing has changed in your health, and it goes straight back to him.</p>
+       ${button('Review and restart', input.portalUrl)}`,
+    ),
+  };
+}
+
 export function declinedEmail(input: {
   firstName: string;
   reason?: string;

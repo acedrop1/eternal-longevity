@@ -306,6 +306,29 @@ export async function createPayIntentAction(token: string): Promise<{
  * the cardholder present — we fall back to emailing the pay link. A failed
  * charge must not dead-end an approved prescription.
  */
+/**
+ * The card to charge off-session: the one the member set as default, else the
+ * most recently saved. Shared with refills, which have to pick the same card a
+ * first order would have used.
+ */
+export async function defaultCardFor(
+  customerId: string,
+): Promise<string | undefined> {
+  const stripe = getStripe();
+  const [methods, customer] = await Promise.all([
+    stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
+    stripe.customers.retrieve(customerId),
+  ]);
+  const preferred =
+    customer && !('deleted' in customer)
+      ? (customer.invoice_settings?.default_payment_method as string | null)
+      : null;
+  return (
+    (preferred && methods.data.find((m) => m.id === preferred)?.id) ??
+    methods.data[0]?.id
+  );
+}
+
 export async function chargeOnApproval(orderNumber: string): Promise<{
   ok: boolean;
   charged?: boolean;
@@ -337,19 +360,7 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
     email: order.member_email,
     name: order.member_name ?? undefined,
   });
-
-  // Prefer the card the member set as default; otherwise the most recent.
-  const [methods, customer] = await Promise.all([
-    stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
-    stripe.customers.retrieve(customerId),
-  ]);
-  const preferred =
-    customer && !('deleted' in customer)
-      ? (customer.invoice_settings?.default_payment_method as string | null)
-      : null;
-  const paymentMethodId =
-    (preferred && methods.data.find((m) => m.id === preferred)?.id) ??
-    methods.data[0]?.id;
+  const paymentMethodId = await defaultCardFor(customerId);
 
   if (!paymentMethodId) {
     // Nothing saved — the emailed link is the only way through.
