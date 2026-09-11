@@ -9,7 +9,14 @@
  * status; an approved intake is what surfaces in the physician's queue.
  */
 import { getSession } from './auth-server';
-import { declinedEmail, sendEmail } from './email';
+import {
+  declinedEmail,
+  intakeNeedsInfoEmail,
+  newIntakeForDoctorEmail,
+  sendEmail,
+} from './email';
+import { sendSms } from './sms';
+import { SITE_URL } from './site';
 import type { Json } from './database.types';
 import {
   createSupabaseAdminClient,
@@ -44,14 +51,21 @@ export async function approveIntake(
   if (blocked) return blocked;
   try {
     const db = createSupabaseAdminClient();
-    const { error } = await db
+    const { data: intake, error } = await db
       .from('intake_submissions')
       .update({ status: 'approved' })
-      .eq('id', intakeId);
+      .eq('id', intakeId)
+      .select('case_id, email, answers')
+      .maybeSingle();
     if (error) return { ok: false, message: error.message };
+
+    // Orders page the prescriber the moment they land. A standalone assessment
+    // used to drop into his queue silently, so it sat until he happened to log in.
+    await notifyDoctorOfIntake(db, intake);
+
     return {
       ok: true,
-      message: 'Approved. It is now in the physician queue.',
+      message: 'Approved. The prescriber has been notified.',
     };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
@@ -70,12 +84,22 @@ export async function requestIntakeInfo(input: {
   }
   try {
     const db = createSupabaseAdminClient();
-    const { error } = await db
+    const { data: intake, error } = await db
       .from('intake_submissions')
       .update({ status: 'needs_info', review_notes: input.note.trim() })
-      .eq('id', input.intakeId);
+      .eq('id', input.intakeId)
+      .select('email, answers')
+      .maybeSingle();
     if (error) return { ok: false, message: error.message };
-    return { ok: true, message: 'Marked as needing more information.' };
+
+    // Asking for information nobody is told about is just a stalled case.
+    const sent = await notifyNeedsInfo(intake, input.note.trim());
+    return {
+      ok: true,
+      message: sent
+        ? 'Member emailed and asked for more information.'
+        : 'Marked as needing information, but the email could not be sent.',
+    };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
   }
@@ -193,16 +217,86 @@ export async function signPrescription(input: {
  * deliberately not forwarded — the email says a prescriber decided against it
  * and that nothing was charged, and invites them to reply.
  */
+function firstNameOf(answers: unknown): string {
+  const a = (answers ?? {}) as Record<string, unknown>;
+  return (typeof a.first_name === 'string' && a.first_name.trim()) || 'there';
+}
+
+function fullNameOf(answers: unknown): string {
+  const a = (answers ?? {}) as Record<string, unknown>;
+  const first = typeof a.first_name === 'string' ? a.first_name.trim() : '';
+  const last = typeof a.last_name === 'string' ? a.last_name.trim() : '';
+  return [first, last].filter(Boolean).join(' ') || 'A member';
+}
+
+/** Emails the member what admin needs. Returns whether it actually went. */
+async function notifyNeedsInfo(
+  intake: { email?: string | null; answers?: unknown } | null,
+  note: string,
+): Promise<boolean> {
+  const email = intake?.email;
+  if (!email) return false;
+  const msg = intakeNeedsInfoEmail({
+    firstName: firstNameOf(intake?.answers),
+    note,
+    portalUrl: `${SITE_URL}/portal`,
+  });
+  try {
+    const res = await sendEmail({ to: email, subject: msg.subject, html: msg.html });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Email and text every active prescriber that an assessment cleared triage. */
+async function notifyDoctorOfIntake(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  intake: { case_id?: string | null; answers?: unknown } | null,
+): Promise<void> {
+  const memberName = fullNameOf(intake?.answers);
+  const caseId = intake?.case_id ?? '—';
+  const { data: doctors } = await db
+    .from('profiles')
+    .select('full_name, email, phone')
+    .eq('role', 'doctor')
+    .eq('account_status', 'active');
+
+  for (const doc of doctors ?? []) {
+    const firstName = (doc.full_name ?? '').trim().split(/\s+/).slice(-1)[0] || 'Doctor';
+    if (doc.email) {
+      const msg = newIntakeForDoctorEmail({
+        firstName,
+        memberName,
+        caseId,
+        queueUrl: `${SITE_URL}/portal/doctor`,
+      });
+      try {
+        await sendEmail({ to: doc.email, subject: msg.subject, html: msg.html });
+      } catch {
+        // A failed notification must not roll back the approval.
+      }
+    }
+    if (doc.phone) {
+      try {
+        await sendSms(
+          doc.phone,
+          `Eternal Longevity: assessment ready to sign — ${memberName}, case ${caseId}. ${SITE_URL}/portal/doctor`,
+        );
+      } catch {
+        // Same.
+      }
+    }
+  }
+}
+
 async function notifyDeclined(
   intake: { email?: string | null; answers?: unknown } | null,
   _clinicalNote: string,
 ): Promise<void> {
   const email = intake?.email;
   if (!email) return;
-  const answers = (intake?.answers ?? {}) as Record<string, unknown>;
-  const firstName =
-    (typeof answers.first_name === 'string' && answers.first_name.trim()) || 'there';
-  const msg = declinedEmail({ firstName });
+  const msg = declinedEmail({ firstName: firstNameOf(intake?.answers) });
   try {
     await sendEmail({ to: email, subject: msg.subject, html: msg.html });
   } catch {

@@ -14,12 +14,15 @@ export interface IntakeRowView {
   caseId: string;
   email: string;
   status: string;
+  /** Product they came in from, or null for the generic Apply Now route. */
+  source: string | null;
   submittedAt: string;
   answers: { label: string; value: string }[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
   submitted: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
+  approved: 'border-accent/40 bg-accent/10 text-accent',
   in_review: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
   needs_info: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
 };
@@ -96,6 +99,18 @@ function IntakeCard({
           <h2 className="text-base font-semibold tracking-tight text-foreground md:text-lg">
             {intake.email}
           </h2>
+          {/* Whether they picked a product first or came through Apply Now
+              changes what the prescriber is being asked to decide. */}
+          <p className="mt-1 text-xs text-foreground/55">
+            {intake.source ? (
+              <>
+                Started from{' '}
+                <span className="text-foreground/85">{intake.source}</span>
+              </>
+            ) : (
+              <>No product selected &mdash; came through Apply Now</>
+            )}
+          </p>
         </div>
         <span
           className={cn(

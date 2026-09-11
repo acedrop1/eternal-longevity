@@ -67,6 +67,11 @@ export default async function AdminQueuePage() {
           email: r.email,
           status: r.status,
           submittedAt: fmtDate(r.created_at),
+          // Arrived from a product card, or from the generic Apply Now?
+          source:
+            (r.answers as Record<string, unknown> | null)?.requestedProduct
+              ? String((r.answers as Record<string, unknown>).requestedProduct)
+              : null,
           answers: flattenAnswers(r.answers),
         }));
       }

@@ -15,7 +15,15 @@ export function AdminQueueList() {
 
   return (
     <>
-      <div className="grid gap-3 mb-8 sm:grid-cols-4">
+      {/* These count orders, not intakes. They used to sit directly beneath the
+          intake cards with no heading, reading as though they described them —
+          and a fourth tile reported an average turnaround that nothing measured. */}
+      <div className="mb-4 mt-12 border-b border-line pb-3">
+        <p className="text-[11px] tracking-widest text-foreground/50">
+          SHOP ORDERS
+        </p>
+      </div>
+      <div className="grid gap-3 mb-8 sm:grid-cols-3">
         <MetricCard label="Awaiting admin" value={String(pending.length)} tone="amber" />
         <MetricCard
           label="In motion"
@@ -27,7 +35,6 @@ export function AdminQueueList() {
           value={String(pending.length + inMotion.length)}
           tone="neutral"
         />
-        <MetricCard label="Avg admin TAT" value="12m" tone="neutral" />
       </div>
 
       {pending.length === 0 ? (

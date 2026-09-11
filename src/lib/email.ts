@@ -450,6 +450,48 @@ export function unfinishedVisitEmail(input: {
   };
 }
 
+/**
+ * Admin needs something more from the member before the prescriber sees it.
+ *
+ * The "Request info" button used to write a status and a note to the database
+ * and stop there — the member was never told anything was wanted, so the case
+ * simply sat.
+ */
+export function intakeNeedsInfoEmail(input: {
+  firstName: string;
+  note: string;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: 'One more thing before your review',
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We need a little more from you.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — before a prescriber can review your visit, our team needs one more detail:</p>
+       <p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(input.note)}</p>
+       <p style="margin:0 0 18px;">Reply to this email, or message us from your portal. Nothing has been charged and nothing is waiting on you other than this.</p>
+       ${button('Open your portal', input.portalUrl)}`,
+    ),
+  };
+}
+
+/** A standalone assessment has cleared admin triage and needs a signature. */
+export function newIntakeForDoctorEmail(input: {
+  firstName: string;
+  memberName: string;
+  caseId: string;
+  queueUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Assessment ready to sign — ${input.memberName}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">An assessment is ready for you.</h1>
+       <p style="margin:0 0 18px;">Hi Dr. ${escapeHtml(input.firstName)} — ${escapeHtml(input.memberName)} has cleared triage and is waiting on your review. Case ${escapeHtml(input.caseId)}.</p>
+       <p style="margin:0 0 18px;">This one has no order attached, so nothing is charged either way. Sign to issue a prescription, or decline with a clinical note.</p>
+       ${button('Open the queue', input.queueUrl)}`,
+    ),
+  };
+}
+
 export function declinedEmail(input: {
   firstName: string;
   reason?: string;
