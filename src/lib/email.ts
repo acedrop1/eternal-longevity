@@ -76,7 +76,7 @@ export async function sendEmail(
 /* -------------------------------------------------------------------------- */
 
 /** Wrap body content in a minimal branded shell. */
-function shell(body: string): string {
+export function shell(body: string): string {
   return `<!doctype html><html><body style="margin:0;background:#0a0a0a;padding:32px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
     <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#141414;border:1px solid #262626;border-radius:20px;overflow:hidden;">
@@ -529,6 +529,39 @@ export function planNeedsReviewEmail(input: {
        <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescription for ${escapeHtml(input.productName)} has reached the end of its term, so your plan is paused until your prescriber reviews it again.</p>
        <p style="margin:0 0 18px;"><strong style="color:#fff;">You have not been charged</strong> and nothing has shipped. Open your portal and confirm nothing has changed in your health, and it goes straight back to him.</p>
        ${button('Review and restart', input.portalUrl)}`,
+    ),
+  };
+}
+
+/**
+ * A message an admin writes by hand, in the brand's own frame.
+ *
+ * Support answering from a personal mailbox arrives looking like nothing to do
+ * with us, which is exactly what a patient is told to be suspicious of. Line
+ * breaks become paragraphs so nobody has to write HTML, and the body is escaped
+ * because an admin typing an ampersand should not break the email.
+ */
+export function adminComposedEmail(input: {
+  firstName: string;
+  subject: string;
+  body: string;
+}): { subject: string; html: string } {
+  const paragraphs = input.body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px;">${escapeHtml(p).replace(/\n/g, '<br/>')}</p>`,
+    )
+    .join('');
+
+  return {
+    subject: input.subject,
+    html: shell(
+      `<p style="margin:0 0 16px;">Hi ${escapeHtml(input.firstName)},</p>
+       ${paragraphs}
+       <p style="margin:24px 0 0;color:#a3a3a3;font-size:13px;">— The Eternal Longevity team</p>`,
     ),
   };
 }

@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
+import { AdminEmailMember } from '@/components/admin/AdminEmailMember';
 import { getSession } from '@/lib/auth-server';
 import type { AccountStatus } from '@/lib/database.types';
 import {
@@ -292,6 +293,10 @@ export default async function MemberDetailPage({ params }: PageProps) {
         </Section>
 
         {/* Assessment */}
+        <Section title="Send an email">
+          <AdminEmailMember userId={id} email={detail.email} />
+        </Section>
+
         <Section title="Activity">
           {detail.timeline.length === 0 ? (
             <p className="text-sm text-foreground/55">

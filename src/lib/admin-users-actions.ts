@@ -19,6 +19,10 @@ import {
 } from './supabase/admin';
 import { SITE_URL } from './site';
 import {
+  adminComposedEmail,
+  intakeConfirmationEmail,
+} from './email';
+import {
   sendEmail,
   welcomeEmail,
   passwordResetEmail,
@@ -270,4 +274,87 @@ export async function adminSendPasswordEmail(input: {
       message: err instanceof Error ? err.message : 'Could not send the email.',
     };
   }
+}
+
+/**
+ * Send a member a branded email from the admin portal.
+ *
+ * Two reasons this exists. A welcome email that bounced, went to spam or landed
+ * before a copy change is otherwise unrepeatable — the only way to resend it was
+ * to make the person sign up again. And answering someone from a personal
+ * mailbox arrives looking like nothing to do with us, which is precisely what a
+ * patient is told to treat as suspicious.
+ *
+ * Every send is written to the member's record, because an email nobody can
+ * prove was sent is worth very little when someone says they never got it.
+ */
+export async function adminSendMemberEmail(input: {
+  userId: string;
+  template: 'welcome' | 'custom';
+  subject?: string;
+  body?: string;
+}): Promise<AdminUserResult> {
+  const actor = await getSession();
+  if (!actor || actor.role !== 'admin') {
+    return { ok: false, message: 'Not authorised.' };
+  }
+  if (!supabaseAdminConfigured()) {
+    return { ok: false, message: 'Database is not configured.' };
+  }
+
+  const db = createSupabaseAdminClient();
+  const { data: profile } = await db
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', input.userId)
+    .maybeSingle();
+  if (!profile?.email) {
+    return { ok: false, message: 'That account has no email address.' };
+  }
+
+  const firstName = (profile.full_name ?? '').trim().split(/\s+/)[0] || 'there';
+
+  let msg: { subject: string; html: string };
+  if (input.template === 'welcome') {
+    msg = intakeConfirmationEmail(firstName);
+  } else {
+    const subject = (input.subject ?? '').trim();
+    const body = (input.body ?? '').trim();
+    if (!subject) return { ok: false, message: 'Give it a subject line.' };
+    if (!body) return { ok: false, message: 'Write something to send.' };
+    if (body.length > 5000) {
+      return { ok: false, message: 'That is too long — 5000 characters max.' };
+    }
+    msg = adminComposedEmail({ firstName, subject, body });
+  }
+
+  const sent = await sendEmail({
+    to: profile.email,
+    subject: msg.subject,
+    html: msg.html,
+  });
+  if (!sent.ok) {
+    return { ok: false, message: sent.error ?? 'Could not send the email.' };
+  }
+
+  // Against the member's most recent order, so it shows on their timeline.
+  const { data: order } = await db
+    .from('orders')
+    .select('id')
+    .eq('user_id', input.userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (order) {
+    await db.from('order_updates').insert({
+      order_id: order.id,
+      label: 'Email sent by the team',
+      body: msg.subject,
+      author: actor.name,
+      author_role: 'admin',
+    });
+  }
+
+  revalidatePath(`/portal/admin/members/${input.userId}`);
+  return { ok: true, message: `Sent to ${profile.email}.` };
 }
