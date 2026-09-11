@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
-import { ageFrom, formatDate as fmtDate, formatPhone } from '@/lib/format';
+import {
+  ageFrom,
+  formatDate as fmtDate,
+  formatDateTime as fmtDateTime,
+  formatPhone,
+} from '@/lib/format';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -40,6 +45,14 @@ interface MemberDetail {
     perCycle: number;
   }[];
   orders: { ref: string; status: string; createdAt: string }[];
+  /** Everything that has happened to this member, newest first. */
+  timeline: {
+    at: string;
+    label: string;
+    body: string | null;
+    orderNumber: string;
+    author: string | null;
+  }[];
   assessment: { label: string; value: string }[];
 }
 
@@ -64,6 +77,7 @@ function demoDetail(id: string): MemberDetail {
     joinedAt: '—',
     subscriptions: [],
     orders: [],
+    timeline: [],
     assessment: [],
   };
 }
@@ -81,7 +95,12 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
       .maybeSingle();
     if (!profile) return null;
 
-    const [{ data: subs }, { data: orders }, { data: intake }] =
+    /*
+     * fulfillment_orders is the pharmacy's view. The member's actual journey —
+     * applied, ordered, approved by the prescriber, charged, shipped — lives in
+     * order_updates against their shop orders, and admin had no way to see it.
+     */
+    const [{ data: subs }, { data: orders }, { data: intake }, { data: shopOrders }] =
       await Promise.all([
         db
           .from('subscriptions')
@@ -99,7 +118,22 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
+        db
+          .from('orders')
+          .select('id, order_number')
+          .eq('user_id', id),
       ]);
+
+    const orderNumberById = new Map(
+      (shopOrders ?? []).map((o) => [o.id, o.order_number]),
+    );
+    const { data: updates } = orderNumberById.size
+      ? await db
+          .from('order_updates')
+          .select('order_id, label, body, author, created_at')
+          .in('order_id', [...orderNumberById.keys()])
+          .order('created_at', { ascending: false })
+      : { data: [] };
 
     const answers =
       intake && intake.answers && typeof intake.answers === 'object'
@@ -123,6 +157,13 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         ref: o.order_ref,
         status: o.status,
         createdAt: fmtDate(o.created_at),
+      })),
+      timeline: (updates ?? []).map((u) => ({
+        at: fmtDateTime(u.created_at),
+        label: u.label,
+        body: u.body,
+        orderNumber: orderNumberById.get(u.order_id) ?? '—',
+        author: u.author,
       })),
       assessment: Object.entries(answers).map(([label, value]) => ({
         label,
@@ -251,6 +292,45 @@ export default async function MemberDetailPage({ params }: PageProps) {
         </Section>
 
         {/* Assessment */}
+        <Section title="Activity">
+          {detail.timeline.length === 0 ? (
+            <p className="text-sm text-foreground/55">
+              Nothing yet. Applying, ordering, prescriber decisions, charges and
+              shipments all appear here.
+            </p>
+          ) : (
+            <ol className="space-y-3">
+              {detail.timeline.map((t, i) => (
+                <li key={i} className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-accent"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-sm font-medium text-foreground">
+                        {t.label}
+                      </span>
+                      <span className="font-mono text-[10px] tracking-wider text-foreground/40">
+                        {t.orderNumber}
+                      </span>
+                    </div>
+                    {t.body && (
+                      <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+                        {t.body}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[11px] text-foreground/40">
+                      {t.at}
+                      {t.author ? ` · ${t.author}` : ''}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Section>
+
         <Section title="Assessment">
           {detail.assessment.length === 0 ? (
             <Empty>No intake on file.</Empty>

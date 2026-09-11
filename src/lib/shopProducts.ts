@@ -949,7 +949,7 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       perMonth: m,
       breakdown: [
         'Billed monthly, shipped monthly',
-        'Every refill re-reviewed by your prescriber',
+        'Ships on the same prescription until it expires',
         'Adjust your refill date whenever you like',
         'Pause or cancel before the next billing date',
         'Ongoing prescriber messaging throughout',
@@ -964,7 +964,7 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       saveLabel: qSave > 0 ? `Save ${qSave}%` : undefined,
       breakdown: [
         'Billed every 3 months, shipped every 3 months',
-        'Every refill re-reviewed by your prescriber',
+        'Ships on the same prescription until it expires',
         'Adjust your refill date whenever you like',
         'Pause or cancel before the next billing date',
         'Ongoing prescriber messaging throughout',

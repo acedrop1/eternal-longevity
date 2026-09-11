@@ -1221,12 +1221,14 @@ export function CheckoutFlow({
                 your prescription goes straight to the pharmacy. If they decide
                 this treatment isn&apos;t right for you, it is never charged.
               </p>
-              {/* Repeat customers assume a past approval carries over. It does
-                  not, and finding that out only when a charge does not arrive
-                  is a support ticket. */}
+              {/* A plan renewing on an existing prescription is not a new
+                  clinical decision; a different product is. Saying so stops a
+                  returning member expecting a review that will not happen, and
+                  a plan member fearing one that will. */}
               <p className="mt-2 text-sm leading-relaxed text-foreground/60">
-                This is true of every order, not just your first. A new product,
-                or the same one ordered again, is reviewed again.
+                A plan keeps shipping on this prescription until it expires. A
+                different product is a new prescription, so it is reviewed
+                again.
               </p>
             </div>
 
