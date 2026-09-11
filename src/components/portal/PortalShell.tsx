@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { CartButton } from '@/components/cart/CartButton';
 import { PortalNav, type NavItem } from '@/components/portal/PortalNav';
 import { enrichNavWithCounts } from '@/lib/pending-counts';
+import { IdleTimeout } from '@/components/portal/IdleTimeout';
+import { IDLE_MINUTES } from '@/lib/session-policy';
 
 const ROLE_THEME: Record<
   Role,
@@ -68,6 +70,14 @@ export async function PortalShell({
   const navItems = await enrichNavWithCounts(nav, user.role);
 
   return (
+    <>
+      {/* Staff can reach other people's records, so their session is cut
+          sooner. See session-policy.ts. */}
+      <IdleTimeout
+        idleMinutes={
+          user.role === 'member' ? IDLE_MINUTES.member : IDLE_MINUTES.staff
+        }
+      />
     <div
       className={cn(
         'min-h-screen bg-background text-foreground',
@@ -157,5 +167,6 @@ export async function PortalShell({
         </main>
       </div>
     </div>
+    </>
   );
 }

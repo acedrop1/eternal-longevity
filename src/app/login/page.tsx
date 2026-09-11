@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  searchParams: Promise<{ error?: string; notice?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; timeout?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, notice } = await searchParams;
+  const { error, notice, timeout } = await searchParams;
 
   return (
     <AuthShell
@@ -50,6 +50,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {supabaseConfigured
               ? 'Invalid email or password.'
               : 'Invalid email or password. Tap a demo card below to fill the form.'}
+          </div>
+        )}
+        {/* Being logged out mid-task with no explanation reads as a bug. */}
+        {timeout === 'idle' && (
+          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground/75">
+            You were signed out after a spell of inactivity. Sign in to pick up
+            where you left off.
+          </div>
+        )}
+        {timeout === 'expired' && (
+          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground/75">
+            Sessions end after 12 hours. Sign in again to continue.
           </div>
         )}
         {error === 'auth' && (

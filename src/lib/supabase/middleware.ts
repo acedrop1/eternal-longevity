@@ -8,6 +8,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from '@/lib/env';
+import {
+  ABSOLUTE_HOURS,
+  ACTIVITY_COOKIE,
+  SESSION_START_COOKIE,
+  idleMinutesForPath,
+} from '@/lib/session-policy';
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,7 +39,59 @@ export async function updateSession(request: NextRequest) {
   });
 
   // Touching getUser() refreshes an expired token if needed.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return response;
+
+  /*
+   * Automatic logoff. Supabase refreshes a token forever as long as the tab
+   * lives, so without this a doctor's laptop stays signed in indefinitely —
+   * which is the one thing the Security Rule names. Enforced here rather than
+   * in the browser because a timer a user can stop is not a control.
+   */
+  const path = request.nextUrl.pathname;
+  if (path.startsWith('/portal') || path.startsWith('/checkout')) {
+    const now = Date.now();
+    const seen = Number(request.cookies.get(ACTIVITY_COOKIE)?.value ?? 0);
+    const since = Number(request.cookies.get(SESSION_START_COOKIE)?.value ?? 0);
+
+    const idleMs = idleMinutesForPath(path) * 60_000;
+    const idledOut = seen > 0 && now - seen > idleMs;
+    const agedOut = since > 0 && now - since > ABSOLUTE_HOURS * 3_600_000;
+
+    if (idledOut || agedOut) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.search = `?timeout=${idledOut ? 'idle' : 'expired'}`;
+      const out = NextResponse.redirect(url);
+      // Drop every auth cookie, not just the session stamps.
+      for (const c of request.cookies.getAll()) {
+        if (c.name.startsWith('sb-')) out.cookies.delete(c.name);
+      }
+      out.cookies.delete(ACTIVITY_COOKIE);
+      out.cookies.delete(SESSION_START_COOKIE);
+      return out;
+    }
+
+    const secure = request.nextUrl.protocol === 'https:';
+    response.cookies.set(ACTIVITY_COOKIE, String(now), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+      path: '/',
+    });
+    if (!since) {
+      response.cookies.set(SESSION_START_COOKIE, String(now), {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure,
+        path: '/',
+      });
+    }
+  }
 
   return response;
 }
