@@ -9,6 +9,7 @@
  */
 import 'server-only';
 import { Resend } from 'resend';
+import { SITE_URL } from '@/lib/site';
 
 let cached: Resend | null = null;
 
@@ -113,16 +114,16 @@ export function intakeConfirmationEmail(firstName: string): {
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:18px 0;">
          <tr><td style="padding:18px 20px;color:#e5e5e5;font-size:14px;line-height:1.6;">
            <div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-bottom:10px;">WHAT HAPPENS NEXT</div>
-           <p style="margin:0 0 10px;"><strong style="color:#fff;">1. Place your order.</strong><br/>
+           <p style="margin:0 0 10px;"><strong style="color:#fff;">1. Complete your clinical visit.</strong><br/>
+           A short set of health questions in your portal. You cannot order until this is done — it is what your prescriber reviews.</p>
+           <p style="margin:0 0 10px;"><strong style="color:#fff;">2. Place your order.</strong><br/>
            You're only charged if a licensed prescriber approves your treatment.</p>
-           <p style="margin:0 0 10px;"><strong style="color:#fff;">2. Complete your clinical visit.</strong><br/>
-           A short set of health questions in your portal — your prescriber reviews it.</p>
            <p style="margin:0;"><strong style="color:#fff;">3. Your treatment ships discreetly.</strong><br/>
            Tracking is added to your order the moment it leaves the pharmacy.</p>
          </td></tr>
        </table>
        <p style="margin:18px 0 6px;">
-         <a href="https://etlongevity.com/login" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Go to my portal</a>
+         <a href="${SITE_URL}/portal/visit" style="display:inline-block;background:#d5a850;color:#000;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;">Complete my visit</a>
        </p>`,
     ),
   };
