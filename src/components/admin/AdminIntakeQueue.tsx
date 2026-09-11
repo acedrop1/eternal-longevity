@@ -20,6 +20,19 @@ export interface IntakeRowView {
   answers: { label: string; value: string }[];
 }
 
+/*
+ * Closing a visit at this desk is an administrative act. A free-text box
+ * invites "history of cancer" — a clinical judgement nobody here is licensed
+ * to make. These are the only reasons an admin can close on.
+ */
+const CLOSE_REASONS = [
+  'Outside New Jersey — we are only licensed to serve NJ residents.',
+  'Under 18 — we cannot treat anyone under 18.',
+  'Duplicate of an existing visit.',
+  'Test, spam, or an incomplete submission.',
+  'The member asked us to close this visit.',
+];
+
 const STATUS_BADGE: Record<string, string> = {
   submitted: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
   approved: 'border-accent/40 bg-accent/10 text-accent',
@@ -159,7 +172,7 @@ function IntakeCard({
             onClick={() => run(() => approveIntake(intake.id))}
             className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
           >
-            {busy ? 'Working…' : 'Approve'}
+            {busy ? 'Working…' : 'Send to prescriber'}
           </button>
           <button
             type="button"
@@ -175,7 +188,7 @@ function IntakeCard({
             onClick={() => setOpen('decline')}
             className="rounded-full border border-red-500/30 bg-red-500/5 px-4 py-2 text-xs tracking-wider text-red-300 transition-colors hover:bg-red-500/10"
           >
-            Decline
+            Close &mdash; not eligible
           </button>
         </div>
       )}
@@ -196,16 +209,43 @@ function IntakeCard({
             )}
           >
             {open === 'decline'
-              ? 'REASON FOR DECLINE'
+              ? 'WHY ARE THEY NOT ELIGIBLE?'
               : 'WHAT DOES THE PATIENT NEED TO PROVIDE?'}
           </div>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            placeholder="The patient will see this note…"
-            className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-          />
+
+          {open === 'decline' ? (
+            <>
+              <div className="space-y-2">
+                {CLOSE_REASONS.map((r) => (
+                  <label
+                    key={r}
+                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground/85 transition-colors hover:border-foreground/30"
+                  >
+                    <input
+                      type="radio"
+                      name={`close-${intake.id}`}
+                      checked={note === r}
+                      onChange={() => setNote(r)}
+                      className="mt-1 h-3.5 w-3.5 flex-none accent-[#d5a850]"
+                    />
+                    <span>{r}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-foreground/50">
+                Not a clinical decision. If the reason is medical, send it to the
+                prescriber instead — only he can decline on clinical grounds.
+              </p>
+            </>
+          ) : (
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="The patient will see this note…"
+              className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+            />
+          )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -227,7 +267,7 @@ function IntakeCard({
               {busy
                 ? 'Working…'
                 : open === 'decline'
-                  ? 'Confirm decline'
+                  ? 'Close this visit'
                   : 'Send request'}
             </button>
             <button

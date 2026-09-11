@@ -97,9 +97,9 @@ export default async function AdminQueuePage() {
           Triage incoming intakes.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Every new intake lands here first. Approve it to release it for
-          physician sign-off, request more information, or decline with a
-          reason.
+          Administrative triage only. Check the intake is complete and the
+          person is eligible, then send it to the prescriber — he makes every
+          clinical decision. Close a visit here only for a non-clinical reason.
         </p>
       </div>
 
