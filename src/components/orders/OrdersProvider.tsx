@@ -46,8 +46,8 @@ interface OrdersAPI {
     id: string,
     author: string,
     note?: string
-  ) => void;
-  declineClinical: (id: string, author: string, note: string) => void;
+  ) => Promise<void>;
+  declineClinical: (id: string, author: string, note: string) => Promise<void>;
   /** Post-sign progression — usually called by physician or pharmacy. */
   markCompounding: (id: string, author: string, note?: string) => void;
   markShipped: (
@@ -139,15 +139,21 @@ export function OrdersProvider({
    * local update has already happened, so the UI does not wait on the round
    * trip; the refresh reconciles it.
    */
+  /*
+   * Returns the promise. Signing runs a chain that takes real seconds — write
+   * the prescription, charge the card, submit to the pharmacy — and a
+   * fire-and-forget call left the button looking dead for all of it.
+   */
   const sync = useCallback(
-    (run: () => Promise<{ ok: boolean; error?: string }>) => {
+    async (run: () => Promise<{ ok: boolean; error?: string }>) => {
       if (!live) return;
-      void run()
-        .then((res) => {
-          if (!res.ok) console.error('[orders] action failed:', res.error);
-          router.refresh();
-        })
-        .catch((err) => console.error('[orders] action threw:', err));
+      try {
+        const res = await run();
+        if (!res.ok) console.error('[orders] action failed:', res.error);
+        router.refresh();
+      } catch (err) {
+        console.error('[orders] action threw:', err);
+      }
     },
     [live, router],
   );
@@ -244,7 +250,7 @@ export function OrdersProvider({
    * charged to the card on file, and only then is the order released to the
    * pharmacy. Recorded as two timeline entries — the sign-off and the charge.
    */
-  const signRx = useCallback<OrdersAPI['signRx']>((id, author, note) => {
+  const signRx = useCallback<OrdersAPI['signRx']>(async (id, author, note) => {
     const now = Date.now();
     setOrders((curr) =>
       curr.map((o) => {
@@ -275,14 +281,14 @@ export function OrdersProvider({
       })
     );
     const charged = orders.find((o) => o.id === id)?.total ?? 0;
-    sync(() => signRxAction(id, note, charged));
+    await sync(() => signRxAction(id, note, charged));
   }, [orders, sync]);
 
   const declineClinical = useCallback<OrdersAPI['declineClinical']>(
-    (id, author, note) => {
+    async (id, author, note) => {
       updateOrder(id, { status: 'declined-clinical', physicianNote: note });
       appendUpdate(id, author, 'physician', note, 'declined-clinical');
-      sync(() => declineClinicalAction(id, note));
+      await sync(() => declineClinicalAction(id, note));
     },
     [updateOrder, appendUpdate, sync]
   );

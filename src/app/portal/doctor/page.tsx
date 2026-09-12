@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DoctorQueueList } from '@/components/doctor/DoctorQueueList';
 import { getSession } from '@/lib/auth-server';
+import { listOrders } from '@/lib/orders-db';
+import { reviewsForOrders } from '@/lib/clinical-review';
 
 export const metadata: Metadata = {
   title: 'Clinical Queue',
@@ -13,6 +15,17 @@ export default async function DoctorPortalPage() {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'doctor') redirect(user.redirectTo);
+
+  /*
+   * The intake behind each waiting order. Fetched here rather than in the
+   * client component so the prescriber never sees a card he cannot act on —
+   * the record loads with the queue, not after a second round trip.
+   */
+  const orders = await listOrders().catch(() => []);
+  const waiting = orders
+    .filter((o) => o.status === 'assigned')
+    .map((o) => o.id);
+  const reviews = await reviewsForOrders(waiting).catch(() => ({}));
 
   return (
     <PortalShell
@@ -48,7 +61,7 @@ export default async function DoctorPortalPage() {
         </div>
       </div>
 
-      <DoctorQueueList doctorName={user.name} />
+      <DoctorQueueList doctorName={user.name} reviews={reviews} />
 
     </PortalShell>
   );

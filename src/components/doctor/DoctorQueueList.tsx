@@ -5,12 +5,18 @@ import Image from 'next/image';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
+import type { PatientReview } from '@/lib/clinical-review';
 
 interface DoctorQueueListProps {
   doctorName: string;
+  /** The intake behind each waiting order, keyed by order number. */
+  reviews: Record<string, PatientReview>;
 }
 
-export function DoctorQueueList({ doctorName }: DoctorQueueListProps) {
+export function DoctorQueueList({
+  doctorName,
+  reviews,
+}: DoctorQueueListProps) {
   const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
     useOrders();
 
@@ -53,7 +59,12 @@ export function DoctorQueueList({ doctorName }: DoctorQueueListProps) {
         ) : (
           <div className="space-y-3">
             {queue.map((o) => (
-              <DoctorQueueRow key={o.id} order={o} doctorName={doctorName} />
+              <DoctorQueueRow
+                key={o.id}
+                order={o}
+                doctorName={doctorName}
+                review={reviews[o.id]}
+              />
             ))}
           </div>
         )}
@@ -141,13 +152,16 @@ function EmptySection({ title, body }: { title: string; body: string }) {
 function DoctorQueueRow({
   order,
   doctorName,
+  review,
 }: {
   order: Order;
   doctorName: string;
+  review?: PatientReview;
 }) {
   const { signRx, declineClinical } = useOrders();
   const [open, setOpen] = useState<null | 'decline'>(null);
   const [note, setNote] = useState('');
+  const [busy, setBusy] = useState<null | 'sign' | 'decline'>(null);
 
   return (
     <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
@@ -182,6 +196,8 @@ function DoctorQueueRow({
               {order.lines.map((l) => `${l.productName} (${l.cadenceLabel})`).join(' + ')}
             </p>
 
+            {review && <ReviewPanel review={review} />}
+
             {order.adminNote && (
               <div className="mt-3 rounded-xl border border-foreground/15 bg-background p-3">
                 <div className="text-[10px] tracking-widest text-foreground/55 mb-1">
@@ -206,23 +222,37 @@ function DoctorQueueRow({
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
           <button
             type="button"
-            onClick={() => {
+            disabled={busy !== null}
+            onClick={async () => {
               if (
-                window.confirm(
+                !window.confirm(
                   "Sign this prescription? This charges the patient's first cycle and releases the order to the pharmacy.",
                 )
               ) {
-                signRx(order.id, doctorName);
+                return;
+              }
+              /*
+               * Signing writes the prescription, charges the card and submits
+               * to the pharmacy. That is seconds of real work, and without a
+               * pending state the button looked broken for all of it.
+               */
+              setBusy('sign');
+              try {
+                await signRx(order.id, doctorName);
+              } finally {
+                setBusy(null);
               }
             }}
-            className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-60"
           >
-            Sign &amp; start billing
+            {busy === 'sign' && <Spinner />}
+            {busy === 'sign' ? 'Signing…' : 'Sign & start billing'}
           </button>
           <button
             type="button"
+            disabled={busy !== null}
             onClick={() => setOpen('decline')}
-            className="rounded-full border border-red-500/30 bg-red-500/5 text-red-300 font-medium px-5 py-2 text-sm hover:bg-red-500/10 transition-colors"
+            className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60"
           >
             Decline
           </button>
@@ -244,20 +274,26 @@ function DoctorQueueRow({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                if (!note.trim()) return;
-                declineClinical(order.id, doctorName, note.trim());
-                setOpen(null);
+              onClick={async () => {
+                if (!note.trim() || busy) return;
+                setBusy('decline');
+                try {
+                  await declineClinical(order.id, doctorName, note.trim());
+                  setOpen(null);
+                } finally {
+                  setBusy(null);
+                }
               }}
-              disabled={!note.trim()}
+              disabled={!note.trim() || busy !== null}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
-                note.trim()
+                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                note.trim() && !busy
                   ? 'bg-red-500 text-foreground hover:bg-red-600'
                   : 'bg-foreground/15 text-foreground/40'
               )}
             >
-              Confirm decline
+              {busy === 'decline' && <Spinner />}
+              {busy === 'decline' ? 'Sending…' : 'Confirm decline'}
             </button>
             <button
               type="button"
@@ -626,4 +662,103 @@ function relativeTime(at: number): string {
   if (hr < 24) return `${hr} hr ago`;
   const days = Math.floor(hr / 24);
   return `${days}d ago`;
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="animate-spin"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="3"
+        opacity="0.25"
+      />
+      <path
+        d="M22 12a10 10 0 0 0-10-10"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * The patient's intake, on the card, open.
+ *
+ * Not behind a toggle: a prescriber should not have to ask for the record
+ * before deciding, and a collapsed panel is one someone signs past. Answers
+ * that change a decision are marked so they survive a skim.
+ */
+function ReviewPanel({ review }: { review: PatientReview }) {
+  return (
+    <section className="mt-4 overflow-hidden rounded-2xl border border-line bg-background">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line px-4 py-3 text-xs text-foreground/60">
+        <span>
+          <span className="text-foreground/40">DOB </span>
+          <span className="text-foreground/90">{review.dob}</span>
+          {review.age !== '—' && (
+            <span className="text-foreground/90"> · {review.age}</span>
+          )}
+        </span>
+        <span>
+          <span className="text-foreground/40">Sex </span>
+          <span className="text-foreground/90">{review.sex}</span>
+        </span>
+        <span>
+          <span className="text-foreground/40">Body </span>
+          <span className="text-foreground/90">{review.body}</span>
+        </span>
+        <span className="ml-auto text-foreground/40">
+          Intake {review.submittedAt}
+        </span>
+      </div>
+
+      <ReviewGroup title="Safety screen" lines={review.safety} />
+      <ReviewGroup title="History" lines={review.history} />
+    </section>
+  );
+}
+
+function ReviewGroup({
+  title,
+  lines,
+}: {
+  title: string;
+  lines: { label: string; value: string; flag?: boolean }[];
+}) {
+  return (
+    <div className="border-b border-line last:border-0">
+      <div className="px-4 pt-3 text-[10px] tracking-widest text-foreground/45">
+        {title.toUpperCase()}
+      </div>
+      <dl className="px-4 pb-3">
+        {lines.map((l) => (
+          <div
+            key={l.label}
+            className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5 border-b border-line/50 py-2 last:border-0"
+          >
+            <dt className="text-xs text-foreground/55">{l.label}</dt>
+            <dd
+              className={cn(
+                'text-sm',
+                l.flag ? 'font-semibold text-accent' : 'text-foreground/85',
+              )}
+            >
+              {l.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
 }
