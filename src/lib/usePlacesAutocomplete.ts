@@ -50,40 +50,73 @@ declare global {
 }
 
 const SCRIPT_ID = 'gmaps-places';
+const CALLBACK = '__elMapsReady';
 
+/**
+ * Load the Maps JS API and hand back the Places library.
+ *
+ * Uses Google's own callback parameter rather than the script's load event.
+ * `onload` fires when the bootstrap file arrives, which is before
+ * `google.maps` is populated — so reading `importLibrary` there found
+ * undefined and the whole thing failed silently as "library unavailable".
+ */
 function loadPlaces(apiKey: string): Promise<PlacesLib | null> {
   if (typeof window === 'undefined') return Promise.resolve(null);
 
-  return new Promise((resolve) => {
-    const finish = async () => {
-      try {
-        const lib = await window.google?.maps?.importLibrary?.('places');
-        resolve((lib as PlacesLib) ?? null);
-      } catch (err) {
-        console.error('[places] importLibrary failed', err);
-        resolve(null);
-      }
-    };
+  const w = window as unknown as Record<string, unknown>;
 
-    if (document.getElementById(SCRIPT_ID)) {
-      void finish();
-      return;
+  const grab = async (): Promise<PlacesLib | null> => {
+    const maps = window.google?.maps as
+      | (Record<string, unknown> & {
+          importLibrary?: (n: string) => Promise<unknown>;
+        })
+      | undefined;
+    if (!maps) return null;
+    // Loaded with libraries=places, so it is usually already on the namespace.
+    if (maps.places) return maps.places as PlacesLib;
+    try {
+      return ((await maps.importLibrary?.('places')) as PlacesLib) ?? null;
+    } catch (err) {
+      console.error('[places] importLibrary failed', err);
+      return null;
     }
+  };
+
+  if (document.getElementById(SCRIPT_ID)) {
+    // Already requested by an earlier mount — wait for the same callback.
+    return new Promise((resolve) => {
+      const done = () => void grab().then(resolve);
+      if (window.google?.maps) done();
+      else {
+        const prev = w[CALLBACK] as (() => void) | undefined;
+        w[CALLBACK] = () => {
+          prev?.();
+          done();
+        };
+      }
+    });
+  }
+
+  return new Promise((resolve) => {
+    w[CALLBACK] = () => void grab().then(resolve);
 
     const el = document.createElement('script');
     el.id = SCRIPT_ID;
-    // loading=async is what Google asks for; it also keeps the main thread free
-    // while someone is still typing their name three fields up.
-    el.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-      apiKey,
-    )}&libraries=places&loading=async&v=weekly`;
     el.async = true;
-    el.onload = () => void finish();
+    el.src =
+      'https://maps.googleapis.com/maps/api/js' +
+      `?key=${encodeURIComponent(apiKey)}` +
+      '&libraries=places&v=weekly' +
+      `&callback=${CALLBACK}`;
     el.onerror = () => {
       console.error('[places] script blocked or failed to load', el.src);
       resolve(null);
     };
     document.head.appendChild(el);
+
+    // Google logs its own named errors (ApiNotActivatedMapError,
+    // RefererNotAllowedMapError) and never calls back. Do not hang on it.
+    window.setTimeout(() => resolve(null), 10_000);
   });
 }
 
