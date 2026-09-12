@@ -100,6 +100,7 @@ function mapOrder(row: OrderRow): Order {
       state: address.state ?? String(row.ship_state ?? ''),
       zip: address.zip ?? '',
     },
+    userId: (row.user_id as string) || undefined,
     cardLast4: (row.card_last4 as string) || undefined,
     placedAt: new Date(String(row.created_at ?? Date.now())).getTime(),
     status: (row.status as OrderStatus) ?? 'pending-admin',

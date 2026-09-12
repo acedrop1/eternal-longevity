@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
@@ -88,9 +89,18 @@ function LiveBoard({ orders }: { orders: Order[] }) {
                 <span className="font-mono text-[11px] tracking-wider text-foreground/50">
                   {order.id.toUpperCase()}
                 </span>
-                <span className="font-medium text-foreground">
-                  {order.memberName}
-                </span>
+                {order.userId ? (
+                  <Link
+                    href={`/portal/admin/members/${order.userId}`}
+                    className="font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    {order.memberName}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground">
+                    {order.memberName}
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 truncate text-sm text-foreground/60">
                   {order.lines.map((l) => l.productName).join(' + ')}
                 </span>

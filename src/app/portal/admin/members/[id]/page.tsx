@@ -16,6 +16,8 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { cn } from '@/lib/utils';
+import { STATUS_LABEL, type OrderStatus } from '@/lib/orders';
+import { reviewForMember, type PatientReview } from '@/lib/clinical-review';
 
 export const metadata: Metadata = {
   title: 'Member record',
@@ -46,7 +48,7 @@ interface MemberDetail {
     cadence: string;
     perCycle: number;
   }[];
-  orders: { ref: string; status: string; createdAt: string }[];
+  orders: { ref: string; status: string; total: number; createdAt: string }[];
   /** Everything that has happened to this member, newest first. */
   timeline: {
     at: string;
@@ -55,7 +57,8 @@ interface MemberDetail {
     orderNumber: string;
     author: string | null;
   }[];
-  assessment: { label: string; value: string }[];
+  /** The intake, read the way the prescriber reads it. */
+  review: PatientReview | null;
 }
 
 const STATUS_BADGE: Record<AccountStatus, string> = {
@@ -80,7 +83,7 @@ function demoDetail(id: string): MemberDetail {
     subscriptions: [],
     orders: [],
     timeline: [],
-    assessment: [],
+    review: null,
   };
 }
 
@@ -109,8 +112,8 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .select('product_name, status, cadence_label, per_cycle_cents')
           .eq('user_id', id),
         db
-          .from('fulfillment_orders')
-          .select('order_ref, status, created_at')
+          .from('orders')
+          .select('id, order_number, status, total_cents, created_at')
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
         db
@@ -137,10 +140,6 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .order('created_at', { ascending: false })
       : { data: [] };
 
-    const answers =
-      intake && intake.answers && typeof intake.answers === 'object'
-        ? (intake.answers as Record<string, unknown>)
-        : {};
 
     return {
       name: profile.full_name ?? 'Unnamed',
@@ -156,8 +155,9 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         perCycle: Math.round((s.per_cycle_cents ?? 0) / 100),
       })),
       orders: (orders ?? []).map((o) => ({
-        ref: o.order_ref,
+        ref: o.order_number,
         status: o.status,
+        total: Math.round((o.total_cents ?? 0) / 100),
         createdAt: fmtDate(o.created_at),
       })),
       timeline: (updates ?? []).map((u) => ({
@@ -167,15 +167,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         orderNumber: orderNumberById.get(u.order_id) ?? '—',
         author: u.author,
       })),
-      assessment: Object.entries(answers).map(([label, value]) => ({
-        label,
-        value:
-          value == null
-            ? '—'
-            : typeof value === 'object'
-              ? JSON.stringify(value)
-              : String(value),
-      })),
+      review: await reviewForMember(id),
     };
   } catch {
     return demoDetail(id);
@@ -222,7 +214,13 @@ export default async function MemberDetailPage({ params }: PageProps) {
         </span>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/*
+        Was a two-column grid, which stretched an empty Order history card to
+        match the tall email composer beside it and left half the screen blank.
+        Short blocks share a row; anything that grows gets the full width.
+      */}
+      <div className="portal-stack">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Account */}
         <Section title="Account">
           <Row label="Phone" value={formatPhone(detail.phone) || '—'} />
@@ -267,16 +265,17 @@ export default async function MemberDetailPage({ params }: PageProps) {
           )}
         </Section>
 
-        {/* Order history */}
+        </div>
+
         <Section title="Order history">
           {detail.orders.length === 0 ? (
             <Empty>No orders yet.</Empty>
           ) : (
             <ul className="space-y-2">
-              {detail.orders.map((o, i) => (
+              {detail.orders.map((o) => (
                 <li
-                  key={i}
-                  className="flex items-center justify-between rounded-2xl border border-line bg-background px-4 py-3"
+                  key={o.ref}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-line bg-background px-4 py-3"
                 >
                   <span className="font-mono text-xs text-foreground/85">
                     {o.ref}
@@ -284,8 +283,11 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <span className="text-xs text-foreground/55">
                     {o.createdAt}
                   </span>
-                  <span className="text-[10px] tracking-widest text-accent">
-                    {o.status.toUpperCase()}
+                  <span className="ml-auto tabular-nums text-sm text-foreground/90">
+                    ${o.total}
+                  </span>
+                  <span className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-semibold tracking-widest text-foreground/70">
+                    {(STATUS_LABEL[o.status as OrderStatus] ?? o.status).toUpperCase()}
                   </span>
                 </li>
               ))}
@@ -337,23 +339,35 @@ export default async function MemberDetailPage({ params }: PageProps) {
           )}
         </Section>
 
-        <Section title="Assessment">
-          {detail.assessment.length === 0 ? (
+        <Section title="Medical record">
+          {!detail.review ? (
             <Empty>No intake on file.</Empty>
           ) : (
-            <dl className="space-y-2.5">
-              {detail.assessment.map((a, i) => (
-                <div
-                  key={i}
-                  className="flex items-start justify-between gap-4 border-b border-line pb-2.5 last:border-0 last:pb-0"
-                >
-                  <dt className="text-xs text-foreground/55">{a.label}</dt>
-                  <dd className="max-w-[60%] text-right text-sm text-foreground/90">
-                    {a.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <div className="space-y-5">
+              <div className="flex flex-wrap gap-x-8 gap-y-3">
+                {(
+                  [
+                    ['Date of birth', detail.review.dob],
+                    ['Age', detail.review.age],
+                    ['Sex at birth', detail.review.sex],
+                    ['Height / weight', detail.review.body],
+                    ['Intake completed', detail.review.submittedAt],
+                  ] as [string, string][]
+                ).map(([k, v]) => (
+                  <div key={k}>
+                    <div className="text-[10px] tracking-widest text-foreground/45">
+                      {k.toUpperCase()}
+                    </div>
+                    <div className="mt-0.5 text-sm text-foreground">{v}</div>
+                  </div>
+                ))}
+              </div>
+
+              <RecordGroup title="Contact" lines={detail.review.contact} />
+              <RecordGroup title="Billing" lines={detail.review.context} />
+              <RecordGroup title="Safety screen" lines={detail.review.safety} />
+              <RecordGroup title="History" lines={detail.review.history} />
+            </div>
           )}
         </Section>
       </div>
@@ -383,6 +397,40 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between border-b border-line py-2.5 text-sm last:border-0">
       <span className="text-foreground/55">{label}</span>
       <span className="text-foreground/90">{value}</span>
+    </div>
+  );
+}
+
+function RecordGroup({
+  title,
+  lines,
+}: {
+  title: string;
+  lines: { label: string; value: string; flag?: boolean }[];
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 text-[10px] tracking-widest text-foreground/45">
+        {title.toUpperCase()}
+      </div>
+      <div className="grid gap-x-8 md:grid-cols-2">
+        {lines.map((l) => (
+          <div
+            key={l.label}
+            className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0"
+          >
+            <span className="text-[13px] text-foreground/60">{l.label}</span>
+            <span
+              className={cn(
+                'text-right text-[13px] font-medium',
+                l.flag ? 'text-accent' : 'text-foreground/90',
+              )}
+            >
+              {l.value}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

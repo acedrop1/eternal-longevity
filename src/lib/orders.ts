@@ -48,6 +48,8 @@ export interface OrderUpdate {
 
 export interface Order {
   id: string;
+  /** Who placed it — admin needs a route from an order to the member. */
+  userId?: string;
   memberName: string;
   memberEmail: string;
   state: string;
