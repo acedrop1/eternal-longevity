@@ -65,6 +65,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Sessions end after 12 hours. Sign in again to continue.
           </div>
         )}
+        {error === 'mfa_unavailable' && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            We could not email your sign-in code. Try again, or contact support
+            if it keeps happening.
+          </div>
+        )}
         {error === 'auth' && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             That sign-in link is invalid or has expired. Please try again.

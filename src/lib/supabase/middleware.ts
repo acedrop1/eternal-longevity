@@ -13,7 +13,52 @@ import {
   ACTIVITY_COOKIE,
   SESSION_START_COOKIE,
   idleMinutesForPath,
+  isStaffPath,
 } from '@/lib/session-policy';
+
+const MFA_COOKIE = 'el_mfa';
+
+/**
+ * Verify the second-factor ticket without a database read.
+ *
+ * Written with Web Crypto rather than the helper in lib/mfa.ts because that
+ * module is server-only and this runs on the edge on every request. The ticket
+ * is userId.expiry.hmac — anything a browser could forge fails the signature.
+ */
+async function ticketValid(
+  ticket: string | undefined,
+  userId: string,
+  secret: string,
+): Promise<boolean> {
+  if (!ticket) return false;
+  const [id, expRaw, sig] = ticket.split('.');
+  if (!id || !expRaw || !sig) return false;
+  if (id !== userId || Number(expRaw) < Date.now()) return false;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const mac = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(`${id}.${expRaw}`),
+  );
+  const expected = [...new Uint8Array(mac)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Constant time: compare every byte whatever happens.
+  if (expected.length !== sig.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  }
+  return diff === 0;
+}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -52,6 +97,27 @@ export async function updateSession(request: NextRequest) {
    * in the browser because a timer a user can stop is not a control.
    */
   const path = request.nextUrl.pathname;
+
+  /*
+   * Staff areas need the second factor as well as the password. Checked here
+   * because a page-level guard only covers the pages someone remembered to
+   * guard, and these are the accounts that reach every patient record.
+   */
+  const mfaSecret = process.env.MFA_SECRET || process.env.CRON_SECRET;
+  if (mfaSecret && isStaffPath(path)) {
+    const ok = await ticketValid(
+      request.cookies.get(MFA_COOKIE)?.value,
+      user.id,
+      mfaSecret,
+    );
+    if (!ok) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login/verify';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (path.startsWith('/portal') || path.startsWith('/checkout')) {
     const now = Date.now();
     const seen = Number(request.cookies.get(ACTIVITY_COOKIE)?.value ?? 0);
@@ -81,6 +147,7 @@ export async function updateSession(request: NextRequest) {
       }
       out.cookies.delete(ACTIVITY_COOKIE);
       out.cookies.delete(SESSION_START_COOKIE);
+      out.cookies.delete(MFA_COOKIE);
       return out;
     }
 

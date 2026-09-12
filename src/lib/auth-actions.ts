@@ -20,6 +20,7 @@ import {
 import { passwordResetEmail, sendEmail } from './email';
 import { SITE_URL } from './site';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
+import { MFA_COOKIE, issueCode, mfaConfigured, mfaRequiredFor } from './mfa';
 import { passwordValid } from './intakeSchema';
 
 /** Sign in. Form fields: email, password. */
@@ -67,14 +68,29 @@ export async function loginAction(formData: FormData): Promise<void> {
     data: { user },
   } = await supabase.auth.getUser();
   let role: Role = 'member';
+  let fullName: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, full_name')
       .eq('id', user.id)
       .single();
     role = (profile?.role as Role) ?? 'member';
+    fullName = profile?.full_name ?? null;
   }
+
+  /*
+   * Staff get a second factor. A member's password protects their own chart;
+   * a doctor's or an admin's protects everyone's, so a leak there is a
+   * different kind of event.
+   */
+  if (user && mfaRequiredFor(role) && mfaConfigured()) {
+    const sent = await issueCode(user.id, user.email ?? email, fullName);
+    if (sent) redirect('/login/verify');
+    // Could not email a code — do not silently drop the second factor.
+    redirect('/login?error=mfa_unavailable');
+  }
+
   redirect(redirectForRole(role));
 }
 
@@ -114,6 +130,7 @@ export async function logoutAction(): Promise<void> {
   const store = await cookies();
   store.delete(ACTIVITY_COOKIE);
   store.delete(SESSION_START_COOKIE);
+  store.delete(MFA_COOKIE);
 
   if (supabaseConfigured) {
     const supabase = await createSupabaseServerClient();
