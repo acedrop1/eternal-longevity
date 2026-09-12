@@ -36,6 +36,7 @@ export default async function CheckoutPage() {
         defaultName={prefill.fullName || user.name}
         defaultPhone={prefill.phone}
         defaultZip={prefill.zip}
+        googlePlacesKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}
         stripePublishableKey={
           (process.env.STRIPE_PUBLISHABLE_KEY ?? '').startsWith('pk_')
             ? (process.env.STRIPE_PUBLISHABLE_KEY as string)

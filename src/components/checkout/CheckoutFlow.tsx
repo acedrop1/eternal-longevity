@@ -19,6 +19,10 @@ import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cityForZip } from '@/lib/njZips';
+import {
+  usePlacesAutocomplete,
+  type Suggestion,
+} from '@/lib/usePlacesAutocomplete';
 import { cn } from '@/lib/utils';
 import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
 import { CheckoutCardStep } from '@/components/checkout/CheckoutCardStep';
@@ -60,6 +64,8 @@ interface CheckoutFlowProps {
   /** Already given during the intake — never ask for it twice. */
   defaultPhone?: string;
   defaultZip?: string;
+  /** Absent in every environment without a Places key; the field degrades. */
+  googlePlacesKey?: string;
   /** Empty when Stripe is unconfigured; the card step hides and the order
    *  can still be placed, which keeps preview environments usable. */
   stripePublishableKey?: string;
@@ -151,6 +157,7 @@ export function CheckoutFlow({
   defaultName,
   defaultPhone = '',
   defaultZip = '',
+  googlePlacesKey,
   stripePublishableKey,
 }: CheckoutFlowProps) {
   const router = useRouter();
@@ -211,6 +218,30 @@ export function CheckoutFlow({
     zip: defaultZip,
     phone: formatPhone(defaultPhone),
   });
+  /*
+   * Street suggestions, when a Places key is configured. Without one the field
+   * is an ordinary input and the ZIP still fills the city, so nothing here is
+   * load-bearing.
+   */
+  const places = usePlacesAutocomplete(googlePlacesKey);
+  const [highlight, setHighlight] = useState(-1);
+
+  const applySuggestion = async (sg: Suggestion) => {
+    places.clear();
+    setHighlight(-1);
+    const picked = await sg.resolve();
+    if (!picked) return;
+    setShipping((s) => ({
+      ...s,
+      address1: picked.line1 || s.address1,
+      city: picked.city || s.city,
+      state: picked.state || s.state,
+      zip: picked.zip || s.zip,
+    }));
+    // Straight to the apartment line — everything else is filled.
+    window.setTimeout(() => address2Ref.current?.focus(), 0);
+  };
+
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethodId>('expedited');
   const [card, setCard] = useState({
@@ -245,6 +276,7 @@ export function CheckoutFlow({
   const emailRef = useRef<HTMLInputElement>(null);
   const fullNameRef = useRef<HTMLInputElement>(null);
   const address1Ref = useRef<HTMLInputElement>(null);
+  const address2Ref = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLInputElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -1021,28 +1053,95 @@ export function CheckoutFlow({
               </div>
               <div>
                 <FieldLabel htmlFor="ship-addr1">STREET ADDRESS</FieldLabel>
-                <input
-                  ref={address1Ref}
-                  id="ship-addr1"
-                  type="text"
-                  value={shipping.address1}
-                  onChange={(e) =>
-                    setShipping((s) => ({ ...s, address1: e.target.value }))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      cityRef.current?.focus();
-                    }
-                  }}
-                  autoComplete="address-line1"
-                  autoCapitalize="words"
-                  className={inputClass}
-                />
+                <div className="relative">
+                  <input
+                    ref={address1Ref}
+                    id="ship-addr1"
+                    type="text"
+                    value={shipping.address1}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setShipping((s) => ({ ...s, address1: v }));
+                      setHighlight(-1);
+                      void places.search(v);
+                    }}
+                    onBlur={() => window.setTimeout(places.clear, 150)}
+                    onKeyDown={(e) => {
+                      if (places.suggestions.length) {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setHighlight((h) =>
+                            Math.min(h + 1, places.suggestions.length - 1),
+                          );
+                          return;
+                        }
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setHighlight((h) => Math.max(h - 1, 0));
+                          return;
+                        }
+                        if (e.key === 'Escape') {
+                          places.clear();
+                          return;
+                        }
+                        if (e.key === 'Enter' && highlight >= 0) {
+                          e.preventDefault();
+                          void applySuggestion(places.suggestions[highlight]);
+                          return;
+                        }
+                      }
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        zipRef.current?.focus();
+                      }
+                    }}
+                    role="combobox"
+                    aria-expanded={places.suggestions.length > 0}
+                    aria-autocomplete="list"
+                    aria-controls="ship-addr-suggestions"
+                    autoComplete={places.enabled ? 'off' : 'address-line1'}
+                    autoCapitalize="words"
+                    className={inputClass}
+                  />
+
+                  {places.suggestions.length > 0 && (
+                    <ul
+                      id="ship-addr-suggestions"
+                      role="listbox"
+                      className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl"
+                    >
+                      {places.suggestions.map((sg, i) => (
+                        <li key={sg.id}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={i === highlight}
+                            onMouseEnter={() => setHighlight(i)}
+                            // mousedown, not click: blur fires first otherwise
+                            // and the list is gone before the click lands.
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              void applySuggestion(sg);
+                            }}
+                            className={cn(
+                              'block w-full px-4 py-3 text-left text-sm transition-colors',
+                              i === highlight
+                                ? 'bg-accent/10 text-foreground'
+                                : 'text-foreground/75 hover:bg-foreground/5',
+                            )}
+                          >
+                            {sg.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
               <div>
                 <FieldLabel htmlFor="ship-addr2">APT / SUITE (OPTIONAL)</FieldLabel>
                 <input
+                  ref={address2Ref}
                   id="ship-addr2"
                   type="text"
                   value={shipping.address2}
