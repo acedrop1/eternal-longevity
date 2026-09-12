@@ -11,11 +11,17 @@ import type { PatientReview } from "@/lib/clinical-review";
 
 interface DoctorQueueListProps {
   doctorName: string;
+  /** True while the password given at the last signature is still good. */
+  signWindowOpen: boolean;
   /** The intake behind each waiting order, keyed by order number. */
   reviews: Record<string, PatientReview>;
 }
 
-export function DoctorQueueList({ doctorName, reviews }: DoctorQueueListProps) {
+export function DoctorQueueList({
+  doctorName,
+  reviews,
+  signWindowOpen,
+}: DoctorQueueListProps) {
   const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
     useOrders();
 
@@ -74,6 +80,7 @@ export function DoctorQueueList({ doctorName, reviews }: DoctorQueueListProps) {
                 key={o.id}
                 order={o}
                 doctorName={doctorName}
+                signWindowOpen={signWindowOpen}
                 review={reviews[o.id]}
               />
             ))}
@@ -163,10 +170,12 @@ function EmptySection({ title, body }: { title: string; body: string }) {
 function DoctorQueueRow({
   order,
   doctorName,
+  signWindowOpen,
   review,
 }: {
   order: Order;
   doctorName: string;
+  signWindowOpen: boolean;
   review?: PatientReview;
 }) {
   const { signRx, declineClinical } = useOrders();
@@ -279,28 +288,38 @@ function DoctorQueueRow({
             </span>{" "}
             to the card on file and releases the order to the pharmacy.
           </p>
-          <p className="mb-4 text-xs leading-relaxed text-foreground/55">
-            Your password is required again here. A session left open is not
-            evidence that you are the one signing.
-          </p>
+          {signWindowOpen ? (
+            <p className="text-xs leading-relaxed text-foreground/55">
+              Your password is still good for a few more minutes, so you are not
+              asked again for this one.
+            </p>
+          ) : (
+            <>
+              <p className="mb-4 text-xs leading-relaxed text-foreground/55">
+                Your password is required again here. A session left open is not
+                evidence that you are the one signing. It then holds for ten
+                minutes, so a morning&apos;s queue is one password.
+              </p>
 
-          <label
-            htmlFor={`pw-${order.id}`}
-            className="mb-1.5 block text-[10px] tracking-widest text-foreground/50"
-          >
-            YOUR PASSWORD
-          </label>
-          <input
-            id={`pw-${order.id}`}
-            type="password"
-            value={password}
-            autoComplete="current-password"
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setSignError(null);
-            }}
-            className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
-          />
+              <label
+                htmlFor={`pw-${order.id}`}
+                className="mb-1.5 block text-[10px] tracking-widest text-foreground/50"
+              >
+                YOUR PASSWORD
+              </label>
+              <input
+                id={`pw-${order.id}`}
+                type="password"
+                value={password}
+                autoComplete="current-password"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setSignError(null);
+                }}
+                className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+              />
+            </>
+          )}
 
           {signError && (
             <p className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
@@ -311,9 +330,9 @@ function DoctorQueueRow({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={!password || busy !== null}
+              disabled={(!password && !signWindowOpen) || busy !== null}
               onClick={async () => {
-                if (!password || busy) return;
+                if ((!password && !signWindowOpen) || busy) return;
                 setBusy("sign");
                 setSignError(null);
                 try {

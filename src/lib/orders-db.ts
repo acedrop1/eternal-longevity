@@ -37,7 +37,7 @@ import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
 import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
-import { passwordMatches } from '@/lib/reauth';
+import { openSignWindow, passwordMatches, signWindowOpen } from '@/lib/reauth';
 import { recordAudit } from '@/lib/prescriber';
 
 /** True when the Supabase-backed workflow is available. */
@@ -531,9 +531,13 @@ export async function signRxAction(
    * minutes is comfortable for reading a chart and far too long to accept as
    * evidence that the prescriber is the one signing it.
    */
-  if (!(await passwordMatches(user.email, password))) {
-    return { ok: false, error: 'bad_password' };
+  if (!(await signWindowOpen(user.id))) {
+    if (!(await passwordMatches(user.email, password))) {
+      return { ok: false, error: 'bad_password' };
+    }
   }
+  // Rolls forward with each signature, so a morning's queue is one password.
+  await openSignWindow(user.id);
 
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };

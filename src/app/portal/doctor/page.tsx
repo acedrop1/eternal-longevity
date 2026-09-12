@@ -1,21 +1,21 @@
-import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { PortalShell } from '@/components/portal/PortalShell';
-import { DoctorQueueList } from '@/components/doctor/DoctorQueueList';
-import { getSession } from '@/lib/auth-server';
-import { listOrders } from '@/lib/orders-db';
-import { reviewsForOrders } from '@/lib/clinical-review';
-import { getPrescriber } from '@/lib/prescriber';
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { PortalShell } from "@/components/portal/PortalShell";
+import { DoctorQueueList } from "@/components/doctor/DoctorQueueList";
+import { getSession } from "@/lib/auth-server";
+import { listOrders } from "@/lib/orders-db";
+import { reviewsForOrders } from "@/lib/clinical-review";
+import { getPrescriber } from "@/lib/prescriber";
+import { signWindowOpen } from "@/lib/reauth";
 
 export const metadata: Metadata = {
-  title: 'Clinical Queue',
+  title: "Clinical Queue",
 };
-
 
 export default async function DoctorPortalPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
-  if (user.role !== 'doctor') redirect(user.redirectTo);
+  if (!user) redirect("/login");
+  if (user.role !== "doctor") redirect(user.redirectTo);
 
   /*
    * The intake behind each waiting order. Fetched here rather than in the
@@ -24,7 +24,7 @@ export default async function DoctorPortalPage() {
    */
   const orders = await listOrders().catch(() => []);
   const waiting = orders
-    .filter((o) => o.status === 'assigned')
+    .filter((o) => o.status === "assigned")
     .map((o) => o.id);
   const reviews = await reviewsForOrders(waiting).catch(() => ({}));
 
@@ -33,8 +33,9 @@ export default async function DoctorPortalPage() {
    * title, so it comes off the credential the profile actually carries.
    */
   const prescriber = await getPrescriber(user.id).catch(() => null);
-  const surname = user.name.split(' ').slice(-1)[0];
-  const greeting = ['NP', 'PA'].includes(prescriber?.credential ?? '')
+  const reauthed = await signWindowOpen(user.id);
+  const surname = user.name.split(" ").slice(-1)[0];
+  const greeting = ["NP", "PA"].includes(prescriber?.credential ?? "")
     ? surname
     : `Dr. ${surname}`;
 
@@ -42,10 +43,10 @@ export default async function DoctorPortalPage() {
     <PortalShell
       user={user}
       nav={[
-        { label: 'Queue', href: '/portal/doctor' },
-        { label: 'Messages', href: '/portal/doctor/messages' },
-        { label: 'My signed Rx', href: '/portal/doctor/history' },
-        { label: 'Profile', href: '/portal/doctor/profile' },
+        { label: "Queue", href: "/portal/doctor" },
+        { label: "Messages", href: "/portal/doctor/messages" },
+        { label: "My signed Rx", href: "/portal/doctor/history" },
+        { label: "Profile", href: "/portal/doctor/profile" },
       ]}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -56,8 +57,8 @@ export default async function DoctorPortalPage() {
           <h1
             className="font-semibold tracking-tight text-foreground"
             style={{
-              fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-              letterSpacing: '-0.02em',
+              fontSize: "clamp(1.85rem, 4vw, 2.75rem)",
+              letterSpacing: "-0.02em",
               lineHeight: 1.05,
             }}
           >
@@ -72,8 +73,11 @@ export default async function DoctorPortalPage() {
         </div>
       </div>
 
-      <DoctorQueueList doctorName={user.name} reviews={reviews} />
-
+      <DoctorQueueList
+        doctorName={user.name}
+        reviews={reviews}
+        signWindowOpen={reauthed}
+      />
     </PortalShell>
   );
 }
