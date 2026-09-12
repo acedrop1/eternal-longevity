@@ -196,8 +196,6 @@ function DoctorQueueRow({
               {order.lines.map((l) => `${l.productName} (${l.cadenceLabel})`).join(' + ')}
             </p>
 
-            {review && <ReviewPanel review={review} />}
-
             {order.adminNote && (
               <div className="mt-3 rounded-xl border border-foreground/15 bg-background p-3">
                 <div className="text-[10px] tracking-widest text-foreground/55 mb-1">
@@ -217,6 +215,8 @@ function DoctorQueueRow({
           </span>
         </div>
       </div>
+
+      {review && <ReviewPanel review={review} order={order} />}
 
       {open === null && (
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
@@ -246,7 +246,7 @@ function DoctorQueueRow({
             className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-60"
           >
             {busy === 'sign' && <Spinner />}
-            {busy === 'sign' ? 'Signing…' : 'Sign & start billing'}
+            {busy === 'sign' ? 'Signing…' : 'Approve & sign prescription'}
           </button>
           <button
             type="button"
@@ -693,72 +693,190 @@ function Spinner() {
 }
 
 /**
- * The patient's intake, on the card, open.
+ * The record the prescriber decides on.
  *
- * Not behind a toggle: a prescriber should not have to ask for the record
- * before deciding, and a collapsed panel is one someone signs past. Answers
- * that change a decision are marked so they survive a skim.
+ * Open by default, because a collapsed record is one people sign past, but
+ * collapsible so a queue of ten stays navigable. Labels sit above their values
+ * rather than across a stretched row — a question pinned left with its answer
+ * pinned right leaves a gap wide enough to read the wrong line.
  */
-function ReviewPanel({ review }: { review: PatientReview }) {
-  return (
-    <section className="mt-4 overflow-hidden rounded-2xl border border-line bg-background">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line px-4 py-3 text-xs text-foreground/60">
-        <span>
-          <span className="text-foreground/40">DOB </span>
-          <span className="text-foreground/90">{review.dob}</span>
-          {review.age !== '—' && (
-            <span className="text-foreground/90"> · {review.age}</span>
-          )}
-        </span>
-        <span>
-          <span className="text-foreground/40">Sex </span>
-          <span className="text-foreground/90">{review.sex}</span>
-        </span>
-        <span>
-          <span className="text-foreground/40">Body </span>
-          <span className="text-foreground/90">{review.body}</span>
-        </span>
-        <span className="ml-auto text-foreground/40">
-          Intake {review.submittedAt}
-        </span>
-      </div>
+function ReviewPanel({
+  review,
+  order,
+}: {
+  review: PatientReview;
+  order: Order;
+}) {
+  const [open, setOpen] = useState(true);
 
-      <ReviewGroup title="Safety screen" lines={review.safety} />
-      <ReviewGroup title="History" lines={review.history} />
+  const flags = [...review.safety, ...review.history].filter((l) => l.flag);
+  const summary =
+    flags.length === 0
+      ? 'Nothing flagged'
+      : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
+
+  return (
+    <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-background">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/[0.03]"
+      >
+        <span className="flex-none text-[10px] tracking-widest text-foreground/45">
+          PATIENT RECORD
+        </span>
+        {!open && (
+          <span
+            className={cn(
+              'min-w-0 flex-1 truncate text-xs',
+              flags.length ? 'text-accent' : 'text-foreground/45',
+            )}
+          >
+            {summary}
+          </span>
+        )}
+        <span
+          aria-hidden
+          className={cn(
+            'ml-auto flex-none text-foreground/40 transition-transform',
+            open && 'rotate-180',
+          )}
+        >
+          &#9662;
+        </span>
+      </button>
+
+      {open && (
+        <>
+          <Strip
+            items={[
+              ['Date of birth', review.dob],
+              ['Age', review.age],
+              ['Sex at birth', review.sex],
+              ['Height / weight', review.body],
+              ['Intake completed', review.submittedAt],
+            ]}
+          />
+
+          <Group title="Safety screen">
+            {review.safety.map((l) => (
+              <AnswerRow key={l.label} line={l} />
+            ))}
+          </Group>
+
+          <Group title="History">
+            {review.history.map((l) => (
+              <AnswerRow key={l.label} line={l} />
+            ))}
+          </Group>
+
+          <Group title="What they ordered">
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {order.lines.map((l) => (
+                <Cell
+                  key={l.productId}
+                  label={l.productName}
+                  value={`${l.cadenceLabel}${
+                    l.quantity > 1 ? ` \u00b7 \u00d7${l.quantity}` : ''
+                  } \u00b7 $${l.perCycle}`}
+                />
+              ))}
+              <Cell label="Charged on signing" value={`$${order.total}`} />
+              <Cell
+                label="Ships to"
+                value={`${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zip}`}
+              />
+            </div>
+          </Group>
+        </>
+      )}
     </section>
   );
 }
 
-function ReviewGroup({
+/** Short facts, read across in one line rather than stacked into rows. */
+function Strip({ items }: { items: [string, string][] }) {
+  return (
+    <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-line px-4 py-3.5">
+      {items.map(([label, value]) => (
+        <div key={label}>
+          <div className="text-[10px] tracking-widest text-foreground/40">
+            {label.toUpperCase()}
+          </div>
+          <div className="mt-0.5 text-sm text-foreground">{value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Group({
   title,
-  lines,
+  children,
 }: {
   title: string;
-  lines: { label: string; value: string; flag?: boolean }[];
+  children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-line last:border-0">
-      <div className="px-4 pt-3 text-[10px] tracking-widest text-foreground/45">
+    <div className="border-t border-line px-4 py-3.5">
+      <div className="mb-2 text-[10px] tracking-widest text-foreground/40">
         {title.toUpperCase()}
       </div>
-      <dl className="px-4 pb-3">
-        {lines.map((l) => (
-          <div
-            key={l.label}
-            className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5 border-b border-line/50 py-2 last:border-0"
-          >
-            <dt className="text-xs text-foreground/55">{l.label}</dt>
-            <dd
-              className={cn(
-                'text-sm',
-                l.flag ? 'font-semibold text-accent' : 'text-foreground/85',
-              )}
-            >
-              {l.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * One answer. A yes/no sits in a badge beside its question; anything longer
+ * gets its own line, because free text is the part worth reading properly.
+ */
+function AnswerRow({
+  line,
+}: {
+  line: { label: string; value: string; flag?: boolean };
+}) {
+  if (line.value.length <= 24) {
+    return (
+      <div className="flex items-center justify-between gap-4 border-b border-line/40 py-2 last:border-0">
+        <span className="text-sm text-foreground/70">{line.label}</span>
+        <span
+          className={cn(
+            'flex-none rounded-full border px-2.5 py-0.5 text-xs font-medium',
+            line.flag
+              ? 'border-accent/50 bg-accent/10 text-accent'
+              : 'border-line bg-surface text-foreground/60',
+          )}
+        >
+          {line.value}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-b border-line/40 py-2 last:border-0">
+      <div className="text-xs text-foreground/50">{line.label}</div>
+      <p
+        className={cn(
+          'mt-0.5 text-sm leading-relaxed',
+          line.flag ? 'font-medium text-accent' : 'text-foreground/85',
+        )}
+      >
+        {line.value}
+      </p>
+    </div>
+  );
+}
+
+function Cell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-surface px-3 py-2.5">
+      <div className="text-[10px] tracking-widest text-foreground/40">
+        {label.toUpperCase()}
+      </div>
+      <div className="mt-0.5 text-sm text-foreground/90">{value}</div>
     </div>
   );
 }
