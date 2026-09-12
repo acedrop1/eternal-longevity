@@ -96,6 +96,25 @@
 .theme-light .placeholder-foreground\/30::placeholder { color: rgb(20 17 12 / 0.30); }
 .theme-light .ring-line           { --tw-ring-color: rgb(0 0 0 / 0.10); }
 .theme-light .ring-foreground\/30 { --tw-ring-color: rgb(20 17 12 / 0.30); }
+/* Colours tuned for a black ground and unreadable on cream. The staff portals
+ * run light, so the ones they actually use need a darker counterpart. */
+.theme-light .text-accent          { color: #7D4E0C; }
+.theme-light .text-accent-soft     { color: #A8721E; }
+.theme-light .hover\:text-accent-soft:hover { color: #A8721E; }
+.theme-light .text-sky-300         { color: #1C5A82; }
+.theme-light .text-red-300         { color: #A42B2B; }
+.theme-light .border-sky-400\/40   { border-color: rgb(28 90 130 / 0.35); }
+.theme-light .bg-sky-500\/10       { background-color: rgb(28 90 130 / 0.08); }
+.theme-light .border-red-500\/30   { border-color: rgb(164 43 43 / 0.30); }
+.theme-light .bg-red-500\/5        { background-color: rgb(164 43 43 / 0.05); }
+.theme-light .bg-red-500\/\[0\.03\] { background-color: rgb(164 43 43 / 0.03); }
+.theme-light .border-accent\/40    { border-color: rgb(168 132 56 / 0.45); }
+.theme-light .border-accent\/50    { border-color: rgb(168 132 56 / 0.55); }
+.theme-light .bg-accent\/10        { background-color: rgb(168 132 56 / 0.12); }
+.theme-light .bg-accent\/5         { background-color: rgb(168 132 56 / 0.07); }
+.theme-light .border-line\/40      { border-color: rgb(0 0 0 / 0.06); }
+.theme-light .border-line\/50      { border-color: rgb(0 0 0 / 0.07); }
+
 /* Subtle dark overlays used in dark theme don't translate — soften them */
 .theme-light .bg-foreground\/5  { background-color: rgb(20 17 12 / 0.05); }
 .theme-light .bg-foreground\/10 { background-color: rgb(20 17 12 / 0.10); }

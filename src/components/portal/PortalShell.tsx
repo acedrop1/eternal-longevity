@@ -64,7 +64,12 @@ export async function PortalShell({
   children,
 }: PortalShellProps) {
   const theme = ROLE_THEME[user.role];
-  const lightBody = bodyTheme === 'light';
+  /*
+   * The prescriber reads dense clinical text for minutes at a time, often on a
+   * laptop in a lit room. Cream is easier on the eye for that than ivory on
+   * black, which is built for a marketing page nobody stares at.
+   */
+  const lightBody = bodyTheme === 'light' || user.role === 'doctor';
 
   // Attach pending-task count badges to the nav.
   const navItems = await enrichNavWithCounts(nav, user.role);

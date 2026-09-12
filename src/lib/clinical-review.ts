@@ -20,6 +20,8 @@ export interface PatientReview {
   submittedAt: string;
   safety: ReviewLine[];
   history: ReviewLine[];
+  /** Context the decision needs that is not in the intake. */
+  context: ReviewLine[];
 }
 
 const SEX: Record<string, string> = {
@@ -65,11 +67,31 @@ export async function reviewsForOrders(
 
   const { data: orders } = await db
     .from('orders')
-    .select('order_number, user_id, member_name')
+    .select('order_number, user_id, member_name, card_last4')
     .in('order_number', orderNumbers);
   if (!orders?.length) return {};
 
   const userIds = [...new Set(orders.map((o) => o.user_id).filter(Boolean))];
+
+  /*
+   * Whether this is someone's first order changes the decision — a repeat
+   * patient has tolerated the thing before, a new one has not — and whether a
+   * card is actually on file decides whether signing can charge at all.
+   */
+  const { data: past } = await db
+    .from('orders')
+    .select('user_id, status, paid_at')
+    .in('user_id', userIds as string[])
+    .in('status', ['signed', 'paid', 'compounding', 'shipped', 'delivered'])
+    .order('paid_at', { ascending: false });
+
+  const history = new Map<string, { count: number; last: string | null }>();
+  for (const row of past ?? []) {
+    if (!row.user_id) continue;
+    const seen = history.get(row.user_id);
+    if (seen) seen.count += 1;
+    else history.set(row.user_id, { count: 1, last: row.paid_at });
+  }
   const { data: intakes } = await db
     .from('intake_submissions')
     .select('user_id, answers, created_at')
@@ -113,6 +135,23 @@ export async function reviewsForOrders(
         { label: 'Active cancer, or treated in the last 5 years', value: cancer.text, flag: cancer.flag },
         { label: 'Pregnant or breastfeeding', value: pregnant.text, flag: pregnant.flag },
         { label: 'End-stage kidney or liver disease', value: organ.text, flag: organ.flag },
+      ],
+      context: [
+        {
+          label: 'Card on file',
+          value: o.card_last4
+            ? `\u2022\u2022\u2022\u2022 ${o.card_last4}`
+            : 'None saved',
+          flag: !o.card_last4,
+        },
+        {
+          label: 'Previous approved orders',
+          value: (() => {
+            const h = o.user_id ? history.get(o.user_id) : undefined;
+            if (!h) return 'None — first order';
+            return `${h.count}, last ${h.last ? formatDate(h.last) : 'unknown'}`;
+          })(),
+        },
       ],
       history: [
         {

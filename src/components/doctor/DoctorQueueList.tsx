@@ -707,9 +707,16 @@ function ReviewPanel({
   review: PatientReview;
   order: Order;
 }) {
-  const [open, setOpen] = useState(true);
+  /*
+   * Closed to start. With ten cases waiting, ten open records is a page nobody
+   * can scan — and the header carries what was flagged, so nothing that should
+   * change a decision is hidden behind the click.
+   */
+  const [open, setOpen] = useState(false);
 
-  const flags = [...review.safety, ...review.history].filter((l) => l.flag);
+  const flags = [...review.safety, ...review.history, ...review.context].filter(
+    (l) => l.flag,
+  );
   const summary =
     flags.length === 0
       ? 'Nothing flagged'
@@ -724,7 +731,7 @@ function ReviewPanel({
         className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/[0.03]"
       >
         <span className="flex-none text-[10px] tracking-widest text-foreground/45">
-          PATIENT RECORD
+          {open ? 'HIDE RECORD' : 'PATIENT RECORD'}
         </span>
         {!open && (
           <span
@@ -739,11 +746,15 @@ function ReviewPanel({
         <span
           aria-hidden
           className={cn(
-            'ml-auto flex-none text-foreground/40 transition-transform',
+            'ml-auto flex-none rounded-full border border-line p-1 text-foreground/50 transition-transform',
             open && 'rotate-180',
           )}
         >
-          &#9662;
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+               strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
         </span>
       </button>
 
@@ -767,6 +778,12 @@ function ReviewPanel({
 
           <Group title="History">
             {review.history.map((l) => (
+              <AnswerRow key={l.label} line={l} />
+            ))}
+          </Group>
+
+          <Group title="Before you sign">
+            {review.context.map((l) => (
               <AnswerRow key={l.label} line={l} />
             ))}
           </Group>
