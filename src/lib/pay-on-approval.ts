@@ -329,6 +329,30 @@ export async function defaultCardFor(
   );
 }
 
+/**
+ * The saved card as a person would describe it.
+ *
+ * `orders.card_last4` is only filled by the old manual card form; the Stripe
+ * flow saves the card against the customer and leaves that column empty. A
+ * prescriber reading "no card on file" off it would be told the charge will
+ * fail on every order that is actually fine.
+ */
+export async function defaultCardSummary(
+  customerId: string,
+): Promise<string | null> {
+  try {
+    const id = await defaultCardFor(customerId);
+    if (!id) return null;
+    const pm = await getStripe().paymentMethods.retrieve(id);
+    const brand = pm.card?.brand
+      ? pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1)
+      : 'Card';
+    return pm.card?.last4 ? `${brand} \u2022\u2022\u2022\u2022 ${pm.card.last4}` : brand;
+  } catch {
+    return null;
+  }
+}
+
 export async function chargeOnApproval(orderNumber: string): Promise<{
   ok: boolean;
   charged?: boolean;

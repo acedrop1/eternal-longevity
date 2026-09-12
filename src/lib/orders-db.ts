@@ -18,7 +18,11 @@ import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
-import { orderReceivedEmail, sendEmail } from '@/lib/email';
+import {
+  orderReceivedEmail,
+  prescriberQuestionEmail,
+  sendEmail,
+} from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 import {
@@ -31,6 +35,7 @@ import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
+import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
 
 /** True when the Supabase-backed workflow is available. */
@@ -399,6 +404,73 @@ export async function denyOrderAction(
 }
 
 /** Physician signs. This is the moment billing starts. */
+/**
+ * The prescriber asks the patient for something before he decides.
+ *
+ * His only two options were sign or decline, so a case that just needed one
+ * more answer had to be declined — a clinical refusal recorded against someone
+ * whose only problem was an incomplete history. The order stays in his queue;
+ * nothing is charged and nothing moves.
+ */
+export async function requestInfoFromPatientAction(
+  orderNumber: string,
+  question: string,
+): Promise<ActionResult> {
+  const { user, error } = await requireRole(['doctor']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  const text = question.trim();
+  if (!text) return { ok: false, error: 'empty' };
+
+  const id = await orderIdFor(orderNumber);
+  if (!id) return { ok: false, error: 'not_found' };
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select('user_id, member_name, member_email')
+    .eq('id', id)
+    .maybeSingle();
+  if (!order?.user_id) return { ok: false, error: 'no_patient' };
+
+  // Into their existing thread with the prescriber, so the answer comes back
+  // to the same place rather than to a support inbox.
+  await db.from('messages').insert({
+    thread_user_id: order.user_id,
+    sender_id: user.id,
+    channel: 'doctor',
+    body: text,
+  });
+
+  await appendUpdate(
+    id,
+    user.name,
+    'physician',
+    'Your prescriber has a question',
+    text,
+  );
+
+  if (order.member_email) {
+    const msg = prescriberQuestionEmail({
+      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
+      question: text,
+      portalUrl: `${SITE_URL}/portal/messages`,
+    });
+    try {
+      await sendEmail({
+        to: order.member_email,
+        subject: msg.subject,
+        html: msg.html,
+      });
+    } catch {
+      // The message is in their portal either way.
+    }
+  }
+
+  revalidatePortal();
+  return { ok: true };
+}
+
 export async function signRxAction(
   orderNumber: string,
   note: string | undefined,

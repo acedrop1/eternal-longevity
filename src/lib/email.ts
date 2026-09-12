@@ -566,6 +566,24 @@ export function adminComposedEmail(input: {
   };
 }
 
+/** The prescriber needs an answer before he can decide. */
+export function prescriberQuestionEmail(input: {
+  firstName: string;
+  question: string;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: 'Your prescriber has a question',
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">One question before your review.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescriber has read your visit and needs one more thing from you before deciding.</p>
+       <p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(input.question)}</p>
+       <p style="margin:0 0 18px;"><strong style="color:#fff;">Nothing has been charged</strong> and your order is still open. Reply in your portal and it goes straight back to him.</p>
+       ${button('Answer in your portal', input.portalUrl)}`,
+    ),
+  };
+}
+
 export function declinedEmail(input: {
   firstName: string;
   reason?: string;

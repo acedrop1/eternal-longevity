@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useOrders } from '@/components/orders/OrdersProvider';
+import { requestInfoFromPatientAction } from '@/lib/orders-db';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import type { PatientReview } from '@/lib/clinical-review';
@@ -159,9 +161,10 @@ function DoctorQueueRow({
   review?: PatientReview;
 }) {
   const { signRx, declineClinical } = useOrders();
-  const [open, setOpen] = useState<null | 'decline'>(null);
+  const router = useRouter();
+  const [open, setOpen] = useState<null | 'decline' | 'ask'>(null);
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState<null | 'sign' | 'decline'>(null);
+  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
 
   return (
     <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
@@ -251,11 +254,75 @@ function DoctorQueueRow({
           <button
             type="button"
             disabled={busy !== null}
+            onClick={() => setOpen('ask')}
+            className="rounded-full border border-line bg-background px-5 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+          >
+            Ask for more information
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
             onClick={() => setOpen('decline')}
             className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60"
           >
             Decline
           </button>
+        </div>
+      )}
+
+      {open === 'ask' && (
+        <div className="mt-5 rounded-2xl border border-line bg-background p-4 md:p-5">
+          <div className="mb-2 text-[10px] tracking-widest text-foreground/50">
+            WHAT DO YOU NEED FROM THEM?
+          </div>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Goes to their portal thread with you and emails them. The order
+            stays here, nothing is charged, and their reply comes back to you.
+          </p>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            placeholder="What dose of tadalafil are you on, and how long have you been taking it?"
+            className="w-full resize-none rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!note.trim() || busy !== null}
+              onClick={async () => {
+                if (!note.trim() || busy) return;
+                setBusy('ask');
+                try {
+                  const res = await requestInfoFromPatientAction(
+                    order.id,
+                    note.trim(),
+                  );
+                  if (res.ok) {
+                    setOpen(null);
+                    setNote('');
+                    router.refresh();
+                  }
+                } finally {
+                  setBusy(null);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-40"
+            >
+              {busy === 'ask' && <Spinner />}
+              {busy === 'ask' ? 'Sending…' : 'Send question'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(null);
+                setNote('');
+              }}
+              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -782,6 +849,10 @@ function ReviewPanel({
             <Answers lines={review.context} />
           </Group>
 
+          <Group title="Patient contact">
+            <Answers lines={review.contact} />
+          </Group>
+
           <Group title="What they ordered">
             <div className="grid gap-2 sm:grid-cols-3">
               {order.lines.map((l) => (
@@ -794,10 +865,6 @@ function ReviewPanel({
                 />
               ))}
               <Cell label="Charged on signing" value={`$${order.total}`} />
-              <Cell
-                label="Ships to"
-                value={`${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zip}`}
-              />
             </div>
           </Group>
         </>

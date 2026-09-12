@@ -3,6 +3,8 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ageFrom, formatDate } from '@/lib/format';
+import { defaultCardSummary } from '@/lib/pay-on-approval';
+import { stripeConfigured } from '@/lib/stripe';
 
 export interface ReviewLine {
   label: string;
@@ -22,6 +24,8 @@ export interface PatientReview {
   history: ReviewLine[];
   /** Context the decision needs that is not in the intake. */
   context: ReviewLine[];
+  /** Where it ships and how to reach them. */
+  contact: ReviewLine[];
 }
 
 const SEX: Record<string, string> = {
@@ -67,7 +71,9 @@ export async function reviewsForOrders(
 
   const { data: orders } = await db
     .from('orders')
-    .select('order_number, user_id, member_name, card_last4')
+    .select(
+      'order_number, user_id, member_name, member_email, card_last4, shipping_address',
+    )
     .in('order_number', orderNumbers);
   if (!orders?.length) return {};
 
@@ -104,6 +110,24 @@ export async function reviewsForOrders(
     if (row.user_id && !latest.has(row.user_id)) latest.set(row.user_id, row);
   }
 
+  /*
+   * Asked of Stripe, one customer at a time. There are never many orders
+   * waiting at once, and being wrong about whether a card exists is worse than
+   * the round trip.
+   */
+  const cards = new Map<string, string | null>();
+  if (stripeConfigured()) {
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, stripe_customer_id')
+      .in('id', userIds as string[]);
+    for (const pr of profiles ?? []) {
+      if (pr.stripe_customer_id) {
+        cards.set(pr.id, await defaultCardSummary(pr.stripe_customer_id));
+      }
+    }
+  }
+
   const out: Record<string, PatientReview> = {};
   for (const o of orders) {
     const row = o.user_id ? latest.get(o.user_id) : undefined;
@@ -137,13 +161,18 @@ export async function reviewsForOrders(
         { label: 'End-stage kidney or liver disease', value: organ.text, flag: organ.flag },
       ],
       context: [
-        {
-          label: 'Card on file',
-          value: o.card_last4
+        (() => {
+          const card = o.user_id ? cards.get(o.user_id) : null;
+          const fallback = o.card_last4
             ? `\u2022\u2022\u2022\u2022 ${o.card_last4}`
-            : 'None saved',
-          flag: !o.card_last4,
-        },
+            : null;
+          const value = card ?? fallback;
+          return {
+            label: 'Card on file',
+            value: value ?? 'None saved — signing cannot charge',
+            flag: !value,
+          };
+        })(),
         {
           label: 'Previous approved orders',
           value: (() => {
@@ -153,6 +182,20 @@ export async function reviewsForOrders(
           })(),
         },
       ],
+      contact: (() => {
+        const addr = (o.shipping_address ?? {}) as Record<string, string>;
+        const street = [addr.line1, addr.line2].filter(Boolean).join(', ');
+        return [
+          {
+            label: 'Ships to',
+            value: street
+              ? `${street}, ${addr.city ?? ''} ${addr.state ?? ''} ${addr.zip ?? ''}`.trim()
+              : '—',
+          },
+          { label: 'Phone', value: str(a, 'phone') },
+          { label: 'Email', value: o.member_email ?? str(a, 'email') },
+        ];
+      })(),
       history: [
         {
           label: 'Diagnosed conditions',
