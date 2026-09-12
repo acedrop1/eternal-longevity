@@ -3,7 +3,7 @@
 import { getSession } from '@/lib/auth-server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
-import { sendEmail } from '@/lib/email';
+import { noticeEmail, sendEmail } from '@/lib/email';
 import { SUPPORT_EMAIL } from '@/lib/site';
 import { passwordValid } from '@/lib/intakeSchema';
 
@@ -66,8 +66,12 @@ async function raiseRequest(
     to: SUPPORT_EMAIL,
     replyTo: user.email,
     subject: `${subject} — ${user.email}`,
-    html: `<p><strong>${user.name || 'Member'}</strong> &lt;${user.email}&gt;</p>
-           <p>${detail}</p>`,
+    html: noticeEmail({
+      eyebrow: 'Member request',
+      heading: subject,
+      rows: [['Member', `${user.name || 'Member'} &lt;${user.email}&gt;`]],
+      body: detail,
+    }),
   });
   if (!sent.ok) {
     return {

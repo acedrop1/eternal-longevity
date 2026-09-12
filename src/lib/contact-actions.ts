@@ -1,6 +1,6 @@
 'use server';
 
-import { sendEmail } from '@/lib/email';
+import { noticeEmail, sendEmail } from '@/lib/email';
 import { SUPPORT_EMAIL } from '@/lib/site';
 
 export interface ContactResult {
@@ -61,10 +61,16 @@ export async function sendContactMessage(input: {
     to: SUPPORT_EMAIL,
     replyTo: email,
     subject: `Contact form — ${topic}`,
-    html: `<p><strong>${escape(name)}</strong> &lt;${escape(email)}&gt;</p>
-           <p><strong>Topic:</strong> ${escape(topic)}</p>
-           <hr/>
-           <p style="white-space:pre-wrap">${escape(message)}</p>`,
+    html: noticeEmail({
+      eyebrow: 'Contact form',
+      heading: `${name} got in touch`,
+      rows: [
+        ['From', `${escape(name)} &lt;${escape(email)}&gt;`],
+        ['Topic', escape(topic)],
+      ],
+      body: `<span style="white-space:pre-wrap">${escape(message)}</span>`,
+      footnote: 'Replying to this email goes straight back to them.',
+    }),
   });
 
   if (!sent.ok) {

@@ -22,7 +22,12 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { sendEmail, newVisitForDoctorEmail, SUPPORT_EMAIL } from '@/lib/email';
+import {
+  newVisitForDoctorEmail,
+  noticeEmail,
+  sendEmail,
+  SUPPORT_EMAIL,
+} from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 
@@ -107,9 +112,16 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: `New order for review — ${order.order_number}`,
-      html: `<p><strong>${memberName}</strong> placed order ${order.order_number}.</p>
-             <p>It has gone straight to the prescriber. Nothing is charged until he signs.</p>
-             <p><a href="${SITE_URL}/portal/admin/queue">Open the admin queue</a></p>`,
+      html: noticeEmail({
+        eyebrow: 'New order',
+        heading: `${memberName} placed an order`,
+        body: 'It has gone straight to the prescriber. Nothing is charged until he signs.',
+        rows: [
+          ['Order', order.order_number],
+          ['Member', memberName],
+        ],
+        cta: { label: 'Open the admin queue', href: `${SITE_URL}/portal/admin/queue` },
+      }),
     });
   } catch {
     // The prescriber has already been paged; this copy is for visibility only.

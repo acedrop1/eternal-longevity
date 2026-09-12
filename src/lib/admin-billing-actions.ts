@@ -21,7 +21,7 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from './supabase/admin';
-import { refundedEmail, sendEmail } from './email';
+import { noticeEmail, refundedEmail, sendEmail } from './email';
 
 export interface AdminBillingResult {
   ok: boolean;
@@ -92,10 +92,14 @@ export async function adminSendCardLink(
     await sendEmail({
       to: contact.email,
       subject: 'Add a card to your Eternal Longevity account',
-      html: `<p>Your care team has asked you to add a payment method.</p>
-             <p><a href="${url}">Add your card securely &rarr;</a></p>
-             <p>This is a Stripe-hosted page — your card details go straight to
-             Stripe and are never seen by our team.</p>`,
+      html: noticeEmail({
+        eyebrow: 'Payment method',
+        heading: 'Add a card to your account',
+        body: 'Your care team has asked you to add a payment method so your treatment can be dispatched once it is approved.',
+        cta: { label: 'Add your card securely', href: url },
+        footnote:
+          'This opens a page hosted by Stripe. Your card details go straight to them and are never seen by our team.',
+      }),
     });
     return {
       ok: true,

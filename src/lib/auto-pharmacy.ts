@@ -25,7 +25,8 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { SITE_URL } from '@/lib/site';
 import type { Json } from '@/lib/database.types';
 import { formatAddress } from '@/lib/format';
 
@@ -106,7 +107,16 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
       await sendEmail({
         to: SUPPORT_EMAIL,
         subject: `Order ${order.order_number} is paid but cannot go to the pharmacy`,
-        html: `<p>${order.order_number} has been signed and paid, but it has not been sent to Kaduceus.</p><p>${why}</p>`,
+        html: noticeEmail({
+          eyebrow: 'Held',
+          heading: 'An order cannot go to the pharmacy',
+          body: `${order.order_number} has been signed and paid, but it has not been sent.`,
+          footnote: why,
+          cta: {
+            label: 'Fix the prescriber record',
+            href: `${SITE_URL}/portal/admin/settings`,
+          },
+        }),
       });
     } catch {
       // The timeline entry already records it.
@@ -153,20 +163,28 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
       await sendEmail({
         to: process.env.PHARMACY_EMAIL,
         subject: `New prescription — ${orderRef}`,
-        html: `<p>A new patient-specific prescription is ready.</p>
-               <p><strong>Reference:</strong> ${orderRef}<br/>
-               <strong>Patient:</strong> ${patient?.full_name ?? order.member_name ?? 'Patient'}<br/>
-               <strong>DOB:</strong> ${patient?.date_of_birth ?? '—'}<br/>
-               <strong>Prescriber:</strong> ${doctor.full_name} · NPI ${doctor.npi}</p>
-               <p><strong>Ship to:</strong><br/>${formatAddress({
-                 line1: a.line1,
-                 line2: a.line2,
-                 city: a.city,
-                 state: a.state,
-                 zip: a.zip,
-               })}</p>
-               <ul>${lines}</ul>
-               <p>Please confirm receipt and add tracking when it ships.</p>`,
+        html: noticeEmail({
+          eyebrow: 'New prescription',
+          heading: 'A patient-specific prescription is ready',
+          rows: [
+            ['Reference', orderRef],
+            ['Patient', patient?.full_name ?? order.member_name ?? 'Patient'],
+            ['Date of birth', patient?.date_of_birth ?? '—'],
+            ['Prescriber', `${doctor.full_name} · NPI ${doctor.npi}`],
+            [
+              'Ship to',
+              formatAddress({
+                line1: a.line1,
+                line2: a.line2,
+                city: a.city,
+                state: a.state,
+                zip: a.zip,
+              }),
+            ],
+            ['Items', `<ul style="margin:0;padding-left:18px;">${lines}</ul>`],
+          ],
+          footnote: 'Please confirm receipt and add tracking when it ships.',
+        }),
       });
     } catch {
       // The record exists; a mail failure must not undo the submission.

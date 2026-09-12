@@ -17,7 +17,8 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from './supabase/admin';
-import { sendEmail } from './email';
+import { pharmacyQueueEmail, sendEmail, shippedEmail } from './email';
+import { SITE_URL } from './site';
 import { sendSms } from './sms';
 
 export interface FulfillmentResult {
@@ -130,11 +131,7 @@ export async function submitToPharmacy(
     if (process.env.PHARMACY_EMAIL) {
       await sendEmail({
         to: process.env.PHARMACY_EMAIL,
-        subject: `New fulfillment order ${orderRef}`,
-        html: `<p>A new order is waiting in your Eternal Longevity pharmacy portal.</p>
-               <p>Reference <strong>${orderRef}</strong>. Log in to view the
-               patient, shipping address, and prescription, then add tracking
-               when you ship.</p>`,
+        ...pharmacyQueueEmail(orderRef, `${SITE_URL}/portal/pharmacy`),
       });
     }
 
@@ -176,10 +173,7 @@ export async function submitDraftOrder(
   if (process.env.PHARMACY_EMAIL) {
     await sendEmail({
       to: process.env.PHARMACY_EMAIL,
-      subject: `New fulfillment order ${order.order_ref}`,
-      html: `<p>A new order is waiting in your Eternal Longevity pharmacy portal.</p>
-             <p>Reference <strong>${order.order_ref}</strong>. Log in to view
-             the patient, shipping address, and prescription.</p>`,
+      ...pharmacyQueueEmail(order.order_ref, `${SITE_URL}/portal/pharmacy`),
     });
   }
 
@@ -249,11 +243,12 @@ export async function pharmacyAddTracking(input: {
     if (patient?.email) {
       await sendEmail({
         to: patient.email,
-        subject: `Your order ${order.order_ref} has shipped`,
-        html: `<p>Good news, ${firstName} — your order is on the way.</p>
-               <p><strong>${input.carrier}</strong> tracking:
-               ${input.trackingNumber.trim()}</p>
-               <p>Compounded peptides ship cold-chain. Refrigerate on arrival.</p>`,
+        ...shippedEmail({
+          firstName,
+          orderRef: order.order_ref,
+          carrier: input.carrier,
+          tracking: input.trackingNumber.trim(),
+        }),
       });
     }
     if (patient?.phone) {

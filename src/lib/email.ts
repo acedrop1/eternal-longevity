@@ -96,6 +96,96 @@ export function shell(body: string): string {
 </body></html>`;
 }
 
+/** A label/value block — the shape every operational email needs. */
+export function dataRows(rows: [string, string][]): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #262626;border-radius:14px;margin:18px 0;">
+    ${rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="padding:10px 18px;border-bottom:1px solid #1f1f1f;color:#a3a3a3;font-size:12px;letter-spacing:1px;width:40%;vertical-align:top;">${escapeHtml(
+            k,
+          ).toUpperCase()}</td><td style="padding:10px 18px;border-bottom:1px solid #1f1f1f;color:#fff;font-size:14px;">${v}</td></tr>`,
+      )
+      .join('')}
+  </table>`;
+}
+
+/**
+ * Everything the team gets told about, in the same frame as everything else.
+ *
+ * Half the operational mail was bare <p> tags — it arrived looking like a
+ * script had written it, which is a poor look in a shared support inbox and a
+ * worse one when the recipient is a pharmacy deciding whether to work with you.
+ */
+export function noticeEmail(input: {
+  eyebrow: string;
+  heading: string;
+  body?: string;
+  rows?: [string, string][];
+  cta?: { label: string; href: string };
+  footnote?: string;
+}): string {
+  return shell(
+    `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">${escapeHtml(
+      input.eyebrow,
+    ).toUpperCase()}</div>
+     <h1 style="margin:10px 0 14px;color:#fff;font-size:21px;line-height:1.25;">${escapeHtml(
+       input.heading,
+     )}</h1>
+     ${input.body ? `<p style="margin:0 0 16px;">${input.body}</p>` : ''}
+     ${input.rows?.length ? dataRows(input.rows) : ''}
+     ${input.cta ? `<p style="margin:18px 0 0;">${button(input.cta.label, input.cta.href)}</p>` : ''}
+     ${
+       input.footnote
+         ? `<p style="margin:18px 0 0;color:#737373;font-size:13px;">${input.footnote}</p>`
+         : ''
+     }`,
+  );
+}
+
+/** Their order has left the pharmacy. */
+export function shippedEmail(input: {
+  firstName: string;
+  orderRef: string;
+  carrier: string;
+  tracking: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Your order ${input.orderRef} has shipped`,
+    html: noticeEmail({
+      eyebrow: 'On its way',
+      heading: `Good news, ${input.firstName} — your order has shipped.`,
+      rows: [
+        ['Order', input.orderRef],
+        ['Carrier', input.carrier],
+        ['Tracking', input.tracking],
+      ],
+      footnote:
+        'Compounded peptides ship cold-chain. Refrigerate on arrival, and keep them refrigerated.',
+    }),
+  };
+}
+
+/**
+ * A log-in prompt for the pharmacy. Deliberately carries no patient detail —
+ * the record lives behind their sign-in, not in an inbox.
+ */
+export function pharmacyQueueEmail(orderRef: string, portalUrl: string): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: `New fulfillment order ${orderRef}`,
+    html: noticeEmail({
+      eyebrow: 'Pharmacy queue',
+      heading: 'A new order is waiting for you',
+      body: 'Sign in to see the patient, the shipping address and the prescription, then add tracking when it ships.',
+      rows: [['Reference', orderRef]],
+      cta: { label: 'Open the pharmacy portal', href: portalUrl },
+    }),
+  };
+}
+
 /** Sent to the patient right after they finish intake. */
 export function intakeConfirmationEmail(firstName: string): {
   subject: string;

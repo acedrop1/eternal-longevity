@@ -21,3 +21,6 @@ python3 scripts/mockdata.py src/app/portal src/components/admin src/components/p
 echo
 echo "── success messages with no server call (noisy — eyeball) ─"
 python3 scripts/theatre.py
+echo
+echo "── mail that skips the brand frame ────────────────────"
+python3 scripts/unbranded-email.py
