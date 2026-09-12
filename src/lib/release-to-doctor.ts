@@ -30,6 +30,7 @@ import {
 } from '@/lib/email';
 import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
+import { orderRef } from '@/lib/format';
 
 /** Mailbox stores and freight forwarders — not a residence, not shippable. */
 const PO_BOX = /\b(p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*box)\b/i;
@@ -111,13 +112,13 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   try {
     await sendEmail({
       to: SUPPORT_EMAIL,
-      subject: `New order for review — ${memberName} (${order.order_number})`,
+      subject: `New order for review — ${memberName} · ${orderRef(order.order_number)}`,
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order`,
         body: 'It has gone straight to the prescriber. Nothing is charged until he signs.',
         rows: [
-          ['Order', order.order_number],
+          ['Order', orderRef(order.order_number)],
           ['Member', memberName],
         ],
         cta: { label: 'Open the admin queue', href: `${SITE_URL}/portal/admin/queue` },
@@ -163,7 +164,7 @@ async function notifyDoctor(
       try {
         await sendSms(
           doc.phone,
-          `Eternal Longevity: a visit is ready for review — ${memberName}, order ${orderNumber}. ${SITE_URL}/portal/doctor`,
+          `Eternal Longevity: a visit is ready for review — ${memberName}, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
         );
       } catch {
         // Same: best effort.

@@ -10,6 +10,7 @@
 import 'server-only';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site';
+import { orderRef } from '@/lib/format';
 
 let cached: Resend | null = null;
 
@@ -151,7 +152,7 @@ export function shippedEmail(input: {
   tracking: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Your order ${input.orderRef} has shipped`,
+    subject: `Your ${orderRef(input.orderRef)} has shipped`,
     html: noticeEmail({
       eyebrow: 'On its way',
       heading: `Good news, ${input.firstName} — your order has shipped.`,
@@ -269,7 +270,7 @@ export function shipmentEmail(
   tracking: string,
 ): { subject: string; html: string } {
   return {
-    subject: `Your order ${orderNumber} has shipped`,
+    subject: `Your ${orderRef(orderNumber)} has shipped`,
     html: shell(
       `<h1 style="color:#fff;font-size:20px;margin:12px 0;">On its way, ${escapeHtml(
         firstName,
@@ -356,7 +357,7 @@ export function orderConfirmationEmail(input: {
     )
     .join('');
   return {
-    subject: `Order confirmed — ${input.orderNumber}`,
+    subject: `Order confirmed — ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your order is confirmed.</h1>
        <p style="margin:0 0 18px;">Thanks ${escapeHtml(
@@ -403,7 +404,7 @@ export function refundedEmail(input: {
 }): { subject: string; html: string } {
   const amt = `$${(input.amount / 100).toFixed(2)}`;
   return {
-    subject: `Refund issued — ${input.orderNumber}`,
+    subject: `Refund issued — ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We have refunded ${escapeHtml(
         amt,
@@ -434,7 +435,7 @@ export function newVisitForDoctorEmail(input: {
   queueUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Visit ready for review — ${input.memberName} (${input.orderNumber})`,
+    subject: `Visit ready for review — ${input.memberName} · ${orderRef(input.orderNumber)}`,
     html: shell(
       `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">CLINICAL QUEUE</div>
        <h1 style="margin:10px 0 14px;color:#fff;font-size:22px;">A visit is waiting for you.</h1>
@@ -461,7 +462,7 @@ export function chargeFailedInternalEmail(input: {
   reason: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Charge failed on a SIGNED order — ${input.memberName} (${input.orderNumber})`,
+    subject: `Charge failed on a SIGNED order — ${input.memberName} · ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">A signed prescription did not get paid.</h1>
        <p style="margin:0 0 18px;">The prescriber approved <strong style="color:#fff;">${escapeHtml(
@@ -719,7 +720,7 @@ export function orderReceivedEmail(input: {
     )
     .join('');
   return {
-    subject: `We received your order — ${input.orderNumber}`,
+    subject: `We received your order — ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">Your order is in. Nothing charged yet.</h1>
        <p style="margin:0 0 18px;">Thanks ${escapeHtml(
@@ -755,7 +756,7 @@ export function approvedPayNowEmail(input: {
   payUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Approved — your card needs a second look (${input.orderNumber})`,
+    subject: `Approved — your card needs a second look · ${orderRef(input.orderNumber)}`,
     html: shell(
       `<div style="color:#a3a3a3;font-size:11px;letter-spacing:2px;font-weight:700;margin-top:8px;">PRESCRIBER APPROVED</div>
        <h1 style="margin:10px 0 14px;color:#fff;font-size:22px;">Hi ${escapeHtml(
@@ -799,13 +800,13 @@ export function signedAndPaidPrescriberEmail(input: {
   portalUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Signed and paid — ${input.memberName} (${input.orderNumber})`,
+    subject: `Signed and paid — ${input.memberName} · ${orderRef(input.orderNumber)}`,
     html: noticeEmail({
       eyebrow: 'Prescription signed',
       heading: `${escapeHtml(input.memberName)}'s order is with the pharmacy`,
       body: `You signed this prescription and the card on file cleared, so it has been released for compounding. Nothing further is needed from you.`,
       rows: [
-        ['Order', escapeHtml(input.orderNumber)],
+        ['Order', escapeHtml(orderRef(input.orderNumber))],
         ['Patient', escapeHtml(input.memberName)],
         ['Prescribed', escapeHtml(input.items)],
         ['Charged', `$${(input.amountCents / 100).toFixed(2)}`],
@@ -830,7 +831,7 @@ export function paymentClearedTeamEmail(input: {
   return {
     subject: `Payment cleared — ${input.memberName} · $${(
       input.amountCents / 100
-    ).toFixed(2)} (${input.orderNumber})`,
+    ).toFixed(2)} · ${orderRef(input.orderNumber)}`,
     html: noticeEmail({
       eyebrow: 'Payment cleared',
       heading: `$${(input.amountCents / 100).toFixed(2)} charged on ${escapeHtml(
@@ -838,7 +839,7 @@ export function paymentClearedTeamEmail(input: {
       )}`,
       body: 'The prescriber signed, the card on file cleared and the order has gone to the pharmacy. It is now waiting on compounding and a tracking number.',
       rows: [
-        ['Order', escapeHtml(input.orderNumber)],
+        ['Order', escapeHtml(orderRef(input.orderNumber))],
         ['Member', `${escapeHtml(input.memberName)} · ${escapeHtml(input.memberEmail)}`],
         ['Prescribed', escapeHtml(input.items)],
         ['Charged', `$${(input.amountCents / 100).toFixed(2)}`],

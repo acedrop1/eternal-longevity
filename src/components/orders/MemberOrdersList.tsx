@@ -10,6 +10,7 @@ import {
   type OrderStatus,
 } from '@/lib/orders';
 import { cn } from '@/lib/utils';
+import { orderRef } from '@/lib/format';
 
 const STATUS_THEME: Record<OrderStatus, string> = {
   'pending-admin': 'bg-foreground/5 text-foreground/85 border-line',
@@ -87,7 +88,7 @@ function MemberOrderCard({ order }: { order: Order }) {
           <div className="min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
               <span className="font-semibold text-foreground/80">
-                {order.id.toUpperCase()}
+                {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>PLACED {placed.toUpperCase()}</span>

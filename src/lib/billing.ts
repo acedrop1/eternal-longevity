@@ -16,6 +16,7 @@ import {
   supabaseAdminConfigured,
 } from './supabase/admin';
 import { SITE_URL } from './site';
+import { nextOrderNumber } from '@/lib/order-number';
 
 /** True when both Stripe and the Supabase service role are available. */
 export function billingConfigured(): boolean {
@@ -90,7 +91,7 @@ export async function createCheckoutSession(params: {
   const db = createSupabaseAdminClient();
   const customerId = await getOrCreateStripeCustomer(params);
 
-  const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}`;
+  const orderNumber = await nextOrderNumber();
   const subtotal = params.lines.reduce(
     (sum, l) => sum + l.amountCents * l.quantity,
     0,

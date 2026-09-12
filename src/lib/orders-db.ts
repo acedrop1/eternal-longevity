@@ -37,6 +37,7 @@ import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
 import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
+import { nextOrderNumber } from '@/lib/order-number';
 import { openSignWindow, passwordMatches, signWindowOpen } from '@/lib/reauth';
 import { recordAudit } from '@/lib/prescriber';
 
@@ -318,9 +319,12 @@ export async function placeOrderAction(input: {
       subtotalCents + shippingCents + taxCents - discountCents,
     );
 
-    const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}${
-      input.lines.length > 1 ? String.fromCharCode(65 + i) : ''
-    }`;
+    /*
+     * One number per order, and a multi-product cart is several orders — each
+     * gets its own rather than a lettered variant of a shared one, because each
+     * is signed, charged and shipped on its own.
+     */
+    const orderNumber = await nextOrderNumber();
 
     const { data: order, error: insErr } = await db
       .from('orders')

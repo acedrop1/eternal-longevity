@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
+import { orderRef } from '@/lib/format';
 
 export function AdminLiveOrders() {
   const { orders } = useOrders();
@@ -87,7 +88,7 @@ function LiveBoard({ orders }: { orders: Order[] }) {
             >
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span className="font-mono text-[11px] tracking-wider text-foreground/50">
-                  {order.id.toUpperCase()}
+                  {orderRef(order.id)}
                 </span>
                 {order.userId ? (
                   <Link

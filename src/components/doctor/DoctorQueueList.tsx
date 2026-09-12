@@ -8,6 +8,7 @@ import { requestInfoFromPatientAction } from '@/lib/orders-db';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import type { PatientReview } from '@/lib/clinical-review';
+import { orderRef } from '@/lib/format';
 
 interface DoctorQueueListProps {
   doctorName: string;
@@ -207,7 +208,7 @@ function DoctorQueueRow({
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
               <span className="font-semibold text-foreground/80">
-                {order.id.toUpperCase()}
+                {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>{order.state}</span>
@@ -546,7 +547,7 @@ function ActiveCaseRow({
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
               <span className="font-semibold text-foreground/80">
-                {order.id.toUpperCase()}
+                {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>{order.state}</span>

@@ -9,6 +9,7 @@ import { defaultCardFor } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { planNeedsReviewEmail, sendEmail } from '@/lib/email';
 import { SITE_URL } from '@/lib/site';
+import { nextOrderNumber } from '@/lib/order-number';
 
 /**
  * How long a prescription written here stays good for.
@@ -242,7 +243,7 @@ export async function renewSubscription(
     return { subscriptionId, result: 'no_card' };
   }
 
-  const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}`;
+  const orderNumber = await nextOrderNumber();
   const { data: order, error: orderErr } = await db
     .from('orders')
     .insert({

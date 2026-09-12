@@ -29,6 +29,7 @@ import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { SITE_URL } from '@/lib/site';
 import type { Json } from '@/lib/database.types';
 import { formatAddress } from '@/lib/format';
+import { orderRef as orderLabel } from '@/lib/format';
 
 export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
   ok: boolean;
@@ -106,11 +107,11 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     try {
       await sendEmail({
         to: SUPPORT_EMAIL,
-        subject: `${order.member_name ?? 'An order'} is paid but cannot go to the pharmacy (${order.order_number})`,
+        subject: `${order.member_name ?? 'An order'} is paid but cannot go to the pharmacy · ${orderLabel(order.order_number)}`,
         html: noticeEmail({
           eyebrow: 'Held',
           heading: 'An order cannot go to the pharmacy',
-          body: `${order.order_number} has been signed and paid, but it has not been sent.`,
+          body: `${orderLabel(order.order_number)} has been signed and paid, but it has not been sent.`,
           footnote: why,
           cta: {
             label: 'Fix the prescriber record',
@@ -162,7 +163,7 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     try {
       await sendEmail({
         to: process.env.PHARMACY_EMAIL,
-        subject: `New prescription — ${patient?.full_name ?? order.member_name ?? 'Patient'} (${orderRef})`,
+        subject: `New prescription — ${patient?.full_name ?? order.member_name ?? 'Patient'} · ${orderLabel(order.order_number)}`,
         html: noticeEmail({
           eyebrow: 'New prescription',
           heading: 'A patient-specific prescription is ready',

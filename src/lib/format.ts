@@ -123,3 +123,16 @@ export function formatAddress(a?: {
     .join(', ');
   return [street, region].filter(Boolean).join(' · ') || '—';
 }
+
+/**
+ * An order number as people say it out loud: "Order #110001".
+ *
+ * Orders placed before the sequence carry the old base36 timestamp form; those
+ * are printed as they are, since "Order #EL-MTXMTCH0" reads worse than the bare
+ * reference it already is.
+ */
+export function orderRef(orderNumber: string): string {
+  return /^\d+$/.test(orderNumber)
+    ? `Order #${orderNumber}`
+    : orderNumber.toUpperCase();
+}

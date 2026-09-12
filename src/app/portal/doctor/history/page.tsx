@@ -5,6 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 import { listOrders } from '@/lib/orders-db';
 import { cn } from '@/lib/utils';
+import { orderRef } from '@/lib/format';
 
 export const metadata: Metadata = {
   title: 'Signed Rx',
@@ -120,7 +121,7 @@ export default async function DoctorHistoryPage() {
                     className="border-t border-line hover:bg-background/40 transition-colors"
                   >
                     <td className="px-4 md:px-6 py-4 font-mono text-xs text-foreground/85">
-                      {r.id.toUpperCase()}
+                      {orderRef(r.id)}
                     </td>
                     <td className="px-4 md:px-6 py-4">
                       <div className="text-foreground">{r.patient}</div>
