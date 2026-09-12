@@ -20,6 +20,12 @@ function attentionFor(order: Order): string | null {
   if (notes.some((n) => /missing NPI/i.test(n))) {
     return 'Held before the pharmacy — prescriber has no NPI';
   }
+  if (order.status === 'pending-admin') {
+    return (
+      order.adminNote ??
+      'Never reached the prescriber. Release failed at checkout.'
+    );
+  }
   if (order.adminNote) return order.adminNote;
   if (
     order.status === 'assigned' &&
@@ -41,7 +47,12 @@ function attentionFor(order: Order): string | null {
 function LiveBoard({ orders }: { orders: Order[] }) {
   const live = orders
     .filter((o) =>
-      ['assigned', 'signed', 'paid', 'compounding', 'shipped'].includes(
+      /*
+       * pending-admin is on this list because an order can now stop there for
+       * a real reason — nobody licensed in the patient's state — and a status
+       * that means "stuck" is the one the board must never hide.
+       */
+      ['pending-admin', 'assigned', 'signed', 'paid', 'compounding', 'shipped'].includes(
         o.status,
       ),
     )
