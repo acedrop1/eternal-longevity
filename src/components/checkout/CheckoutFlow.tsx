@@ -18,6 +18,7 @@ import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { cityForZip } from '@/lib/njZips';
 import { cn } from '@/lib/utils';
 import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
 import { CheckoutCardStep } from '@/components/checkout/CheckoutCardStep';
@@ -56,6 +57,9 @@ type ShippingMethodId = (typeof SHIPPING_OPTIONS)[number]['id'];
 interface CheckoutFlowProps {
   defaultEmail: string;
   defaultName: string;
+  /** Already given during the intake — never ask for it twice. */
+  defaultPhone?: string;
+  defaultZip?: string;
   /** Empty when Stripe is unconfigured; the card step hides and the order
    *  can still be placed, which keeps preview environments usable. */
   stripePublishableKey?: string;
@@ -145,6 +149,8 @@ function isCvcValid(cvc: string) {
 export function CheckoutFlow({
   defaultEmail,
   defaultName,
+  defaultPhone = '',
+  defaultZip = '',
   stripePublishableKey,
 }: CheckoutFlowProps) {
   const router = useRouter();
@@ -199,10 +205,11 @@ export function CheckoutFlow({
     fullName: defaultName,
     address1: '',
     address2: '',
-    city: '',
-    state: '',
-    zip: '',
-    phone: '',
+    // We serve one state, and the ZIP they gave at intake names the city.
+    city: cityForZip(defaultZip) ?? '',
+    state: SERVICEABLE_STATES[0] ?? '',
+    zip: defaultZip,
+    phone: formatPhone(defaultPhone),
   });
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethodId>('expedited');
@@ -570,8 +577,14 @@ export function CheckoutFlow({
     }
   };
 
+  /* A ZIP names exactly one city in the one state we serve, so typing it fills
+     the city in. Anything they have typed themselves is left alone. */
   const onZipChange = (raw: string) =>
-    setShipping((s) => ({ ...s, zip: formatZip(raw) }));
+    setShipping((s) => {
+      const zip = formatZip(raw);
+      const city = cityForZip(zip);
+      return { ...s, zip, city: city ?? s.city };
+    });
 
   const onPhoneChange = (raw: string) =>
     setShipping((s) => ({ ...s, phone: formatPhone(raw) }));
