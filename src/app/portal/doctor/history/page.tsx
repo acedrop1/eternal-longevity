@@ -73,7 +73,7 @@ export default async function DoctorHistoryPage() {
         { label: 'Profile', href: '/portal/doctor/profile' },
       ]}
     >
-      <div className="mb-10">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-sky-300">
           MY SIGNED RX · {signed.length} TOTAL
         </p>

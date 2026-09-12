@@ -37,7 +37,7 @@ export default async function DoctorPortalPage() {
         { label: 'Profile', href: '/portal/doctor/profile' },
       ]}
     >
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-2 text-[11px] tracking-widest text-sky-300">
             CLINICAL QUEUE

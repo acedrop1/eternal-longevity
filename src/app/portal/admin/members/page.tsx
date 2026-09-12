@@ -73,7 +73,7 @@ export default async function AdminUsersPage() {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div className="mb-8">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
           USERS · {users.length} TOTAL · {memberCount} MEMBERS
         </p>

@@ -47,7 +47,7 @@ export function DoctorQueueList({
       </div>
 
       {/* === AWAITING REVIEW === */}
-      <section className="mb-10">
+      <section>
         <SectionHeader
           eyebrow="AWAITING REVIEW"
           title="Sign or decline"
@@ -73,7 +73,7 @@ export function DoctorQueueList({
       </section>
 
       {/* === ACTIVE CASES === */}
-      <section className="mb-10">
+      <section>
         <SectionHeader
           eyebrow="ACTIVE CASES"
           title="Manage post-sign"

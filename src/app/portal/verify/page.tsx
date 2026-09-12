@@ -48,7 +48,7 @@ export default async function VerifyIdPage() {
       <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
         {/* === MAIN === */}
         <div>
-          <div className="mb-8">
+          <div>
             <p className="mb-2 text-[11px] tracking-widest text-accent">
               REQUIRED · BEFORE FIRST SHIPMENT
             </p>

@@ -6,6 +6,7 @@ import { CartButton } from '@/components/cart/CartButton';
 import { PortalNav, type NavItem } from '@/components/portal/PortalNav';
 import { enrichNavWithCounts } from '@/lib/pending-counts';
 import { IdleTimeout } from '@/components/portal/IdleTimeout';
+import { PortalContent } from '@/components/portal/PortalContent';
 import { IDLE_MINUTES } from '@/lib/session-policy';
 
 const ROLE_THEME: Record<
@@ -168,7 +169,7 @@ export async function PortalShell({
         <main
           className="flex-1 min-w-0 min-h-[calc(100vh-3.5rem)] bg-background text-foreground"
         >
-          <div className="px-4 md:px-6 lg:px-8 py-8 md:py-10">{children}</div>
+          <PortalContent>{children}</PortalContent>
         </main>
       </div>
     </div>

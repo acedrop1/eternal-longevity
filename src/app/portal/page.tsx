@@ -64,7 +64,7 @@ export default async function MemberPortalPage() {
       ]}
     >
       {/* Greeting */}
-      <div className="mb-8">
+      <div>
         <h1
           className="font-semibold tracking-tight text-foreground"
           style={{

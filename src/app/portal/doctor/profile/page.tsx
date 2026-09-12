@@ -33,7 +33,7 @@ export default async function DoctorProfilePage() {
         { label: 'Profile', href: '/portal/doctor/profile' },
       ]}
     >
-      <div className="mb-10">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-sky-300">
           PHYSICIAN PROFILE
         </p>

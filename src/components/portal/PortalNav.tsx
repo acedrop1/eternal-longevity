@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,40 @@ interface PortalNavProps {
   nav: NavItem[];
   /** 'sidebar' = vertical desktop rail · 'mobile' = horizontal scrolling pills. */
   variant: 'sidebar' | 'mobile';
+}
+
+/**
+ * The dot beside a nav item, and what it does while the page is fetching.
+ *
+ * A tab that only highlights once the new page has rendered leaves the click
+ * feeling unregistered for however long the server takes. useLinkStatus knows
+ * the navigation is in flight the instant it starts, which is the difference
+ * between an app that feels immediate and one that feels slow.
+ */
+function NavDot({ isActive }: { isActive: boolean }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      className={cn(
+        'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
+        pending
+          ? 'animate-ping bg-accent'
+          : isActive
+            ? 'bg-accent'
+            : 'bg-foreground/20 group-hover:bg-foreground/40',
+      )}
+    />
+  );
+}
+
+/** Same idea for the mobile pills, which have no dot to pulse. */
+function PillLabel({ label }: { label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className={cn(pending && 'opacity-60')}>
+      {label.toUpperCase()}
+    </span>
+  );
 }
 
 /**
@@ -55,7 +90,7 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
                     : 'border-line bg-surface text-foreground/75 hover:text-foreground hover:border-foreground/30'
                 )}
               >
-                {item.label.toUpperCase()}
+                <PillLabel label={item.label} />
                 {!!item.badge && (
                   <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-black">
                     {item.badge}
@@ -89,12 +124,7 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
                     : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'
                 )}
               >
-                <span
-                  className={cn(
-                    'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
-                    isActive ? 'bg-accent' : 'bg-foreground/20 group-hover:bg-foreground/40'
-                  )}
-                />
+                <NavDot isActive={isActive} />
                 <span className="flex-1 truncate">{item.label}</span>
                 {!!item.badge && (
                   <span

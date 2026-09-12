@@ -25,7 +25,7 @@ export default async function AccountPage() {
         { label: 'Account', href: '/portal/account' },
       ]}
     >
-      <div className="mb-10">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
           ACCOUNT
         </p>

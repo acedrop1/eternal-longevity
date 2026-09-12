@@ -31,7 +31,7 @@ export default async function MemberMessagesPage() {
         { label: 'Account', href: '/portal/account' },
       ]}
     >
-      <div className="mb-8">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-accent">
           SUPPORT &amp; DOCTOR
         </p>

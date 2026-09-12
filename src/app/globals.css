@@ -136,6 +136,10 @@
 }
 
 /* Entrance animations (CSS-driven so they don't depend on framer-motion lifecycle) */
+@keyframes routeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -159,6 +163,21 @@
 
 @layer utilities {
   .anim-fade-up { animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  /* Route change inside a portal. Short and small on purpose: this is a tool
+     someone uses forty times a day, and a page that slides every time is a
+     page that feels slower than one that does not move. */
+  .anim-route { animation: routeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+  /*
+   * One rhythm for every portal page. Each page used to set its own margins,
+   * so two sections rendered by different components met with no gap at all —
+   * which is what an uneven portal looks like. Owned here, once, and any page
+   * that wants a different gap between two specific blocks can still say so.
+   */
+  .portal-stack > * + * { margin-top: 2rem; }
+  @media (min-width: 768px) {
+    .portal-stack > * + * { margin-top: 2.5rem; }
+  }
   .anim-fade-in { animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .anim-slide-down { animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .anim-halo { animation: haloDrift 14s ease-in-out infinite alternate; }
@@ -276,4 +295,11 @@ select:-webkit-autofill {
        constraint, not a style preference, so it wins outright. */
     font-size: 16px !important;
   }
+}
+
+/* Respect the OS setting. A tool used all day by someone who gets migraines
+   should not animate because we thought it looked nice. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-route { animation: none; }
+  .animate-ping { animation: none; opacity: 0.7; }
 }

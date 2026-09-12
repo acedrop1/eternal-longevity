@@ -49,7 +49,7 @@ function LiveBoard({ orders }: { orders: Order[] }) {
   const needing = rows.filter((r) => r.attention).length;
 
   return (
-    <section className="mt-10">
+    <section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
         <div>
           <p className="text-[11px] tracking-widest text-foreground/50">

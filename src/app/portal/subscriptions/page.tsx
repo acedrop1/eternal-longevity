@@ -72,7 +72,7 @@ export default async function SubscriptionsPage() {
         { label: 'Account', href: '/portal/account' },
       ]}
     >
-      <div className="mb-10">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
           SUBSCRIPTIONS · {activeCount} ACTIVE
         </p>

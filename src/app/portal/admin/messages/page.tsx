@@ -41,7 +41,7 @@ export default async function AdminMessagesPage() {
         { label: 'Settings', href: '/portal/admin/settings' },
       ]}
     >
-      <div className="mb-8">
+      <div>
         <p className="mb-2 text-[11px] tracking-widest text-accent">
           MEMBER MESSAGES
         </p>
