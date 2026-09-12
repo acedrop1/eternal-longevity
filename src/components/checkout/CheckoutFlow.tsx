@@ -579,6 +579,19 @@ export function CheckoutFlow({
 
   /* A ZIP names exactly one city in the one state we serve, so typing it fills
      the city in. Anything they have typed themselves is left alone. */
+  /*
+   * Derive the city from the ZIP whenever the ZIP changes and the city is
+   * blank. The change handler covers typing, but a browser autofill or a paste
+   * can set the value without one firing — and the city sitting empty next to a
+   * filled ZIP is what makes the form feel broken.
+   */
+  useEffect(() => {
+    const city = cityForZip(shipping.zip);
+    if (city && !shipping.city.trim()) {
+      setShipping((s) => (s.city.trim() ? s : { ...s, city }));
+    }
+  }, [shipping.zip, shipping.city]);
+
   const onZipChange = (raw: string) =>
     setShipping((s) => {
       const zip = formatZip(raw);

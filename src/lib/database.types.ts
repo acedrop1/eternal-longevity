@@ -108,6 +108,10 @@ export type Database = {
           date_of_birth: string | null;
           stripe_customer_id: string | null;
           npi: string | null;
+          credential: string | null;
+          license_state: string | null;
+          license_number: string | null;
+          license_expires: string | null;
           account_status: AccountStatus;
           two_factor_enabled: boolean;
           notification_prefs: Json;
@@ -126,6 +130,10 @@ export type Database = {
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
           npi?: string | null;
+          credential?: string | null;
+          license_state?: string | null;
+          license_number?: string | null;
+          license_expires?: string | null;
           account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
@@ -144,6 +152,10 @@ export type Database = {
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
           npi?: string | null;
+          credential?: string | null;
+          license_state?: string | null;
+          license_number?: string | null;
+          license_expires?: string | null;
           account_status?: AccountStatus;
           two_factor_enabled?: boolean;
           notification_prefs?: Json;
@@ -496,6 +508,45 @@ export type Database = {
           author?: string | null;
           author_role?: string | null;
           status_change?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          actor_name: string;
+          actor_role: string;
+          entity: string;
+          entity_id: string | null;
+          field: string;
+          old_value: string | null;
+          new_value: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          actor_name: string;
+          actor_role: string;
+          entity: string;
+          entity_id?: string | null;
+          field: string;
+          old_value?: string | null;
+          new_value?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string | null;
+          actor_name?: string;
+          actor_role?: string;
+          entity?: string;
+          entity_id?: string | null;
+          field?: string;
+          old_value?: string | null;
+          new_value?: string | null;
           created_at?: string;
         };
         Relationships: [];
