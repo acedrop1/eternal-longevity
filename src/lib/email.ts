@@ -777,6 +777,72 @@ export function approvedPayNowEmail(input: {
   };
 }
 
+/**
+ * The prescriber's own receipt.
+ *
+ * He signed, the card cleared and the order left for the pharmacy — three
+ * things that happen in the seconds after he clicks and none of which he can
+ * see once the card leaves his queue. This is the record that they happened.
+ */
+export function signedAndPaidPrescriberEmail(input: {
+  prescriberName: string;
+  orderNumber: string;
+  memberName: string;
+  items: string;
+  amountCents: number;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Signed and paid — ${input.orderNumber}`,
+    html: noticeEmail({
+      eyebrow: 'Prescription signed',
+      heading: `${escapeHtml(input.memberName)}'s order is with the pharmacy`,
+      body: `You signed this prescription and the card on file cleared, so it has been released for compounding. Nothing further is needed from you.`,
+      rows: [
+        ['Order', escapeHtml(input.orderNumber)],
+        ['Patient', escapeHtml(input.memberName)],
+        ['Prescribed', escapeHtml(input.items)],
+        ['Charged', `$${(input.amountCents / 100).toFixed(2)}`],
+      ],
+      cta: { label: 'Open your signed prescriptions', href: input.portalUrl },
+      footnote:
+        'If you did not sign this, reply to this email immediately — the order can be recalled before it ships.',
+    }),
+  };
+}
+
+/** The team's version of the same event: money in, order moving. */
+export function paymentClearedTeamEmail(input: {
+  orderNumber: string;
+  memberName: string;
+  memberEmail: string;
+  items: string;
+  amountCents: number;
+  signedBy: string;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Payment cleared — ${input.orderNumber} · $${(
+      input.amountCents / 100
+    ).toFixed(2)}`,
+    html: noticeEmail({
+      eyebrow: 'Payment cleared',
+      heading: `$${(input.amountCents / 100).toFixed(2)} charged on ${escapeHtml(
+        input.orderNumber,
+      )}`,
+      body: 'The prescriber signed, the card on file cleared and the order has gone to the pharmacy. It is now waiting on compounding and a tracking number.',
+      rows: [
+        ['Order', escapeHtml(input.orderNumber)],
+        ['Member', `${escapeHtml(input.memberName)} · ${escapeHtml(input.memberEmail)}`],
+        ['Prescribed', escapeHtml(input.items)],
+        ['Charged', `$${(input.amountCents / 100).toFixed(2)}`],
+        ['Signed by', escapeHtml(input.signedBy)],
+      ],
+      cta: { label: 'Open the order board', href: input.portalUrl },
+    }),
+  };
+}
+
 export interface DailyReportStats {
   /** Human date the report covers, e.g. "Tuesday, 4 August 2026". */
   dateLabel: string;

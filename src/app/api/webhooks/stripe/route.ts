@@ -22,8 +22,12 @@ import {
   SUPPORT_EMAIL,
   emailConfigured,
   orderConfirmationEmail,
+  paymentClearedTeamEmail,
   sendEmail,
+  signedAndPaidPrescriberEmail,
 } from '@/lib/email';
+import { getPrescriber } from '@/lib/prescriber';
+import { SITE_URL } from '@/lib/site';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 
 // Webhooks need the raw body + Node crypto.
@@ -97,7 +101,12 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
           pay_token_expires: null,
         })
         .eq('stripe_payment_intent_id', pi.id);
-      await addOrderUpdate(db, pi.id, 'Payment received', 'Your card was charged successfully.');
+      await addOrderUpdate(
+        db,
+        pi.id,
+        'Payment received',
+        `$${(pi.amount / 100).toFixed(2)} charged to the card on file. Released to the pharmacy.`,
+      );
       await sendOrderConfirmation(db, pi.id);
 
       /*
@@ -280,11 +289,42 @@ async function sendOrderConfirmation(
     });
 
     await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
-    await sendEmail({
-      to: SUPPORT_EMAIL,
-      subject: `New order — ${order.order_number}`,
-      html: mail.html,
+
+    /*
+     * Everyone who acted on this order hears that the money moved, from here
+     * rather than from the sign action — the charge is only real once Stripe
+     * says so, and this is where Stripe says so.
+     */
+    const itemList =
+      (items ?? []).map((i) => i.product_name).join(', ') || 'Care program';
+    const memberName = profile.full_name || 'Member';
+    const amount = order.total_cents ?? 0;
+
+    const prescriber = await getPrescriber().catch(() => null);
+    const signedBy = prescriber?.display || 'the prescriber';
+
+    if (prescriber?.email) {
+      const rx = signedAndPaidPrescriberEmail({
+        prescriberName: prescriber.name,
+        orderNumber: order.order_number,
+        memberName,
+        items: itemList,
+        amountCents: amount,
+        portalUrl: `${SITE_URL}/portal/doctor/history`,
+      });
+      await sendEmail({ to: prescriber.email, subject: rx.subject, html: rx.html });
+    }
+
+    const team = paymentClearedTeamEmail({
+      orderNumber: order.order_number,
+      memberName,
+      memberEmail: profile.email,
+      items: itemList,
+      amountCents: amount,
+      signedBy,
+      portalUrl: `${SITE_URL}/portal/admin`,
     });
+    await sendEmail({ to: SUPPORT_EMAIL, subject: team.subject, html: team.html });
   } catch (err) {
     console.error('[stripe] order confirmation email failed:', err);
   }
