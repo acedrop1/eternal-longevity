@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useOrders } from '@/components/orders/OrdersProvider';
-import { requestInfoFromPatientAction } from '@/lib/orders-db';
-import { STATUS_LABEL, type Order } from '@/lib/orders';
-import { cn } from '@/lib/utils';
-import type { PatientReview } from '@/lib/clinical-review';
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useOrders } from "@/components/orders/OrdersProvider";
+import { requestInfoFromPatientAction } from "@/lib/orders-db";
+import { STATUS_LABEL, type Order } from "@/lib/orders";
+import { cn } from "@/lib/utils";
+import type { PatientReview } from "@/lib/clinical-review";
 
 interface DoctorQueueListProps {
   doctorName: string;
@@ -15,10 +15,7 @@ interface DoctorQueueListProps {
   reviews: Record<string, PatientReview>;
 }
 
-export function DoctorQueueList({
-  doctorName,
-  reviews,
-}: DoctorQueueListProps) {
+export function DoctorQueueList({ doctorName, reviews }: DoctorQueueListProps) {
   const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
     useOrders();
 
@@ -30,20 +27,32 @@ export function DoctorQueueList({
   // Cases handled (signed onward) — shown as a stat.
   const handled = orders.filter((o) =>
     [
-      'signed',
-      'declined-clinical',
-      'compounding',
-      'shipped',
-      'delivered',
-    ].includes(o.status)
+      "signed",
+      "declined-clinical",
+      "compounding",
+      "shipped",
+      "delivered",
+    ].includes(o.status),
   );
 
   return (
     <>
       <div className="grid gap-3 mb-8 sm:grid-cols-3">
-        <Metric label="Awaiting my review" value={String(queue.length)} tone="blue" />
-        <Metric label="Active cases" value={String(active.length)} tone="accent" />
-        <Metric label="Handled total" value={String(handled.length)} tone="neutral" />
+        <Metric
+          label="Awaiting my review"
+          value={String(queue.length)}
+          tone="blue"
+        />
+        <Metric
+          label="Active cases"
+          value={String(active.length)}
+          tone="accent"
+        />
+        <Metric
+          label="Handled total"
+          value={String(handled.length)}
+          tone="neutral"
+        />
       </div>
 
       {/* === AWAITING REVIEW === */}
@@ -132,7 +141,7 @@ function SectionHeader({
         </h2>
       </div>
       <span className="text-[10px] tracking-widest text-foreground/55">
-        {count} {count === 1 ? 'CASE' : 'CASES'}
+        {count} {count === 1 ? "CASE" : "CASES"}
       </span>
     </div>
   );
@@ -162,9 +171,11 @@ function DoctorQueueRow({
 }) {
   const { signRx, declineClinical } = useOrders();
   const router = useRouter();
-  const [open, setOpen] = useState<null | 'decline' | 'ask'>(null);
-  const [note, setNote] = useState('');
-  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
+  const [open, setOpen] = useState<null | "sign" | "decline" | "ask">(null);
+  const [note, setNote] = useState("");
+  const [password, setPassword] = useState("");
+  const [signError, setSignError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<null | "sign" | "decline" | "ask">(null);
 
   return (
     <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
@@ -196,7 +207,9 @@ function DoctorQueueRow({
               {order.memberName}
             </h2>
             <p className="text-sm text-foreground/85 mt-0.5">
-              {order.lines.map((l) => `${l.productName} (${l.cadenceLabel})`).join(' + ')}
+              {order.lines
+                .map((l) => `${l.productName} (${l.cadenceLabel})`)
+                .join(" + ")}
             </p>
 
             {order.adminNote && (
@@ -226,35 +239,19 @@ function DoctorQueueRow({
           <button
             type="button"
             disabled={busy !== null}
-            onClick={async () => {
-              if (
-                !window.confirm(
-                  "Sign this prescription? This charges the patient's first cycle and releases the order to the pharmacy.",
-                )
-              ) {
-                return;
-              }
-              /*
-               * Signing writes the prescription, charges the card and submits
-               * to the pharmacy. That is seconds of real work, and without a
-               * pending state the button looked broken for all of it.
-               */
-              setBusy('sign');
-              try {
-                await signRx(order.id, doctorName);
-              } finally {
-                setBusy(null);
-              }
+            onClick={() => {
+              setSignError(null);
+              setPassword("");
+              setOpen("sign");
             }}
             className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-60"
           >
-            {busy === 'sign' && <Spinner />}
-            {busy === 'sign' ? 'Signing…' : 'Approve & sign prescription'}
+            Approve &amp; sign prescription
           </button>
           <button
             type="button"
             disabled={busy !== null}
-            onClick={() => setOpen('ask')}
+            onClick={() => setOpen("ask")}
             className="rounded-full border border-line bg-background px-5 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
           >
             Ask for more information
@@ -262,7 +259,7 @@ function DoctorQueueRow({
           <button
             type="button"
             disabled={busy !== null}
-            onClick={() => setOpen('decline')}
+            onClick={() => setOpen("decline")}
             className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60"
           >
             Decline
@@ -270,7 +267,93 @@ function DoctorQueueRow({
         </div>
       )}
 
-      {open === 'ask' && (
+      {open === "sign" && (
+        <div className="mt-5 rounded-2xl border border-accent/40 bg-accent/[0.06] p-4 md:p-5">
+          <div className="mb-3 text-[10px] tracking-widest text-accent">
+            SIGN THE PRESCRIPTION
+          </div>
+          <p className="mb-4 text-sm leading-relaxed text-foreground/75">
+            Signing writes the prescription under your licence, charges{" "}
+            <span className="font-semibold text-foreground">
+              ${order.total.toFixed(2)}
+            </span>{" "}
+            to the card on file and releases the order to the pharmacy.
+          </p>
+          <p className="mb-4 text-xs leading-relaxed text-foreground/55">
+            Your password is required again here. A session left open is not
+            evidence that you are the one signing.
+          </p>
+
+          <label
+            htmlFor={`pw-${order.id}`}
+            className="mb-1.5 block text-[10px] tracking-widest text-foreground/50"
+          >
+            YOUR PASSWORD
+          </label>
+          <input
+            id={`pw-${order.id}`}
+            type="password"
+            value={password}
+            autoComplete="current-password"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setSignError(null);
+            }}
+            className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+
+          {signError && (
+            <p className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+              {signError}
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!password || busy !== null}
+              onClick={async () => {
+                if (!password || busy) return;
+                setBusy("sign");
+                setSignError(null);
+                try {
+                  const res = await signRx(order.id, doctorName, password);
+                  if (res.ok) {
+                    setOpen(null);
+                    setPassword("");
+                  } else {
+                    setSignError(
+                      res.error === "bad_password"
+                        ? "That password is not right. Nothing was signed or charged."
+                        : "Could not sign. Nothing was charged — try again.",
+                    );
+                  }
+                } finally {
+                  setBusy(null);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-40"
+            >
+              {busy === "sign" && <Spinner />}
+              {busy === "sign" ? "Signing…" : "Confirm and sign"}
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => {
+                setOpen(null);
+                setPassword("");
+                setSignError(null);
+              }}
+              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {open === "ask" && (
         <div className="mt-5 rounded-2xl border border-line bg-background p-4 md:p-5">
           <div className="mb-2 text-[10px] tracking-widest text-foreground/50">
             WHAT DO YOU NEED FROM THEM?
@@ -292,7 +375,7 @@ function DoctorQueueRow({
               disabled={!note.trim() || busy !== null}
               onClick={async () => {
                 if (!note.trim() || busy) return;
-                setBusy('ask');
+                setBusy("ask");
                 try {
                   const res = await requestInfoFromPatientAction(
                     order.id,
@@ -300,7 +383,7 @@ function DoctorQueueRow({
                   );
                   if (res.ok) {
                     setOpen(null);
-                    setNote('');
+                    setNote("");
                     router.refresh();
                   }
                 } finally {
@@ -309,14 +392,14 @@ function DoctorQueueRow({
               }}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-40"
             >
-              {busy === 'ask' && <Spinner />}
-              {busy === 'ask' ? 'Sending…' : 'Send question'}
+              {busy === "ask" && <Spinner />}
+              {busy === "ask" ? "Sending…" : "Send question"}
             </button>
             <button
               type="button"
               onClick={() => {
                 setOpen(null);
-                setNote('');
+                setNote("");
               }}
               className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
             >
@@ -326,7 +409,7 @@ function DoctorQueueRow({
         </div>
       )}
 
-      {open === 'decline' && (
+      {open === "decline" && (
         <div className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 md:p-5">
           <div className="mb-3 text-[10px] tracking-widest text-red-300">
             REASON FOR CLINICAL DECLINE
@@ -343,7 +426,7 @@ function DoctorQueueRow({
               type="button"
               onClick={async () => {
                 if (!note.trim() || busy) return;
-                setBusy('decline');
+                setBusy("decline");
                 try {
                   await declineClinical(order.id, doctorName, note.trim());
                   setOpen(null);
@@ -353,14 +436,14 @@ function DoctorQueueRow({
               }}
               disabled={!note.trim() || busy !== null}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors",
                 note.trim() && !busy
-                  ? 'bg-red-500 text-foreground hover:bg-red-600'
-                  : 'bg-foreground/15 text-foreground/40'
+                  ? "bg-red-500 text-foreground hover:bg-red-600"
+                  : "bg-foreground/15 text-foreground/40",
               )}
             >
-              {busy === 'decline' && <Spinner />}
-              {busy === 'decline' ? 'Sending…' : 'Confirm decline'}
+              {busy === "decline" && <Spinner />}
+              {busy === "decline" ? "Sending…" : "Confirm decline"}
             </button>
             <button
               type="button"
@@ -383,7 +466,7 @@ function Metric({
 }: {
   label: string;
   value: string;
-  tone: 'blue' | 'accent' | 'neutral';
+  tone: "blue" | "accent" | "neutral";
 }) {
   return (
     <div className="rounded-2xl border border-line bg-surface p-4">
@@ -392,10 +475,10 @@ function Metric({
       </div>
       <div
         className={cn(
-          'text-2xl font-semibold tracking-tight tabular-nums',
-          tone === 'blue' && 'text-sky-300',
-          tone === 'accent' && 'text-accent',
-          tone === 'neutral' && 'text-foreground'
+          "text-2xl font-semibold tracking-tight tabular-nums",
+          tone === "blue" && "text-sky-300",
+          tone === "accent" && "text-accent",
+          tone === "neutral" && "text-foreground",
         )}
       >
         {value}
@@ -417,11 +500,11 @@ function ActiveCaseRow({
 }) {
   const { markCompounding, markShipped, markDelivered, addUpdate } =
     useOrders();
-  const [open, setOpen] = useState<null | 'tracking' | 'note'>(null);
+  const [open, setOpen] = useState<null | "tracking" | "note">(null);
   const [showTimeline, setShowTimeline] = useState(false);
-  const [tracking, setTracking] = useState(order.tracking ?? '');
-  const [carrier, setCarrier] = useState(order.carrier ?? 'FedEx');
-  const [note, setNote] = useState('');
+  const [tracking, setTracking] = useState(order.tracking ?? "");
+  const [carrier, setCarrier] = useState(order.carrier ?? "FedEx");
+  const [note, setNote] = useState("");
 
   return (
     <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
@@ -453,7 +536,7 @@ function ActiveCaseRow({
               {order.memberName}
             </h2>
             <p className="text-sm text-foreground/85 mt-0.5">
-              {order.lines.map((l) => l.productName).join(' + ')}
+              {order.lines.map((l) => l.productName).join(" + ")}
             </p>
             {order.tracking && (
               <p className="mt-2 text-xs text-foreground/65 font-mono break-all">
@@ -473,7 +556,7 @@ function ActiveCaseRow({
       {/* Action buttons — visible status-progression */}
       {open === null && (
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
-          {order.status === 'signed' && (
+          {order.status === "signed" && (
             <button
               type="button"
               onClick={() => markCompounding(order.id, doctorName)}
@@ -482,16 +565,16 @@ function ActiveCaseRow({
               Mark compounding
             </button>
           )}
-          {(order.status === 'signed' || order.status === 'compounding') && (
+          {(order.status === "signed" || order.status === "compounding") && (
             <button
               type="button"
-              onClick={() => setOpen('tracking')}
+              onClick={() => setOpen("tracking")}
               className="rounded-full bg-foreground text-background font-semibold px-5 py-2 text-sm hover:bg-accent hover:text-black transition-colors"
             >
               Add tracking &amp; ship
             </button>
           )}
-          {order.status === 'shipped' && (
+          {order.status === "shipped" && (
             <button
               type="button"
               onClick={() => markDelivered(order.id, doctorName)}
@@ -502,7 +585,7 @@ function ActiveCaseRow({
           )}
           <button
             type="button"
-            onClick={() => setOpen('note')}
+            onClick={() => setOpen("note")}
             className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
           >
             Add update
@@ -512,13 +595,13 @@ function ActiveCaseRow({
             onClick={() => setShowTimeline((v) => !v)}
             className="ml-auto text-[11px] tracking-widest text-foreground/55 hover:text-foreground transition-colors"
           >
-            {showTimeline ? 'HIDE TIMELINE ↑' : 'TIMELINE ↓'}
+            {showTimeline ? "HIDE TIMELINE ↑" : "TIMELINE ↓"}
           </button>
         </div>
       )}
 
       {/* Add tracking panel */}
-      {open === 'tracking' && (
+      {open === "tracking" && (
         <div className="mt-5 rounded-2xl border border-accent/30 bg-accent/5 p-4 md:p-5">
           <div className="mb-3 text-[10px] tracking-widest text-accent">
             SHIPMENT DETAILS
@@ -575,17 +658,17 @@ function ActiveCaseRow({
                   doctorName,
                   tracking.trim(),
                   carrier,
-                  note.trim() || undefined
+                  note.trim() || undefined,
                 );
                 setOpen(null);
-                setNote('');
+                setNote("");
               }}
               disabled={!tracking.trim()}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                "rounded-full px-5 py-2 text-sm font-semibold transition-colors",
                 tracking.trim()
-                  ? 'bg-accent text-black hover:bg-accent-soft'
-                  : 'bg-foreground/15 text-foreground/40'
+                  ? "bg-accent text-black hover:bg-accent-soft"
+                  : "bg-foreground/15 text-foreground/40",
               )}
             >
               Save &amp; mark shipped
@@ -594,7 +677,7 @@ function ActiveCaseRow({
               type="button"
               onClick={() => {
                 setOpen(null);
-                setNote('');
+                setNote("");
               }}
               className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
             >
@@ -605,7 +688,7 @@ function ActiveCaseRow({
       )}
 
       {/* Add free-form note panel */}
-      {open === 'note' && (
+      {open === "note" && (
         <div className="mt-5 rounded-2xl border border-line bg-background p-4 md:p-5">
           <div className="mb-3 text-[10px] tracking-widest text-foreground/55">
             UPDATE FOR MEMBER + CARE TEAM
@@ -622,16 +705,16 @@ function ActiveCaseRow({
               type="button"
               onClick={() => {
                 if (!note.trim()) return;
-                addUpdate(order.id, doctorName, 'physician', note.trim());
+                addUpdate(order.id, doctorName, "physician", note.trim());
                 setOpen(null);
-                setNote('');
+                setNote("");
               }}
               disabled={!note.trim()}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                "rounded-full px-5 py-2 text-sm font-semibold transition-colors",
                 note.trim()
-                  ? 'bg-accent text-black hover:bg-accent-soft'
-                  : 'bg-foreground/15 text-foreground/40'
+                  ? "bg-accent text-black hover:bg-accent-soft"
+                  : "bg-foreground/15 text-foreground/40",
               )}
             >
               Post update
@@ -640,7 +723,7 @@ function ActiveCaseRow({
               type="button"
               onClick={() => {
                 setOpen(null);
-                setNote('');
+                setNote("");
               }}
               className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
             >
@@ -668,19 +751,21 @@ function RecentCaseRow({ order }: { order: Order }) {
     <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground truncate">
-          {order.memberName}{' '}
-          <span className="text-foreground/55 font-normal">· {order.state}</span>
+          {order.memberName}{" "}
+          <span className="text-foreground/55 font-normal">
+            · {order.state}
+          </span>
         </div>
         <div className="text-xs text-foreground/55 mt-0.5">
-          {order.lines.map((l) => l.productName).join(' + ')}
+          {order.lines.map((l) => l.productName).join(" + ")}
         </div>
       </div>
       <span
         className={cn(
-          'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] tracking-widest font-semibold flex-shrink-0',
-          order.status === 'delivered'
-            ? 'bg-foreground/5 text-foreground/65 border-line'
-            : 'bg-red-500/10 text-red-300 border-red-500/40'
+          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] tracking-widest font-semibold flex-shrink-0",
+          order.status === "delivered"
+            ? "bg-foreground/5 text-foreground/65 border-line"
+            : "bg-red-500/10 text-red-300 border-red-500/40",
         )}
       >
         {STATUS_LABEL[order.status]}
@@ -689,7 +774,7 @@ function RecentCaseRow({ order }: { order: Order }) {
   );
 }
 
-function Timeline({ updates }: { updates: Order['updates'] }) {
+function Timeline({ updates }: { updates: Order["updates"] }) {
   if (!updates || updates.length === 0) return null;
   // Reverse so newest is at the top
   const ordered = [...updates].sort((a, b) => b.at - a.at);
@@ -706,9 +791,7 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
             </span>
             <span>{relativeTime(u.at)}</span>
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed">
-            {u.note}
-          </p>
+          <p className="text-sm text-foreground/85 leading-relaxed">{u.note}</p>
           {u.statusChange && (
             <p className="mt-1.5 text-[10px] tracking-widest text-accent">
               STATUS · {STATUS_LABEL[u.statusChange]}
@@ -723,7 +806,7 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
 function relativeTime(at: number): string {
   const diff = Date.now() - at;
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return 'just now';
+  if (min < 1) return "just now";
   if (min < 60) return `${min} min ago`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr} hr ago`;
@@ -786,8 +869,8 @@ function ReviewPanel({
   );
   const summary =
     flags.length === 0
-      ? 'Nothing flagged'
-      : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
+      ? "Nothing flagged"
+      : `${flags.length} to weigh — ${flags.map((f) => f.label).join(", ")}`;
 
   return (
     <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
@@ -798,13 +881,13 @@ function ReviewPanel({
         className="flex w-full items-center gap-3 bg-background px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.04]"
       >
         <span className="flex-none text-[10px] tracking-widest text-foreground/45">
-          {open ? 'HIDE RECORD' : 'PATIENT RECORD'}
+          {open ? "HIDE RECORD" : "PATIENT RECORD"}
         </span>
         {!open && (
           <span
             className={cn(
-              'min-w-0 flex-1 truncate text-xs',
-              flags.length ? 'text-accent' : 'text-foreground/45',
+              "min-w-0 flex-1 truncate text-xs",
+              flags.length ? "text-accent" : "text-foreground/45",
             )}
           >
             {summary}
@@ -813,13 +896,20 @@ function ReviewPanel({
         <span
           aria-hidden
           className={cn(
-            'ml-auto flex-none rounded-full border border-line p-1 text-foreground/50 transition-transform',
-            open && 'rotate-180',
+            "ml-auto flex-none rounded-full border border-line p-1 text-foreground/50 transition-transform",
+            open && "rotate-180",
           )}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-               strokeLinejoin="round">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </span>
@@ -829,11 +919,11 @@ function ReviewPanel({
         <>
           <Strip
             items={[
-              ['Date of birth', review.dob],
-              ['Age', review.age],
-              ['Sex at birth', review.sex],
-              ['Height / weight', review.body],
-              ['Intake completed', review.submittedAt],
+              ["Date of birth", review.dob],
+              ["Age", review.age],
+              ["Sex at birth", review.sex],
+              ["Height / weight", review.body],
+              ["Intake completed", review.submittedAt],
             ]}
           />
 
@@ -860,7 +950,7 @@ function ReviewPanel({
                   key={l.productId}
                   label={l.productName}
                   value={`${l.cadenceLabel}${
-                    l.quantity > 1 ? ` \u00b7 \u00d7${l.quantity}` : ''
+                    l.quantity > 1 ? ` \u00b7 \u00d7${l.quantity}` : ""
                   } \u00b7 $${l.perCycle}`}
                 />
               ))}
@@ -872,7 +962,7 @@ function ReviewPanel({
               <Money label="Subtotal" value={order.subtotal} />
               {!!order.discount && (
                 <Money
-                  label={`Discount${order.promoCode ? ` · ${order.promoCode}` : ''}`}
+                  label={`Discount${order.promoCode ? ` · ${order.promoCode}` : ""}`}
                   value={-order.discount}
                 />
               )}
@@ -948,23 +1038,23 @@ function Answers({
           <div
             key={l.label}
             className={cn(
-              'flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0',
-              long && 'md:col-span-2 md:flex-col md:items-start md:gap-0.5',
+              "flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0",
+              long && "md:col-span-2 md:flex-col md:items-start md:gap-0.5",
             )}
           >
             <span
               className={cn(
-                'text-[13px] leading-snug',
-                l.flag ? 'text-foreground/80' : 'text-foreground/70',
+                "text-[13px] leading-snug",
+                l.flag ? "text-foreground/80" : "text-foreground/70",
               )}
             >
               {l.label}
             </span>
             <span
               className={cn(
-                'flex-none text-[13px] font-semibold leading-snug',
-                long && 'md:w-full',
-                l.flag ? 'text-accent' : 'text-foreground/90',
+                "flex-none text-[13px] font-semibold leading-snug",
+                long && "md:w-full",
+                l.flag ? "text-accent" : "text-foreground/90",
               )}
             >
               {l.flag && !long && (
@@ -996,27 +1086,27 @@ function Money({
   return (
     <div
       className={cn(
-        'flex items-baseline justify-between gap-4 py-1',
-        strong && 'mt-1 border-t border-line pt-2',
+        "flex items-baseline justify-between gap-4 py-1",
+        strong && "mt-1 border-t border-line pt-2",
       )}
     >
       <dt
         className={cn(
-          'text-[13px]',
-          strong ? 'font-semibold text-foreground' : 'text-foreground/60',
+          "text-[13px]",
+          strong ? "font-semibold text-foreground" : "text-foreground/60",
         )}
       >
         {label}
       </dt>
       <dd
         className={cn(
-          'tabular-nums text-[13px]',
-          strong ? 'font-semibold text-foreground' : 'text-foreground/85',
+          "tabular-nums text-[13px]",
+          strong ? "font-semibold text-foreground" : "text-foreground/85",
         )}
       >
         {value === 0 && zeroLabel
           ? zeroLabel
-          : `${value < 0 ? '−' : ''}$${Math.abs(value)}`}
+          : `${value < 0 ? "−" : ""}$${Math.abs(value)}`}
       </dd>
     </div>
   );

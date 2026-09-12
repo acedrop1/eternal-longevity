@@ -37,6 +37,8 @@ import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
 import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
+import { passwordMatches } from '@/lib/reauth';
+import { recordAudit } from '@/lib/prescriber';
 
 /** True when the Supabase-backed workflow is available. */
 export async function ordersDbConfigured(): Promise<boolean> {
@@ -519,9 +521,20 @@ export async function signRxAction(
   orderNumber: string,
   note: string | undefined,
   firstChargeAmount: number,
+  password: string,
 ): Promise<ActionResult> {
   const { user, error } = await requireRole(['doctor']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  /*
+   * The signature, not the session, is what a board asks about. Thirty idle
+   * minutes is comfortable for reading a chart and far too long to accept as
+   * evidence that the prescriber is the one signing it.
+   */
+  if (!(await passwordMatches(user.email, password))) {
+    return { ok: false, error: 'bad_password' };
+  }
+
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
 
@@ -557,6 +570,20 @@ export async function signRxAction(
    * without it a plan reaches its second cycle with nothing to renew from.
    */
   await writePrescriptionForOrder(orderNumber);
+
+  // The signing itself belongs in the trail admin reads, not only the order.
+  await recordAudit([
+    {
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: 'doctor',
+      entity: 'order',
+      entityId: id,
+      field: 'prescription signed',
+      oldValue: null,
+      newValue: orderNumber,
+    },
+  ]);
 
   const charge = await chargeOnApproval(orderNumber);
   if (charge.charged) await autoSubmitToPharmacy(orderNumber);

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import {
   placeOrderAction,
   approveOrderAction,
@@ -8,7 +8,7 @@ import {
   signRxAction,
   declineClinicalAction,
   advanceOrderAction,
-} from '@/lib/orders-db';
+} from "@/lib/orders-db";
 import {
   createContext,
   useCallback,
@@ -17,14 +17,14 @@ import {
   useMemo,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 import {
   SEED_ORDERS,
   type Order,
   type OrderStatus,
   type OrderUpdate,
   type UpdateAuthorRole,
-} from '@/lib/orders';
+} from "@/lib/orders";
 
 interface OrdersAPI {
   orders: Order[];
@@ -36,17 +36,16 @@ interface OrdersAPI {
   /** Finished cases (delivered / declined-clinical). */
   recentClinicalCases: (limit?: number) => Order[];
   pendingAdminOrders: () => Order[];
-  placeOrder: (
-    order: Omit<Order, 'id' | 'placedAt' | 'status'>
-  ) => Order;
+  placeOrder: (order: Omit<Order, "id" | "placedAt" | "status">) => Order;
   /** Admin approves an order, releasing it to the physician for sign-off. */
   approve: (id: string, note?: string) => void;
   denyAdmin: (id: string, note: string) => void;
   signRx: (
     id: string,
     author: string,
-    note?: string
-  ) => Promise<void>;
+    password: string,
+    note?: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
   declineClinical: (id: string, author: string, note: string) => Promise<void>;
   /** Post-sign progression — usually called by physician or pharmacy. */
   markCompounding: (id: string, author: string, note?: string) => void;
@@ -55,7 +54,7 @@ interface OrdersAPI {
     author: string,
     tracking: string,
     carrier: string,
-    note?: string
+    note?: string,
   ) => void;
   markDelivered: (id: string, author: string, note?: string) => void;
   /** Free-form note appended to the order timeline without changing status. */
@@ -63,17 +62,17 @@ interface OrdersAPI {
     id: string,
     author: string,
     role: UpdateAuthorRole,
-    note: string
+    note: string,
   ) => void;
   /** Demo: clear localStorage and re-seed */
   resetToSeed: () => void;
 }
 
 const OrdersContext = createContext<OrdersAPI | null>(null);
-const STORAGE_KEY = 'el_orders_v1';
+const STORAGE_KEY = "el_orders_v1";
 
 function loadFromStorage(): Order[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return SEED_ORDERS;
@@ -86,7 +85,7 @@ function loadFromStorage(): Order[] {
 }
 
 function saveToStorage(orders: Order[]) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
   } catch {
@@ -112,7 +111,9 @@ export function OrdersProvider({
   live = false,
 }: OrdersProviderProps) {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>(live ? initialOrders ?? [] : []);
+  const [orders, setOrders] = useState<Order[]>(
+    live ? (initialOrders ?? []) : [],
+  );
   const [hydrated, setHydrated] = useState(false);
 
   // Demo mode only: hydrate from localStorage. In live mode the server
@@ -149,23 +150,20 @@ export function OrdersProvider({
       if (!live) return;
       try {
         const res = await run();
-        if (!res.ok) console.error('[orders] action failed:', res.error);
+        if (!res.ok) console.error("[orders] action failed:", res.error);
         router.refresh();
       } catch (err) {
-        console.error('[orders] action threw:', err);
+        console.error("[orders] action threw:", err);
       }
     },
     [live, router],
   );
 
-  const updateOrder = useCallback(
-    (id: string, patch: Partial<Order>) => {
-      setOrders((curr) =>
-        curr.map((o) => (o.id === id ? { ...o, ...patch } : o))
-      );
-    },
-    []
-  );
+  const updateOrder = useCallback((id: string, patch: Partial<Order>) => {
+    setOrders((curr) =>
+      curr.map((o) => (o.id === id ? { ...o, ...patch } : o)),
+    );
+  }, []);
 
   /** Internal: append an update entry to an order's timeline. */
   const appendUpdate = useCallback(
@@ -174,7 +172,7 @@ export function OrdersProvider({
       author: string,
       role: UpdateAuthorRole,
       note: string,
-      statusChange?: OrderStatus
+      statusChange?: OrderStatus,
     ) => {
       const entry: OrderUpdate = {
         id: `upd-${Math.random().toString(36).slice(2, 8)}`,
@@ -186,22 +184,20 @@ export function OrdersProvider({
       };
       setOrders((curr) =>
         curr.map((o) =>
-          o.id === id
-            ? { ...o, updates: [...(o.updates ?? []), entry] }
-            : o
-        )
+          o.id === id ? { ...o, updates: [...(o.updates ?? []), entry] } : o,
+        ),
       );
     },
-    []
+    [],
   );
 
-  const placeOrder = useCallback<OrdersAPI['placeOrder']>(
+  const placeOrder = useCallback<OrdersAPI["placeOrder"]>(
     (draft) => {
       const order: Order = {
         ...draft,
         id: `ord-${Math.random().toString(36).slice(2, 8)}`,
         placedAt: Date.now(),
-        status: 'pending-admin' as OrderStatus,
+        status: "pending-admin" as OrderStatus,
       };
       setOrders((curr) => [order, ...curr]);
       sync(() =>
@@ -222,27 +218,27 @@ export function OrdersProvider({
     [sync],
   );
 
-  const approve = useCallback<OrdersAPI['approve']>(
+  const approve = useCallback<OrdersAPI["approve"]>(
     (id, note) => {
-      updateOrder(id, { status: 'assigned', adminNote: note });
+      updateOrder(id, { status: "assigned", adminNote: note });
       appendUpdate(
         id,
-        'Admin',
-        'admin',
-        note ?? 'Confirmed. Released for compounding.',
-        'assigned'
+        "Admin",
+        "admin",
+        note ?? "Confirmed. Released for compounding.",
+        "assigned",
       );
       sync(() => approveOrderAction(id, undefined, note));
     },
-    [updateOrder, appendUpdate, sync]
+    [updateOrder, appendUpdate, sync],
   );
 
-  const denyAdmin = useCallback<OrdersAPI['denyAdmin']>(
+  const denyAdmin = useCallback<OrdersAPI["denyAdmin"]>(
     (id, note) => {
-      updateOrder(id, { status: 'denied-admin', adminNote: note });
+      updateOrder(id, { status: "denied-admin", adminNote: note });
       sync(() => denyOrderAction(id, note));
     },
-    [updateOrder, sync]
+    [updateOrder, sync],
   );
 
   /**
@@ -250,99 +246,115 @@ export function OrdersProvider({
    * charged to the card on file, and only then is the order released to the
    * pharmacy. Recorded as two timeline entries — the sign-off and the charge.
    */
-  const signRx = useCallback<OrdersAPI['signRx']>(async (id, author, note) => {
-    const now = Date.now();
-    setOrders((curr) =>
-      curr.map((o) => {
-        if (o.id !== id) return o;
-        const signEntry: OrderUpdate = {
-          id: `upd-${Math.random().toString(36).slice(2, 8)}`,
-          at: now,
-          author,
-          role: 'physician',
-          note: note ?? 'Order confirmed. Billing starts now.',
-          statusChange: 'signed',
-        };
-        const payEntry: OrderUpdate = {
-          id: `upd-${Math.random().toString(36).slice(2, 8)}`,
-          at: now + 1,
-          author: 'Billing',
-          role: 'system',
-          note: `First cycle billed. $${o.total} charged to the card on file. Order released to the pharmacy.`,
-        };
-        return {
-          ...o,
-          status: 'signed' as OrderStatus,
-          physicianNote: note,
-          paidAt: now,
-          firstChargeAmount: o.total,
-          updates: [...(o.updates ?? []), signEntry, payEntry],
-        };
-      })
-    );
-    const charged = orders.find((o) => o.id === id)?.total ?? 0;
-    await sync(() => signRxAction(id, note, charged));
-  }, [orders, sync]);
+  const signRx = useCallback<OrdersAPI["signRx"]>(
+    async (id, author, password, note) => {
+      /*
+       * The server runs first here, unlike every other action in this file.
+       * A wrong password must not leave a card flipped to "signed" on screen
+       * while nothing was signed.
+       */
+      const charged = orders.find((o) => o.id === id)?.total ?? 0;
+      if (live) {
+        const res = await signRxAction(id, note, charged, password);
+        if (!res.ok) return res;
+      }
 
-  const declineClinical = useCallback<OrdersAPI['declineClinical']>(
+      const now = Date.now();
+      setOrders((curr) =>
+        curr.map((o) => {
+          if (o.id !== id) return o;
+          const signEntry: OrderUpdate = {
+            id: `upd-${Math.random().toString(36).slice(2, 8)}`,
+            at: now,
+            author,
+            role: "physician",
+            note: note ?? "Order confirmed. Billing starts now.",
+            statusChange: "signed",
+          };
+          const payEntry: OrderUpdate = {
+            id: `upd-${Math.random().toString(36).slice(2, 8)}`,
+            at: now + 1,
+            author: "Billing",
+            role: "system",
+            note: `First cycle billed. $${o.total} charged to the card on file. Order released to the pharmacy.`,
+          };
+          return {
+            ...o,
+            status: "signed" as OrderStatus,
+            physicianNote: note,
+            paidAt: now,
+            firstChargeAmount: o.total,
+            updates: [...(o.updates ?? []), signEntry, payEntry],
+          };
+        }),
+      );
+      router.refresh();
+      return { ok: true };
+    },
+    [orders, live, router],
+  );
+
+  const declineClinical = useCallback<OrdersAPI["declineClinical"]>(
     async (id, author, note) => {
-      updateOrder(id, { status: 'declined-clinical', physicianNote: note });
-      appendUpdate(id, author, 'physician', note, 'declined-clinical');
+      updateOrder(id, { status: "declined-clinical", physicianNote: note });
+      appendUpdate(id, author, "physician", note, "declined-clinical");
       await sync(() => declineClinicalAction(id, note));
     },
-    [updateOrder, appendUpdate, sync]
+    [updateOrder, appendUpdate, sync],
   );
 
-  const markCompounding = useCallback<OrdersAPI['markCompounding']>(
+  const markCompounding = useCallback<OrdersAPI["markCompounding"]>(
     (id, author, note) => {
-      updateOrder(id, { status: 'compounding' });
+      updateOrder(id, { status: "compounding" });
       appendUpdate(
         id,
         author,
-        'physician',
-        note ?? 'Pharmacy is compounding now.',
-        'compounding'
+        "physician",
+        note ?? "Pharmacy is compounding now.",
+        "compounding",
       );
-      sync(() => advanceOrderAction(id, 'compounding', { note }));
+      sync(() => advanceOrderAction(id, "compounding", { note }));
     },
-    [updateOrder, appendUpdate, sync]
+    [updateOrder, appendUpdate, sync],
   );
 
-  const markShipped = useCallback<OrdersAPI['markShipped']>(
+  const markShipped = useCallback<OrdersAPI["markShipped"]>(
     (id, author, tracking, carrier, note) => {
-      updateOrder(id, { status: 'shipped', tracking, carrier });
+      updateOrder(id, { status: "shipped", tracking, carrier });
       appendUpdate(
         id,
         author,
-        'physician',
+        "physician",
         note ?? `Shipped via ${carrier} · ${tracking}`,
-        'shipped'
+        "shipped",
       );
-      sync(() => advanceOrderAction(id, 'shipped', { note, carrier, tracking }));
+      sync(() =>
+        advanceOrderAction(id, "shipped", { note, carrier, tracking }),
+      );
     },
-    [updateOrder, appendUpdate, sync]
+    [updateOrder, appendUpdate, sync],
   );
 
-  const markDelivered = useCallback<OrdersAPI['markDelivered']>(
+  const markDelivered = useCallback<OrdersAPI["markDelivered"]>(
     (id, author, note) => {
-      updateOrder(id, { status: 'delivered' });
+      updateOrder(id, { status: "delivered" });
       appendUpdate(
         id,
         author,
-        'physician',
-        note ?? 'Delivery confirmed.',
-        'delivered'
+        "physician",
+        note ?? "Delivery confirmed.",
+        "delivered",
       );
-      sync(() => advanceOrderAction(id, 'delivered', { note }));
+      sync(() => advanceOrderAction(id, "delivered", { note }));
     },
-    [updateOrder, appendUpdate, sync]
+    [updateOrder, appendUpdate, sync],
   );
 
-  const addUpdate = useCallback<OrdersAPI['addUpdate']>(
+  const addUpdate = useCallback<OrdersAPI["addUpdate"]>(
     (id, author, role, note) => {
       appendUpdate(id, author, role, note);
     },
-    [appendUpdate]
+    [appendUpdate],
   );
 
   const resetToSeed = useCallback(() => {
@@ -351,44 +363,42 @@ export function OrdersProvider({
 
   const ordersByMember = useCallback(
     (email: string) =>
-      orders.filter(
-        (o) => o.memberEmail.toLowerCase() === email.toLowerCase()
-      ),
-    [orders]
+      orders.filter((o) => o.memberEmail.toLowerCase() === email.toLowerCase()),
+    [orders],
   );
 
   // One medical director signs every case, so the clinical queue is not
   // routed per-physician — it's simply every order the admin has approved.
   const clinicalQueue = useCallback(
-    () => orders.filter((o) => o.status === 'assigned'),
-    [orders]
+    () => orders.filter((o) => o.status === "assigned"),
+    [orders],
   );
 
   const activeClinicalCases = useCallback(
     () =>
       orders.filter((o) =>
-        (['signed', 'compounding', 'shipped'] as OrderStatus[]).includes(
-          o.status
-        )
+        (["signed", "compounding", "shipped"] as OrderStatus[]).includes(
+          o.status,
+        ),
       ),
-    [orders]
+    [orders],
   );
 
   const recentClinicalCases = useCallback(
     (limit = 5) =>
       orders
         .filter((o) =>
-          (['delivered', 'declined-clinical'] as OrderStatus[]).includes(
-            o.status
-          )
+          (["delivered", "declined-clinical"] as OrderStatus[]).includes(
+            o.status,
+          ),
         )
         .slice(0, limit),
-    [orders]
+    [orders],
   );
 
   const pendingAdminOrders = useCallback(
-    () => orders.filter((o) => o.status === 'pending-admin'),
-    [orders]
+    () => orders.filter((o) => o.status === "pending-admin"),
+    [orders],
   );
 
   const api = useMemo<OrdersAPI>(
@@ -427,16 +437,18 @@ export function OrdersProvider({
       markDelivered,
       addUpdate,
       resetToSeed,
-    ]
+    ],
   );
 
-  return <OrdersContext.Provider value={api}>{children}</OrdersContext.Provider>;
+  return (
+    <OrdersContext.Provider value={api}>{children}</OrdersContext.Provider>
+  );
 }
 
 export function useOrders(): OrdersAPI {
   const ctx = useContext(OrdersContext);
   if (!ctx) {
-    throw new Error('useOrders() must be used inside <OrdersProvider>');
+    throw new Error("useOrders() must be used inside <OrdersProvider>");
   }
   return ctx;
 }
