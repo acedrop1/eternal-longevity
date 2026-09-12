@@ -31,7 +31,6 @@ import {
 import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 import { orderRef } from '@/lib/format';
-import { prescriberForState } from '@/lib/prescriber-routing';
 
 /** Mailbox stores and freight forwarders — not a residence, not shippable. */
 const PO_BOX = /\b(p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*box)\b/i;
@@ -69,7 +68,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_name, member_email, status, shipping_address, ship_state',
+      'id, order_number, user_id, member_name, member_email, status, shipping_address',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
@@ -86,42 +85,10 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
    */
   const notes = addressNotes(order.shipping_address);
 
-  /*
-   * Who signs this. Nothing stamped the prescriber before, so every
-   * prescription written so far carries a null doctor_id — the one field a
-   * board would ask about first — and every prescriber on the roster was
-   * emailed about every order regardless of where they are licensed.
-   */
-  const shipState =
-    order.ship_state ??
-    ((order.shipping_address ?? {}) as Record<string, string>).state ??
-    '';
-  const routed = await prescriberForState(shipState);
-
-  if (!routed) {
-    await db
-      .from('orders')
-      .update({
-        admin_note: `No prescriber is licensed in ${shipState || 'that state'}. The order is held until one is.`,
-      })
-      .eq('id', order.id);
-    await db.from('order_updates').insert({
-      order_id: order.id,
-      label: 'Held before the prescriber',
-      body: `No active prescriber is licensed in ${shipState || 'the shipping state'}, so this order has not been released.`,
-      author: 'System',
-      author_role: 'system',
-    });
-    return { ok: false, error: 'no_prescriber_for_state' };
-  }
-
-  if (routed.caveat) notes.push(routed.caveat);
-
   await db
     .from('orders')
     .update({
       status: 'assigned',
-      assigned_physician_id: routed.id,
       admin_note: notes.length ? notes.join(' ') : null,
     })
     .eq('id', order.id);
@@ -135,7 +102,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   });
 
   const memberName = order.member_name ?? 'A member';
-  await notifyDoctor(routed, order.order_number, memberName);
+  await notifyDoctor(db, order.order_number, memberName);
 
   /*
    * The team gets a copy too. The prescriber owns the clinical decision, but
@@ -149,12 +116,10 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order`,
-        body: 'It has gone straight to the prescriber licensed in that state. Nothing is charged until it is signed.',
+        body: 'It has gone straight to the prescriber. Nothing is charged until he signs.',
         rows: [
           ['Order', orderRef(order.order_number)],
           ['Member', memberName],
-          ['Ships to', shipState || '—'],
-          ['Prescriber', routed.name ?? '—'],
         ],
         cta: { label: 'Open the admin queue', href: `${SITE_URL}/portal/admin/queue` },
       }),
@@ -170,32 +135,40 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
 
 /** Email and text every doctor that something is waiting. */
 async function notifyDoctor(
-  doc: { id: string | null; name: string | null; email: string | null; phone: string | null },
+  db: ReturnType<typeof createSupabaseAdminClient>,
   orderNumber: string,
   memberName: string,
 ): Promise<void> {
-  const firstName = (doc.name ?? '').trim().split(/\s+/)[0] || 'Doctor';
-  if (doc.email) {
-    const msg = newVisitForDoctorEmail({
-      firstName,
-      memberName,
-      orderNumber,
-      queueUrl: `${SITE_URL}/portal/doctor`,
-    });
-    try {
-      await sendEmail({ to: doc.email, subject: msg.subject, html: msg.html });
-    } catch {
-      // A failed notification must not roll back the release.
+  const { data: doctors } = await db
+    .from('profiles')
+    .select('full_name, email, phone')
+    .eq('role', 'doctor')
+    .eq('account_status', 'active');
+
+  for (const doc of doctors ?? []) {
+    const firstName = (doc.full_name ?? '').trim().split(/\s+/)[0] || 'Doctor';
+    if (doc.email) {
+      const msg = newVisitForDoctorEmail({
+        firstName,
+        memberName,
+        orderNumber,
+        queueUrl: `${SITE_URL}/portal/doctor`,
+      });
+      try {
+        await sendEmail({ to: doc.email, subject: msg.subject, html: msg.html });
+      } catch {
+        // A failed notification must not roll back the release.
+      }
     }
-  }
-  if (doc.phone) {
-    try {
-      await sendSms(
-        doc.phone,
-        `Eternal Longevity: a visit is ready for review — ${memberName}, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
-      );
-    } catch {
-      // Same: best effort.
+    if (doc.phone) {
+      try {
+        await sendSms(
+          doc.phone,
+          `Eternal Longevity: a visit is ready for review — ${memberName}, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
+        );
+      } catch {
+        // Same: best effort.
+      }
     }
   }
 }
