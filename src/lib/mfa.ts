@@ -22,6 +22,10 @@ export const MAX_ATTEMPTS = 5;
 /** Matches the absolute session ceiling, so the two expire together. */
 export const MFA_HOURS = 12;
 
+/** "Remember this device" — how long a code can be skipped on this browser. */
+export const TRUST_COOKIE = 'el_trust';
+export const TRUST_DAYS = 30;
+
 export function mfaRequiredFor(role: Role): boolean {
   return role === 'admin' || role === 'doctor' || role === 'pharmacy';
 }
@@ -42,6 +46,34 @@ function hash(value: string): string {
 /** Proof that this browser passed the check, without a database read per request. */
 export function signTicket(userId: string, expiresAt: number): string {
   return `${userId}.${expiresAt}.${hash(`${userId}.${expiresAt}`)}`;
+}
+
+/**
+ * A browser the account holder has vouched for.
+ *
+ * Skips the code, never the password, and never the idle logoff — the same
+ * bargain Shopify, Google and GitHub strike. Bound to the user agent as well as
+ * the account, so the cookie is worth nothing lifted onto another machine, and
+ * it carries its own expiry so there is no table to sweep.
+ */
+export function signTrust(userId: string, userAgent: string): string {
+  const expires = Date.now() + TRUST_DAYS * 86_400_000;
+  return `${expires}.${hash(`${userId}|${userAgent}|${expires}`)}`;
+}
+
+export function trustValid(
+  cookie: string | undefined,
+  userId: string,
+  userAgent: string,
+): boolean {
+  if (!cookie || !secret()) return false;
+  const [expRaw, sig] = cookie.split('.');
+  if (!expRaw || !sig) return false;
+  if (Number(expRaw) < Date.now()) return false;
+  const expected = hash(`${userId}|${userAgent}|${expRaw}`);
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export function verifyTicket(ticket: string | undefined, userId: string): boolean {

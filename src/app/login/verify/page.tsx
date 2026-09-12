@@ -64,6 +64,22 @@ export default async function VerifyPage({ searchParams }: PageProps) {
           />
         </div>
 
+        <label className="flex cursor-pointer items-start gap-3 text-sm text-foreground/70">
+          <input
+            type="checkbox"
+            name="remember"
+            value="1"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line bg-surface accent-accent"
+          />
+          <span>
+            Remember this device for 30 days
+            <span className="mt-0.5 block text-xs text-foreground/45">
+              Skips the code on this browser. Your password is still required
+              every time.
+            </span>
+          </span>
+        </label>
+
         <SubmitButton pendingLabel="Checking…">Continue →</SubmitButton>
       </form>
 

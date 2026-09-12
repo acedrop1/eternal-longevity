@@ -1,16 +1,19 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth-server';
 import { redirectForRole } from '@/lib/auth';
 import {
   MFA_COOKIE,
   MFA_HOURS,
+  TRUST_COOKIE,
+  TRUST_DAYS,
   checkCode,
   issueCode,
   mfaConfigured,
   signTicket,
+  signTrust,
 } from '@/lib/mfa';
 import { noteStaffSignIn } from '@/lib/device-alert';
 
@@ -45,6 +48,19 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
       path: '/',
       expires: new Date(expires),
     });
+
+    // Vouching for a browser is the account holder's call, never a default.
+    if (formData.get('remember')) {
+      const ua = (await headers()).get('user-agent') ?? '';
+      store.set(TRUST_COOKIE, signTrust(user.id, ua), {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: TRUST_DAYS * 86_400,
+      });
+    }
+
     await noteStaffSignIn({
       id: user.id,
       email: user.email,

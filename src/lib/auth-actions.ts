@@ -7,7 +7,7 @@
  *
  * The /login, /signup, /forgot-password, /auth/reset pages all post to these.
  */
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DEMO_USERS, redirectForRole, type Role } from './auth';
 import { clearSession, setSession } from './auth-server';
@@ -20,7 +20,16 @@ import {
 import { passwordResetEmail, sendEmail } from './email';
 import { SITE_URL } from './site';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
-import { MFA_COOKIE, issueCode, mfaConfigured, mfaRequiredFor } from './mfa';
+import {
+  MFA_COOKIE,
+  MFA_HOURS,
+  TRUST_COOKIE,
+  issueCode,
+  mfaConfigured,
+  mfaRequiredFor,
+  signTicket,
+  trustValid,
+} from './mfa';
 import { passwordValid } from './intakeSchema';
 import { noteStaffSignIn } from './device-alert';
 
@@ -86,6 +95,30 @@ export async function loginAction(formData: FormData): Promise<void> {
    * different kind of event.
    */
   if (user && mfaRequiredFor(role) && mfaConfigured()) {
+    /*
+     * A browser this account has already vouched for skips the code — it does
+     * not skip the password, the idle logoff or the new-device alert.
+     */
+    const store = await cookies();
+    const ua = (await headers()).get('user-agent') ?? '';
+    if (trustValid(store.get(TRUST_COOKIE)?.value, user.id, ua)) {
+      const expires = Date.now() + MFA_HOURS * 3_600_000;
+      store.set(MFA_COOKIE, signTicket(user.id, expires), {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        expires: new Date(expires),
+      });
+      await noteStaffSignIn({
+        id: user.id,
+        email: user.email ?? email,
+        name: fullName,
+        role,
+      });
+      redirect(redirectForRole(role));
+    }
+
     const sent = await issueCode(user.id, user.email ?? email, fullName);
     if (sent) redirect('/login/verify');
     // Could not email a code — do not silently drop the second factor.

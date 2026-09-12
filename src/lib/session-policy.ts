@@ -7,14 +7,16 @@
  * other people's records at 15–30, and patient portals at 15–30 because the
  * only record at risk is the reader's own.
  *
- * Staff get the tighter limit for the reason the tiering exists at all: an
- * unattended doctor or admin laptop exposes every patient, an unattended
- * member's exposes one.
+ * Both sit at thirty. Fifteen is the tighter clinical number and the practice
+ * chose against it deliberately: a prescriber who loses a half-reviewed chart
+ * twice a morning starts leaving the screen unlocked instead, which is the
+ * outcome the control exists to prevent. The second factor and the thirty-day
+ * device trust carry the weight the shorter idle window would have.
  */
 
 /** Idle minutes before the session ends, by what the person can reach. */
 export const IDLE_MINUTES = {
-  staff: 15,
+  staff: 30,
   member: 30,
 } as const;
 
