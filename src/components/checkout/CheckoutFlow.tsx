@@ -246,7 +246,6 @@ export function CheckoutFlow({
   const fullNameRef = useRef<HTMLInputElement>(null);
   const address1Ref = useRef<HTMLInputElement>(null);
   const cityRef = useRef<HTMLInputElement>(null);
-  const stateRef = useRef<HTMLSelectElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const methodSectionRef = useRef<HTMLDivElement>(null);
@@ -1053,7 +1052,7 @@ export function CheckoutFlow({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      cityRef.current?.focus();
+                      zipRef.current?.focus();
                     }
                   }}
                   autoComplete="address-line2"
@@ -1061,54 +1060,12 @@ export function CheckoutFlow({
                   className={inputClass}
                 />
               </div>
-              <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
-                <div>
-                  <FieldLabel htmlFor="ship-city">CITY</FieldLabel>
-                  <input
-                    ref={cityRef}
-                    id="ship-city"
-                    type="text"
-                    value={shipping.city}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, city: e.target.value }))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        stateRef.current?.focus();
-                      }
-                    }}
-                    autoComplete="address-level2"
-                    autoCapitalize="words"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <FieldLabel htmlFor="ship-state">STATE</FieldLabel>
-                  <select
-                    ref={stateRef}
-                    id="ship-state"
-                    value={shipping.state}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, state: e.target.value }))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        zipRef.current?.focus();
-                      }
-                    }}
-                    autoComplete="address-level1"
-                    className={cn(inputClass, 'appearance-none')}
-                  >
-                    <option value="">—</option>
-                    {SERVICEABLE_STATES.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/*
+                ZIP first, then city. The city is derived from the ZIP, so
+                asking for it first meant reaching an empty field with nothing
+                to fill it from — which reads as a form that does not work.
+              */}
+              <div className="grid gap-4 sm:grid-cols-[1fr_2fr_1fr]">
                 <div>
                   <FieldLabel htmlFor="ship-zip">ZIP</FieldLabel>
                   <input
@@ -1122,12 +1079,47 @@ export function CheckoutFlow({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        phoneRef.current?.focus();
+                        cityRef.current?.focus();
                       }
                     }}
                     autoComplete="postal-code"
                     placeholder="07512"
                     className={inputClass}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="ship-city">CITY</FieldLabel>
+                  <input
+                    ref={cityRef}
+                    id="ship-city"
+                    type="text"
+                    value={shipping.city}
+                    onChange={(e) =>
+                      setShipping((s) => ({ ...s, city: e.target.value }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        phoneRef.current?.focus();
+                      }
+                    }}
+                    autoComplete="address-level2"
+                    autoCapitalize="words"
+                    placeholder="Fills from your ZIP"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="ship-state">STATE</FieldLabel>
+                  {/* One state served, so this is shown rather than chosen. */}
+                  <input
+                    id="ship-state"
+                    type="text"
+                    value={shipping.state}
+                    readOnly
+                    aria-readonly
+                    autoComplete="address-level1"
+                    className={cn(inputClass, 'cursor-default text-foreground/60')}
                   />
                 </div>
               </div>
