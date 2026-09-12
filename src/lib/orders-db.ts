@@ -577,7 +577,7 @@ export async function signRxAction(
    * record of what he just decided, and it is what a refill ships against —
    * without it a plan reaches its second cycle with nothing to renew from.
    */
-  await writePrescriptionForOrder(orderNumber);
+  await writePrescriptionForOrder(orderNumber, user.id);
 
   // The signing itself belongs in the trail admin reads, not only the order.
   await recordAudit([

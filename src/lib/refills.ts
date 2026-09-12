@@ -49,7 +49,16 @@ const isoDate = (d: Date) => d.toISOString().slice(0, 10);
  * reached its second cycle with nothing to ship against. The prescription is
  * the thing a refill checks: is it still in date, are there refills left.
  */
-export async function writePrescriptionForOrder(orderNumber: string): Promise<{
+export async function writePrescriptionForOrder(
+  orderNumber: string,
+  /**
+   * The prescriber who signed. Nothing sets assigned_physician_id on a new
+   * order, so without this the prescription records no author at all — and the
+   * author of a prescription is the person who signed it, not whoever the order
+   * was routed to.
+   */
+  signedByDoctorId?: string,
+): Promise<{
   ok: boolean;
   prescriptionId?: string;
   error?: string;
@@ -87,7 +96,7 @@ export async function writePrescriptionForOrder(orderNumber: string): Promise<{
     .insert({
       user_id: order.user_id,
       order_id: order.id,
-      doctor_id: order.assigned_physician_id,
+      doctor_id: signedByDoctorId ?? order.assigned_physician_id,
       protocol_name: items.map((i) => i.product_name).join(' + '),
       items: items.map((i) => ({
         name: i.product_name,
