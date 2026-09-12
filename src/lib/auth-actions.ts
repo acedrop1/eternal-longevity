@@ -7,6 +7,7 @@
  *
  * The /login, /signup, /forgot-password, /auth/reset pages all post to these.
  */
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DEMO_USERS, redirectForRole, type Role } from './auth';
 import { clearSession, setSession } from './auth-server';
@@ -18,9 +19,19 @@ import {
 } from './supabase/admin';
 import { passwordResetEmail, sendEmail } from './email';
 import { SITE_URL } from './site';
+import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
 import { passwordValid } from './intakeSchema';
 
 /** Sign in. Form fields: email, password. */
+/** Reset the automatic-logoff clocks. See session-policy.ts. */
+async function stampNewSession(): Promise<void> {
+  const store = await cookies();
+  const now = String(Date.now());
+  const opts = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+  store.set(ACTIVITY_COOKIE, now, opts);
+  store.set(SESSION_START_COOKIE, now, opts);
+}
+
 export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get('email') ?? '')
     .trim()
@@ -42,6 +53,14 @@ export async function loginAction(formData: FormData): Promise<void> {
     password,
   });
   if (error) redirect('/login?error=invalid');
+
+  /*
+   * A fresh sign-in starts a fresh clock. Without this the stamps from the
+   * previous session survive, so signing in after being timed out lands on the
+   * portal with an idle stamp that is already stale — and the middleware
+   * bounces straight back to the login page. Same for the twelve-hour ceiling.
+   */
+  await stampNewSession();
 
   // Land on the dashboard for this account's role.
   const {
@@ -92,6 +111,10 @@ export async function signupAction(formData: FormData): Promise<void> {
 
 /** Sign out. */
 export async function logoutAction(): Promise<void> {
+  const store = await cookies();
+  store.delete(ACTIVITY_COOKIE);
+  store.delete(SESSION_START_COOKIE);
+
   if (supabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     await supabase.auth.signOut();

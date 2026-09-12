@@ -58,8 +58,16 @@ export async function updateSession(request: NextRequest) {
     const since = Number(request.cookies.get(SESSION_START_COOKIE)?.value ?? 0);
 
     const idleMs = idleMinutesForPath(path) * 60_000;
-    const idledOut = seen > 0 && now - seen > idleMs;
-    const agedOut = since > 0 && now - since > ABSOLUTE_HOURS * 3_600_000;
+    const absoluteMs = ABSOLUTE_HOURS * 3_600_000;
+
+    /*
+     * A stamp older than the absolute ceiling cannot describe the session in
+     * front of us — it is a leftover a sign-out failed to clear. Treating it as
+     * evidence signs someone out the instant they sign in.
+     */
+    const stale = seen > 0 && now - seen > absoluteMs;
+    const idledOut = !stale && seen > 0 && now - seen > idleMs;
+    const agedOut = !stale && since > 0 && now - since > absoluteMs;
 
     if (idledOut || agedOut) {
       await supabase.auth.signOut();
@@ -83,7 +91,7 @@ export async function updateSession(request: NextRequest) {
       secure,
       path: '/',
     });
-    if (!since) {
+    if (!since || stale) {
       response.cookies.set(SESSION_START_COOKIE, String(now), {
         httpOnly: true,
         sameSite: 'lax',
