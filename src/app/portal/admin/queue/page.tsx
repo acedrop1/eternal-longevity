@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { formatDate as fmtDate } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { AdminQueueList } from '@/components/admin/AdminQueueList';
 import {
   AdminIntakeQueue,
   type IntakeRowView,
@@ -107,7 +106,6 @@ export default async function AdminQueuePage() {
       {/* Intakes come from Supabase in live mode. Orders now do too, so the
           admin sees both queues rather than one or the other. */}
       {live && <AdminIntakeQueue intakes={intakes} />}
-      <AdminQueueList />
     </PortalShell>
   );
 }

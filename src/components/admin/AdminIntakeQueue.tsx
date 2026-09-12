@@ -39,8 +39,31 @@ const STATUS_BADGE: Record<string, string> = {
   needs_info: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
 };
 
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'submitted', label: 'New' },
+  { key: 'needs_info', label: 'Waiting on them' },
+  { key: 'product', label: 'From a product' },
+] as const;
+
 export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
   const [rows, setRows] = useState(intakes);
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]['key']>('all');
+  const [query, setQuery] = useState('');
+
+  /*
+   * Three cases fit on a screen; thirty do not, and the one that needs
+   * attention is the one waiting on a reply.
+   */
+  const q = query.trim().toLowerCase();
+  const shown = rows.filter((r) => {
+    if (filter === 'submitted' && r.status !== 'submitted') return false;
+    if (filter === 'needs_info' && r.status !== 'needs_info') return false;
+    if (filter === 'product' && !r.source) return false;
+    if (q && !r.email.toLowerCase().includes(q) && !r.caseId.toLowerCase().includes(q))
+      return false;
+    return true;
+  });
 
   if (rows.length === 0) {
     return (
@@ -55,9 +78,54 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
     );
   }
 
+  const count = (key: (typeof FILTERS)[number]['key']) =>
+    key === 'all'
+      ? rows.length
+      : key === 'product'
+        ? rows.filter((r) => r.source).length
+        : rows.filter((r) => r.status === key).length;
+
   return (
     <div className="space-y-3">
-      {rows.map((intake) => (
+      <p className="text-sm leading-relaxed text-foreground/55">
+        Nothing to approve here — an application is a medical record, not a
+        request for a prescription. Everyone below can shop already, and the
+        prescriber reviews each order when it is placed.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2 pb-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setFilter(f.key)}
+            className={cn(
+              'rounded-full border px-4 py-2 text-xs font-medium tracking-wider transition-colors',
+              filter === f.key
+                ? 'border-accent/50 bg-accent/10 text-accent'
+                : 'border-line bg-surface text-foreground/60 hover:border-foreground/30 hover:text-foreground',
+            )}
+          >
+            {f.label}
+            <span className="ml-1.5 tabular-nums opacity-60">{count(f.key)}</span>
+          </button>
+        ))}
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search email or case"
+          aria-label="Search applications"
+          className="ml-auto w-full rounded-full border border-line bg-background px-4 py-2 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none sm:w-56"
+        />
+      </div>
+
+      {shown.length === 0 && (
+        <p className="rounded-3xl border border-line bg-surface p-8 text-center text-sm text-foreground/55">
+          Nothing matches that.
+        </p>
+      )}
+
+      {shown.map((intake) => (
         <IntakeCard
           key={intake.id}
           intake={intake}
@@ -165,11 +233,6 @@ function IntakeCard({
       {/* Actions */}
       {open === null && (
         <div className="mt-5 border-t border-line pt-5">
-          <p className="mb-3 text-xs leading-relaxed text-foreground/50">
-            Nothing to approve here — an application is a medical record, not a
-            request for a prescription. This member can shop now, and the
-            prescriber reviews each order when it is placed.
-          </p>
           <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"

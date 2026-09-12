@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
+import { AdminLiveOrders } from '@/components/admin/AdminLiveOrders';
 import {
   AdminFulfillment,
   type ReadyRxView,
@@ -134,7 +135,7 @@ export default async function AdminFulfillmentPage() {
             lineHeight: 1.05,
           }}
         >
-          Submit orders to the pharmacy.
+          Every order, and where it is.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
           Once a physician signs a prescription it lands here. Submit it to
@@ -142,6 +143,8 @@ export default async function AdminFulfillmentPage() {
           order through to delivery.
         </p>
       </div>
+
+      <AdminLiveOrders />
 
       <AdminFulfillment
         readyPrescriptions={ready}
