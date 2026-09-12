@@ -48,7 +48,18 @@ interface MemberDetail {
     cadence: string;
     perCycle: number;
   }[];
-  orders: { ref: string; status: string; total: number; createdAt: string }[];
+  orders: {
+    ref: string;
+    status: string;
+    total: number;
+    products: string;
+    placedAt: string;
+    /** The moments that matter, newest last. */
+    steps: { label: string; at: string }[];
+    tracking: { carrier: string; number: string } | null;
+    /** Something is wrong with this one. */
+    warning: string | null;
+  }[];
   /** Everything that has happened to this member, newest first. */
   timeline: {
     at: string;
@@ -113,7 +124,9 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .eq('user_id', id),
         db
           .from('orders')
-          .select('id, order_number, status, total_cents, created_at')
+          .select(
+            'id, order_number, status, total_cents, created_at, paid_at, paid_confirmed_at',
+          )
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
         db
@@ -128,6 +141,26 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .select('id, order_number')
           .eq('user_id', id),
       ]);
+
+    const orderIds = (orders ?? []).map((o) => o.id);
+    const { data: itemRows } = orderIds.length
+      ? await db
+          .from('order_items')
+          .select('order_id, product_name, quantity, cadence_label')
+          .in('order_id', orderIds)
+      : { data: [] };
+    const itemsByOrder = new Map<string, typeof itemRows>();
+    for (const it of itemRows ?? []) {
+      const list = itemsByOrder.get(it.order_id) ?? [];
+      list.push(it);
+      itemsByOrder.set(it.order_id, list);
+    }
+
+    const { data: fulRows } = await db
+      .from('fulfillment_orders')
+      .select('order_ref, submitted_at, shipped_at, tracking_carrier, tracking_number')
+      .eq('user_id', id);
+    const fulfilment = new Map((fulRows ?? []).map((f) => [f.order_ref, f]));
 
     const orderNumberById = new Map(
       (shopOrders ?? []).map((o) => [o.id, o.order_number]),
@@ -154,12 +187,50 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         cadence: s.cadence_label ?? '—',
         perCycle: Math.round((s.per_cycle_cents ?? 0) / 100),
       })),
-      orders: (orders ?? []).map((o) => ({
-        ref: o.order_number,
-        status: o.status,
-        total: Math.round((o.total_cents ?? 0) / 100),
-        createdAt: fmtDate(o.created_at),
-      })),
+      orders: (orders ?? []).map((o) => {
+        const items = itemsByOrder.get(o.id) ?? [];
+        const ful = fulfilment.get(`FUL-${o.order_number}`);
+
+        const steps: { label: string; at: string }[] = [
+          { label: 'Placed', at: fmtDateTime(o.created_at) },
+        ];
+        if (o.paid_at) steps.push({ label: 'Approved by prescriber', at: fmtDateTime(o.paid_at) });
+        if (o.paid_confirmed_at) steps.push({ label: 'Payment cleared', at: fmtDateTime(o.paid_confirmed_at) });
+        if (ful?.submitted_at) steps.push({ label: 'Sent to pharmacy', at: fmtDateTime(ful.submitted_at) });
+        if (ful?.shipped_at) steps.push({ label: 'Shipped', at: fmtDateTime(ful.shipped_at) });
+
+        /*
+         * An order that never left pending-admin means the release to the
+         * prescriber failed — it is sitting where nobody is looking for it.
+         */
+        const warning =
+          o.status === 'pending-admin'
+            ? 'Never reached the prescriber. Release failed at checkout.'
+            : o.status === 'signed' && !o.paid_confirmed_at
+              ? 'Approved but the payment has not cleared.'
+              : null;
+
+        return {
+          ref: o.order_number,
+          status: o.status,
+          total: Math.round((o.total_cents ?? 0) / 100),
+          products:
+            items
+              .map(
+                (i) =>
+                  `${i.product_name}${i.quantity > 1 ? ` ×${i.quantity}` : ''}` +
+                  (i.cadence_label ? ` · ${i.cadence_label}` : ''),
+              )
+              .join(' + ') || '—',
+          placedAt: fmtDate(o.created_at),
+          steps,
+          tracking:
+            ful?.tracking_number
+              ? { carrier: ful.tracking_carrier ?? 'Carrier', number: ful.tracking_number }
+              : null,
+          warning,
+        };
+      }),
       timeline: (updates ?? []).map((u) => ({
         at: fmtDateTime(u.created_at),
         label: u.label,
@@ -271,24 +342,52 @@ export default async function MemberDetailPage({ params }: PageProps) {
           {detail.orders.length === 0 ? (
             <Empty>No orders yet.</Empty>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {detail.orders.map((o) => (
                 <li
                   key={o.ref}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-line bg-background px-4 py-3"
+                  className="rounded-2xl border border-line bg-background p-4"
                 >
-                  <span className="font-mono text-xs text-foreground/85">
-                    {o.ref}
-                  </span>
-                  <span className="text-xs text-foreground/55">
-                    {o.createdAt}
-                  </span>
-                  <span className="ml-auto tabular-nums text-sm text-foreground/90">
-                    ${o.total}
-                  </span>
-                  <span className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-semibold tracking-widest text-foreground/70">
-                    {(STATUS_LABEL[o.status as OrderStatus] ?? o.status).toUpperCase()}
-                  </span>
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <span className="font-mono text-xs text-foreground/85">
+                      {o.ref}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground/85">
+                      {o.products}
+                    </span>
+                    <span className="tabular-nums text-sm text-foreground">
+                      ${o.total}
+                    </span>
+                    <span className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-semibold tracking-widest text-foreground/70">
+                      {(STATUS_LABEL[o.status as OrderStatus] ?? o.status).toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* The dates, so "where is it" has an answer without
+                      opening anything. */}
+                  <ol className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5">
+                    {o.steps.map((st) => (
+                      <li key={st.label}>
+                        <div className="text-[10px] tracking-widest text-foreground/40">
+                          {st.label.toUpperCase()}
+                        </div>
+                        <div className="text-xs text-foreground/80">{st.at}</div>
+                      </li>
+                    ))}
+                  </ol>
+
+                  {o.tracking && (
+                    <p className="mt-3 text-xs text-foreground/70">
+                      <span className="text-foreground/45">Tracking </span>
+                      {o.tracking.carrier} · {o.tracking.number}
+                    </p>
+                  )}
+
+                  {o.warning && (
+                    <p className="mt-3 rounded-xl border border-accent/40 bg-accent/5 px-3 py-2 text-xs text-accent">
+                      {o.warning}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
