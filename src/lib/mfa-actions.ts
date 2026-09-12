@@ -12,6 +12,7 @@ import {
   mfaConfigured,
   signTicket,
 } from '@/lib/mfa';
+import { noteStaffSignIn } from '@/lib/device-alert';
 
 const MESSAGES: Record<string, string> = {
   wrong: 'That code is not right. Check the email and try again.',
@@ -43,6 +44,12 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       expires: new Date(expires),
+    });
+    await noteStaffSignIn({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
     });
     redirect(redirectForRole(user.role));
   }

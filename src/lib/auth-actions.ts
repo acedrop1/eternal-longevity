@@ -22,6 +22,7 @@ import { SITE_URL } from './site';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
 import { MFA_COOKIE, issueCode, mfaConfigured, mfaRequiredFor } from './mfa';
 import { passwordValid } from './intakeSchema';
+import { noteStaffSignIn } from './device-alert';
 
 /** Sign in. Form fields: email, password. */
 /** Reset the automatic-logoff clocks. See session-policy.ts. */
@@ -89,6 +90,20 @@ export async function loginAction(formData: FormData): Promise<void> {
     if (sent) redirect('/login/verify');
     // Could not email a code — do not silently drop the second factor.
     redirect('/login?error=mfa_unavailable');
+  }
+
+  /*
+   * Sign-in is complete here only when there is no second factor to clear;
+   * otherwise the alert fires from verifyMfaAction, so a password guess that
+   * never gets past the code cannot fill someone's inbox.
+   */
+  if (user) {
+    await noteStaffSignIn({
+      id: user.id,
+      email: user.email ?? email,
+      name: fullName,
+      role,
+    });
   }
 
   redirect(redirectForRole(role));

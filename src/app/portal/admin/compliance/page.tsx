@@ -119,7 +119,8 @@ export default async function CompliancePage() {
         {audit.length === 0 ? (
           <p className="rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground/55">
             Nothing recorded yet. Changes to the prescriber&apos;s name,
-            credential, NPI or licence appear here.
+            credential, NPI or licence appear here, as does every staff
+            sign-in from a new device.
           </p>
         ) : (
           <div className="overflow-x-auto">
