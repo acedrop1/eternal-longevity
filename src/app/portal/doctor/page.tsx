@@ -5,6 +5,7 @@ import { DoctorQueueList } from '@/components/doctor/DoctorQueueList';
 import { getSession } from '@/lib/auth-server';
 import { listOrders } from '@/lib/orders-db';
 import { reviewsForOrders } from '@/lib/clinical-review';
+import { getPrescriber } from '@/lib/prescriber';
 
 export const metadata: Metadata = {
   title: 'Clinical Queue',
@@ -26,6 +27,16 @@ export default async function DoctorPortalPage() {
     .filter((o) => o.status === 'assigned')
     .map((o) => o.id);
   const reviews = await reviewsForOrders(waiting).catch(() => ({}));
+
+  /*
+   * "Dr." is not automatic — an NP or PA holds the same queue but not the
+   * title, so it comes off the credential the profile actually carries.
+   */
+  const prescriber = await getPrescriber(user.id).catch(() => null);
+  const surname = user.name.split(' ').slice(-1)[0];
+  const greeting = ['NP', 'PA'].includes(prescriber?.credential ?? '')
+    ? surname
+    : `Dr. ${surname}`;
 
   return (
     <PortalShell
@@ -50,7 +61,7 @@ export default async function DoctorPortalPage() {
               lineHeight: 1.05,
             }}
           >
-            Welcome back, {user.name.split(' ').slice(-1)[0]}.
+            Welcome back, {greeting}.
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-foreground/65">
             Every order arrives here the moment a member checks out — a first
