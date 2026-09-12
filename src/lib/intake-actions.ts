@@ -162,7 +162,7 @@ export async function submitIntakeAction(
       : 'there';
 
   const patient = intakeConfirmationEmail(firstName);
-  const team = intakeReceivedTeamEmail(caseId, email);
+  const team = intakeReceivedTeamEmail(caseId, email, fullName);
 
   await Promise.allSettled([
     sendEmail({ to: email, subject: patient.subject, html: patient.html }),

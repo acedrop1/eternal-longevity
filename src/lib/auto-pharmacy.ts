@@ -106,7 +106,7 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     try {
       await sendEmail({
         to: SUPPORT_EMAIL,
-        subject: `Order ${order.order_number} is paid but cannot go to the pharmacy`,
+        subject: `${order.member_name ?? 'An order'} is paid but cannot go to the pharmacy (${order.order_number})`,
         html: noticeEmail({
           eyebrow: 'Held',
           heading: 'An order cannot go to the pharmacy',
@@ -162,7 +162,7 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     try {
       await sendEmail({
         to: process.env.PHARMACY_EMAIL,
-        subject: `New prescription — ${orderRef}`,
+        subject: `New prescription — ${patient?.full_name ?? order.member_name ?? 'Patient'} (${orderRef})`,
         html: noticeEmail({
           eyebrow: 'New prescription',
           heading: 'A patient-specific prescription is ready',

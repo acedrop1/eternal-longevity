@@ -175,7 +175,7 @@ export function pharmacyQueueEmail(orderRef: string, portalUrl: string): {
   html: string;
 } {
   return {
-    subject: `New fulfillment order ${orderRef}`,
+    subject: `New fulfillment order — ${orderRef}`,
     html: noticeEmail({
       eyebrow: 'Pharmacy queue',
       heading: 'A new order is waiting for you',
@@ -243,15 +243,21 @@ export function passwordResetEmail(link: string): {
 export function intakeReceivedTeamEmail(
   caseId: string,
   patientEmail: string,
+  patientName?: string,
 ): { subject: string; html: string } {
+  const who = (patientName ?? '').trim() || patientEmail;
   return {
-    subject: `New intake to review — ${caseId}`,
-    html: shell(
-      `<h1 style="color:#fff;font-size:20px;margin:12px 0;">New intake submitted</h1>
-       <p><strong style="color:#fff;">Case:</strong> ${escapeHtml(caseId)}<br/>
-       <strong style="color:#fff;">Patient:</strong> ${escapeHtml(patientEmail)}</p>
-       <p>Open the clinical queue in the portal to review and assign.</p>`,
-    ),
+    subject: `New intake to review — ${who}`,
+    html: noticeEmail({
+      eyebrow: 'New intake',
+      heading: `${who} submitted an intake`,
+      body: 'Open the clinical queue to review and assign it.',
+      rows: [
+        ['Patient', escapeHtml(who)],
+        ['Email', escapeHtml(patientEmail)],
+        ['Case', escapeHtml(caseId)],
+      ],
+    }),
   };
 }
 
@@ -455,7 +461,7 @@ export function chargeFailedInternalEmail(input: {
   reason: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Charge failed on a SIGNED order — ${input.orderNumber}`,
+    subject: `Charge failed on a SIGNED order — ${input.memberName} (${input.orderNumber})`,
     html: shell(
       `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">A signed prescription did not get paid.</h1>
        <p style="margin:0 0 18px;">The prescriber approved <strong style="color:#fff;">${escapeHtml(
@@ -793,7 +799,7 @@ export function signedAndPaidPrescriberEmail(input: {
   portalUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Signed and paid — ${input.orderNumber}`,
+    subject: `Signed and paid — ${input.memberName} (${input.orderNumber})`,
     html: noticeEmail({
       eyebrow: 'Prescription signed',
       heading: `${escapeHtml(input.memberName)}'s order is with the pharmacy`,
@@ -822,9 +828,9 @@ export function paymentClearedTeamEmail(input: {
   portalUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Payment cleared — ${input.orderNumber} · $${(
+    subject: `Payment cleared — ${input.memberName} · $${(
       input.amountCents / 100
-    ).toFixed(2)}`,
+    ).toFixed(2)} (${input.orderNumber})`,
     html: noticeEmail({
       eyebrow: 'Payment cleared',
       heading: `$${(input.amountCents / 100).toFixed(2)} charged on ${escapeHtml(

@@ -111,7 +111,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   try {
     await sendEmail({
       to: SUPPORT_EMAIL,
-      subject: `New order for review — ${order.order_number}`,
+      subject: `New order for review — ${memberName} (${order.order_number})`,
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order`,

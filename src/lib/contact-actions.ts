@@ -60,7 +60,7 @@ export async function sendContactMessage(input: {
   const sent = await sendEmail({
     to: SUPPORT_EMAIL,
     replyTo: email,
-    subject: `Contact form — ${topic}`,
+    subject: `Contact form — ${name} · ${topic}`,
     html: noticeEmail({
       eyebrow: 'Contact form',
       heading: `${name} got in touch`,

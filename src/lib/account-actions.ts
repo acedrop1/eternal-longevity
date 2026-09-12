@@ -65,7 +65,7 @@ async function raiseRequest(
   const sent = await sendEmail({
     to: SUPPORT_EMAIL,
     replyTo: user.email,
-    subject: `${subject} — ${user.email}`,
+    subject: `${subject} — ${user.name || user.email}`,
     html: noticeEmail({
       eyebrow: 'Member request',
       heading: subject,
