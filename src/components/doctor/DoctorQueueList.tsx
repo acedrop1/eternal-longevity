@@ -723,12 +723,12 @@ function ReviewPanel({
       : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
 
   return (
-    <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-background">
+    <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/[0.03]"
+        className="flex w-full items-center gap-3 bg-background px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.04]"
       >
         <span className="flex-none text-[10px] tracking-widest text-foreground/45">
           {open ? 'HIDE RECORD' : 'PATIENT RECORD'}
@@ -771,25 +771,19 @@ function ReviewPanel({
           />
 
           <Group title="Safety screen">
-            {review.safety.map((l) => (
-              <AnswerRow key={l.label} line={l} />
-            ))}
+            <Answers lines={review.safety} />
           </Group>
 
           <Group title="History">
-            {review.history.map((l) => (
-              <AnswerRow key={l.label} line={l} />
-            ))}
+            <Answers lines={review.history} />
           </Group>
 
           <Group title="Before you sign">
-            {review.context.map((l) => (
-              <AnswerRow key={l.label} line={l} />
-            ))}
+            <Answers lines={review.context} />
           </Group>
 
           <Group title="What they ordered">
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               {order.lines.map((l) => (
                 <Cell
                   key={l.productId}
@@ -815,13 +809,15 @@ function ReviewPanel({
 /** Short facts, read across in one line rather than stacked into rows. */
 function Strip({ items }: { items: [string, string][] }) {
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-line px-4 py-3.5">
+    <div className="flex flex-wrap gap-x-7 gap-y-2.5 border-t border-line px-4 py-3">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="text-[10px] tracking-widest text-foreground/40">
+          <div className="text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
             {label.toUpperCase()}
           </div>
-          <div className="mt-0.5 text-sm text-foreground">{value}</div>
+          <div className="mt-0.5 text-sm font-semibold text-foreground">
+            {value}
+          </div>
         </div>
       ))}
     </div>
@@ -836,8 +832,8 @@ function Group({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-line px-4 py-3.5">
-      <div className="mb-2 text-[10px] tracking-widest text-foreground/40">
+    <div className="border-t border-line px-4 py-3">
+      <div className="mb-2 text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
         {title.toUpperCase()}
       </div>
       {children}
@@ -846,54 +842,70 @@ function Group({
 }
 
 /**
- * One answer. A yes/no sits in a badge beside its question; anything longer
- * gets its own line, because free text is the part worth reading properly.
+ * Answers in two columns.
+ *
+ * A question pinned to the left of a wide card with its answer pinned to the
+ * right leaves the eye crossing half a screen per line, and a screen's worth
+ * of scrolling for ten of them. Paired into narrow cells they sit next to each
+ * other, and the panel is half as tall. Anything long breaks out to full width,
+ * because free text is read rather than scanned.
  */
-function AnswerRow({
-  line,
+function Answers({
+  lines,
 }: {
-  line: { label: string; value: string; flag?: boolean };
+  lines: { label: string; value: string; flag?: boolean }[];
 }) {
-  if (line.value.length <= 24) {
-    return (
-      <div className="flex items-center justify-between gap-4 border-b border-line/40 py-2 last:border-0">
-        <span className="text-sm text-foreground/70">{line.label}</span>
-        <span
-          className={cn(
-            'flex-none rounded-full border px-2.5 py-0.5 text-xs font-medium',
-            line.flag
-              ? 'border-accent/50 bg-accent/10 text-accent'
-              : 'border-line bg-surface text-foreground/60',
-          )}
-        >
-          {line.value}
-        </span>
-      </div>
-    );
-  }
-
   return (
-    <div className="border-b border-line/40 py-2 last:border-0">
-      <div className="text-xs text-foreground/50">{line.label}</div>
-      <p
-        className={cn(
-          'mt-0.5 text-sm leading-relaxed',
-          line.flag ? 'font-medium text-accent' : 'text-foreground/85',
-        )}
-      >
-        {line.value}
-      </p>
+    <div className="grid gap-x-8 gap-y-0 md:grid-cols-2">
+      {lines.map((l) => {
+        const long = l.value.length > 22;
+        return (
+          <div
+            key={l.label}
+            className={cn(
+              'flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0',
+              long && 'md:col-span-2 md:flex-col md:items-start md:gap-0.5',
+            )}
+          >
+            <span
+              className={cn(
+                'text-[13px] leading-snug',
+                l.flag ? 'text-foreground/80' : 'text-foreground/70',
+              )}
+            >
+              {l.label}
+            </span>
+            <span
+              className={cn(
+                'flex-none text-[13px] font-semibold leading-snug',
+                long && 'md:w-full',
+                l.flag ? 'text-accent' : 'text-foreground/90',
+              )}
+            >
+              {l.flag && !long && (
+                <span
+                  aria-hidden
+                  className="mr-1.5 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-accent align-middle"
+                />
+              )}
+              {l.value}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 function Cell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-line bg-surface px-3 py-2.5">
-      <div className="text-[10px] tracking-widest text-foreground/40">
+    <div className="rounded-lg border border-line bg-background px-3 py-2">
+      <div className="text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
         {label.toUpperCase()}
       </div>
-      <div className="mt-0.5 text-sm text-foreground/90">{value}</div>
+      <div className="mt-0.5 text-[13px] font-semibold text-foreground/90">
+        {value}
+      </div>
     </div>
   );
 }
