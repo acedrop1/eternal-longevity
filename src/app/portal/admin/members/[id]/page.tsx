@@ -52,6 +52,7 @@ interface MemberDetail {
     ref: string;
     status: string;
     total: number;
+    money: { label: string; value: number; strong?: boolean }[];
     products: string;
     placedAt: string;
     /** The moments that matter, newest last. */
@@ -125,7 +126,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         db
           .from('orders')
           .select(
-            'id, order_number, status, total_cents, created_at, paid_at, paid_confirmed_at',
+            'id, order_number, status, subtotal_cents, shipping_cents, tax_cents, discount_cents, promo_code, total_cents, created_at, paid_at, paid_confirmed_at',
           )
           .eq('user_id', id)
           .order('created_at', { ascending: false }),
@@ -214,6 +215,24 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           ref: o.order_number,
           status: o.status,
           total: Math.round((o.total_cents ?? 0) / 100),
+          money: [
+            { label: 'Subtotal', value: Math.round((o.subtotal_cents ?? 0) / 100) },
+            ...(o.discount_cents
+              ? [
+                  {
+                    label: `Discount${o.promo_code ? ` · ${o.promo_code}` : ''}`,
+                    value: -Math.round(o.discount_cents / 100),
+                  },
+                ]
+              : []),
+            { label: 'Shipping', value: Math.round((o.shipping_cents ?? 0) / 100) },
+            { label: 'Tax', value: Math.round((o.tax_cents ?? 0) / 100) },
+            {
+              label: 'Total',
+              value: Math.round((o.total_cents ?? 0) / 100),
+              strong: true,
+            },
+          ],
           products:
             items
               .map(
@@ -362,6 +381,27 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       {(STATUS_LABEL[o.status as OrderStatus] ?? o.status).toUpperCase()}
                     </span>
                   </div>
+
+                  {/* Why the charge is not the sticker price. */}
+                  <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
+                    {o.money.map((m) => (
+                      <div key={m.label} className="flex items-baseline gap-1.5">
+                        <dt className="text-[10px] tracking-widest text-foreground/40">
+                          {m.label.toUpperCase()}
+                        </dt>
+                        <dd
+                          className={cn(
+                            'tabular-nums text-xs',
+                            m.strong
+                              ? 'font-semibold text-foreground'
+                              : 'text-foreground/75',
+                          )}
+                        >
+                          {m.value < 0 ? '−' : ''}${Math.abs(m.value)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
 
                   {/* The dates, so "where is it" has an answer without
                       opening anything. */}

@@ -217,6 +217,17 @@ function revalidatePortal() {
 }
 
 /** Member places an order. Returns the new order number. */
+/**
+ * Member places an order. Returns the first order number.
+ *
+ * One order per product, deliberately. A prescription is written for a drug,
+ * not for a basket — the prescriber may approve one thing and decline another,
+ * and a single order forced him to take both or neither. Splitting here means
+ * each product gets its own review, its own charge, its own prescription and
+ * its own pharmacy submission, and it removes a real bug: the prescription
+ * writer read the cadence off the first line, so a monthly and a quarterly item
+ * bought together produced one prescription with the wrong term.
+ */
 export async function placeOrderAction(input: {
   lines: OrderLine[];
   subtotal: number;
@@ -227,7 +238,7 @@ export async function placeOrderAction(input: {
   cardLast4?: string;
   /** Promotion code the member entered, if any. */
   promoCode?: string;
-  /** The manual-capture PaymentIntent holding the funds. */
+  /** The saved card this order will be charged against on approval. */
   authIntentId?: string;
 }): Promise<ActionResult & { orderNumber?: string }> {
   const { user, error } = await requireRole(['member']);
@@ -253,97 +264,124 @@ export async function placeOrderAction(input: {
     return { ok: false, error: 'intake_incomplete' };
   }
 
+  if (!input.lines.length) return { ok: false, error: 'empty_cart' };
+
   const db = createSupabaseAdminClient();
-  const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}`;
+
+  const lineSubtotal = (l: OrderLine) =>
+    Math.round(l.perCycle * 100) * (l.quantity ?? 1);
+  const cartSubtotalCents = input.lines.reduce((s, l) => s + lineSubtotal(l), 0);
+  if (cartSubtotalCents <= 0) return { ok: false, error: 'empty_cart' };
 
   /*
    * Re-check the code here rather than trusting the total the client sent.
    * The browser computes a discounted total to display it; this is the number
    * that gets charged, so it is derived server-side from the code itself.
    */
-  const subtotalCents = Math.round(input.subtotal * 100);
-  const shippingCents = Math.round(input.shippingCost * 100);
-  const taxCents = Math.round(input.tax * 100);
-  let discountCents = 0;
+  let cartDiscountCents = 0;
   let appliedCode: string | null = null;
   if (input.promoCode) {
-    const check = await checkPromoAction(input.promoCode, subtotalCents);
+    const check = await checkPromoAction(input.promoCode, cartSubtotalCents);
     if (check.ok && check.discountCents) {
-      discountCents = check.discountCents;
+      cartDiscountCents = check.discountCents;
       appliedCode = check.code ?? null;
     }
   }
-  const totalCents = Math.max(
-    0,
-    subtotalCents + shippingCents + taxCents - discountCents,
-  );
 
-  const { data: order, error: insErr } = await db
-    .from('orders')
-    .insert({
-      order_number: orderNumber,
-      user_id: user.id,
-      status: 'pending-admin',
-      member_name: user.name,
-      member_email: user.email,
-      ship_state: input.shippingAddress.state,
-      subtotal_cents: subtotalCents,
-      shipping_cents: shippingCents,
-      tax_cents: taxCents,
-      discount_cents: discountCents,
-      promo_code: appliedCode,
-      total_cents: totalCents,
-      shipping_address: input.shippingAddress,
-      card_last4: input.cardLast4 ?? null,
-      // The hold placed at checkout. Signing captures exactly this.
-      stripe_payment_intent_id: input.authIntentId ?? null,
-    })
-    .select('id')
-    .single();
+  const cartShippingCents = Math.round(input.shippingCost * 100);
+  const cartTaxCents = Math.round(input.tax * 100);
 
-  if (insErr || !order) {
-    console.error('[orders-db] placeOrder:', insErr?.message);
-    return { ok: false, error: insErr?.message ?? 'insert_failed' };
+  // Shipping and tax belong to the basket, so they are split across it by
+  // value, and the rounding remainder lands on the first order.
+  const share = (total: number, i: number) => {
+    if (i < input.lines.length - 1) {
+      return Math.round((total * lineSubtotal(input.lines[i])) / cartSubtotalCents);
+    }
+    let taken = 0;
+    for (let j = 0; j < input.lines.length - 1; j++) {
+      taken += Math.round((total * lineSubtotal(input.lines[j])) / cartSubtotalCents);
+    }
+    return total - taken;
+  };
+
+  const created: string[] = [];
+
+  for (const [i, line] of input.lines.entries()) {
+    const subtotalCents = lineSubtotal(line);
+    const shippingCents = share(cartShippingCents, i);
+    const taxCents = share(cartTaxCents, i);
+    const discountCents = share(cartDiscountCents, i);
+    const totalCents = Math.max(
+      0,
+      subtotalCents + shippingCents + taxCents - discountCents,
+    );
+
+    const orderNumber = `EL-${Date.now().toString(36).toUpperCase()}${
+      input.lines.length > 1 ? String.fromCharCode(65 + i) : ''
+    }`;
+
+    const { data: order, error: insErr } = await db
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        user_id: user.id,
+        status: 'pending-admin',
+        member_name: user.name,
+        member_email: user.email,
+        ship_state: input.shippingAddress.state,
+        subtotal_cents: subtotalCents,
+        shipping_cents: shippingCents,
+        tax_cents: taxCents,
+        discount_cents: discountCents,
+        promo_code: appliedCode,
+        total_cents: totalCents,
+        shipping_address: input.shippingAddress,
+        card_last4: input.cardLast4 ?? null,
+        stripe_payment_intent_id: input.authIntentId ?? null,
+      })
+      .select('id')
+      .single();
+
+    if (insErr || !order) {
+      console.error('[orders-db] placeOrder:', insErr?.message);
+      // Earlier lines already exist; report rather than pretend it all failed.
+      if (created.length) break;
+      return { ok: false, error: insErr?.message ?? 'insert_failed' };
+    }
+
+    await db.from('order_items').insert({
+      order_id: order.id,
+      product_id: line.productId,
+      product_name: line.productName,
+      quantity: line.quantity,
+      unit_price_cents: Math.round(line.perCycle * 100),
+      cadence: line.cadence,
+      cadence_label: line.cadenceLabel,
+      image: line.image,
+      swatch: line.swatch,
+    });
+
+    await appendUpdate(
+      order.id,
+      'System',
+      'system',
+      'Order received',
+      'Nothing charged. Your prescriber is reviewing.',
+      'pending-admin',
+    );
+
+    created.push(orderNumber);
   }
 
-  // Redeemed at order time, not at payment. An order can sit unpaid for seven
-  // days, and holding a limited code open that long lets one code be spent
-  // many times over.
+  if (!created.length) return { ok: false, error: 'insert_failed' };
+
   if (appliedCode) await redeemPromo(appliedCode);
 
-  // Straight to the prescriber — no admin gate. He is emailed and texted.
-  await releaseToDoctor(orderNumber);
-
-  if (input.lines.length) {
-    await db.from('order_items').insert(
-      input.lines.map((l) => ({
-        order_id: order.id,
-        product_id: l.productId,
-        product_name: l.productName,
-        quantity: l.quantity,
-        unit_price_cents: Math.round(l.perCycle * 100),
-        cadence: l.cadence,
-        cadence_label: l.cadenceLabel,
-        image: l.image,
-        swatch: l.swatch,
-      })),
-    );
-  }
-
-  await appendUpdate(
-    order.id,
-    'System',
-    'system',
-    'Order received',
-    'Nothing charged. Your prescriber is reviewing.',
-    'pending-admin',
-  );
-
-  // Confirm receipt and make the no-charge-yet promise explicit in writing.
+  // One email for the basket, however many orders it became.
   if (user.email) {
     const msg = orderReceivedEmail({
       firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'there',
-      orderNumber,
+      orderNumber: created.join(', '),
       items: input.lines.map((l) => ({
         name: l.productName,
         qty: l.quantity,
@@ -354,8 +392,13 @@ export async function placeOrderAction(input: {
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }
 
+  // Each one goes to the prescriber as its own decision.
+  for (const orderNumber of created) {
+    await releaseToDoctor(orderNumber);
+  }
+
   revalidatePortal();
-  return { ok: true, orderNumber };
+  return { ok: true, orderNumber: created[0] };
 }
 
 /** Admin approves and releases the order for sign-off. */

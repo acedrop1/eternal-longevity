@@ -854,7 +854,7 @@ function ReviewPanel({
           </Group>
 
           <Group title="What they ordered">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2">
               {order.lines.map((l) => (
                 <Cell
                   key={l.productId}
@@ -864,8 +864,26 @@ function ReviewPanel({
                   } \u00b7 $${l.perCycle}`}
                 />
               ))}
-              <Cell label="Charged on signing" value={`$${order.total}`} />
             </div>
+
+            {/* The product price and the amount charged are different numbers.
+                Showing only the second one invites the question this answers. */}
+            <dl className="mt-3 rounded-xl border border-line bg-background px-3 py-2.5">
+              <Money label="Subtotal" value={order.subtotal} />
+              {!!order.discount && (
+                <Money
+                  label={`Discount${order.promoCode ? ` · ${order.promoCode}` : ''}`}
+                  value={-order.discount}
+                />
+              )}
+              <Money
+                label="Shipping"
+                value={order.shippingCost}
+                zeroLabel="Included"
+              />
+              <Money label="Estimated tax" value={order.tax} />
+              <Money label="Charged on signing" value={order.total} strong />
+            </dl>
           </Group>
         </>
       )}
@@ -960,6 +978,46 @@ function Answers({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function Money({
+  label,
+  value,
+  strong,
+  zeroLabel,
+}: {
+  label: string;
+  value: number;
+  strong?: boolean;
+  zeroLabel?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-baseline justify-between gap-4 py-1',
+        strong && 'mt-1 border-t border-line pt-2',
+      )}
+    >
+      <dt
+        className={cn(
+          'text-[13px]',
+          strong ? 'font-semibold text-foreground' : 'text-foreground/60',
+        )}
+      >
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          'tabular-nums text-[13px]',
+          strong ? 'font-semibold text-foreground' : 'text-foreground/85',
+        )}
+      >
+        {value === 0 && zeroLabel
+          ? zeroLabel
+          : `${value < 0 ? '−' : ''}$${Math.abs(value)}`}
+      </dd>
     </div>
   );
 }
