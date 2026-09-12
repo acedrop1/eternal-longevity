@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
+import { getPrescriber } from '@/lib/prescriber';
+import type { PrescriberRecord } from '@/lib/prescriberTypes';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 
 export const metadata: Metadata = {
@@ -20,17 +22,30 @@ export const metadata: Metadata = {
  * add a claim to this page that cannot be backed with a document.
  */
 
-const FACTS: { label: string; value: string }[] = [
+/*
+ * The prescriber's three lines come from his profile row rather than from
+ * literals here. They print on prescriptions too, and a page quoting a
+ * credential the profile no longer holds is the kind of drift a certifier
+ * finds before you do.
+ */
+function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
+  return [
   { label: 'Legal entity', value: 'Eternal Longevity' },
   { label: 'Business address', value: '825 Riverview Dr, Floor 2, Totowa, NJ 07512' },
   { label: 'Support', value: 'support@etlongevity.com' },
-  { label: 'Prescriber of record', value: 'Bader Elder, DO' },
-  { label: 'Prescriber licensure', value: 'New Jersey · License 25MB11925900' },
-  { label: 'NPI', value: '1619538881' },
+  { label: 'Prescriber of record', value: p.display },
+  {
+    label: 'Prescriber licensure',
+    value: p.licenseNumber
+      ? `${p.licenseState === 'NJ' ? 'New Jersey' : p.licenseState} · License ${p.licenseNumber}`
+      : '—',
+  },
+  { label: 'NPI', value: p.npi || '—' },
   { label: 'Compounding partner', value: 'Kaduceus Pharmacy, a licensed 503A compounder' },
   { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
   { label: 'Minimum age', value: '18+' },
-];
+  ];
+}
 
 const CONTROLS: { title: string; body: string }[] = [
   {
@@ -59,7 +74,9 @@ const CONTROLS: { title: string; body: string }[] = [
   },
 ];
 
-export default function CompliancePage() {
+export default async function CompliancePage() {
+  const FACTS = factsFor(await getPrescriber());
+
   return (
     <>
       <Header />

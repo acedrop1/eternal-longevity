@@ -6,6 +6,8 @@ import {
   type SettingsResult,
 } from '@/lib/admin-settings-actions';
 import { cn } from '@/lib/utils';
+import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
+import type { PrescriberRecord } from '@/lib/prescriberTypes';
 
 export interface ServiceStatus {
   name: string;
@@ -16,7 +18,7 @@ export interface ServiceStatus {
 export interface AdminSettingsProps {
   services: ServiceStatus[];
   notifications: { careTeam: string; pharmacy: string; fromEmail: string };
-  prescriber: { id: string; name: string; npi: string };
+  prescriber: PrescriberRecord;
   clinic: { name: string; siteUrl: string };
 }
 
@@ -144,89 +146,13 @@ function ReadRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PrescriberCard({
-  prescriber,
-}: {
-  prescriber: { id: string; name: string; npi: string };
-}) {
-  const [name, setName] = useState(prescriber.name);
-  const [npi, setNpi] = useState(prescriber.npi);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<SettingsResult | null>(null);
-
-  const dirty = name !== prescriber.name || npi !== prescriber.npi;
-
-  async function save() {
-    setBusy(true);
-    setResult(null);
-    try {
-      setResult(
-        await adminSavePrescriber({ doctorId: prescriber.id, name, npi }),
-      );
-    } catch {
-      setResult({ ok: false, message: 'Request failed. Please try again.' });
-    } finally {
-      setBusy(false);
-    }
-  }
-
+function PrescriberCard({ prescriber }: { prescriber: PrescriberRecord }) {
   return (
     <Card
       title="Prescriber on file"
-      subtitle="The licensed prescriber whose name and NPI appear on every order sent to the pharmacy."
+      subtitle="Name, credential, NPI and state licence. These print on every prescription sent to the pharmacy and on the published prescription policy."
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-            PRESCRIBER NAME
-          </label>
-          <input
-            aria-label="Prescriber name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Dr. Bader"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-            NPI (10 DIGITS)
-          </label>
-          <input
-            aria-label="Prescriber NPI, 10 digits"
-            value={npi}
-            onChange={(e) => setNpi(e.target.value.replace(/\D/g, '').slice(0, 10))}
-            inputMode="numeric"
-            placeholder="1234567890"
-            className={inputClass}
-          />
-        </div>
-      </div>
-      <div className="mt-4 flex items-center gap-3">
-        <button
-          type="button"
-          disabled={busy || !dirty}
-          onClick={save}
-          className={cn(
-            'rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98]',
-            busy || !dirty
-              ? 'cursor-not-allowed bg-foreground/15 text-foreground/40'
-              : 'bg-accent text-black hover:bg-accent-soft',
-          )}
-        >
-          {busy ? 'Saving…' : 'Save prescriber'}
-        </button>
-        {result && (
-          <span
-            className={cn(
-              'text-sm',
-              result.ok ? 'text-accent' : 'text-red-300',
-            )}
-          >
-            {result.message}
-          </span>
-        )}
-      </div>
+      <PrescriberForm record={prescriber} mode="admin" />
     </Card>
   );
 }

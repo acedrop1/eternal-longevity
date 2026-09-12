@@ -2,20 +2,10 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
+import type { PrescriberRecord } from '@/lib/prescriberTypes';
 
-export interface PrescriberRecord {
-  id: string | null;
-  name: string;
-  credential: string;
-  /** "Bader Elder, DO" — what appears on a prescription and on the site. */
-  display: string;
-  npi: string;
-  licenseState: string;
-  licenseNumber: string;
-  licenseExpires: string;
-  email: string;
-  phone: string;
-}
+export { CREDENTIALS } from '@/lib/prescriberTypes';
+export type { PrescriberRecord } from '@/lib/prescriberTypes';
 
 const EMPTY: PrescriberRecord = {
   id: null,
@@ -29,8 +19,6 @@ const EMPTY: PrescriberRecord = {
   email: '',
   phone: '',
 };
-
-export const CREDENTIALS = ['MD', 'DO', 'NP', 'PA', 'PharmD'] as const;
 
 /**
  * The prescriber of record, from the database.

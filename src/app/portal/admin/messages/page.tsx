@@ -37,6 +37,7 @@ export default async function AdminMessagesPage() {
         { label: 'Billing', href: '/portal/admin/billing' },
         { label: 'Orders', href: '/portal/admin/fulfillment' },
         { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
+  { label: 'Compliance', href: '/portal/admin/compliance' },
         { label: 'Settings', href: '/portal/admin/settings' },
       ]}
     >

@@ -7,12 +7,17 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
+import { getPrescriber } from '@/lib/prescriber';
+
 export const metadata: Metadata = {
   title: 'Prescription Policy',
   description: 'A prescription is issued only after a licensed prescriber reviews your intake. Ordering and paying do not produce one.',
 };
 
-export default function PrescriptionPolicyPage() {
+export default async function PrescriptionPolicyPage() {
+  // Quoted from the prescriber row, so the page and the profile cannot drift.
+  const prescriber = await getPrescriber();
+
   return (
     <LegalLayout
       eyebrow="LEGAL"
@@ -51,7 +56,7 @@ export default function PrescriptionPolicyPage() {
         {
           heading: `Who Prescribes`,
           paragraphs: [
-            `Prescriptions are written by Bader Elder, DO, licensed to practise medicine and surgery in ${SERVICE_AREA} (license 25MB11925900, NPI 1619538881). Our full prescriber and pharmacy details are on our Compliance page.`,
+            `Prescriptions are written by ${prescriber.display}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.licenseNumber ? ` (license ${prescriber.licenseNumber}` : ''}${prescriber.npi ? `, NPI ${prescriber.npi})` : prescriber.licenseNumber ? ')' : ''}. Our full prescriber and pharmacy details are on our Compliance page.`,
           ],
         },
         {

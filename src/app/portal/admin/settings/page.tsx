@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
+import { getPrescriber } from '@/lib/prescriber';
 import {
   AdminSettings,
   type ServiceStatus,
@@ -28,6 +29,7 @@ const ADMIN_NAV = [
   { label: 'Billing', href: '/portal/admin/billing' },
   { label: 'Orders', href: '/portal/admin/fulfillment' },
   { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
+  { label: 'Compliance', href: '/portal/admin/compliance' },
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
@@ -65,28 +67,7 @@ export default async function AdminSettingsPage() {
     fromEmail: process.env.RESEND_FROM_EMAIL || 'Not set',
   };
 
-  let prescriber = { id: '', name: 'Dr. Bader', npi: '' };
-  if (supabaseAdminConfigured()) {
-    try {
-      const db = createSupabaseAdminClient();
-      const { data } = await db
-        .from('profiles')
-        .select('id, full_name, npi')
-        .eq('role', 'doctor')
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (data) {
-        prescriber = {
-          id: data.id,
-          name: data.full_name ?? '',
-          npi: data.npi ?? '',
-        };
-      }
-    } catch {
-      // keep the demo prescriber
-    }
-  }
+  const prescriber = await getPrescriber();
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
