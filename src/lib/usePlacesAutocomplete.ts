@@ -59,7 +59,8 @@ function loadPlaces(apiKey: string): Promise<PlacesLib | null> {
       try {
         const lib = await window.google?.maps?.importLibrary?.('places');
         resolve((lib as PlacesLib) ?? null);
-      } catch {
+      } catch (err) {
+        console.error('[places] importLibrary failed', err);
         resolve(null);
       }
     };
@@ -78,7 +79,10 @@ function loadPlaces(apiKey: string): Promise<PlacesLib | null> {
     )}&libraries=places&loading=async&v=weekly`;
     el.async = true;
     el.onload = () => void finish();
-    el.onerror = () => resolve(null);
+    el.onerror = () => {
+      console.error('[places] script blocked or failed to load', el.src);
+      resolve(null);
+    };
     document.head.appendChild(el);
   });
 }
@@ -118,6 +122,8 @@ function pickFrom(
 export function usePlacesAutocomplete(apiKey: string | undefined) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const libRef = useRef<PlacesLib | null>(null);
+  const apiKeyRef = useRef<string | undefined>(apiKey);
+  apiKeyRef.current = apiKey;
   const tokenRef = useRef<unknown>(null);
   const seq = useRef(0);
 
@@ -125,7 +131,9 @@ export function usePlacesAutocomplete(apiKey: string | undefined) {
     if (!apiKey) return;
     let alive = true;
     void loadPlaces(apiKey).then((lib) => {
-      if (alive) libRef.current = lib;
+      if (!alive) return;
+      libRef.current = lib;
+      if (!lib) console.error('[places] library unavailable');
     });
     return () => {
       alive = false;
@@ -135,6 +143,9 @@ export function usePlacesAutocomplete(apiKey: string | undefined) {
   const search = useCallback(
     async (input: string) => {
       const lib = libRef.current;
+      if (!lib && apiKeyRef.current) {
+        console.warn('[places] not ready yet — still loading, or failed above');
+      }
       if (!lib || input.trim().length < 3) {
         setSuggestions([]);
         return;
@@ -150,7 +161,6 @@ export function usePlacesAutocomplete(apiKey: string | undefined) {
             input,
             sessionToken: tokenRef.current,
             includedRegionCodes: ['us'],
-            includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
           });
         if (mine !== seq.current) return; // a later keystroke already won
 
@@ -176,7 +186,8 @@ export function usePlacesAutocomplete(apiKey: string | undefined) {
               },
             })),
         );
-      } catch {
+      } catch (err) {
+        console.error('[places] fetchAutocompleteSuggestions failed', err);
         setSuggestions([]);
       }
     },
