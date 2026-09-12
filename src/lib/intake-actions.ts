@@ -116,6 +116,9 @@ export async function submitIntakeAction(
           .update({
             ...(fullName ? { full_name: fullName } : {}),
             ...(phone ? { phone } : {}),
+            ...(typeof answers.dob === 'string' && answers.dob
+              ? { date_of_birth: answers.dob }
+              : {}),
           })
           .eq('id', userId);
       } else if (authErr) {
@@ -182,6 +185,40 @@ export interface PendingVisit {
 }
 
 /** The caller's open clinical visit, if any. */
+/**
+ * Copy identity out of the intake and onto the profile.
+ *
+ * Date of birth lived only inside the answers blob, so the member record said
+ * "—" while the intake right beside it had the date. Anything reading the
+ * profile — the admin page, an age check, the pharmacy submission — saw
+ * nothing.
+ */
+async function syncProfileFromAnswers(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string,
+  answers: Record<string, unknown>,
+): Promise<void> {
+  const str = (k: string) =>
+    typeof answers[k] === 'string' ? (answers[k] as string).trim() : '';
+  const fullName = [str('first_name'), str('last_name')]
+    .filter(Boolean)
+    .join(' ');
+  const patch: {
+    full_name?: string;
+    phone?: string;
+    date_of_birth?: string;
+  } = {};
+  if (fullName) patch.full_name = fullName;
+  if (str('phone')) patch.phone = str('phone');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str('dob'))) patch.date_of_birth = str('dob');
+  if (!Object.keys(patch).length) return;
+  try {
+    await db.from('profiles').update(patch).eq('id', userId);
+  } catch {
+    // The intake is saved either way; this is a convenience copy.
+  }
+}
+
 export async function getPendingVisit(): Promise<PendingVisit | null> {
   const user = await getSession();
   if (!user || !supabaseAdminConfigured()) return null;
@@ -255,6 +292,8 @@ export async function submitVisitAction(
     .update({ answers: merged as unknown as Json, status: 'submitted' })
     .eq('id', intake.id);
   if (error) return { ok: false, error: 'Could not save your visit. Try again.' };
+
+  await syncProfileFromAnswers(db, user.id, merged);
   return { ok: true, caseId: intake.case_id };
 }
 
