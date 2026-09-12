@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
@@ -113,12 +114,9 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base hover:bg-accent-soft transition-colors"
-        >
+        <SubmitButton pendingLabel="Creating your account…">
           Create account →
-        </button>
+        </SubmitButton>
 
         <p className="text-center text-[11px] text-foreground/45 leading-relaxed">
           Creating an account doesn&apos;t place an order. Every protocol is

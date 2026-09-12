@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
 import { requestPasswordResetAction } from '@/lib/auth-actions';
@@ -94,12 +95,9 @@ export default async function ForgotPasswordPage({
               className={authInputClass}
             />
           </div>
-          <button
-            type="submit"
-            className="w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base hover:bg-accent-soft transition-colors"
-          >
-            Send reset link →
-          </button>
+          <SubmitButton pendingLabel="Sending…">
+          Send reset link →
+        </SubmitButton>
         </form>
       )}
     </AuthShell>
