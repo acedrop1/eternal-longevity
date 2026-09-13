@@ -28,22 +28,22 @@ function triangle(x: number) {
 const CHAPTERS = [
   {
     eyebrow: 'LONGEVITY MEDICINE, MEDICAL-GRADE',
-    body: 'Every Eternal Longevity protocol mirrors the rigor of clinical compounding: small chains of amino acids, formulated to a structured cycle, compounded for purity and potency.',
+    body: 'Peptides are short chains of amino acids. Every preparation we dispense is compounded to a prescription written for one patient, on a structured cycle.',
     image: '/images/9.jpg', // gel / molecule
   },
   {
     eyebrow: 'QUALITY INGREDIENTS, BETTER ABSORPTION',
-    body: 'We work only with 503A pharmacies that test for purity, sterility, and bioavailability before shipping. Every batch is documented. Every vial is traceable.',
+    body: 'We dispense only through state-licensed 503A pharmacies that test for purity, potency and sterility before shipping. Every batch is documented. Every vial is traceable.',
     image: '/images/11.jpg', // pipette / beaker
   },
   {
     eyebrow: 'TARGETED PROTOCOLS',
-    body: 'Stacks are formulated against your goals: recovery, performance, body composition, or longevity. No one-size-fits-all kits. No guesswork.',
+    body: 'What you are prescribed depends on what your intake says, not on what you selected. The prescriber can decline, change or reduce it.',
     image: '/images/13.jpg', // bubble field
   },
   {
     eyebrow: 'ADVANCED CARE, MADE SIMPLE',
-    body: 'Manage everything through your member portal: refills, dosing instructions, protocol check-ins with your concierge team. Concierge in your pocket.',
+    body: 'Your portal holds your prescription, your dosing instructions, your order history and a message thread with your prescriber.',
     image: '/images/14.jpg', // single sphere
   },
 ];

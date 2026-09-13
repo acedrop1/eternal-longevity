@@ -137,7 +137,7 @@ export function Footer() {
           <p className="max-w-2xl text-[11px] text-foreground/35 leading-relaxed md:text-right">
             Prescriptions are written by a New Jersey&ndash;licensed physician
             following clinical review, and dispensed by an independently
-            licensed, FDA-registered 503A compounding pharmacy. Eternal
+            licensed 503A compounding pharmacy. Eternal
             Longevity is not a pharmacy. Compounded medications are not
             FDA-approved. These statements have not been evaluated by the Food
             and Drug Administration; these products are not intended to

@@ -19,19 +19,19 @@ import { cn } from '@/lib/utils';
 const FEATURES = [
   {
     title: 'Recovery',
-    body: 'Peptides studied for soft-tissue repair and recovery between hard training blocks. Structured cycles, compounded to prescription, with check-ins along the way.',
+    body: 'Structured cycles, compounded to a prescription written for you. What the published evidence does and does not show is on each product page.',
     label: '01',
     image: '/images/8.jpg', // core / athletic
   },
   {
     title: 'Performance',
-    body: 'Protocols built around the growth-hormone axis and body composition. Cycle-based, with clear dosing and ongoing check-ins.',
+    body: 'Cycle-based, with dosing written by the prescriber. Each product page states the evidence, the side effects and the contraindications.',
     label: '02',
     image: '/images/7.jpg', // stretching / strength
   },
   {
     title: 'Longevity',
-    body: 'Cellular support, metabolic regulation, cognitive clarity. Engineered for the long arc. Protocols you can sustain across years, not weeks.',
+    body: 'Prescribed on a twelve-month cycle rather than a one-off vial, with the prescriber reviewing each renewal.',
     label: '03',
     image: '/images/1.jpg', // desert yoga / lifestyle
   },

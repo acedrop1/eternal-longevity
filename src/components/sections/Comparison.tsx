@@ -10,11 +10,11 @@ import { FadeIn } from '@/components/ui/FadeIn';
  */
 
 const FEATURES = [
-  { label: 'Third-Party Tested Protocol', ours: true, theirs: false },
+  { label: 'Prescribed by a Licensed Physician', ours: true, theirs: false },
   { label: 'Licensed 503A Pharmacy', ours: true, theirs: false },
   { label: 'Tested for Purity & Sterility', ours: true, theirs: 'Maybe' },
-  { label: 'Personalized Dosing', ours: true, theirs: false },
-  { label: 'Concierge Support', ours: true, theirs: false },
+  { label: 'Dosing Written for You', ours: true, theirs: false },
+  { label: 'Message the Prescriber', ours: true, theirs: false },
   { label: 'Private, Encrypted Records', ours: true, theirs: false },
   { label: 'Cold-Chain Shipping', ours: true, theirs: false },
 ];
@@ -58,7 +58,10 @@ export function Comparison() {
             </h2>
 
             <p className="text-foreground/65 leading-relaxed max-w-md mb-8">
-              The peptide market is full of unregulated research vials. Eternal Longevity is the opposite: third-party tested protocols, licensed compounding pharmacies, and a formulation team that stands behind every batch.
+              The peptide market is full of &ldquo;research use only&rdquo; vials sold with no
+              prescriber and no pharmacy. Eternal Longevity is the opposite: a
+              named New Jersey physician writes every prescription, and a
+              licensed 503A pharmacy compounds it.
             </p>
 
             <a

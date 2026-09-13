@@ -21,19 +21,19 @@ const PILLARS = [
   {
     title: 'Medical-Grade',
     kicker: 'Compounded by licensed 503A pharmacies.',
-    body: 'Every protocol is compounded in an FDA-registered facility, tested for purity, potency, and sterility before it ships. Vials are batch-documented and traceable.',
+    body: 'Every protocol is compounded by a state-licensed 503A pharmacy and tested for purity, potency and sterility before it ships. Vials are batch-documented and traceable.',
     image: '/images/11.jpg', // pipette / science
   },
   {
-    title: 'Third-Party Tested',
-    kicker: 'Formulated and third-party tested for purity.',
-    body: 'No algorithms, no shortcuts. Our formulation team builds a personalized protocol, and every compound is third-party tested for purity and potency before it ships.',
+    title: 'One Prescriber',
+    kicker: 'One physician reviews every intake.',
+    body: 'No algorithms and no rotating panel. Dr. Elder reads each intake himself and either writes a prescription or declines it with a reason.',
     image: '/images/7.jpg', // athlete / performance
   },
   {
-    title: 'Concierge Care',
-    kicker: 'Direct access to your concierge support.',
-    body: 'Schedule onboarding calls, message your team in the portal, request dose adjustments. Cycle check-ins are built into every protocol so nothing falls through the cracks.',
+    title: 'Direct Access',
+    kicker: 'Message your prescriber directly.',
+    body: 'Your portal holds a message thread with the prescriber who signed your prescription. Ask a question, raise a side effect, or request a change — the answer comes from him.',
     image: '/images/1.jpg', // desert yoga / lifestyle
   },
 ];

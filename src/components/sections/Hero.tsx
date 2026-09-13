@@ -73,8 +73,8 @@ export function Hero() {
           className="mt-6 max-w-xl text-base text-white/85 anim-fade-up d-3"
           style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}
         >
-          Performance, recovery, longevity. Engineered into every protocol,
-          formulated and third-party tested for purity.
+          Prescribed by a New Jersey physician. Compounded by a licensed 503A
+          pharmacy.
         </p>
 
         {/* Pill-pair CTA (Protocole pattern). Stacks on mobile, joined on desktop */}
@@ -88,7 +88,7 @@ export function Hero() {
             }}
           >
             <span className="pill text-xs sm:text-sm text-white/95 px-5 sm:px-6">
-              NJ&apos;s first longevity brand
+              New Jersey only
             </span>
             <Link
               href="/start"
@@ -100,7 +100,7 @@ export function Hero() {
         </div>
 
         <p className="mt-6 text-xs tracking-wider text-white/70 anim-fade-in d-5">
-          Third-party tested · 18+
+          Prescription required · 18+
         </p>
       </div>
 
