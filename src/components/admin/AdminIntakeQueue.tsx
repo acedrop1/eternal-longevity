@@ -88,9 +88,8 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
   return (
     <div className="space-y-3">
       <p className="text-sm leading-relaxed text-foreground/55">
-        Nothing to approve here — an application is a medical record, not a
-        request for a prescription. Everyone below can shop already, and the
-        prescriber reviews each order when it is placed.
+        Nothing to action here. Everyone below can already shop; this is the
+        record of who signed up and what they answered.
       </p>
 
       <div className="flex flex-wrap items-center gap-2 pb-1">

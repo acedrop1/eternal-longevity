@@ -13,13 +13,13 @@ import {
 } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
-  title: 'Review Queue',
+  title: 'Applications',
 };
 
 const ADMIN_NAV = [
   { label: 'Overview', href: '/portal/admin' },
   { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Queue', href: '/portal/admin/queue' },
+  { label: 'Applications', href: '/portal/admin/queue' },
         { label: 'Messages', href: '/portal/admin/messages' },
   { label: 'Billing', href: '/portal/admin/billing' },
   { label: 'Orders', href: '/portal/admin/fulfillment' },
@@ -84,7 +84,7 @@ export default async function AdminQueuePage() {
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
         <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          REVIEW QUEUE · ADMIN TRIAGE
+          MEMBERS · APPLICATIONS
         </p>
         <h1
           className="font-semibold tracking-tight text-foreground"
@@ -94,12 +94,13 @@ export default async function AdminQueuePage() {
             lineHeight: 1.05,
           }}
         >
-          Triage incoming intakes.
+          Applications.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Administrative triage only. Check the intake is complete and the
-          person is eligible, then send it to the prescriber — he makes every
-          clinical decision. Close a visit here only for a non-clinical reason.
+          Everyone who has completed the intake. Signing up is not a request
+          for anything — the prescriber reviews each order under Orders when it
+          is placed. Request info or close an application only if something in
+          it is wrong.
         </p>
       </div>
 

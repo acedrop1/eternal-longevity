@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 interface Overview {
   members: number;
   mrr: number;
-  pendingIntakes: number;
+  applications: number;
   openOrders: number;
   pipeline: { label: string; count: number }[];
   activity: { time: string; action: string }[];
@@ -26,7 +26,7 @@ async function loadOverview(): Promise<Overview> {
   const empty: Overview = {
     members: 0,
     mrr: 0,
-    pendingIntakes: 0,
+    applications: 0,
     openOrders: 0,
     pipeline: [],
     activity: [],
@@ -85,11 +85,11 @@ async function loadOverview(): Promise<Overview> {
     return {
       members: members.count ?? 0,
       mrr: Math.round(mrr / 100),
-      pendingIntakes: count(intakeRows, 'submitted', 'in_review', 'needs_info'),
+      applications: count(intakeRows, 'submitted', 'in_review', 'needs_info'),
       openOrders: count(orderRows, 'pending-admin', 'assigned', 'signed', 'paid', 'compounding'),
       pipeline: [
         { label: 'Awaiting visit', count: count(intakeRows, 'awaiting_visit') },
-        { label: 'Intake review', count: count(intakeRows, 'submitted', 'in_review', 'needs_info') },
+        { label: 'Applied', count: count(intakeRows, 'submitted', 'in_review', 'needs_info') },
         { label: 'Physician sign-off', count: count(orderRows, 'assigned') },
         { label: 'Compounding', count: count(orderRows, 'signed', 'paid', 'compounding') },
         { label: 'Shipped (7d)', count: shipped.count ?? 0 },
@@ -122,7 +122,7 @@ export default async function AdminPortalPage() {
   const metrics = [
     { label: 'Active members', value: String(o.members) },
     { label: 'MRR (active subs)', value: `$${o.mrr.toLocaleString()}` },
-    { label: 'Pending review', value: String(o.pendingIntakes) },
+    { label: 'Applications', value: String(o.applications) },
     { label: 'Open orders', value: String(o.openOrders) },
   ];
 
@@ -132,7 +132,7 @@ export default async function AdminPortalPage() {
       nav={[
         { label: 'Overview', href: '/portal/admin' },
         { label: 'Members', href: '/portal/admin/members' },
-        { label: 'Queue', href: '/portal/admin/queue' },
+        { label: 'Applications', href: '/portal/admin/queue' },
         { label: 'Messages', href: '/portal/admin/messages' },
         { label: 'Billing', href: '/portal/admin/billing' },
         { label: 'Orders', href: '/portal/admin/fulfillment' },
@@ -233,7 +233,7 @@ export default async function AdminPortalPage() {
         )}
         <div className="mt-5 border-t border-line pt-4">
           <Link href="/portal/admin/queue" className="text-sm text-accent hover:underline">
-            Open the review queue →
+            See applications →
           </Link>
         </div>
       </div>

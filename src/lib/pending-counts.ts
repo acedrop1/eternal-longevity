@@ -2,7 +2,7 @@
  * Pending-task counts for the portal nav badges.
  *
  * Each role sees a count on the tabs that need their attention — the doctor's
- * sign-off queue, the admin's review queue and open orders, the pharmacy's
+ * sign-off queue, the admin's open orders, the pharmacy's
  * orders to ship. Server-only; reads Supabase in live mode, demo numbers
  * otherwise so the badges still show in the preview.
  */
@@ -16,7 +16,7 @@ import {
 
 /** Plausible demo counts so the badges render before the backend is connected. */
 const DEMO_COUNTS: Record<Role, Record<string, number>> = {
-  admin: { '/portal/admin/queue': 3, '/portal/admin/fulfillment': 2 },
+  admin: { '/portal/admin/fulfillment': 2 },
   doctor: { '/portal/doctor': 3 },
   pharmacy: { '/portal/pharmacy': 2 },
   member: {},
@@ -32,20 +32,12 @@ export async function getPendingCounts(
     const db = createSupabaseAdminClient();
 
     if (role === 'admin') {
-      const [queue, orders] = await Promise.all([
-        db
-          .from('intake_submissions')
-          .select('*', { count: 'exact', head: true })
-          .in('status', ['submitted', 'in_review', 'needs_info']),
-        db
-          .from('fulfillment_orders')
-          .select('*', { count: 'exact', head: true })
-          .in('status', ['draft', 'submitted', 'accepted']),
-      ]);
-      return {
-        '/portal/admin/queue': queue.count ?? 0,
-        '/portal/admin/fulfillment': orders.count ?? 0,
-      };
+      // Applications get no badge: signing up is not a task for anyone.
+      const orders = await db
+        .from('fulfillment_orders')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['draft', 'submitted', 'accepted']);
+      return { '/portal/admin/fulfillment': orders.count ?? 0 };
     }
 
     if (role === 'doctor') {
