@@ -120,8 +120,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
         <p className="text-center text-[11px] text-foreground/45 leading-relaxed">
           Creating an account doesn&apos;t place an order. Every protocol is
-          compounded by a licensed 503A pharmacy and third-party tested before
-          it ships.
+          compounded by a licensed 503A pharmacy against a prescription written
+          for you.
         </p>
       </form>
     </AuthShell>

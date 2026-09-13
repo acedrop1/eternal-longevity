@@ -102,7 +102,7 @@ export default async function SubscriptionsPage() {
             </h2>
             <p className="text-sm text-foreground/65 leading-relaxed">
               Browse the catalog and subscribe to anything that fits your
-              protocol. Every addition is third-party tested before it ships.
+              protocol. Every addition goes back to the prescriber first.
             </p>
           </div>
           <Link

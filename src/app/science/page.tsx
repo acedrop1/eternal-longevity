@@ -29,21 +29,21 @@ const MECHANISMS = [
     n: '03',
     title: 'Cellular cleanup',
     body:
-      'Targeted senolytics and mitochondrial peptides clear damaged cells and rebuild ATP production. The deep work of slowing biological aging at the source rather than just managing its symptoms.',
+      'Senolytic and mitochondrial peptides are an active area of ageing research. The evidence in humans is early, and we say so on each product page rather than promising an outcome.',
   },
   {
     n: '04',
     title: 'Metabolic balance',
     body:
-      'Tesamorelin and supporting peptides target visceral fat and re-sensitize metabolic signaling. Producing fat loss that holds because the underlying biology shifted, not just the scale.',
+      'Tesamorelin has been studied for visceral adipose tissue in one approved indication. What we dispense is compounded, is not FDA-approved, and is prescribed off-label — the product page states exactly what the trials measured.',
   },
 ];
 
 const STANDARDS = [
   {
-    label: '99%+ Purity',
+    label: 'Tested Before Release',
     body:
-      'Independent HPLC and mass-spec testing on every lot. We publish certificates of analysis on request.',
+      'The dispensing pharmacy tests each lot for purity and potency and releases it against a certificate of analysis. We will share the one for your lot on request.',
   },
   {
     label: '503A Compounding',
@@ -51,9 +51,9 @@ const STANDARDS = [
       'All protocols are compounded by U.S.-licensed 503A pharmacies operating under state-board oversight.',
   },
   {
-    label: 'Expert Formulation',
+    label: 'Compounded to Prescription',
     body:
-      'Every protocol is formulated by our team and third-party tested for purity and identity before it ships.',
+      'Every preparation is compounded to a prescription and released by the pharmacy against a certificate of analysis for purity and potency.',
   },
   {
     label: 'Cold-Chain Shipping',
@@ -366,8 +366,8 @@ export default function SciencePage() {
                 <p className="text-foreground/65 leading-relaxed">
                   The peptide market is full of gray-market sources. We refuse
                   to play that game. Every vial we ship is compounded in a
-                  U.S.-licensed pharmacy, third-party tested, and shipped under
-                  cold chain.
+                  U.S.-licensed pharmacy against a prescription, and shipped
+                  under cold chain.
                 </p>
               </FadeIn>
             </div>
@@ -480,9 +480,9 @@ export default function SciencePage() {
             </FadeIn>
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
-                Answer a few questions and we match you to a protocol. It ships
-                compounded by a licensed 503A pharmacy and third-party tested for
-                purity. Order online, and it arrives at your door.
+                Answer a few questions. A New Jersey physician reviews them and
+                decides whether to prescribe; if he does, a licensed 503A
+                pharmacy compounds it and ships it to your door.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

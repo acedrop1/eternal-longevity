@@ -256,7 +256,7 @@ export function ProductPDP({ product, related, basePath = '/portal/shop', ctaHre
             {[
               'Only charged if approved',
               'Free cold-chain shipping',
-              'Third-party tested',
+              'Tested before release',
               'Cancel anytime',
             ].map((t) => (
               <li key={t} className="flex items-start gap-1.5">

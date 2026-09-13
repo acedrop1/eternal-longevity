@@ -8,7 +8,7 @@ import { getShopProduct } from '@/lib/shopProducts';
 export const metadata: Metadata = {
   title: 'Start Your Assessment',
   description:
-    'Order your peptide protocol with a quick 3-minute profile. Compounded, third-party tested, shipped to your door.',
+    'Start with a short health profile. A New Jersey physician reviews it and decides whether to prescribe.',
 };
 
 interface StartPageProps {

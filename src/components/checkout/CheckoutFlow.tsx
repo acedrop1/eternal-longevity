@@ -816,7 +816,7 @@ export function CheckoutFlow({
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </span>
-                  <span className="font-semibold text-foreground/85">Third-party tested</span>
+                  <span className="font-semibold text-foreground/85">Prescription required</span>
                   <span>· 503A compounded</span>
                 </div>
 

@@ -24,7 +24,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How does Eternal Longevity work?',
-    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. Based on your answers we recommend a protocol, it's compounded by a U.S.-licensed 503A pharmacy and third-party tested for purity, and we ship it to your door. From order to your door is typically three to five days.",
+    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. A New Jersey physician reviews it and decides whether to prescribe. If he does, a U.S.-licensed 503A pharmacy compounds it and ships it to your door — typically three to five days. If he declines, you are not charged.",
   },
   {
     category: 'Getting Started',
@@ -117,7 +117,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How is the pharmacy quality controlled?',
-    a: "Every lot is third-party tested for purity (HPLC) and identity (mass spec). We work only with 503A pharmacies that publish certificates of analysis and operate under state-board oversight. We will share lot-level documentation on request. Transparency is not optional for us.",
+    a: "The dispensing pharmacy tests each lot for purity and potency and releases it against a certificate of analysis. That testing is the pharmacy's own, not an independent laboratory's — we would rather say so than imply an outside audit that does not happen. The pharmacy is licensed and inspected by its state board, and we will share the certificate of analysis for your lot on request.",
   },
   {
     category: 'Safety',

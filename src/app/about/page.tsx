@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 
 const NUMBERS = [
   { stat: '12', label: 'Peptides in our formulary' },
-  { stat: '10', label: 'Compounded peptides' },
-  { stat: '8', label: 'States we ship to' },
-  { stat: '99%+', label: 'Lot purity, third-party tested' },
+  { stat: '1', label: 'Prescriber, who signs every order' },
+  { stat: 'NJ', label: 'The only state we serve' },
+  { stat: '503A', label: 'Licensed compounding pharmacy' },
 ];
 
 const VALUES = [
@@ -37,7 +37,7 @@ const VALUES = [
     n: '03',
     title: 'Formulation is the product',
     body:
-      'No shortcuts here. Every protocol is compounded by a licensed 503A pharmacy and third-party tested for purity and identity before it ships. The formulation is the product.',
+      'Every preparation is compounded by a licensed 503A pharmacy against a prescription written for one person, and released against a certificate of analysis for purity and potency.',
   },
   {
     n: '04',
@@ -198,8 +198,8 @@ export default function AboutPage() {
                   worst.
                 </p>
                 <p>
-                  Eternal Longevity is the answer to that gap. Clinical-grade
-                  pharmacy. Third-party tested protocols. A price point that
+                  Eternal Longevity is the answer to that gap. A licensed
+                  pharmacy. A named prescriber. A price point that
                   doesn&apos;t require a private banker. And the patience to
                   measure outcomes over years, not Instagram-week before-and-afters.
                 </p>
@@ -322,8 +322,8 @@ export default function AboutPage() {
               <div className="absolute inset-0 flex items-end px-6 pb-10 md:pb-16">
                 <div className="mx-auto w-full max-w-6xl">
                   <p className="max-w-xl text-foreground/85 text-base md:text-lg leading-relaxed">
-                    A clinical-grade pharmacy, paired with formulation that&apos;s
-                    third-party tested on every lot. That&apos;s the whole point.
+                    A licensed pharmacy and a physician who puts his name on
+                    every prescription. That&apos;s the whole point.
                   </p>
                 </div>
               </div>
@@ -392,8 +392,7 @@ export default function AboutPage() {
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
                 Three minutes. Answer a few questions and we match you to a
-                protocol. It ships compounded and third-party tested for purity,
-                straight to your door.
+                protocol, and a physician decides whether to prescribe it.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

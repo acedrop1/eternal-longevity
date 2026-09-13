@@ -29,13 +29,13 @@ interface StandardItem {
 
 const STANDARDS: StandardItem[] = [
   {
-    name: 'Third-Party Tested',
+    name: 'Batch Tested',
     el: (
       <span
         className="font-bold text-lg md:text-xl leading-none"
         style={{ letterSpacing: '0.08em' }}
       >
-        THIRD-PARTY TESTED
+        BATCH TESTED
       </span>
     ),
   },

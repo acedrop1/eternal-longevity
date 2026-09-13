@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 
 export const metadata: Metadata = {
   title: 'Shop',
-  description: 'Browse our full peptide catalog. Third-party tested, 503A compounded.',
+  description: 'Browse our full peptide catalog. Compounded to prescription by a licensed 503A pharmacy.',
 };
 
 export default async function ShopPage() {
@@ -42,9 +42,9 @@ export default async function ShopPage() {
           Build the protocol that fits you.
         </h1>
         <p className="mt-4 max-w-2xl text-foreground/65 leading-relaxed">
-          Every product is third-party tested, compounded by a
-          503A pharmacy, and cold-chain shipped. Subscribe monthly, quarterly,
-          or annually. And cancel between cycles, never mid-cycle.
+          Every product is compounded to prescription by a licensed 503A
+          pharmacy, tested for purity and potency before release, and
+          cold-chain shipped. Cancel between cycles, never mid-cycle.
         </p>
 
       </header>

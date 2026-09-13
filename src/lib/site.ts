@@ -26,7 +26,7 @@ export const SITE_NAME = 'Eternal Longevity';
 export const SITE_TAGLINE = 'Premium peptide protocols.';
 
 export const SITE_DESCRIPTION =
-  'An online peptide store. Order protocols compounded by a licensed 503A pharmacy, third-party tested for 99%+ purity, and shipped cold-chain to your door.';
+  'Peptide protocols prescribed by a New Jersey physician, compounded by a licensed 503A pharmacy, and shipped cold-chain to your door.';
 
 /* ------------------------- merchant identity ------------------------------ */
 

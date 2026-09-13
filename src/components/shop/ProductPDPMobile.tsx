@@ -242,7 +242,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          THIRD-PARTY TESTED · COMPOUNDED IN A 503A PHARMACY
+          BATCH TESTED · COMPOUNDED IN A 503A PHARMACY
         </div>
 
         {/* Product name */}
@@ -413,7 +413,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           <p className="text-[13px] leading-relaxed text-foreground/85">
             <span className="font-semibold text-accent">Important. </span>
             Eternal Longevity peptides are compounded by a licensed 503A
-            pharmacy and third-party tested. Not a substitute for medical
+            pharmacy against a prescription. Not a substitute for medical
             care; do not use if pregnant, nursing, or under 18.
           </p>
         </div>
@@ -516,7 +516,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
               label="Storage"
               value="Refrigerated 2–8°C · use within compounding date"
             />
-            <SpecRow label="Third-party tested" value="Yes" />
+            <SpecRow label="Tested before release" value="Purity and potency" />
           </dl>
         </Section>
 

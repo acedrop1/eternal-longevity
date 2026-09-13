@@ -206,8 +206,8 @@ export default function FAQPage() {
             </FadeIn>
             <FadeIn delay={150}>
               <p className="mb-10 text-foreground/65 leading-relaxed">
-                Three minutes. Answer a few questions and we match you to a
-                protocol, compounded and third-party tested, shipped to your door.
+                Three minutes. Answer a few questions and a New Jersey
+                physician decides whether to prescribe.
               </p>
             </FadeIn>
             <FadeIn delay={250}>

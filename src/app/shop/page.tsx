@@ -9,7 +9,7 @@ import { PUBLIC_PRODUCTS, PUBLIC_CATEGORIES } from '@/lib/shopProducts';
 export const metadata: Metadata = {
   title: 'Shop',
   description:
-    'Compounded peptide protocols, third-party tested and shipped from a licensed 503A pharmacy. Subscribe monthly, quarterly, or annually.',
+    'Compounded peptide protocols, prescribed by a New Jersey physician and dispensed by a licensed 503A pharmacy. Subscribe monthly, quarterly, or annually.',
 };
 
 export default function PublicShopPage() {
@@ -44,8 +44,9 @@ export default function PublicShopPage() {
             <FadeIn delay={200}>
               <p className="mx-auto mt-5 max-w-2xl text-foreground/65 leading-relaxed">
                 Every product is compounded by a U.S.-licensed 503A pharmacy,
-                third-party tested for purity, and cold-chain shipped. Complete
-                a short health assessment and your protocol ships to your door.
+                tested for purity and potency before release, and cold-chain
+                shipped. Complete a short health assessment; a physician decides
+                whether to prescribe.
               </p>
             </FadeIn>
             <FadeIn delay={300}>
