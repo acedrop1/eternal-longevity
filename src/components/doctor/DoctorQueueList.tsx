@@ -434,11 +434,15 @@ function DoctorQueueRow({
           <div className="mb-3 text-[10px] tracking-widest text-red-300">
             REASON FOR CLINICAL DECLINE
           </div>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            Write this to the patient — they are emailed it word for word, and
+            it goes on their chart. Anything charged is refunded in full.
+          </p>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
-            placeholder="Note logged on the member's chart and visible to the care team…"
+            placeholder="Your blood pressure readings are too high for this treatment to be safe. Please see your primary physician, and we can revisit this once it is controlled."
             className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">

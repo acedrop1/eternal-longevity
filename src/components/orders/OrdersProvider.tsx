@@ -39,7 +39,10 @@ interface OrdersAPI {
   placeOrder: (order: Omit<Order, 'id' | 'placedAt' | 'status'>) => Order;
   /** Admin approves an order, releasing it to the physician for sign-off. */
   approve: (id: string, note?: string) => void;
-  denyAdmin: (id: string, note: string) => void;
+  denyAdmin: (
+    id: string,
+    note: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
   signRx: (
     id: string,
     author: string,
@@ -234,11 +237,20 @@ export function OrdersProvider({
   );
 
   const denyAdmin = useCallback<OrdersAPI['denyAdmin']>(
-    (id, note) => {
+    async (id, note) => {
+      /*
+       * Server first: cancelling refunds the card and emails the member, so a
+       * row must not read "cancelled" on screen until that actually happened.
+       */
+      if (live) {
+        const res = await denyOrderAction(id, note);
+        if (!res.ok) return res;
+      }
       updateOrder(id, { status: 'denied-admin', adminNote: note });
-      sync(() => denyOrderAction(id, note));
+      router.refresh();
+      return { ok: true };
     },
-    [updateOrder, sync],
+    [updateOrder, live, router],
   );
 
   /**

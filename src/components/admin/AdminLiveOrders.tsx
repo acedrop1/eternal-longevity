@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
@@ -82,58 +83,166 @@ function LiveBoard({ orders }: { orders: Order[] }) {
       ) : (
         <div className="overflow-hidden rounded-3xl border border-line bg-surface">
           {rows.map(({ order, attention }) => (
-            <div
-              key={order.id}
-              className="border-b border-line px-4 py-3.5 last:border-0 md:px-5"
-            >
-              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span className="font-mono text-[11px] tracking-wider text-foreground/50">
-                  {orderRef(order.id)}
-                </span>
-                {order.userId ? (
-                  <Link
-                    href={`/portal/admin/members/${order.userId}`}
-                    className="font-medium text-foreground underline-offset-4 hover:underline"
-                  >
-                    {order.memberName}
-                  </Link>
-                ) : (
-                  <span className="font-medium text-foreground">
-                    {order.memberName}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground/60">
-                  {order.lines.map((l) => l.productName).join(' + ')}
-                </span>
-                <span className="tabular-nums text-sm text-foreground/85">
-                  ${order.total}
-                </span>
-                <span className="text-[10px] tracking-widest text-foreground/40">
-                  {describeAge(order.placedAt)}
-                </span>
-                <span
-                  className={cn(
-                    'flex-none rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-widest',
-                    order.status === 'assigned'
-                      ? 'border-sky-400/40 bg-sky-500/10 text-sky-300'
-                      : order.status === 'shipped'
-                        ? 'border-accent/40 bg-accent/10 text-accent'
-                        : 'border-line bg-background text-foreground/60',
-                  )}
-                >
-                  {STATUS_LABEL[order.status] ?? order.status}
-                </span>
-              </div>
-              {attention && (
-                <p className="mt-2 rounded-xl border border-accent/40 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
-                  {attention}
-                </p>
-              )}
-            </div>
+            <OrderRow key={order.id} order={order} attention={attention} />
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * One order, and the way to stop it.
+ *
+ * Cancelling refunds whatever was charged and emails the member, so it asks
+ * for a reason first — the member reads that sentence, and "cancelled" with no
+ * explanation is the thing that generates the phone call.
+ */
+function OrderRow({
+  order,
+  attention,
+}: {
+  order: Order;
+  attention: string | null;
+}) {
+  const { denyAdmin } = useOrders();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cancellable = !['shipped', 'delivered'].includes(order.status);
+
+  return (
+    <div className="border-b border-line px-4 py-3.5 last:border-0 md:px-5">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <span className="font-mono text-[11px] tracking-wider text-foreground/50">
+          {orderRef(order.id)}
+        </span>
+        {order.userId ? (
+          <Link
+            href={`/portal/admin/members/${order.userId}`}
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {order.memberName}
+          </Link>
+        ) : (
+          <span className="font-medium text-foreground">
+            {order.memberName}
+          </span>
+        )}
+        <span className="min-w-0 flex-1 truncate text-sm text-foreground/60">
+          {order.lines.map((l) => l.productName).join(' + ')}
+        </span>
+        <span className="tabular-nums text-sm text-foreground/85">
+          ${order.total}
+        </span>
+        <span className="text-[10px] tracking-widest text-foreground/40">
+          {describeAge(order.placedAt)}
+        </span>
+        <span
+          className={cn(
+            'flex-none rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-widest',
+            order.status === 'assigned'
+              ? 'border-sky-400/40 bg-sky-500/10 text-sky-300'
+              : order.status === 'shipped'
+                ? 'border-accent/40 bg-accent/10 text-accent'
+                : 'border-line bg-background text-foreground/60',
+          )}
+        >
+          {STATUS_LABEL[order.status] ?? order.status}
+        </span>
+      </div>
+      {attention && (
+        <p className="mt-2 rounded-xl border border-accent/40 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
+          {attention}
+        </p>
+      )}
+
+      {cancellable && !open && (
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setOpen(true);
+          }}
+          className="mt-2 text-[11px] tracking-widest text-foreground/45 transition-colors hover:text-red-300"
+        >
+          CANCEL ORDER
+        </button>
+      )}
+
+      {open && (
+        <div className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/5 p-4">
+          <div className="mb-2 text-[10px] tracking-widest text-red-300">
+            WHY ARE YOU CANCELLING?
+          </div>
+          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+            The member is emailed this sentence and anything charged is refunded
+            in full. It is not recorded as a clinical decision.
+          </p>
+          <textarea
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value);
+              setError(null);
+            }}
+            rows={3}
+            placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
+            className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+          />
+          {error && (
+            <p className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+              {error}
+            </p>
+          )}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!reason.trim() || busy}
+              onClick={async () => {
+                if (!reason.trim() || busy) return;
+                setBusy(true);
+                setError(null);
+                try {
+                  const res = await denyAdmin(order.id, reason.trim());
+                  if (res.ok) {
+                    setOpen(false);
+                    setReason('');
+                  } else {
+                    setError(
+                      'Could not cancel this order. Nothing was refunded or sent.',
+                    );
+                  }
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className={cn(
+                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                reason.trim() && !busy
+                  ? 'bg-red-500 text-foreground hover:bg-red-600'
+                  : 'bg-foreground/15 text-foreground/40',
+              )}
+            >
+              {busy ? 'Cancelling…' : 'Cancel and refund'}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setOpen(false);
+                setReason('');
+                setError(null);
+              }}
+              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+            >
+              Keep it
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

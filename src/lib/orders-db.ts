@@ -19,6 +19,8 @@ import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import {
+  declinedEmail,
+  orderCancelledByTeamEmail,
   orderReceivedEmail,
   prescriberQuestionEmail,
   sendEmail,
@@ -444,11 +446,39 @@ export async function denyOrderAction(
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
 
+  const reason = note.trim();
+  if (!reason) return { ok: false, error: 'no_reason' };
+
   const db = createSupabaseAdminClient();
-  await db.from('orders').update({ status: 'denied-admin', admin_note: note }).eq('id', id);
-  await appendUpdate(id, user.name, 'admin', 'Declined', note, 'denied-admin');
-  // Denied before review — return the money now.
-  await refundDeclinedOrder(orderNumber);
+  const { data: order } = await db
+    .from('orders')
+    .select('member_name, member_email')
+    .eq('id', id)
+    .maybeSingle();
+
+  await db.from('orders').update({ status: 'denied-admin', admin_note: reason }).eq('id', id);
+  await appendUpdate(id, user.name, 'admin', 'Cancelled', reason, 'denied-admin');
+
+  // Whatever was charged goes back, described the way it actually happened.
+  const refund = await refundDeclinedOrder(
+    orderNumber,
+    'Our team cancelled this order.',
+  );
+
+  if (order?.member_email) {
+    const msg = orderCancelledByTeamEmail({
+      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
+      orderNumber,
+      reason,
+      refunded: refund.refunded === true,
+    });
+    try {
+      await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
+    } catch {
+      // The cancellation stands; the notice is best effort.
+    }
+  }
+
   revalidatePortal();
   return { ok: true };
 }
@@ -611,12 +641,36 @@ export async function declineClinicalAction(
   if (!id) return { ok: false, error: 'not_found' };
 
   const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select('member_name, member_email')
+    .eq('id', id)
+    .maybeSingle();
+
   await db.from('orders').update({ status: 'declined-clinical', physician_note: note }).eq('id', id);
   await appendUpdate(id, user.name, 'physician', 'Declined', note, 'declined-clinical');
 
   // Refund in full, immediately. The checkout copy promises exactly this, and
   // a promise that waits on someone remembering to click refund is not one.
   await refundDeclinedOrder(orderNumber);
+
+  /*
+   * His reason reached the order timeline and nowhere else, so the member was
+   * declined in silence unless they went looking in the portal. It is the one
+   * part of a decline they actually need.
+   */
+  if (order?.member_email) {
+    const msg = declinedEmail({
+      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
+      reason: note,
+    });
+    try {
+      await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
+    } catch {
+      // The note is on their order either way.
+    }
+  }
+
   revalidatePortal();
   return { ok: true };
 }

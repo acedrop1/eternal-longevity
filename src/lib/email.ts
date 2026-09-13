@@ -701,6 +701,42 @@ export function declinedEmail(input: {
   };
 }
 
+/**
+ * The team cancels an order before a prescriber has decided anything.
+ *
+ * Deliberately not `declinedEmail`: that one tells the member a licensed
+ * prescriber reviewed their visit and judged the treatment inappropriate. When
+ * the cancellation is operational — an address the pharmacy cannot ship to, a
+ * duplicate, a member who asked — saying so would attribute a clinical decision
+ * to a prescriber who never made one.
+ */
+export function orderCancelledByTeamEmail(input: {
+  firstName: string;
+  orderNumber: string;
+  reason: string;
+  refunded: boolean;
+}): { subject: string; html: string } {
+  return {
+    subject: `We cancelled ${orderRef(input.orderNumber)}`,
+    html: shell(
+      `<h1 style="margin:0 0 12px;color:#fff;font-size:22px;">We&rsquo;ve cancelled this order.</h1>
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(
+         input.firstName,
+       )} — our team cancelled ${escapeHtml(
+         orderRef(input.orderNumber),
+       )}. This is not a medical decision and no prescriber has reviewed it.</p>
+       <p style="margin:0 0 18px;padding:14px 16px;border:1px solid #262626;border-radius:12px;">${escapeHtml(
+         input.reason,
+       )}</p>
+       <p style="margin:0 0 18px;"><strong style="color:#fff;">${
+         input.refunded
+           ? 'Anything you were charged has been refunded in full.'
+           : 'You have not been charged anything.'
+       }</strong> If you think this is a mistake, reply to this email and we will take another look.</p>`,
+    ),
+  };
+}
+
 export function orderReceivedEmail(input: {
   firstName: string;
   orderNumber: string;

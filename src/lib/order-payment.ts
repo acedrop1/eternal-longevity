@@ -86,8 +86,18 @@ export async function createOrderAuthAction(amountCents: number): Promise<{
  * treatment is not approved, and a promise that depends on someone remembering
  * to click something is not a promise.
  */
-export async function refundDeclinedOrder(orderNumber: string): Promise<{
+export async function refundDeclinedOrder(
+  orderNumber: string,
+  /**
+   * Why, in the member's words. Defaults to the clinical wording because the
+   * prescriber's decline is the common case — an operational cancellation must
+   * pass its own, or the receipt attributes a decision nobody made.
+   */
+  reason = 'Your prescriber determined this treatment is not right for you.',
+): Promise<{
   ok: boolean;
+  /** False when there was nothing to refund, which is not a failure. */
+  refunded?: boolean;
   error?: string;
 }> {
   if (!stripeConfigured() || !supabaseAdminConfigured()) {
@@ -101,7 +111,7 @@ export async function refundDeclinedOrder(orderNumber: string): Promise<{
     .eq('order_number', orderNumber)
     .maybeSingle();
 
-  if (!order?.stripe_payment_intent_id) return { ok: true };
+  if (!order?.stripe_payment_intent_id) return { ok: true, refunded: false };
 
   try {
     await getStripe().refunds.create({
@@ -116,7 +126,7 @@ export async function refundDeclinedOrder(orderNumber: string): Promise<{
     await db.from('order_updates').insert({
       order_id: order.id,
       label: 'Refunded in full',
-      body: 'Your treatment was not approved, so your payment has been returned. Banks usually post it within 5–10 business days.',
+      body: `${reason} Your payment has been returned — banks usually post it within 5–10 business days.`,
       author: 'System',
       author_role: 'system',
     });
@@ -127,7 +137,7 @@ export async function refundDeclinedOrder(orderNumber: string): Promise<{
         orderNumber: order.order_number,
         amount: order.total_cents ?? 0,
         full: true,
-        reason: 'Your prescriber determined this treatment is not right for you.',
+        reason,
       });
       try {
         await sendEmail({
@@ -141,7 +151,7 @@ export async function refundDeclinedOrder(orderNumber: string): Promise<{
       }
     }
 
-    return { ok: true };
+    return { ok: true, refunded: true };
   } catch (err) {
     return {
       ok: false,
