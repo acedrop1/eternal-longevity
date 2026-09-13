@@ -23,6 +23,7 @@ import {
   sendEmail,
   SUPPORT_EMAIL,
 } from '@/lib/email';
+import { LIMITS, allow } from './rate-limit';
 
 /**
  * Is there already an account on this address?
@@ -32,6 +33,10 @@ import {
  * failure — this is a convenience, and the submit path holds the real guard.
  */
 export async function emailHasAccountAction(email: string): Promise<boolean> {
+  // This answers "does this person have an account here" to anyone who asks,
+  // about a medical practice. Throttled rather than removed: the intake wizard
+  // needs it to route someone to sign-in instead of a duplicate account.
+  if (!(await allow('enumeration', LIMITS.enumeration))) return false;
   const clean = email.trim().toLowerCase();
   if (!clean.includes('@') || !supabaseAdminConfigured()) return false;
   try {

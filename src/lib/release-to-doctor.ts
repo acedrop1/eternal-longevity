@@ -1,4 +1,10 @@
-'use server';
+import 'server-only';
+
+/*
+ * Not a server action. Nothing in the browser calls this, and the directive was
+ * publishing "release this order to the prescriber" as an unauthenticated
+ * endpoint that skips every checkout gate.
+ */
 
 /**
  * Release a new order straight to the prescriber.

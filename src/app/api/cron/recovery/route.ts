@@ -45,7 +45,12 @@ const MAX_PER_RUN = 100;
 
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
+  /*
+   * No secret means nobody gets in, not everybody. This fired real charges and
+   * real email on an unauthenticated POST whenever the variable was missing —
+   * which is exactly when you least want it to.
+   */
+  if (!secret) return false;
   return req.headers.get('authorization') === `Bearer ${secret}`;
 }
 

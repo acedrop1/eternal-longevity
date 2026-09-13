@@ -65,6 +65,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Sessions end after 12 hours. Sign in again to continue.
           </div>
         )}
+        {error === 'throttled' && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            Too many attempts from this connection. Wait a few minutes and try
+            again.
+          </div>
+        )}
         {error === 'mfa_unavailable' && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             We could not email your sign-in code. Try again, or contact support

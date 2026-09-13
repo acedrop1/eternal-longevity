@@ -20,6 +20,7 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { getSession } from '@/lib/auth-server';
+import { LIMITS, allow } from './rate-limit';
 
 export interface PromoCode {
   id: string;
@@ -61,6 +62,10 @@ export async function checkPromoAction(
 ): Promise<PromoCheck> {
   const code = rawCode.trim().toUpperCase();
   if (!code) return { ok: false, error: 'Enter a code.' };
+  // Unauthenticated by design — so it is also a free oracle for guessing codes.
+  if (!(await allow('promo', LIMITS.promo))) {
+    return { ok: false, error: 'Too many attempts. Try again shortly.' };
+  }
   if (!supabaseAdminConfigured()) {
     return { ok: false, error: 'Codes are unavailable right now.' };
   }

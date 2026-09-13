@@ -17,7 +17,20 @@ import { createSupabaseServerClient } from './supabase/server';
  * Either way the return shape is identical, so portal pages never branch.
  */
 export async function getSession(): Promise<SessionUser | null> {
-  return supabaseConfigured ? getSupabaseSession() : getDemoSession();
+  if (supabaseConfigured) return getSupabaseSession();
+  /*
+   * Demo mode is a development convenience and must never be reachable in
+   * production. The demo session is an unsigned cookie whose value is the role
+   * — a browser can simply set `el_session=admin` — so if the Supabase
+   * variables were ever missing or misread on a production boot, the entire
+   * application would fall back to "anyone is an administrator". Refusing to
+   * serve a session is the only safe failure here.
+   *
+   * Gated on VERCEL_ENV rather than NODE_ENV: it is set on every deployment,
+   * preview included, and it is not something a build can get wrong.
+   */
+  if (process.env.VERCEL_ENV) return null;
+  return getDemoSession();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -39,8 +52,9 @@ async function getDemoSession(): Promise<SessionUser | null> {
   };
 }
 
-/** Persist a demo session. No-op once Supabase is connected. */
+/** Persist a demo session. Never in production — see getSession. */
 export async function setSession(role: Role): Promise<void> {
+  if (process.env.VERCEL_ENV) return;
   const store = await cookies();
   store.set(SESSION_COOKIE, role, {
     httpOnly: true,

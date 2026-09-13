@@ -266,7 +266,7 @@ export const STEPS: Step[] = [
     body: "Take a moment to review the statements below. You'll confirm with the single acknowledgement at the bottom.",
     disclaimers: [
       'All information provided is accurate and complete to the best of my knowledge.',
-      'I consent to have my information reviewed by the Eternal Longevity formulation team for the purpose of evaluating my responses and providing personalized peptide protocol recommendations based on my goals and health information.',
+      'I consent to have my information reviewed by the prescribing physician for the purpose of evaluating my responses and deciding whether to prescribe.',
       'I understand that this information is for informational and educational purposes only and does not constitute medical advice, diagnosis, or a substitute for consulting my own healthcare provider.',
       'I understand that results from peptide protocols may vary, and I accept the potential risks associated with their use.',
       'I understand that I may be contacted for follow-up, clarification, or adjustments to my order.',

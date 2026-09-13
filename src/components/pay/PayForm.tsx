@@ -17,7 +17,7 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { createPayIntentAction } from '@/lib/pay-on-approval';
+import { createPayIntentAction } from '@/lib/checkout-payment-actions';
 
 const ERRORS: Record<string, string> = {
   invalid_link: 'This payment link is no longer valid.',

@@ -31,6 +31,7 @@ import {
   trustValid,
 } from './mfa';
 import { passwordValid } from './intakeSchema';
+import { LIMITS, allow } from './rate-limit';
 import { noteStaffSignIn } from './device-alert';
 
 /** Sign in. Form fields: email, password. */
@@ -48,6 +49,14 @@ export async function loginAction(formData: FormData): Promise<void> {
     .trim()
     .toLowerCase();
   const password = String(formData.get('password') ?? '');
+
+  /*
+   * Nothing stood between an attacker and unlimited password guesses against
+   * a known staff address, and the admin account reaches every chart.
+   */
+  if (!(await allow('login', LIMITS.login))) {
+    redirect('/login?error=throttled');
+  }
 
   if (!supabaseConfigured) {
     const demo = DEMO_USERS.find(
@@ -152,6 +161,10 @@ export async function signupAction(formData: FormData): Promise<void> {
   const password = String(formData.get('password') ?? '');
   const fullName = String(formData.get('name') ?? '').trim();
 
+  if (!(await allow('signup', LIMITS.signup))) {
+    redirect('/signup?error=throttled');
+  }
+
   if (!email.includes('@') || password.length < 8) {
     redirect('/signup?error=invalid');
   }
@@ -196,6 +209,11 @@ export async function requestPasswordResetAction(
   const email = String(formData.get('email') ?? '')
     .trim()
     .toLowerCase();
+
+  // Reset mail is free outbound email addressed to anyone you name.
+  if (!(await allow('reset', LIMITS.passwordReset))) {
+    redirect('/forgot-password?sent=1');
+  }
 
   if (supabaseAdminConfigured() && email.includes('@')) {
     // Generate the recovery token ourselves and send it through our own

@@ -70,6 +70,12 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             Enter a valid email and a password of at least 8 characters.
           </div>
         )}
+        {error === 'throttled' && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            Too many attempts from this connection. Wait a few minutes and try
+            again.
+          </div>
+        )}
         {error === 'taken' && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             We couldn&apos;t create that account. The email may already be

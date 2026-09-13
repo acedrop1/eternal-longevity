@@ -25,9 +25,10 @@ export const maxDuration = 30;
 
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  // No secret configured (e.g. preview) — allow, since the route only reads
-  // aggregates and emails the internal inbox.
-  if (!secret) return true;
+  // No secret means nobody gets in, not everybody. Aggregate revenue and order
+  // counts are not public, and an open endpoint that emails on demand is a
+  // free way to burn the sending reputation.
+  if (!secret) return false;
   return req.headers.get('authorization') === `Bearer ${secret}`;
 }
 

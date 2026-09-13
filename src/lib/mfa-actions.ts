@@ -15,6 +15,7 @@ import {
   signTicket,
   signTrust,
 } from '@/lib/mfa';
+import { LIMITS, allow } from '@/lib/rate-limit';
 import { noteStaffSignIn } from '@/lib/device-alert';
 
 const MESSAGES: Record<string, string> = {
@@ -22,6 +23,7 @@ const MESSAGES: Record<string, string> = {
   expired: 'That code has expired. We have sent you another.',
   locked: 'Too many attempts. We have sent you a new code.',
   unavailable: 'Two-factor is not available right now.',
+  throttled: 'Too many attempts. Wait a few minutes and try again.',
 };
 
 /**
@@ -34,6 +36,14 @@ const MESSAGES: Record<string, string> = {
 export async function verifyMfaAction(formData: FormData): Promise<void> {
   const user = await getSession();
   if (!user) redirect('/login');
+
+  /*
+   * Five attempts are enforced per code, but a wrong code issues a fresh one —
+   * so without a ceiling here the six-digit space is walkable.
+   */
+  if (!(await allow('mfa', LIMITS.mfa))) {
+    redirect('/login/verify?error=throttled');
+  }
 
   const code = String(formData.get('code') ?? '').replace(/\D/g, '');
   const result = await checkCode(user.id, code);
@@ -80,6 +90,9 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
 export async function resendMfaAction(): Promise<void> {
   const user = await getSession();
   if (!user) redirect('/login');
+  if (!(await allow('mfa', LIMITS.mfa))) {
+    redirect('/login/verify?error=throttled');
+  }
   if (!mfaConfigured()) redirect('/login/verify?error=unavailable');
   await issueCode(user.id, user.email, user.name);
   redirect('/login/verify?sent=1');

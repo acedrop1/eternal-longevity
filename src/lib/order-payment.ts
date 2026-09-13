@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 /**
  * Save the card at checkout; charge it when the prescriber approves.

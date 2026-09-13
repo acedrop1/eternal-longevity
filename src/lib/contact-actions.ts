@@ -2,6 +2,7 @@
 
 import { noticeEmail, sendEmail } from '@/lib/email';
 import { SUPPORT_EMAIL } from '@/lib/site';
+import { LIMITS, allow } from './rate-limit';
 
 export interface ContactResult {
   ok: boolean;
@@ -54,6 +55,10 @@ export async function sendContactMessage(input: {
   }
   if (message.length > 5000) {
     return { ok: false, error: 'That message is too long — 5000 characters max.' };
+  }
+
+  if (!(await allow('form', LIMITS.form))) {
+    return { ok: false, error: 'Too many messages. Try again shortly.' };
   }
 
   const topic = TOPIC_LABELS[input.topic] ?? 'Something else';

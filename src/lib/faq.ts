@@ -63,7 +63,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Protocols',
     q: 'How are the protocols designed?',
-    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. Our formulation team writes the base template, and each protocol is compounded to a structured, titrated dose. We don't run one-size-fits-all kits.",
+    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. The prescriber decides what is appropriate for you, and each preparation is compounded to a structured, titrated dose. We don't run one-size-fits-all kits.",
   },
   {
     category: 'Protocols',

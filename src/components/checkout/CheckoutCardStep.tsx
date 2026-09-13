@@ -8,7 +8,7 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { createOrderAuthAction } from '@/lib/order-payment';
+import { createOrderAuthAction } from '@/lib/checkout-payment-actions';
 
 /**
  * Card capture at checkout — saved, not charged.

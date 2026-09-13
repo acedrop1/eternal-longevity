@@ -1,4 +1,10 @@
-'use server';
+import 'server-only';
+
+/*
+ * Not a server action. Nothing in the browser calls this — the directive was
+ * publishing "submit this prescription to the pharmacy" as an unauthenticated
+ * endpoint, callable by anyone holding an order number.
+ */
 
 /**
  * Send a signed, paid order to the pharmacy automatically.
