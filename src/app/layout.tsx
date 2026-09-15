@@ -26,10 +26,9 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   keywords: [
     'peptides',
-    'GHK-Cu',
-    'KPV',
-    'CJC-1295',
-    'Ipamorelin',
+    'Sermorelin',
+    'Tesamorelin',
+    'NAD+',
     'longevity',
     '503A pharmacy',
   ],

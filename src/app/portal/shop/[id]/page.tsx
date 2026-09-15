@@ -6,7 +6,7 @@ import { ProductPDP, RelatedProducts } from '@/components/shop/ProductPDP';
 import { ProductPDPMobile } from '@/components/shop/ProductPDPMobile';
 import { getSession } from '@/lib/auth-server';
 import {
-  SHOP_PRODUCTS,
+  PUBLIC_PRODUCTS,
   getRelatedProducts,
   getShopProduct,
 } from '@/lib/shopProducts';
@@ -16,7 +16,9 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return SHOP_PRODUCTS.map((p) => ({ id: p.id }));
+  // Withheld products get no route at all, in the portal as much as on the
+  // public shop — a signed-in member is not a different legal posture.
+  return PUBLIC_PRODUCTS.map((p) => ({ id: p.id }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

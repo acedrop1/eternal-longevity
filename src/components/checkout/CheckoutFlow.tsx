@@ -18,6 +18,7 @@ import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -326,20 +327,26 @@ export function CheckoutFlow({
   // --- Derived ---
   const hasCart = resolvedItems.length > 0;
 
-  // Fallback line: Recover protocol shown if cart is empty.
+  /*
+   * Shown when someone reaches checkout with an empty cart. It was hard-coded
+   * to GHK-Cu, which is now withheld — an empty cart could have placed a real
+   * order for a product we cannot sell. Taken from the live catalogue instead,
+   * so it can never name something that is not on it.
+   */
+  const fallbackProduct = PUBLIC_PRODUCTS[0];
   const fallbackLine = useMemo(
     () => ({
-      key: 'fallback-ghk',
-      name: 'GHK-Cu',
+      key: `fallback-${fallbackProduct.id}`,
+      name: fallbackProduct.name,
       cadence: 'Quarterly billing',
       qty: 1,
-      perMonth: 160,
-      total: 480,
-      sub: '12-week cycle',
-      image: '/images/11.jpg',
-      swatch: 'linear-gradient(180deg, #1a4a3e 0%, #000000 100%)',
+      perMonth: Math.round(fallbackProduct.pricing.quarterly / 3),
+      total: fallbackProduct.pricing.quarterly,
+      sub: fallbackProduct.cycleLength,
+      image: fallbackProduct.image,
+      swatch: fallbackProduct.swatch,
     }),
-    []
+    [fallbackProduct]
   );
 
   const lines = useMemo(() => {
@@ -508,8 +515,8 @@ export function CheckoutFlow({
         }))
       : [
           {
-            productId: 'ghk-cu',
-            productName: 'GHK-Cu',
+            productId: fallbackProduct.id,
+            productName: fallbackProduct.name,
             cadence: 'quarterly' as const,
             cadenceLabel: 'Quarterly',
             quantity: 1,

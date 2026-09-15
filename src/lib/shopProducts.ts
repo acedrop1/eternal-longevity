@@ -913,6 +913,12 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
 
 /** Look up by id (slug). */
 export function getShopProduct(id: string): ShopProduct | null {
+  if (!isSellable(id)) return null;
+  return SHOP_PRODUCTS.find((p) => p.id === id) ?? null;
+}
+
+/** The withheld ones, for order history and any record that must still render. */
+export function getAnyShopProduct(id: string): ShopProduct | null {
   return SHOP_PRODUCTS.find((p) => p.id === id) ?? null;
 }
 
@@ -988,14 +994,55 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
 }
 
 /**
+ * What we are allowed to sell, as opposed to what we can make.
+ *
+ * Three separate gates landed on nearly the same answer, which is why this is
+ * one list rather than three:
+ *
+ *   • 503A — none of the withheld substances are on the FDA Bulks List, so
+ *     compounding them sits outside the exemption. Six of them (BPC-157,
+ *     TB-500, KPV, MOTS-c, Semax, Epitalon) came off Category 2 in April 2026
+ *     and were voted onto the path to the list by PCAC in July, but the
+ *     Secretary has not signed. Recommended is not listed.
+ *   • The payment processor's prohibited-products list, which allows exactly
+ *     the five below.
+ *   • LegitScript, which reviews the live catalogue as part of certification.
+ *
+ * Withheld, not deleted. The product data, imagery and clinical copy stay
+ * intact so a single edit here puts one back the day it is cleared.
+ */
+const WITHHELD = new Set([
+  'ghk-cu',
+  'cjc-ipamorelin',
+  'ipamorelin',
+  'selank',
+  'semax',
+  'epitalon',
+  'bpc-157',
+  'tb-500',
+  'bpc-tb500',
+  'thymosin-alpha-1',
+  'mots-c',
+  'kpv',
+  'dsip',
+  'klow',
+]);
+
+/** True when a product may be listed, linked, indexed or ordered. */
+export function isSellable(id: string): boolean {
+  return !WITHHELD.has(id);
+}
+
+/**
  * Products listed on the PUBLIC storefront (/shop).
  *
- * The whole catalog is public — the products underwriting flagged as
- * prohibited were removed from the catalog entirely rather than hidden, so
- * there is nothing left to gate. `fdaApproved` is kept as a display badge,
- * not as a visibility filter.
+ * A withheld product must not merely lose its tile: an orphaned page that
+ * still resolves, or a sitemap entry pointing at one, reads worse to a
+ * certifier than never having withheld it at all.
  */
-export const PUBLIC_PRODUCTS: ShopProduct[] = SHOP_PRODUCTS;
+export const PUBLIC_PRODUCTS: ShopProduct[] = SHOP_PRODUCTS.filter((p) =>
+  isSellable(p.id),
+);
 
 /** Categories that still have at least one product on the public storefront. */
 export const PUBLIC_CATEGORIES = SHOP_CATEGORIES.filter((c) =>

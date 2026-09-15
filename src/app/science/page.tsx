@@ -17,13 +17,13 @@ const MECHANISMS = [
     n: '01',
     title: 'Growth-hormone axis',
     body:
-      'Secretagogues like CJC-1295 and Ipamorelin act on the pituitary to produce pulsatile GH release, closer to how the body naturally cycles, without flooding the system.',
+      'Growth-hormone-releasing analogues act on the pituitary to produce pulsatile GH release, closer to how the body naturally cycles than flooding the system.',
   },
   {
     n: '02',
     title: 'Tissue repair',
     body:
-      'Restorative peptides like KPV and GHK-Cu are studied for tissue-remodelling signals. Explored for recovery across joints, skin, and connective tissue.',
+      'Repair signalling is an active research area across joints, skin and connective tissue. What we dispense is limited to preparations a prescriber can lawfully write today.',
   },
   {
     n: '03',
@@ -64,24 +64,24 @@ const STANDARDS = [
 
 const EVIDENCE = [
   {
-    peptide: 'CJC-1295 / Ipamorelin',
-    headline: 'GH pulse amplification, no cortisol shift',
-    summary:
-      'Trials in healthy adults have studied combined dosing for IGF-1 response and GH AUC across an eight-week window, reporting no elevation of prolactin or cortisol. Results in a trial population are not a prediction of your own.',
-    note: 'Multiple Phase 1/2 trials, peer-reviewed.',
-  },
-  {
-    peptide: 'GHK-Cu',
-    headline: 'Collagen synthesis & tissue remodeling',
-    summary:
-      'A naturally occurring copper tripeptide whose levels decline with age. Laboratory and dermatological research has studied its role in collagen production, tissue remodelling and antioxidant activity.',
-    note: 'Established in dermatology; systemic evidence emerging.',
-  },
-  {
     peptide: 'Tesamorelin',
     headline: 'The deepest human trial record in this class',
     summary:
       'Tesamorelin is FDA-approved under the brand name Egrifta for one specific indication. The preparation we dispense is compounded, is not FDA-approved, and is prescribed off-label. Trials in the approved population studied visceral adipose and lipid measures.',
+    note: 'The branded product is approved; the compounded preparation is not.',
+  },
+  {
+    peptide: 'Sermorelin',
+    headline: 'A growth-hormone-releasing analogue with an approval history',
+    summary:
+      'Sermorelin was approved in the United States as Geref and later withdrawn for commercial reasons rather than safety findings. What we dispense is a compounded preparation and is not itself FDA-approved.',
+    note: 'Previously approved; the compounded preparation is not.',
+  },
+  {
+    peptide: 'PT-141',
+    headline: 'Bremelanotide, approved as Vyleesi',
+    summary:
+      'Bremelanotide is FDA-approved as Vyleesi for one specific indication in premenopausal women. Anything we dispense is compounded, is not FDA-approved, and is prescribed off-label where a prescriber documents why the commercial product is not suitable.',
     note: 'The branded product is approved; the compounded preparation is not.',
   },
 ];

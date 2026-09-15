@@ -34,6 +34,7 @@ import {
 import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { isSellable } from '@/lib/shopProducts';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
@@ -270,6 +271,14 @@ export async function placeOrderAction(input: {
   }
 
   if (!input.lines.length) return { ok: false, error: 'empty_cart' };
+
+  /*
+   * Catalogue gate, enforced server-side for the same reason as the geofence.
+   * A withheld product has no tile, no page and no route — but a saved cart or
+   * a crafted request is not stopped by any of those.
+   */
+  const withheld = input.lines.filter((l) => !isSellable(l.productId));
+  if (withheld.length) return { ok: false, error: 'product_unavailable' };
 
   const db = createSupabaseAdminClient();
 

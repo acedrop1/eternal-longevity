@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   SHOP_CATEGORIES,
-  SHOP_PRODUCTS,
+  PUBLIC_PRODUCTS,
   DELIVERY_LABEL,
   type ShopCategory,
 } from '@/lib/shopProducts';
@@ -15,7 +15,7 @@ type Filter = 'all' | ShopCategory;
 
 interface ShopCatalogProps {
   /** Products to list. Defaults to the full member catalog. */
-  items?: typeof SHOP_PRODUCTS;
+  items?: typeof PUBLIC_PRODUCTS;
   /** Category pills to offer. Defaults to all categories. */
   categories?: typeof SHOP_CATEGORIES;
   /** Route prefix for product links. '/shop' on the public storefront. */
@@ -30,7 +30,7 @@ interface ShopCatalogProps {
 }
 
 export function ShopCatalog({
-  items = SHOP_PRODUCTS,
+  items = PUBLIC_PRODUCTS,
   categories = SHOP_CATEGORIES,
   basePath = '/portal/shop',
   startPath,

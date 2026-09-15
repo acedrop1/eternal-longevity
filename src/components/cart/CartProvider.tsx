@@ -12,6 +12,7 @@ import {
 } from 'react';
 import {
   SHOP_PRODUCTS,
+  isSellable,
   cadenceTiersForProduct,
   type ShopProduct,
 } from '@/lib/shopProducts';
@@ -207,8 +208,12 @@ export function CartProvider({
     let sub = 0;
     let count = 0;
     for (const it of state.items) {
+      /*
+       * A withheld product drops out of the cart rather than rendering: a
+       * saved cart from before it was withdrawn must not be a way to order it.
+       */
       const product = SHOP_PRODUCTS.find((p) => p.id === it.productId);
-      if (!product) continue;
+      if (!product || !isSellable(product.id)) continue;
       const tiers = cadenceTiersForProduct(product);
       const tier = tiers.find((t) => t.key === it.cadence) ?? tiers[0];
       resolved.push({
