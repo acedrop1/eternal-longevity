@@ -30,7 +30,7 @@ export default async function CheckoutPage() {
   const prefill = await checkoutPrefill(user.id);
 
   return (
-    <main className="relative min-h-screen bg-background">
+    <main className="theme-light relative min-h-screen bg-background">
       <CheckoutFlow
         defaultEmail={user.email}
         defaultName={prefill.fullName || user.name}

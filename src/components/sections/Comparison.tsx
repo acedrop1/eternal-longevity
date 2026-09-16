@@ -75,12 +75,17 @@ export function Comparison() {
 
           {/* Right column. Comparison table */}
           <FadeIn delay={220}>
+          {/*
+           * The card used to be a hard-coded translucent near-black. Over a
+           * cream band that composites to mud and takes the text down with it,
+           * so the surface comes from the theme now and only the gold wash
+           * stays inline.
+           */}
           <div
-            className="relative rounded-3xl border border-line overflow-hidden"
+            className="relative overflow-hidden rounded-3xl border border-line bg-surface"
             style={{
-              background:
-                'linear-gradient(180deg, rgba(213,168,80,0.06) 0%, rgba(0, 0, 0,0) 30%, rgba(0, 0, 0,0) 100%), rgba(20, 20, 20,0.6)',
-              backdropFilter: 'blur(10px)',
+              backgroundImage:
+                'linear-gradient(180deg, rgba(213,168,80,0.08) 0%, rgba(213,168,80,0) 32%)',
             }}
           >
             {/* Table header */}

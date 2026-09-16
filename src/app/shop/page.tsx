@@ -16,7 +16,7 @@ export default function PublicShopPage() {
   return (
     <>
       <Header />
-      <main className="bg-background text-foreground">
+      <main className="theme-light bg-background text-foreground">
         {/* HERO */}
         <section className="relative isolate overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 px-6">
           <div

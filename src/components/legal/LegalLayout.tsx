@@ -47,7 +47,7 @@ export function LegalLayout({
   return (
     <>
       <Header />
-      <main className="relative bg-background">
+      <main className="theme-light relative bg-background">
         {/* ============ HERO ============ */}
         <section className="relative px-6 pt-20 pb-12 md:pt-24 md:pb-16 overflow-hidden">
           <div

@@ -32,7 +32,7 @@ export default async function PayPage({ params }: PayPageProps) {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-background px-6 pb-16 pt-20 text-foreground">
+      <main className="theme-light min-h-screen bg-background px-6 pb-16 pt-20 text-foreground">
         <div className="mx-auto max-w-lg">
           {!order ? (
             <div className="rounded-3xl border border-line bg-surface p-8 text-center">

@@ -80,7 +80,7 @@ export default async function CompliancePage() {
   return (
     <>
       <Header />
-      <main className="bg-background">
+      <main className="theme-light bg-background">
         <section className="relative isolate overflow-hidden px-6 pt-20 pb-16 md:pt-24 md:pb-20">
           <div
             aria-hidden

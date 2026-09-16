@@ -15,7 +15,7 @@ export default function NotFound() {
   return (
     <>
       <Header />
-      <main className="relative min-h-screen bg-background overflow-hidden">
+      <main className="theme-light relative min-h-screen bg-background overflow-hidden">
         {/* Soft halo */}
         <div
           aria-hidden

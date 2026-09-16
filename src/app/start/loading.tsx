@@ -7,7 +7,7 @@ import { Shimmer } from '@/components/skeletons/Shimmer';
  */
 export default function StartLoading() {
   return (
-    <main className="min-h-screen bg-background overflow-hidden">
+    <main className="theme-light min-h-screen bg-background overflow-hidden">
       {/* Top: progress bar + step counter */}
       <header className="fixed top-0 inset-x-0 z-30 bg-background/85 backdrop-blur border-b border-line">
         <div className="mx-auto max-w-3xl px-6 py-3">

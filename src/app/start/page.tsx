@@ -22,7 +22,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   return (
     <>
       <Header />
-      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <main className="theme-light relative min-h-screen overflow-hidden bg-background text-foreground">
         {/* Ambient hero video. Dimmed, anchored at the top, fades into bg */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] md:h-[70vh] -z-10">
           <LoopVideo src="/videos/4.mp4" className="absolute inset-0 w-full h-full" />

@@ -24,7 +24,7 @@ export function AuthShell({
   return (
     <>
       <Header />
-      <main className="relative min-h-screen bg-background overflow-hidden">
+      <main className="theme-light relative min-h-screen bg-background overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <LoopVideo
             src="/videos/3.mp4"
