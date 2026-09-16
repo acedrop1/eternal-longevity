@@ -85,16 +85,17 @@ export function ProductRail() {
       </div>
 
       {/*
-       * The rail sits in the same centred container as the heading, then
-       * negative-margins out and pads back in — so the first card starts on the
-       * heading's left edge while later cards can still bleed past the gutter
-       * as they scroll.
+       * On a phone the rail bleeds into the gutter, because a sliced card at
+       * the edge is what tells a thumb there is more to swipe. On a desktop
+       * there is no thumb and the slice just reads as a clipped layout, so the
+       * rail ends exactly where the container does and the cards are sized to
+       * divide it evenly — every resting position lands on clean edges.
        */}
       <div className="mx-auto max-w-7xl">
         <div
           ref={railRef}
           onScroll={sync}
-          className="scrollbar-hide -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2"
+          className="scrollbar-hide -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:px-0"
           style={{ scrollPaddingLeft: '1.5rem' }}
         >
           {PUBLIC_PRODUCTS.map((p) => (
@@ -102,7 +103,7 @@ export function ProductRail() {
               key={p.id}
               data-card
               href={`/shop/${p.id}`}
-              className="group relative w-[74vw] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-line bg-surface transition-colors duration-500 hover:border-accent/30 sm:w-[46vw] lg:w-[300px]"
+              className="group relative w-[74vw] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-line bg-surface transition-colors duration-500 hover:border-accent/30 sm:w-[46vw] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]"
             >
               <div
                 className="relative aspect-[5/6] overflow-hidden"
@@ -156,8 +157,8 @@ export function ProductRail() {
             </Link>
           ))}
 
-          {/* Lets the final card clear the right gutter instead of hugging it. */}
-          <div aria-hidden className="w-2 shrink-0" />
+          {/* Clears the mobile gutter; unwanted once the rail ends at the container. */}
+          <div aria-hidden className="w-2 shrink-0 md:hidden" />
         </div>
       </div>
 
