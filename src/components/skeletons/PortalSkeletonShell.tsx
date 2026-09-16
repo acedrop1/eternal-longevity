@@ -12,7 +12,9 @@ export function PortalSkeletonShell({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
+    // Matches PortalShell, which now runs light for every role — a dark
+    // skeleton in front of a cream portal is a flash of the old site.
+    <div className="theme-light min-h-screen bg-background">
       {/* ============ TOP BAR ============ */}
       <header className="sticky top-0 z-40 border-b border-line bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 md:px-6">

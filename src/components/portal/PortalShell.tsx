@@ -61,16 +61,21 @@ interface PortalShellProps {
 export async function PortalShell({
   user,
   nav = [],
-  bodyTheme = 'dark',
+  bodyTheme = 'light',
   children,
 }: PortalShellProps) {
   const theme = ROLE_THEME[user.role];
   /*
-   * The prescriber reads dense clinical text for minutes at a time, often on a
-   * laptop in a lit room. Cream is easier on the eye for that than ivory on
-   * black, which is built for a marketing page nobody stares at.
+   * Every portal runs light, the way the whole site does now. The prescriber's
+   * was first — he reads dense clinical text for minutes at a time, and cream
+   * is easier on the eye than ivory on black — but the argument was never
+   * specific to him. A member checking an order and an admin reading an audit
+   * trail are doing the same kind of reading, and a site that is cream
+   * everywhere except behind the login is two brands, not one.
+   *
+   * bodyTheme stays as the override for anything that ever needs the dark back.
    */
-  const lightBody = bodyTheme === 'light' || user.role === 'doctor';
+  const lightBody = bodyTheme !== 'dark';
 
   // Attach pending-task count badges to the nav.
   const navItems = await enrichNavWithCounts(nav, user.role);
