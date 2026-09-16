@@ -23,16 +23,31 @@ export default function Home() {
           <Hero />
           <IntroPanel />           {/* Rounded-top card: teal bar + press marquee + animated text */}
         </div>
-        {/* Wrap each subsequent section in SectionReveal so it fades + rises into view */}
-        <SectionReveal><ProductRail /></SectionReveal>   {/* The catalogue, straight after the brand statement */}
-        <SectionReveal><Pillars /></SectionReveal>              {/* Premium expandable rows */}
+        {/*
+         * Bands, not a gradient. The page alternates between committed dark
+         * and committed light rather than settling on one mid-tone: the dark
+         * stretches are the cinematic ones, where the scroll does the work,
+         * and the light stretches are the ones you actually read and buy from.
+         * A product, a price and a contraindication all want a light ground;
+         * a video and a sticky reveal do not.
+         */}
+        <div className="theme-light">
+          <SectionReveal><ProductRail /></SectionReveal>
+          <SectionReveal><Pillars /></SectionReveal>
+        </div>
+
         <SectionReveal><Science /></SectionReveal>              {/* POUCH sticky-scroll science section */}
-        <SectionReveal><HowItWorks /></SectionReveal>
-        <SectionReveal><ClinicalBoard /></SectionReveal>  {/* The named prescriber, straight after how it works */}
+
+        <div className="theme-light">
+          <SectionReveal><HowItWorks /></SectionReveal>
+          <SectionReveal><ClinicalBoard /></SectionReveal>
+        </div>
         {/* Testimonials intentionally omitted until real, permissioned member
             quotes exist. The component remains in components/sections for
             when they do — see its header comment. */}
-        <SectionReveal><Comparison /></SectionReveal>           {/* POUCH Sip vs Drip comparison table */}
+        <div className="theme-light">
+          <SectionReveal><Comparison /></SectionReveal>
+        </div>
         <SectionReveal><FeatureSpotlight /></SectionReveal>     {/* Eight Sleep scroll-pinned spotlight */}
       </main>
       <Footer />

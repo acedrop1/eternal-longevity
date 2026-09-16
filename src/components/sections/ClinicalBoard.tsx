@@ -16,7 +16,7 @@ import { FadeIn } from '@/components/ui/FadeIn';
  */
 export function ClinicalBoard() {
   return (
-    <section className="relative bg-surface px-6 py-20 md:py-28">
+    <section className="relative bg-background px-6 py-20 md:py-28">
       <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-[300px_1fr] md:gap-20">
         <FadeIn>
           <figure className="m-0">

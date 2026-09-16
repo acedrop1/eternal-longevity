@@ -72,7 +72,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
           // z-[45] keeps the pill (and its X) above the dropdown scrim
           // (z-35) and panel (z-40) so it never gets covered + blurred.
           'relative z-[45] inline-flex items-center justify-center rounded-full px-5 py-2.5 transition-colors',
-          'glass text-foreground text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
+          'bg-black/60 backdrop-blur-xl ring-1 ring-white/10 text-white text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
         )}
       >
         {/* "Menu ⌄" label. Fades out when open (opacity-only, no scale —

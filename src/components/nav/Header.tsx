@@ -51,17 +51,26 @@ export function Header() {
         </div>
 
         <nav className="hidden md:block">
+          {/*
+           * Always dark, never themed. The page alternates between black and
+           * cream bands and the header floats across both — a glass pill that
+           * tints white disappears the moment it crosses a light one, labels
+           * and all. A solid dark pill reads on either ground, which is what
+           * every site built out of bands ends up doing with its nav.
+           */}
           <div
             className={cn(
-              'flex items-center gap-1 rounded-full px-2 py-1.5 transition-all duration-500 ease-out-expo',
-              scrolled ? 'glass-strong' : 'glass'
+              'flex items-center gap-1 rounded-full px-2 py-1.5 backdrop-blur-xl transition-all duration-500 ease-out-expo',
+              scrolled
+                ? 'bg-black/80 ring-1 ring-white/15'
+                : 'bg-black/55 ring-1 ring-white/10'
             )}
           >
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="pill text-foreground/80 hover:text-foreground hover:bg-foreground/5"
+                className="pill text-white/80 hover:bg-white/10 hover:text-white"
               >
                 {link.label}
               </Link>
@@ -72,7 +81,7 @@ export function Header() {
         <div className="hidden md:flex flex-1 items-center justify-end gap-2">
           <Link
             href="/login"
-            className="pill text-foreground/70 hover:text-foreground"
+            className="pill bg-black/55 text-white/75 backdrop-blur-xl ring-1 ring-white/10 hover:text-white"
           >
             Login
           </Link>
@@ -100,7 +109,7 @@ export function Header() {
           <Link
             href="/login"
             aria-label="Login"
-            className="grid h-11 w-11 place-items-center rounded-full glass text-foreground/80 hover:text-foreground"
+            className="grid h-11 w-11 place-items-center rounded-full bg-black/55 text-white/80 backdrop-blur-xl ring-1 ring-white/10 hover:text-white"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
