@@ -41,7 +41,6 @@ function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
       : '—',
   },
   { label: 'NPI', value: p.npi || '—' },
-  { label: 'Compounding partner', value: 'Kaduceus Pharmacy, a licensed 503A compounder' },
   { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
   { label: 'Minimum age', value: '18+' },
   ];

@@ -1012,6 +1012,9 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
  * intact so a single edit here puts one back the day it is cleared.
  */
 const WITHHELD = new Set([
+  // The prescriber does not intend to write it. A catalogue that lists what
+  // nobody will sign is the same defect as listing what nobody can compound.
+  'sermorelin',
   // LegitScript's analyst flagged tesamorelin under Healthcare Standard 2: not
   // on the 503A bulks list, not a component of an FDA-approved drug for
   // compounding purposes, and therefore a barrier to certification. The brand

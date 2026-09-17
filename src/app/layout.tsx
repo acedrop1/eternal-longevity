@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   keywords: [
     'peptides',
-    'Sermorelin',
     'NAD+',
     'longevity',
     '503A pharmacy',

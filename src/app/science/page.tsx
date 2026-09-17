@@ -64,13 +64,6 @@ const STANDARDS = [
 
 const EVIDENCE = [
   {
-    peptide: 'Sermorelin',
-    headline: 'A growth-hormone-releasing analogue with an approval history',
-    summary:
-      'Sermorelin was approved in the United States as Geref and later withdrawn for commercial reasons rather than safety findings. What we dispense is a compounded preparation and is not itself FDA-approved.',
-    note: 'Previously approved; the compounded preparation is not.',
-  },
-  {
     peptide: 'PT-141',
     headline: 'Bremelanotide, approved as Vyleesi',
     summary:
