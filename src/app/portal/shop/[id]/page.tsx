@@ -15,6 +15,14 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+/*
+ * A withheld product must 404, not render a not-found page with a 200. Next
+ * generates an unlisted param on demand, calls notFound(), and the edge caches
+ * that render with a success status — so the page reads "404" while the status
+ * line says otherwise. Refusing unknown params settles it at the route.
+ */
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   // Withheld products get no route at all, in the portal as much as on the
   // public shop — a signed-in member is not a different legal posture.

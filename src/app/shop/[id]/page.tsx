@@ -12,6 +12,14 @@ interface PageProps {
 }
 
 /** Only the public (FDA-approved-active) products get a public product page. */
+/*
+ * A withheld product must 404, not render a not-found page with a 200. Next
+ * generates an unlisted param on demand, calls notFound(), and the edge caches
+ * that render with a success status — so the page reads "404" while the status
+ * line says otherwise. Refusing unknown params settles it at the route.
+ */
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return PUBLIC_PRODUCTS.map((p) => ({ id: p.id }));
 }
