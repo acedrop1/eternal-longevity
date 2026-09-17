@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   keywords: [
     'peptides',
     'Sermorelin',
-    'Tesamorelin',
     'NAD+',
     'longevity',
     '503A pharmacy',

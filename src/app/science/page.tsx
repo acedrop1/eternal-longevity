@@ -35,7 +35,7 @@ const MECHANISMS = [
     n: '04',
     title: 'Metabolic balance',
     body:
-      'Tesamorelin has been studied for visceral adipose tissue in one approved indication. What we dispense is compounded, is not FDA-approved, and is prescribed off-label — the product page states exactly what the trials measured.',
+      'Metabolic peptides are an active research area. What a prescriber can lawfully write today is narrower than what is studied, and the catalogue reflects that rather than the literature.',
   },
 ];
 
@@ -63,13 +63,6 @@ const STANDARDS = [
 ];
 
 const EVIDENCE = [
-  {
-    peptide: 'Tesamorelin',
-    headline: 'The deepest human trial record in this class',
-    summary:
-      'Tesamorelin is FDA-approved under the brand name Egrifta for one specific indication. The preparation we dispense is compounded, is not FDA-approved, and is prescribed off-label. Trials in the approved population studied visceral adipose and lipid measures.',
-    note: 'The branded product is approved; the compounded preparation is not.',
-  },
   {
     peptide: 'Sermorelin',
     headline: 'A growth-hormone-releasing analogue with an approval history',

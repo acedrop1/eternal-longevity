@@ -1012,6 +1012,11 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
  * intact so a single edit here puts one back the day it is cleared.
  */
 const WITHHELD = new Set([
+  // LegitScript's analyst flagged tesamorelin under Healthcare Standard 2: not
+  // on the 503A bulks list, not a component of an FDA-approved drug for
+  // compounding purposes, and therefore a barrier to certification. The brand
+  // being approved is not the same thing as the bulk substance being permitted.
+  'tesamorelin',
   'ghk-cu',
   'cjc-ipamorelin',
   'ipamorelin',
