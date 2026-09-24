@@ -395,7 +395,8 @@ export function CheckoutFlow({
 
   const subtotal = hasCart ? cartSubtotal : fallbackLine.total;
   const shippingCost = SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.price ?? 0;
-  const tax = Math.round(subtotal * 0.08);
+  // Prescription drugs carry no sales tax in NJ, NY, PA or MI; the server sets it too.
+  const tax = 0;
   const discount = promo?.ok ? (promo.discountCents ?? 0) / 100 : 0;
   const total = Math.max(0, subtotal + shippingCost + tax - discount);
 
@@ -845,7 +846,6 @@ export function CheckoutFlow({
                     label="Shipping"
                     value={shippingCost === 0 ? 'Included' : `$${shippingCost}`}
                   />
-                  <SummaryRow label="Estimated tax" value={`$${tax}`} />
                   {promo?.ok && (
                     <SummaryRow
                       label={`Discount · ${promo.code}`}

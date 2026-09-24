@@ -207,8 +207,6 @@ export function OrdersProvider({
         placeOrderAction({
           lines: draft.lines,
           subtotal: draft.subtotal,
-          shippingCost: draft.shippingCost,
-          tax: draft.tax,
           total: draft.total,
           shippingAddress: draft.shippingAddress,
           cardLast4: draft.cardLast4,

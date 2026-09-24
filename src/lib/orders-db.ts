@@ -238,8 +238,6 @@ function revalidatePortal() {
 export async function placeOrderAction(input: {
   lines: OrderLine[];
   subtotal: number;
-  shippingCost: number;
-  tax: number;
   total: number;
   shippingAddress: Order['shippingAddress'];
   cardLast4?: string;
@@ -327,8 +325,16 @@ export async function placeOrderAction(input: {
     }
   }
 
-  const cartShippingCents = Math.round(input.shippingCost * 100);
-  const cartTaxCents = Math.round(input.tax * 100);
+  /*
+   * Shipping and tax are set here, not taken from the request. Shipping is
+   * included in the price (expedited cold-chain, carrier cost absorbed), and
+   * no sales tax is charged: prescription drugs are exempt in every state we
+   * serve (NJ, NY, PA, MI). If a taxable item is ever sold, compute it here
+   * (e.g. Stripe Tax calculations) rather than trusting a number the browser
+   * sent.
+   */
+  const cartShippingCents = 0;
+  const cartTaxCents = 0;
 
   // Shipping and tax belong to the basket, so they are split across it by
   // value, and the rounding remainder lands on the first order.
