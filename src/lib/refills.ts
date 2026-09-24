@@ -312,7 +312,15 @@ export async function renewSubscription(
           }
         : undefined,
       metadata: { order_number: orderNumber, refill: 'true' },
+    }, {
+      // One charge per plan per billing date, even if two cron runs overlap.
+      // ponytail: an overlapping run still inserts a second (unpaid) order row;
+      // add a row lock on the subscription if the cron ever runs concurrently.
+      idempotencyKey: `renew-${sub.id}-${sub.next_billing_date}-${paymentMethodId}`,
     });
+    if (intent.status !== 'succeeded') {
+      throw new Error(`Charge not completed (${intent.status}).`);
+    }
     await db
       .from('orders')
       .update({ stripe_payment_intent_id: intent.id })

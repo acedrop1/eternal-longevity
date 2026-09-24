@@ -90,6 +90,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const pi = event.data.object;
+      await linkIntentToOrder(db, pi);
       // Burn the pay-link token alongside marking the order paid, so the
       // emailed link cannot be reused or forwarded after it has been used.
       await db
@@ -129,6 +130,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
 
     case 'payment_intent.payment_failed': {
       const pi = event.data.object;
+      await linkIntentToOrder(db, pi);
       await addOrderUpdate(
         db,
         pi.id,
@@ -198,6 +200,24 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
  * A paid refill cycle -> a draft fulfillment order in the admin queue. The
  * admin reviews it, then submits it to the pharmacy.
  */
+/**
+ * Every intent we create carries its order number in metadata. The charge code
+ * writes the intent id onto the order only after Stripe answers, and this event
+ * can arrive first; matching on the id alone would then update nothing and the
+ * order would never be marked paid. Linking by order number closes that race.
+ */
+async function linkIntentToOrder(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  pi: Stripe.PaymentIntent,
+): Promise<void> {
+  const orderNumber = pi.metadata?.order_number;
+  if (!orderNumber) return;
+  await db
+    .from('orders')
+    .update({ stripe_payment_intent_id: pi.id })
+    .eq('order_number', orderNumber);
+}
+
 async function createRefillDraft(
   db: ReturnType<typeof createSupabaseAdminClient>,
   stripeCustomerId: string,

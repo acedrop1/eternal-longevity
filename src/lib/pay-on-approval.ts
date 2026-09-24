@@ -366,7 +366,7 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state',
+      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state, stripe_payment_intent_id',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
@@ -374,11 +374,29 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
   if (!order) return { ok: false, error: 'not_found' };
   if (order.paid_confirmed_at) return { ok: true, charged: false };
 
+  const stripe = getStripe();
+
+  /*
+   * paid_confirmed_at is written by the webhook, seconds after the charge. A
+   * second approval inside that window (a double click, a retried request)
+   * would otherwise charge again. If this order's intent already went through,
+   * report it and stop.
+   */
+  if (order.stripe_payment_intent_id) {
+    try {
+      const prior = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
+      if (prior.status === 'succeeded' || prior.status === 'processing') {
+        return { ok: true, charged: prior.status === 'succeeded' };
+      }
+    } catch {
+      // Unknown id: fall through and charge.
+    }
+  }
+
   const amount = order.total_cents ?? 0;
   if (amount <= 0) return { ok: false, error: 'invalid_amount' };
   if (!order.member_email) return { ok: false, error: 'no_email' };
 
-  const stripe = getStripe();
   const customerId = await getOrCreateStripeCustomer({
     userId: order.user_id,
     email: order.member_email,
@@ -418,6 +436,11 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
           }
         : undefined,
       metadata: { order_number: order.order_number, order_id: order.id },
+    }, {
+      // Two approvals racing each other get one charge: Stripe returns the
+      // first intent for the same key. Keyed on the card too, so a retry after
+      // the member replaces a declined card is a new attempt.
+      idempotencyKey: `approve-${order.id}-${paymentMethodId}`,
     });
 
     await db

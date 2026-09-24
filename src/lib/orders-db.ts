@@ -386,7 +386,7 @@ export async function placeOrderAction(input: {
         total_cents: totalCents,
         shipping_address: input.shippingAddress,
         card_last4: input.cardLast4 ?? null,
-        stripe_payment_intent_id: input.authIntentId ?? null,
+        stripe_payment_intent_id: input.authIntentId || null,
       })
       .select('id')
       .single();
