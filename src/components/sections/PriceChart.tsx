@@ -117,7 +117,7 @@ export function PriceChart() {
 
             <figcaption className="mt-8 max-w-xl text-[12px] leading-relaxed text-black/55">
               Price per month, from our current catalog. The quarterly plan is billed every three months. Prescription
-              required: if the physician doesn&rsquo;t prescribe, you aren&rsquo;t charged. New Jersey residents, 18+.
+              required: if the physician doesn&rsquo;t prescribe, you aren&rsquo;t charged. Residents of NJ, NY, PA and MI, 18+.
             </figcaption>
           </figure>
         </div>

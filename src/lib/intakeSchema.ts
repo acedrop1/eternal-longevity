@@ -15,11 +15,12 @@
  *
  * Two things gate a state: a prescriber licensed there (medicine is practiced
  * where the patient is) and a pharmacy licensed to dispense there. Both must
- * be true — today only New Jersey clears both, because Dr. Elder holds a NJ
- * license and nothing else. Add states here the moment a contracted prescriber
- * network covers them; every consumer of this list follows automatically.
+ * be true. Dr. Elder is licensed in NJ, NY, PA and MI, and the partner
+ * pharmacy must hold a (non-resident) licence for each. Add or remove a state
+ * here and every consumer follows: the server geofence, checkout, saved
+ * addresses and the compliance page. Keep SERVICE_AREA in lib/site in step.
  */
-export const SERVICEABLE_STATES = ['NJ'];
+export const SERVICEABLE_STATES = ['NJ', 'NY', 'PA', 'MI'];
 
 /** All US state abbreviations. Billing addresses only — never shipping. */
 export const STATES_AVAILABLE = [

@@ -18,7 +18,7 @@ const H3 = { fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 } as const;
 
 const NUMBERS = [
   { stat: '1', label: 'Prescriber, who signs every order' },
-  { stat: 'NJ', label: 'The only state we serve' },
+  { stat: '4', label: 'States we serve: NJ, NY, PA and MI' },
   { stat: '503A', label: 'Licensed compounding pharmacy' },
   { stat: '18+', label: 'Minimum age to order' },
 ];

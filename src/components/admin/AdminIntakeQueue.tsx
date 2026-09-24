@@ -25,7 +25,7 @@ export interface IntakeRowView {
  * to make. These are the only reasons an admin can close on.
  */
 const CLOSE_REASONS = [
-  'Outside New Jersey — we are only licensed to serve NJ residents.',
+  'Outside our service area — we serve NJ, NY, PA and MI only.',
   'Under 18 — we cannot treat anyone under 18.',
   'Duplicate of an existing visit.',
   'Test, spam, or an incomplete submission.',

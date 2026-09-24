@@ -15,7 +15,7 @@ const PLAYBACK_RATE = 0.7;
 
 // Standing facts for the ticker. Each is already stated elsewhere on the site.
 const TICKER = [
-  'New Jersey only',
+  'Serving NJ, NY, PA & MI',
   'Prescription required',
   '18+',
   'Free shipping on every cycle',
@@ -85,7 +85,7 @@ export function Hero() {
         </h1>
         {/* The two trust facts sit at full white against softer copy. */}
         <p className={`mt-5 max-w-md text-[15px] leading-relaxed text-white/70 md:text-[16px] ${enter(1).className}`} style={enter(1).style}>
-          Prescribed by a <span className="text-white">New Jersey physician</span>. Compounded by a licensed{' '}
+          Prescribed by a <span className="text-white">licensed physician</span>. Compounded by a licensed{' '}
           <span className="text-white">503A pharmacy</span>.
         </p>
 

@@ -5,6 +5,7 @@ import {
   BUSINESS_ADDRESS,
   SUPPORT_EMAIL,
   SERVICE_AREA,
+  SERVICE_AREA_OR,
 } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export default function StateAvailabilityPage() {
         {
           heading: `Where We Operate`,
           paragraphs: [
-            `We serve ${SERVICE_AREA} only. Our prescriber is licensed there, and our partner pharmacy holds the registration required to ship prescriptions into it.`,
+            `We serve ${SERVICE_AREA} only. Our prescriber is licensed in each of those states, and our partner pharmacy holds the registration required to ship prescriptions into each of them.`,
             `We do not operate internationally, and we do not ship to P.O. boxes, freight forwarders, or APO/FPO addresses.`,
           ],
         },
@@ -42,7 +43,7 @@ export default function StateAvailabilityPage() {
         {
           heading: `If You Move`,
           paragraphs: [
-            `If you relocate out of ${SERVICE_AREA}, tell us. We will stop your subscription rather than continue shipping into a state we are not licensed for. If you move into ${SERVICE_AREA}, update your address and we can resume.`,
+            `If you relocate to a state we do not serve, tell us. We will stop your subscription rather than continue shipping into a state we are not licensed for. If you later move into ${SERVICE_AREA_OR}, update your address and we can resume.`,
           ],
         },
         {

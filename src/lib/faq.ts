@@ -47,7 +47,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How does Eternal Longevity work?',
-    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. A New Jersey physician reviews it and decides whether to prescribe. If he does, a U.S.-licensed 503A pharmacy compounds it and ships it to your door — typically three to five days. If he declines, you are not charged.",
+    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. A licensed physician reviews it and decides whether to prescribe. If he does, a U.S.-licensed 503A pharmacy compounds it and ships it to your door — typically three to five days. If he declines, you are not charged.",
   },
   {
     category: 'Getting Started',
@@ -64,7 +64,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Eligibility',
     q: 'Which states do you ship to?',
-    a: "We currently serve members in New Jersey. Our prescriber is licensed in NJ, and orders ship to NJ addresses. We're adding states as we expand our licensed prescriber network. If you're outside New Jersey, leave your email and we'll notify you the moment we go live in your state.",
+    a: "We currently serve members in New Jersey, New York, Pennsylvania and Michigan. Our prescriber is licensed in all four states, and orders ship only to addresses in them. We're adding states as we expand. If you're somewhere else, leave your email and we'll notify you the moment we go live in your state.",
   },
   {
     category: 'Eligibility',

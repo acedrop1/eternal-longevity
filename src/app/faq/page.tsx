@@ -91,7 +91,7 @@ export default function FAQPage() {
                 The shortest path is to start the assessment.
               </h2>
               <p className="mt-4 max-w-md text-[16px] leading-relaxed text-black/70">
-                Three minutes. Answer a few questions and a New Jersey physician decides whether to prescribe.
+                Three minutes. Answer a few questions and a licensed physician decides whether to prescribe.
               </p>
               <Link
                 href="/start"

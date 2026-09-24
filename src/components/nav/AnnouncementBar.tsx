@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * makes and links to the page that backs it up.
  */
 const MESSAGES = [
-  { text: 'Prescribed by a New Jersey physician.', href: '/about' },
+  { text: 'Prescribed by a licensed physician. NJ, NY, PA & MI.', href: '/about' },
   { text: 'Compounded by a licensed 503A pharmacy.', href: '/legal/pharmacy-fulfillment' },
   { text: 'Free shipping on every cycle.', href: '/legal/shipping' },
 ];

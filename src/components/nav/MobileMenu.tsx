@@ -159,7 +159,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
                   Log in
                 </Link>
                 <p className="mt-2 text-center font-mono text-[12px] text-white/50">
-                  New Jersey only · Prescription required · 18+
+                  NJ, NY, PA &amp; MI only · Prescription required · 18+
                 </p>
               </div>
             </div>

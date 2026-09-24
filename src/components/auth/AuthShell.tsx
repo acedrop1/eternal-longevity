@@ -61,7 +61,7 @@ export function AuthShell({
                   Every protocol is compounded by a licensed 503A pharmacy against a prescription written for you.
                 </p>
                 <p className="mt-6 font-mono text-[12px] text-white/55">
-                  New Jersey only · Prescription required · 18+
+                  NJ, NY, PA &amp; MI only · Prescription required · 18+
                 </p>
               </div>
             </aside>

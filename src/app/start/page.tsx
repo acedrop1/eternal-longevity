@@ -7,7 +7,7 @@ import { getLiveProduct } from '@/lib/catalog';
 export const metadata: Metadata = {
   title: 'Start Your Assessment',
   description:
-    'Start with a short health profile. A New Jersey physician reviews it and decides whether to prescribe.',
+    'Start with a short health profile. A licensed physician reviews it and decides whether to prescribe.',
 };
 
 interface StartPageProps {

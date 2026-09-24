@@ -136,11 +136,11 @@ export function Footer() {
             © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>
           <p className="max-w-2xl text-[11px] leading-relaxed text-white/45 md:text-right">
-            Prescriptions are written by a New Jersey&ndash;licensed physician following clinical review, and dispensed
+            Prescriptions are written by a licensed physician following clinical review, and dispensed
             by an independently licensed 503A compounding pharmacy. Eternal Longevity is not a pharmacy. Compounded
             medications are not FDA-approved. These statements have not been evaluated by the Food and Drug
             Administration; these products are not intended to diagnose, treat, cure, or prevent any disease. Not a
-            substitute for primary care. Available to New Jersey residents only. 18+.
+            substitute for primary care. Available to residents of New Jersey, New York, Pennsylvania and Michigan only. 18+.
           </p>
         </div>
       </div>

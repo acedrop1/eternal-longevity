@@ -55,7 +55,7 @@ export default async function PrescriptionPolicyPage() {
         {
           heading: `Who Prescribes`,
           paragraphs: [
-            `Prescriptions are written by ${prescriber.display}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.licenseNumber ? ` (license ${prescriber.licenseNumber}` : ''}${prescriber.npi ? `, NPI ${prescriber.npi})` : prescriber.licenseNumber ? ')' : ''}. Our full prescriber and pharmacy details are on our Compliance page.`,
+            `Prescriptions are written by ${prescriber.display}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.licenseNumber ? ` (${prescriber.licenseState ? `${prescriber.licenseState} ` : ''}license ${prescriber.licenseNumber}` : ''}${prescriber.npi ? `, NPI ${prescriber.npi})` : prescriber.licenseNumber ? ')' : ''}. Our full prescriber and pharmacy details are on our Compliance page.`,
           ],
         },
         {

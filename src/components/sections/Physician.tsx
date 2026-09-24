@@ -40,14 +40,14 @@ export function Physician() {
               <div>
                 <p className="font-mono text-[15px] uppercase tracking-[0.04em] md:text-[17px]">Dr. Bader Elder, DO</p>
                 <p className="mt-1.5 font-mono text-[12px] uppercase tracking-[0.04em] text-black/55 md:text-[13px]">
-                  Prescriber of record · New Jersey
+                  Prescriber of record · NJ, NY, PA, MI
                 </p>
 
                 <p
                   className="mt-8 max-w-2xl font-display [text-wrap:pretty] md:mt-12"
                   style={{ fontSize: 'clamp(1.35rem, 1.1vw + 1rem, 2.1rem)', fontStretch: '75%', lineHeight: 1.15 }}
                 >
-                  A New Jersey–licensed osteopathic physician. He reads every intake himself: nothing reaches the pharmacy
+                  An osteopathic physician licensed in New Jersey, New York, Pennsylvania and Michigan. He reads every intake himself: nothing reaches the pharmacy
                   without his signature, and nothing is charged unless he approves.
                 </p>
               </div>

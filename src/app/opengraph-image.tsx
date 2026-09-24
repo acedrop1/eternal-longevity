@@ -1,47 +1,51 @@
 import { ImageResponse } from 'next/og';
+import { readFile } from 'fs/promises';
+import path from 'path';
 import { SITE_NAME, SITE_TAGLINE } from '@/lib/site';
 
 /**
- * Open Graph / social-share image.
- *
- * Rendered dynamically as a clean brand card — flat black field, gold
- * wordmark with the logo's rule beneath it, white tagline — so shared
- * Eternal Longevity URLs preview on-brand with no lifestyle photography. Next.js wires this into <meta property="og:image">
- * and <meta name="twitter:image"> automatically.
+ * Open Graph / social-share image: a still from the hero film (the drop
+ * landing under the vial) darkened, with the gold wordmark centred on it.
+ * Static, so it renders once at build time. Next.js wires it into
+ * <meta property="og:image"> and <meta name="twitter:image"> automatically.
  */
 export const alt = `${SITE_NAME} | ${SITE_TAGLINE}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default function OpengraphImage() {
+const dataUrl = async (file: string, type: string) =>
+  `data:${type};base64,${(await readFile(path.join(process.cwd(), file))).toString('base64')}`;
+
+export default async function OpengraphImage() {
+  const [frame, logo] = await Promise.all([
+    dataUrl('src/app/og/frame.jpg', 'image/jpeg'),
+    dataUrl('public/logo.svg', 'image/svg+xml'),
+  ]);
+
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          padding: '80px 88px',
-          background: '#000000',
-          fontFamily: 'sans-serif',
-        }}
-      >
+      <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative', background: '#000' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+        <img src={frame} width={1200} height={630} style={{ position: 'absolute', top: 0, left: 0 }} />
         <div
           style={{
-            fontSize: 76,
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            color: '#d5a850',
-            lineHeight: 1,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 1200,
+            height: 630,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.62)',
           }}
         >
-          ETERNAL LONGEVITY
-        </div>
-        <div style={{ marginTop: 36, width: '100%', height: 2, background: '#d5a850' }} />
-        <div style={{ marginTop: 36, fontSize: 40, color: '#ffffff', lineHeight: 1.2 }}>
-          {SITE_TAGLINE}
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img src={logo} width={680} height={135} />
+          <div style={{ marginTop: 40, fontSize: 30, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}>
+            {SITE_TAGLINE}
+          </div>
         </div>
       </div>
     ),

@@ -18,6 +18,7 @@ import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { SERVICE_AREA_OR } from '@/lib/site';
 import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { cityForZip } from '@/lib/njZips';
@@ -28,6 +29,9 @@ import {
 import { cn } from '@/lib/utils';
 import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
 import { CheckoutCardStep } from '@/components/checkout/CheckoutCardStep';
+
+/** Full names for the shipping-state dropdown. */
+const STATE_NAMES: Record<string, string> = { NJ: 'New Jersey', NY: 'New York', PA: 'Pennsylvania', MI: 'Michigan' };
 
 type SectionKey = 'email' | 'shipping' | 'method' | 'payment';
 
@@ -622,8 +626,9 @@ export function CheckoutFlow({
     }
   };
 
-  /* A ZIP names exactly one city in the one state we serve, so typing it fills
-     the city in. Anything they have typed themselves is left alone. */
+  /* A New Jersey ZIP names exactly one city, so typing it fills the city in
+     (the bundled map covers NJ; other states type their city). Anything they
+     have typed themselves is left alone. */
   /*
    * Derive the city from the ZIP whenever the ZIP changes and the city is
    * blank. The change handler covers typing, but a browser autofill or a paste
@@ -1221,16 +1226,20 @@ export function CheckoutFlow({
                 </div>
                 <div>
                   <FieldLabel htmlFor="ship-state">State</FieldLabel>
-                  {/* One state served, so this is shown rather than chosen. */}
-                  <input
+                  {/* Only the states we serve can be chosen; the server enforces the same list. */}
+                  <select
                     id="ship-state"
-                    type="text"
                     value={shipping.state}
-                    readOnly
-                    aria-readonly
+                    onChange={(e) => setShipping((s) => ({ ...s, state: e.target.value }))}
                     autoComplete="address-level1"
-                    className={cn(inputClass, 'cursor-default text-black/60')}
-                  />
+                    className={inputClass}
+                  >
+                    {SERVICEABLE_STATES.map((st) => (
+                      <option key={st} value={st}>
+                        {STATE_NAMES[st] ?? st}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div>
@@ -1391,7 +1400,7 @@ export function CheckoutFlow({
                 className="mt-1 h-4 w-4 flex-none accent-black"
               />
               <span>
-                I am 18 or older and a New Jersey resident, the health
+                I am 18 or older and a resident of {SERVICE_AREA_OR}, the health
                 information I provided is accurate and complete, and I agree to
                 the{' '}
                 <Link href="/legal/terms" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">

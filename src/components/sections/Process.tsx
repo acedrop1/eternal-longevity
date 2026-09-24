@@ -211,7 +211,7 @@ function ReviewScene() {
         </span>
         <div>
           <p className="text-[15px] font-semibold">Dr. Bader Elder, DO</p>
-          <p className="font-mono text-[11px] text-black/55">Prescriber of record · NJ</p>
+          <p className="font-mono text-[11px] text-black/55">Prescriber of record · NJ, NY, PA, MI</p>
         </div>
       </div>
       <div className="mt-5 space-y-2.5">

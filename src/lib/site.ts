@@ -26,7 +26,7 @@ export const SITE_NAME = 'Eternal Longevity';
 export const SITE_TAGLINE = 'Premium peptide protocols.';
 
 export const SITE_DESCRIPTION =
-  'Peptide protocols prescribed by a New Jersey physician, compounded by a licensed 503A pharmacy, and shipped cold-chain to your door.';
+  'Peptide protocols prescribed by a licensed physician, compounded by a licensed 503A pharmacy, and shipped cold-chain to your door.';
 
 /* ------------------------- merchant identity ------------------------------ */
 
@@ -69,5 +69,12 @@ export const SUPPORT_HOURS = 'Mon–Fri, 9a–6p ET';
  */
 export const STATEMENT_DESCRIPTOR = 'ET LONGEVITY';
 
-/** The only state we are licensed to sell into today. */
-export const SERVICE_AREA = 'New Jersey';
+/**
+ * The states we are licensed to sell into, as prose. Keep in step with
+ * SERVICEABLE_STATES in lib/intakeSchema (the list the geofence enforces).
+ */
+export const SERVICE_AREA = 'New Jersey, New York, Pennsylvania and Michigan';
+/** The same list joined with "or", for "located in … or …" sentences. */
+export const SERVICE_AREA_OR = 'New Jersey, New York, Pennsylvania or Michigan';
+/** Compact form for chips and fine print. */
+export const SERVICE_AREA_SHORT = 'NJ, NY, PA & MI';

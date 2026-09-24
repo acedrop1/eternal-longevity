@@ -49,7 +49,7 @@ export default function CancellationPage() {
         {
           heading: `Closing Your Account`,
           paragraphs: [
-            `To close your account entirely rather than just cancel a subscription, email ${SUPPORT_EMAIL}. We retain medical records for the period required by ${SERVICE_AREA} law even after an account is closed — that retention is a legal obligation, not a choice.`,
+            `To close your account entirely rather than just cancel a subscription, email ${SUPPORT_EMAIL}. We retain medical records for the period required by the law of the state you were treated in (${SERVICE_AREA}) even after an account is closed — that retention is a legal obligation, not a choice.`,
           ],
         },
         {

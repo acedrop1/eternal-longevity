@@ -17,14 +17,14 @@ export default function ConsentPolicyPage() {
   return (
     <LegalLayout
       title="Informed Consent & Product Acknowledgement"
-      effective="May 2026"
+      effective="September 2026"
       lead="Eternal Longevity provides access to prescription peptide protocols through a licensed prescriber and a licensed 503A compounding pharmacy. This document explains what you are acknowledging when you place an order, how the telehealth review works, and the risks you accept."
       sections={[
         {
           heading: 'What This Acknowledgement Covers',
           paragraphs: [
             'When you order a compounded peptide protocol from Eternal Longevity, your order is submitted to a licensed 503A pharmacy that compounds and fulfills it. This document explains what you are acknowledging when you place that order, including that nothing here is medical advice and that you are responsible for consulting your own healthcare provider before use.',
-            `Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. We serve ${SERVICE_AREA} only: our prescriber is licensed there and our partner pharmacy is registered to dispense there. Orders with a shipping address in any other state are rejected at checkout.`,
+            `Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. We serve ${SERVICE_AREA} only: our prescriber is licensed in each of those states and our partner pharmacy is registered to dispense there. Orders with a shipping address in any other state are rejected at checkout.`,
           ],
         },
         {

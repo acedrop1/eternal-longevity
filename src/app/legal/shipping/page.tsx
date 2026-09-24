@@ -29,7 +29,7 @@ export default function ShippingPage() {
         {
           heading: 'Where We Ship',
           paragraphs: [
-            `We currently ship only to residential and business addresses in ${SERVICE_AREA}. Our prescriber is licensed in ${SERVICE_AREA} and our partner pharmacy is registered to dispense there, and we will not ship a prescription into a state where both of those are not true.`,
+            `We currently ship only to residential and business addresses in ${SERVICE_AREA}. Our prescriber is licensed in each of those states and our partner pharmacy is registered to dispense into each of them, and we will not ship a prescription into a state where both of those are not true.`,
             'We do not ship to P.O. boxes, freight forwarders, or addresses outside the United States. We cannot ship to a different name than the one on the prescription.',
           ],
         },

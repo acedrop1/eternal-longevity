@@ -5,6 +5,7 @@ import {
   BUSINESS_ADDRESS,
   SUPPORT_EMAIL,
   SERVICE_AREA,
+  SERVICE_AREA_OR,
 } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default function EligibilityPage() {
           ],
           bullets: [
             `Be 18 years of age or older.`,
-            `Be physically located in ${SERVICE_AREA}, with a ${SERVICE_AREA} shipping address. Orders shipping anywhere else are rejected at checkout.`,
+            `Be physically located in ${SERVICE_AREA_OR}, with a shipping address in that same state. Orders shipping anywhere else are rejected at checkout.`,
             `Not be pregnant, planning pregnancy, or breastfeeding.`,
             `Have no active or prior malignancy, unless specifically cleared by your own physician.`,
             `Provide a complete and honest medical history, including every medication and supplement you take.`,

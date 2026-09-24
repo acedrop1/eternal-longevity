@@ -49,7 +49,7 @@ export default function PharmacyFulfillmentPage() {
         {
           heading: `If the Pharmacy Changes`,
           paragraphs: [
-            `We may add or change pharmacy partners as licensure and supply require. Any pharmacy we use will be FDA-registered, state-licensed, and registered to ship into ${SERVICE_AREA}. The pharmacy that filled your specific order is always the one named on your label.`,
+            `We may add or change pharmacy partners as licensure and supply require. Any pharmacy we use will be FDA-registered, state-licensed, and registered to ship into each state we serve (${SERVICE_AREA}). The pharmacy that filled your specific order is always the one named on your label.`,
           ],
         },
         {

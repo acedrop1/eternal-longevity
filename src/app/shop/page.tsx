@@ -13,7 +13,7 @@ import { getLiveProducts } from '@/lib/catalog';
 export const metadata: Metadata = {
   title: 'Shop',
   description:
-    'Compounded peptide protocols, prescribed by a New Jersey physician and dispensed by a licensed 503A pharmacy. Subscribe monthly or quarterly.',
+    'Compounded peptide protocols, prescribed by a licensed physician and dispensed by a licensed 503A pharmacy. Subscribe monthly or quarterly.',
 };
 
 /**
