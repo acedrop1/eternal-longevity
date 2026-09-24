@@ -31,13 +31,16 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { noticeEmail, readyToPlaceEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { SITE_URL } from '@/lib/site';
 import type { Json } from '@/lib/database.types';
-import { formatAddress } from '@/lib/format';
 import { orderRef as orderLabel } from '@/lib/format';
+import { getPrescriber } from '@/lib/prescriber';
 
-export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
+export async function autoSubmitToPharmacy(
+  orderNumber: string,
+  opts: { refill?: boolean; prescriptionId?: string } = {},
+): Promise<{
   ok: boolean;
   submitted?: boolean;
   error?: string;
@@ -131,9 +134,21 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     return { ok: false, error: 'no_npi' };
   }
 
+  /*
+   * Link the prescription. Admin's "ready to submit" list is every signed
+   * prescription with no shipment against it; without this link an order
+   * already queued here stayed on that list and could be submitted twice.
+   */
+  const prescriptionId =
+    opts.prescriptionId ??
+    (await db.from('prescriptions').select('id').eq('order_id', order.id).maybeSingle()).data?.id ??
+    null;
+
+  const cadence = items?.[0]?.cadence_label ?? 'First cycle';
   const { error: insErr } = await db.from('fulfillment_orders').insert({
     order_ref: orderRef,
     user_id: order.user_id,
+    prescription_id: prescriptionId,
     status: 'submitted',
     patient_name: patient?.full_name ?? order.member_name ?? 'Patient',
     patient_dob: patient?.date_of_birth ?? null,
@@ -141,60 +156,51 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
     prescriber_name: doctor.full_name,
     prescriber_npi: doctor.npi,
     items: (items ?? []) as unknown as Json,
-    cycle_label: items?.[0]?.cadence_label ?? 'First cycle',
+    cycle_label: opts.refill ? `Refill · ${cadence}` : cadence,
     submitted_at: new Date().toISOString(),
   });
 
   if (insErr) return { ok: false, error: insErr.message };
 
+  /*
+   * Not "sent to the pharmacy" yet: a person places it on the pharmacy's own
+   * platform, and that step writes the "Sent to the pharmacy" entry.
+   */
   await db.from('order_updates').insert({
     order_id: order.id,
-    label: 'Sent to the pharmacy',
-    body: `Submitted to the pharmacy as ${orderRef}. Compounding usually starts the same business day.`,
+    label: 'Preparing your order',
+    body: 'Payment received. Your order is being placed with our partner pharmacy.',
     author: 'System',
     author_role: 'system',
   });
 
-  const a = (order.shipping_address ?? {}) as Record<string, string>;
-  const lines = (items ?? [])
-    .map(
-      (i) =>
-        `<li>${i.product_name}${i.quantity > 1 ? ` &times;${i.quantity}` : ''} — ${
-          i.cadence_label ?? ''
-        }</li>`,
-    )
-    .join('');
-
-  if (process.env.PHARMACY_EMAIL) {
+  /*
+   * Admin and the prescriber both get the to-do; whoever places it marks it on
+   * the board. Names and products only — the address and date of birth stay
+   * behind the sign-in.
+   */
+  const itemList =
+    (items ?? [])
+      .map((i) => `${i.product_name}${i.quantity > 1 ? ` ×${i.quantity}` : ''}`)
+      .join(', ') || 'Care program';
+  const patientName = patient?.full_name ?? order.member_name ?? 'Patient';
+  const prescriber = await getPrescriber().catch(() => null);
+  const recipients: [string, string][] = [[SUPPORT_EMAIL, `${SITE_URL}/portal/admin/fulfillment`]];
+  if (prescriber?.email && prescriber.email !== SUPPORT_EMAIL) {
+    recipients.push([prescriber.email, `${SITE_URL}/portal/doctor/fulfillment`]);
+  }
+  for (const [to, portalUrl] of recipients) {
     try {
-      await sendEmail({
-        to: process.env.PHARMACY_EMAIL,
-        subject: `New prescription — ${patient?.full_name ?? order.member_name ?? 'Patient'} · ${orderLabel(order.order_number)}`,
-        html: noticeEmail({
-          eyebrow: 'New prescription',
-          heading: 'A patient-specific prescription is ready',
-          rows: [
-            ['Reference', orderRef],
-            ['Patient', patient?.full_name ?? order.member_name ?? 'Patient'],
-            ['Date of birth', patient?.date_of_birth ?? '—'],
-            ['Prescriber', `${doctor.full_name} · NPI ${doctor.npi}`],
-            [
-              'Ship to',
-              formatAddress({
-                line1: a.line1,
-                line2: a.line2,
-                city: a.city,
-                state: a.state,
-                zip: a.zip,
-              }),
-            ],
-            ['Items', `<ul style="margin:0;padding-left:18px;">${lines}</ul>`],
-          ],
-          footnote: 'Please confirm receipt and add tracking when it ships.',
-        }),
+      const msg = readyToPlaceEmail({
+        orderRef,
+        patientName,
+        items: itemList,
+        refill: Boolean(opts.refill),
+        portalUrl,
       });
+      await sendEmail({ to, subject: msg.subject, html: msg.html });
     } catch {
-      // The record exists; a mail failure must not undo the submission.
+      // The row is on the board either way.
     }
   }
 

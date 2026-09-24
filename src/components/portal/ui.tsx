@@ -22,6 +22,15 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Settings', href: '/portal/admin/settings' },
 ];
 
+/** The prescriber's nav, one list so the doctor pages can't drift apart. */
+export const DOCTOR_NAV: NavItem[] = [
+  { label: 'Queue', href: '/portal/doctor' },
+  { label: 'Orders', href: '/portal/doctor/fulfillment' },
+  { label: 'Messages', href: '/portal/doctor/messages' },
+  { label: 'My signed Rx', href: '/portal/doctor/history' },
+  { label: 'Profile', href: '/portal/doctor/profile' },
+];
+
 export const MEMBER_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/portal' },
   { label: 'Shop', href: '/portal/shop' },

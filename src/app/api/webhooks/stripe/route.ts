@@ -19,15 +19,10 @@ import {
 } from '@/lib/supabase/admin';
 import type { Json, SubscriptionStatus } from '@/lib/database.types';
 import {
-  SUPPORT_EMAIL,
   emailConfigured,
   orderConfirmationEmail,
-  paymentClearedTeamEmail,
   sendEmail,
-  signedAndPaidPrescriberEmail,
 } from '@/lib/email';
-import { getPrescriber } from '@/lib/prescriber';
-import { SITE_URL } from '@/lib/site';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 
 // Webhooks need the raw body + Node crypto.
@@ -106,7 +101,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         db,
         pi.id,
         'Payment received',
-        `$${(pi.amount / 100).toFixed(2)} charged to the card on file. Released to the pharmacy.`,
+        `$${(pi.amount / 100).toFixed(2)} charged to the card on file. Your order is confirmed.`,
       );
       await sendOrderConfirmation(db, pi.id);
 
@@ -311,40 +306,10 @@ async function sendOrderConfirmation(
     await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
 
     /*
-     * Everyone who acted on this order hears that the money moved, from here
-     * rather than from the sign action — the charge is only real once Stripe
-     * says so, and this is where Stripe says so.
+     * Admin and the prescriber hear about it once, as the "place this in
+     * Formula" to-do that autoSubmitToPharmacy sends when the order joins the
+     * board. A separate "payment cleared" note on top of that was noise.
      */
-    const itemList =
-      (items ?? []).map((i) => i.product_name).join(', ') || 'Care program';
-    const memberName = profile.full_name || 'Member';
-    const amount = order.total_cents ?? 0;
-
-    const prescriber = await getPrescriber().catch(() => null);
-    const signedBy = prescriber?.display || 'the prescriber';
-
-    if (prescriber?.email) {
-      const rx = signedAndPaidPrescriberEmail({
-        prescriberName: prescriber.name,
-        orderNumber: order.order_number,
-        memberName,
-        items: itemList,
-        amountCents: amount,
-        portalUrl: `${SITE_URL}/portal/doctor/history`,
-      });
-      await sendEmail({ to: prescriber.email, subject: rx.subject, html: rx.html });
-    }
-
-    const team = paymentClearedTeamEmail({
-      orderNumber: order.order_number,
-      memberName,
-      memberEmail: profile.email,
-      items: itemList,
-      amountCents: amount,
-      signedBy,
-      portalUrl: `${SITE_URL}/portal/admin`,
-    });
-    await sendEmail({ to: SUPPORT_EMAIL, subject: team.subject, html: team.html });
   } catch (err) {
     console.error('[stripe] order confirmation email failed:', err);
   }

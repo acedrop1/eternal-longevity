@@ -17,9 +17,9 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from './supabase/admin';
-import { pharmacyQueueEmail, sendEmail, shippedEmail } from './email';
+import { pharmacyQueueEmail, sendEmail } from './email';
+import { advanceFulfillment } from './fulfillment-core';
 import { SITE_URL } from './site';
-import { sendSms } from './sms';
 
 export interface FulfillmentResult {
   ok: boolean;
@@ -184,82 +184,64 @@ export async function submitDraftOrder(
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Pharmacy: accept an order                                                 */
+/*  Placed, shipped, delivered: admin, the prescriber or the pharmacy         */
 /* -------------------------------------------------------------------------- */
 
-export async function pharmacyAcceptOrder(
-  fulfillmentId: string,
-): Promise<FulfillmentResult> {
-  const blocked = await requireRole('pharmacy', 'admin');
-  if (blocked) return blocked;
+type Staff = 'admin' | 'doctor' | 'pharmacy';
 
-  const db = createSupabaseAdminClient();
-  const { error } = await db
-    .from('fulfillment_orders')
-    .update({ status: 'accepted' })
-    .eq('id', fulfillmentId);
-  if (error) return { ok: false, message: error.message };
-  return { ok: true, message: 'Order accepted.' };
+async function staffActor(): Promise<{ name: string; role: Staff } | FulfillmentResult> {
+  if (!supabaseAdminConfigured()) {
+    return { ok: false, message: 'Connect Supabase to enable fulfillment.' };
+  }
+  const session = await getSession();
+  if (!session || !['admin', 'doctor', 'pharmacy'].includes(session.role)) {
+    return { ok: false, message: 'Staff access is required.' };
+  }
+  return { name: session.name, role: session.role as Staff };
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Pharmacy: add tracking + notify the patient                               */
-/* -------------------------------------------------------------------------- */
+/** Placed on the pharmacy's platform. Optional: the pharmacy's own order number. */
+export async function pharmacyAcceptOrder(
+  fulfillmentId: string,
+  pharmacyRef?: string,
+): Promise<FulfillmentResult> {
+  const actor = await staffActor();
+  if ('ok' in actor) return actor;
+  return advanceFulfillment({
+    fulfillmentId,
+    step: 'placed',
+    actorName: actor.name,
+    actorRole: actor.role,
+    pharmacyRef,
+  });
+}
 
+/** Tracking in: marks it shipped and emails/texts the patient. */
 export async function pharmacyAddTracking(input: {
   fulfillmentId: string;
   carrier: string;
   trackingNumber: string;
 }): Promise<FulfillmentResult> {
-  // Admin too: the pharmacy works from its own platform, so the team keys in
-  // the tracking it sends back.
-  const blocked = await requireRole('pharmacy', 'admin');
-  if (blocked) return blocked;
+  const actor = await staffActor();
+  if ('ok' in actor) return actor;
+  return advanceFulfillment({
+    fulfillmentId: input.fulfillmentId,
+    step: 'shipped',
+    actorName: actor.name,
+    actorRole: actor.role,
+    carrier: input.carrier,
+    tracking: input.trackingNumber,
+  });
+}
 
-  if (!input.trackingNumber.trim()) {
-    return { ok: false, message: 'Enter a tracking number.' };
-  }
-
-  const db = createSupabaseAdminClient();
-  const { data: order, error } = await db
-    .from('fulfillment_orders')
-    .update({
-      status: 'shipped',
-      tracking_carrier: input.carrier,
-      tracking_number: input.trackingNumber.trim(),
-      shipped_at: new Date().toISOString(),
-    })
-    .eq('id', input.fulfillmentId)
-    .select('user_id, order_ref')
-    .single();
-  if (error) return { ok: false, message: error.message };
-
-  // Notify the patient by email + SMS (best-effort).
-  if (order?.user_id) {
-    const { data: patient } = await db
-      .from('profiles')
-      .select('email, phone, full_name')
-      .eq('id', order.user_id)
-      .maybeSingle();
-    const firstName = patient?.full_name?.split(/\s+/)[0] ?? 'there';
-    if (patient?.email) {
-      await sendEmail({
-        to: patient.email,
-        ...shippedEmail({
-          firstName,
-          orderRef: order.order_ref,
-          carrier: input.carrier,
-          tracking: input.trackingNumber.trim(),
-        }),
-      });
-    }
-    if (patient?.phone) {
-      await sendSms(
-        patient.phone,
-        `Your Eternal Longevity order ${order.order_ref} has shipped. ${input.carrier} tracking: ${input.trackingNumber.trim()}`,
-      );
-    }
-  }
-
-  return { ok: true, message: 'Tracking added — the patient was notified.' };
+/** Arrived: marks it delivered and emails the patient. */
+export async function markDeliveredAction(fulfillmentId: string): Promise<FulfillmentResult> {
+  const actor = await staffActor();
+  if ('ok' in actor) return actor;
+  return advanceFulfillment({
+    fulfillmentId,
+    step: 'delivered',
+    actorName: actor.name,
+    actorRole: actor.role,
+  });
 }

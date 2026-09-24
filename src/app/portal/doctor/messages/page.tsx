@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
+import { DOCTOR_NAV } from '@/components/portal/ui';
 import { StaffInbox } from '@/components/messages/StaffInbox';
 import { getSession } from '@/lib/auth-server';
 import {
@@ -29,12 +30,7 @@ export default async function DoctorMessagesPage() {
   return (
     <PortalShell
       user={user}
-      nav={[
-        { label: 'Queue', href: '/portal/doctor' },
-        { label: 'Messages', href: '/portal/doctor/messages' },
-        { label: 'My signed Rx', href: '/portal/doctor/history' },
-        { label: 'Profile', href: '/portal/doctor/profile' },
-      ]}
+      nav={DOCTOR_NAV}
     >
       {/* Same eyebrow colour and heading scale as Queue, Profile and Signed Rx
           — this page used to run a size larger in a different accent. */}

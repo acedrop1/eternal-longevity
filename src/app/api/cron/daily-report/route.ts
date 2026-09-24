@@ -1,3 +1,4 @@
+import { getPrescriber } from '@/lib/prescriber';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   createSupabaseAdminClient,
@@ -97,8 +98,32 @@ export async function GET(req: NextRequest) {
     // 'draft' = created from a signed Rx but not yet sent to the pharmacy.
     countSince(db, 'fulfillment_orders', 'created_at', '1970-01-01', {
       column: 'status',
-      value: 'draft',
+      value: 'submitted',
     }),
+  ]);
+
+  // What still needs a person: placed but no tracking yet, stuck in transit,
+  // and tomorrow's refills (they land on the board after the renewal run).
+  const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
+  const threeDaysAgo = new Date(now.getTime() - 3 * 86400_000).toISOString();
+  const tomorrow = new Date(now.getTime() + 86400_000).toISOString().slice(0, 10);
+  const [awaitingTracking, trackingLate, refillsTomorrow, pausedPlans] = await Promise.all([
+    count(db.from('fulfillment_orders').select('*', { count: 'exact', head: true }).eq('status', 'accepted')),
+    count(
+      db
+        .from('fulfillment_orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'accepted')
+        .lte('updated_at', threeDaysAgo),
+    ),
+    count(
+      db
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .lte('next_billing_date', tomorrow),
+    ),
+    count(db.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'paused')),
   ]);
 
   // Revenue: sum paid orders in the window.
@@ -133,6 +158,10 @@ export async function GET(req: NextRequest) {
     shipmentsSent,
     pendingIntakes,
     pendingFulfillment,
+    awaitingTracking,
+    trackingLate,
+    refillsTomorrow,
+    pausedPlans,
   };
 
   if (!emailConfigured()) {
@@ -142,11 +171,13 @@ export async function GET(req: NextRequest) {
   }
 
   const mail = dailyReportEmail(stats);
-  const res = await sendEmail({
-    to: SUPPORT_EMAIL,
-    subject: mail.subject,
-    html: mail.html,
-  });
+  // The prescriber shares the orders board, so he gets the summary too.
+  const prescriber = await getPrescriber().catch(() => null);
+  const results = await Promise.all(
+    [...new Set([SUPPORT_EMAIL, prescriber?.email].filter(Boolean) as string[])].map((to) =>
+      sendEmail({ to, subject: mail.subject, html: mail.html }),
+    ),
+  );
 
-  return NextResponse.json({ ok: res.ok, error: res.error, stats });
+  return NextResponse.json({ ok: results.every((r) => r.ok), stats });
 }

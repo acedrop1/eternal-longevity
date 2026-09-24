@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
+import { DOCTOR_NAV } from '@/components/portal/ui';
 import { getSession } from '@/lib/auth-server';
 import { getPrescriber } from '@/lib/prescriber';
 import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
@@ -26,12 +27,7 @@ export default async function DoctorProfilePage() {
   return (
     <PortalShell
       user={user}
-      nav={[
-        { label: 'Queue', href: '/portal/doctor' },
-        { label: 'Messages', href: '/portal/doctor/messages' },
-        { label: 'My signed Rx', href: '/portal/doctor/history' },
-        { label: 'Profile', href: '/portal/doctor/profile' },
-      ]}
+      nav={DOCTOR_NAV}
     >
       <div>
         <p className="mb-2 font-mono text-[12px] text-foreground/55">

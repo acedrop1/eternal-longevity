@@ -2,11 +2,9 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminLiveOrders } from '@/components/admin/AdminLiveOrders';
-import {
-  AdminFulfillment,
-  type ReadyRxView,
-  type SubmittedOrderView,
-} from '@/components/admin/AdminFulfillment';
+import { AdminFulfillment, type ReadyRxView } from '@/components/admin/AdminFulfillment';
+import { FulfillmentBoard } from '@/components/fulfillment/FulfillmentBoard';
+import { loadFulfillmentBoard, type BoardRow } from '@/lib/fulfillment-core';
 import { getSession } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
@@ -23,8 +21,6 @@ export const metadata: Metadata = {
 // patient or order data on a staff screen.
 const DEMO_READY: ReadyRxView[] = [];
 
-const DEMO_SUBMITTED: SubmittedOrderView[] = [];
-
 export default async function AdminFulfillmentPage() {
   const user = await getSession();
   if (!user) redirect('/login');
@@ -32,7 +28,7 @@ export default async function AdminFulfillmentPage() {
 
   const live = supabaseAdminConfigured();
   let ready: ReadyRxView[] = DEMO_READY;
-  let submitted: SubmittedOrderView[] = DEMO_SUBMITTED;
+  let board: BoardRow[] = [];
 
   if (live) {
     try {
@@ -52,17 +48,8 @@ export default async function AdminFulfillmentPage() {
       ]);
 
       const allOrders = orders ?? [];
+      board = await loadFulfillmentBoard();
 
-      submitted = allOrders
-        .filter((o) => o.status !== 'draft')
-        .map((o) => ({
-          id: o.id,
-          orderRef: o.order_ref,
-          patientName: o.patient_name,
-          status: o.status,
-          trackingCarrier: o.tracking_carrier,
-          trackingNumber: o.tracking_number,
-        }));
 
       // Auto-generated refill drafts join the ready-to-submit list.
       const draftItems: ReadyRxView[] = allOrders
@@ -107,7 +94,6 @@ export default async function AdminFulfillmentPage() {
       ];
     } catch {
       ready = DEMO_READY;
-      submitted = DEMO_SUBMITTED;
     }
   }
 
@@ -128,19 +114,22 @@ export default async function AdminFulfillmentPage() {
           Every order, and where it is.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Once a physician signs a prescription it lands here. Send it to the
-          pharmacy, then add the tracking they send back so the patient is
-          notified.
+          Every paid order, new or refill, lands in <b>To place</b>. Place it
+          in the Formula Health portal and mark it placed; Dr. Elder sees the
+          same board, so whoever places it first marks it. Then add tracking
+          and mark it delivered, and the patient is emailed at each step.
         </p>
       </div>
 
-      <AdminLiveOrders />
+      <div className="mt-10">
+        <FulfillmentBoard rows={board} />
+      </div>
 
-      <AdminFulfillment
-        readyPrescriptions={ready}
-        submittedOrders={submitted}
-        live={live}
-      />
+      <div className="mt-12">
+        <AdminLiveOrders />
+      </div>
+
+      <AdminFulfillment readyPrescriptions={ready} live={live} />
     </PortalShell>
   );
 }

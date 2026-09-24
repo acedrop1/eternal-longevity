@@ -45,7 +45,11 @@ export async function getPendingCounts(
         .from('prescriptions')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
-      return { '/portal/doctor': count ?? 0 };
+      const toPlace = await db
+        .from('fulfillment_orders')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['draft', 'submitted']);
+      return { '/portal/doctor': count ?? 0, '/portal/doctor/fulfillment': toPlace.count ?? 0 };
     }
 
     if (role === 'pharmacy') {

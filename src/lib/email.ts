@@ -167,6 +167,94 @@ export function shippedEmail(input: {
   };
 }
 
+/** Their order has arrived. */
+export function deliveredEmail(input: {
+  firstName: string;
+  orderRef: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Your ${orderRef(input.orderRef)} has been delivered`,
+    html: noticeEmail({
+      eyebrow: 'Delivered',
+      heading: `${input.firstName}, your order has arrived.`,
+      rows: [['Order', input.orderRef]],
+      body: 'Refrigerate it now if you haven’t already. Questions about dosing go to your prescriber through the portal.',
+      cta: { label: 'Open your portal', href: `${SITE_URL}/portal/orders` },
+    }),
+  };
+}
+
+/**
+ * To admin and the prescriber: a paid order is waiting to be placed on the
+ * pharmacy's platform. Names and products only; the address, date of birth
+ * and prescriber details sit behind the sign-in, not in an inbox.
+ */
+export function readyToPlaceEmail(input: {
+  orderRef: string;
+  patientName: string;
+  items: string;
+  refill: boolean;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Place in Formula: ${input.patientName} · ${input.items}${input.refill ? ' (refill)' : ''}`,
+    html: noticeEmail({
+      eyebrow: input.refill ? 'Refill to place' : 'New order to place',
+      heading: 'A paid order is waiting to be placed with the pharmacy',
+      body: 'Place it in the Formula Health portal, then mark it placed so nobody places it twice. Everything you need to enter is on the order.',
+      rows: [
+        ['Order', input.orderRef],
+        ['Patient', escapeHtml(input.patientName)],
+        ['Items', escapeHtml(input.items)],
+      ],
+      cta: { label: 'Open the orders board', href: input.portalUrl },
+      footnote: 'Admin and the prescriber both get this. Whoever places it marks it placed.',
+    }),
+  };
+}
+
+/** To the member: their refill payment didn't go through. */
+export function renewalFailedMemberEmail(input: {
+  firstName: string;
+  productName: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Action needed: your ${input.productName} refill payment didn’t go through`,
+    html: noticeEmail({
+      eyebrow: 'Payment issue',
+      heading: `${input.firstName}, we couldn’t charge your card for your refill.`,
+      body: `Your ${escapeHtml(input.productName)} plan is paused, so nothing will ship until the card is updated. Add or update your card and we’ll pick it straight back up.`,
+      cta: { label: 'Update your card', href: `${SITE_URL}/portal/account` },
+      footnote: 'If you meant to stop, you don’t need to do anything.',
+    }),
+  };
+}
+
+/** To admin and the prescriber: a refill didn't charge, or couldn't. */
+export function renewalFailedTeamEmail(input: {
+  patientName: string;
+  patientEmail: string;
+  productName: string;
+  amountCents: number;
+  reason: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Refill not charged: ${input.patientName} · ${input.productName}`,
+    html: noticeEmail({
+      eyebrow: 'Refill failed',
+      heading: 'A refill was not charged and will not ship',
+      body: 'The plan is paused and the patient has been emailed a link to update their card. Nothing needs placing with the pharmacy.',
+      rows: [
+        ['Patient', `${escapeHtml(input.patientName)} · ${escapeHtml(input.patientEmail)}`],
+        ['Plan', escapeHtml(input.productName)],
+        ['Amount', `$${(input.amountCents / 100).toFixed(2)}`],
+        ['Reason', escapeHtml(input.reason)],
+      ],
+      cta: { label: 'Open the orders board', href: `${SITE_URL}/portal/admin/fulfillment` },
+    }),
+  };
+}
+
 /**
  * A log-in prompt for the pharmacy. Deliberately carries no patient detail —
  * the record lives behind their sign-in, not in an inbox.
@@ -896,7 +984,13 @@ export interface DailyReportStats {
   prescriptionsSigned: number;
   shipmentsSent: number;
   pendingIntakes: number;
+  /** Paid orders waiting to be placed with the pharmacy. */
   pendingFulfillment: number;
+  awaitingTracking: number;
+  /** Placed three or more days ago and still no tracking. */
+  trackingLate: number;
+  refillsTomorrow: number;
+  pausedPlans: number;
 }
 
 /** Branded end-of-day summary for the support inbox. */
@@ -939,9 +1033,18 @@ export function dailyReportEmail(s: DailyReportStats): {
            Intakes awaiting review: <strong style="color:${
              s.pendingIntakes > 0 ? '#d5a850' : '#e5e5e5'
            };">${s.pendingIntakes}</strong><br />
-           Orders awaiting fulfillment: <strong style="color:${
+           Orders to place in Formula: <strong style="color:${
              s.pendingFulfillment > 0 ? '#d5a850' : '#e5e5e5'
-           };">${s.pendingFulfillment}</strong>
+           };">${s.pendingFulfillment}</strong><br />
+           Placed, waiting for tracking: <strong>${s.awaitingTracking}</strong>${
+             s.trackingLate > 0
+               ? ` <span style="color:#f87171;">(${s.trackingLate} for 3+ days)</span>`
+               : ''
+           }<br />
+           Refills charging by tomorrow: <strong>${s.refillsTomorrow}</strong><br />
+           Plans paused (card failed or no card): <strong style="color:${
+             s.pausedPlans > 0 ? '#f87171' : '#e5e5e5'
+           };">${s.pausedPlans}</strong>
          </div>
        </div>`,
     ),

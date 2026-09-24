@@ -7,7 +7,15 @@ import { getStripe } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
 import { defaultCardFor } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
-import { planNeedsReviewEmail, sendEmail } from '@/lib/email';
+import {
+  planNeedsReviewEmail,
+  renewalFailedMemberEmail,
+  renewalFailedTeamEmail,
+  sendEmail,
+  SUPPORT_EMAIL,
+} from '@/lib/email';
+import { getPrescriber } from '@/lib/prescriber';
+import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
 
@@ -235,6 +243,36 @@ export async function renewSubscription(
     .limit(1)
     .maybeSingle();
 
+  /*
+   * Ship where they live now. The primary address on their account wins over
+   * the last order's, so a member who moves between cycles gets the refill at
+   * the new address. The old order's address is only a fallback.
+   */
+  const { data: primary } = await db
+    .from('addresses')
+    .select('full_name, line1, line2, city, state, zip, phone')
+    .eq('user_id', sub.user_id)
+    .eq('is_primary', true)
+    .maybeSingle();
+  const shipTo = primary
+    ? {
+        fullName: primary.full_name,
+        line1: primary.line1,
+        line2: primary.line2 ?? undefined,
+        city: primary.city,
+        state: primary.state,
+        zip: primary.zip,
+        phone: primary.phone ?? undefined,
+      }
+    : ((lastOrder?.shipping_address ?? null) as Record<string, string> | null);
+  const shipState = (shipTo?.state ?? lastOrder?.ship_state ?? '').toUpperCase();
+  if (!shipTo?.line1 || !SERVICEABLE_STATES.includes(shipState)) {
+    // Moved out of the states we serve, or no address at all: nothing ships.
+    await db.from('subscriptions').update({ status: 'pending_review' }).eq('id', sub.id);
+    await notifyRenewalFailed(sub, profile, 'No shipping address in a state we serve (NJ, NY, PA, MI).');
+    return { subscriptionId, result: 'needs_review', detail: 'address' };
+  }
+
   const amount = sub.per_cycle_cents ?? 0;
   if (amount <= 0) return { subscriptionId, result: 'error', detail: 'zero_amount' };
 
@@ -249,6 +287,7 @@ export async function renewSubscription(
       .from('subscriptions')
       .update({ status: 'paused' })
       .eq('id', sub.id);
+    await notifyRenewalFailed(sub, profile, 'No card on file.');
     return { subscriptionId, result: 'no_card' };
   }
 
@@ -262,12 +301,12 @@ export async function renewSubscription(
       status: 'signed',
       member_name: profile.full_name,
       member_email: profile.email,
-      ship_state: lastOrder?.ship_state ?? null,
+      ship_state: shipState,
       subtotal_cents: amount,
       shipping_cents: 0,
       tax_cents: 0,
       total_cents: amount,
-      shipping_address: lastOrder?.shipping_address ?? null,
+      shipping_address: shipTo as unknown as Json,
       card_last4: lastOrder?.card_last4 ?? null,
       paid_at: new Date().toISOString(),
     })
@@ -287,7 +326,7 @@ export async function renewSubscription(
     cadence_label: sub.cadence_label ?? 'Monthly',
   });
 
-  const addr = (lastOrder?.shipping_address ?? {}) as Record<string, string>;
+  const addr = shipTo as Record<string, string | undefined>;
   try {
     const intent = await getStripe().paymentIntents.create({
       amount,
@@ -335,6 +374,7 @@ export async function renewSubscription(
       author_role: 'system',
     });
     await db.from('subscriptions').update({ status: 'paused' }).eq('id', sub.id);
+    await notifyRenewalFailed(sub, profile, reason);
     return { subscriptionId, result: 'charge_failed', orderNumber, detail: reason };
   }
 
@@ -362,7 +402,7 @@ export async function renewSubscription(
   ]);
 
   // The webhook marks it paid and submits it; this is the belt to that braces.
-  await autoSubmitToPharmacy(orderNumber);
+  await autoSubmitToPharmacy(orderNumber, { refill: true, prescriptionId: rx.id });
 
   return { subscriptionId, result: 'charged', orderNumber };
 }
@@ -378,4 +418,37 @@ export async function dueSubscriptionIds(limit = 100): Promise<string[]> {
     .lte('next_billing_date', isoDate(new Date()))
     .limit(limit);
   return (data ?? []).map((r) => r.id);
+}
+
+/**
+ * A refill that didn't charge is a patient who silently stops getting their
+ * medication. The member gets a link to fix their card; admin and the
+ * prescriber get the reason, so someone can follow up.
+ */
+async function notifyRenewalFailed(
+  sub: { product_name: string; per_cycle_cents: number | null },
+  profile: { email: string | null; full_name: string | null },
+  reason: string,
+): Promise<void> {
+  const name = profile.full_name ?? 'Member';
+  const sends: Promise<unknown>[] = [];
+  if (profile.email) {
+    const m = renewalFailedMemberEmail({
+      firstName: name.trim().split(/\s+/)[0] || 'there',
+      productName: sub.product_name,
+    });
+    sends.push(sendEmail({ to: profile.email, subject: m.subject, html: m.html }));
+  }
+  const team = renewalFailedTeamEmail({
+    patientName: name,
+    patientEmail: profile.email ?? '—',
+    productName: sub.product_name,
+    amountCents: sub.per_cycle_cents ?? 0,
+    reason,
+  });
+  const prescriber = await getPrescriber().catch(() => null);
+  for (const to of new Set([SUPPORT_EMAIL, prescriber?.email].filter(Boolean) as string[])) {
+    sends.push(sendEmail({ to, subject: team.subject, html: team.html }));
+  }
+  await Promise.allSettled(sends);
 }

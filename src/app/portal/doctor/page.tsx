@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { DOCTOR_NAV } from '@/components/portal/ui';
 import { DoctorQueueList } from "@/components/doctor/DoctorQueueList";
 import { getSession } from "@/lib/auth-server";
 import { listOrders } from "@/lib/orders-db";
@@ -42,12 +43,7 @@ export default async function DoctorPortalPage() {
   return (
     <PortalShell
       user={user}
-      nav={[
-        { label: "Queue", href: "/portal/doctor" },
-        { label: "Messages", href: "/portal/doctor/messages" },
-        { label: "My signed Rx", href: "/portal/doctor/history" },
-        { label: "Profile", href: "/portal/doctor/profile" },
-      ]}
+      nav={DOCTOR_NAV}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -67,8 +63,9 @@ export default async function DoctorPortalPage() {
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-foreground/65">
             Every order arrives here the moment a member checks out — a first
             order and a returning member&apos;s tenth alike. Signing charges
-            their card and sends the prescription to the pharmacy; declining
-            charges nothing.
+            their card and puts the order on{" "}
+            <a href="/portal/doctor/fulfillment" className="underline underline-offset-2">Orders</a>{" "}
+            to place in Formula; declining charges nothing.
           </p>
         </div>
       </div>

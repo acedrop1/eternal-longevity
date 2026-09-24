@@ -14,8 +14,8 @@ export interface MemberOrderView {
 // compounding, gold once it ships), now as dot + label chips.
 const STATUS: Record<string, { label: string; tone: Tone }> = {
   draft: { label: 'Preparing', tone: 'neutral' },
-  submitted: { label: 'With pharmacy', tone: 'warn' },
-  accepted: { label: 'Compounding', tone: 'info' },
+  submitted: { label: 'Preparing', tone: 'warn' },
+  accepted: { label: 'With pharmacy', tone: 'info' },
   shipped: { label: 'Shipped', tone: 'gold' },
   delivered: { label: 'Delivered', tone: 'gold' },
   canceled: { label: 'Canceled', tone: 'muted' },

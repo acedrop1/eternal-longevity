@@ -18,6 +18,7 @@ import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
+import { advanceFulfillment } from '@/lib/fulfillment-core';
 import {
   declinedEmail,
   orderCancelledByTeamEmail,
@@ -717,36 +718,27 @@ export async function declineClinicalAction(
   return { ok: true };
 }
 
-/** Pharmacy (or admin) moves the order through compounding and shipping. */
+/**
+ * Admin, the prescriber or the pharmacy moves the order through compounding,
+ * shipping and delivery. Same path as the orders board, so the shipment row,
+ * the member's timeline and their emails stay in step whichever portal clicks.
+ */
 export async function advanceOrderAction(
   orderNumber: string,
   to: Extract<OrderStatus, 'compounding' | 'shipped' | 'delivered'>,
   opts?: { note?: string; carrier?: string; tracking?: string },
 ): Promise<ActionResult> {
-  const { user, error } = await requireRole(['pharmacy', 'admin']);
+  const { user, error } = await requireRole(['pharmacy', 'admin', 'doctor']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
-  const id = await orderIdFor(orderNumber);
-  if (!id) return { ok: false, error: 'not_found' };
-
-  const db = createSupabaseAdminClient();
-  const patch: {
-    status: OrderStatus;
-    tracking_carrier?: string;
-    tracking_number?: string;
-  } = { status: to };
-  if (opts?.carrier) patch.tracking_carrier = opts.carrier;
-  if (opts?.tracking) patch.tracking_number = opts.tracking;
-  await db.from('orders').update(patch).eq('id', id);
-
-  const label =
-    to === 'compounding' ? 'Compounding' : to === 'shipped' ? 'Shipped' : 'Delivered';
-  const body =
-    opts?.note ??
-    (to === 'shipped' && opts?.tracking
-      ? `${opts.carrier ?? 'Carrier'} · ${opts.tracking}`
-      : undefined);
-
-  await appendUpdate(id, user.name, 'pharmacy', label, body, to);
+  const res = await advanceFulfillment({
+    orderNumber,
+    step: to === 'compounding' ? 'placed' : to,
+    actorName: user.name,
+    actorRole: user.role as 'admin' | 'doctor' | 'pharmacy',
+    carrier: opts?.carrier,
+    tracking: opts?.tracking,
+    note: opts?.note,
+  });
   revalidatePortal();
-  return { ok: true };
+  return res.ok ? { ok: true } : { ok: false, error: res.message };
 }
