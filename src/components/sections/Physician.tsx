@@ -56,7 +56,7 @@ export function Physician() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.svg" alt="Eternal Longevity" className="h-7 w-auto md:h-8" draggable={false} />
                 <p className="font-mono text-[12px] uppercase tracking-[0.04em] text-black/60">
-                  NJ license 25MB11925900
+                  Licensed in NJ, NY, PA &amp; MI
                 </p>
               </div>
             </div>

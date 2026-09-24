@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { Physician } from '@/components/sections/Physician';
-import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SERVICE_AREA } from '@/lib/site';
+import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SERVICE_AREA, SERVICE_AREA_SHORT } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -44,7 +44,7 @@ const VALUES = [
 
 const RECORD = [
   { k: 'Business', v: `${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}` },
-  { k: 'Prescriber of record', v: 'Dr. Bader Elder, DO · NJ license 25MB11925900' },
+  { k: 'Prescriber of record', v: `Dr. Bader Elder, DO · licensed in ${SERVICE_AREA_SHORT}` },
   { k: 'Pharmacy', v: 'A U.S.-licensed 503A compounding pharmacy, under state board oversight' },
   { k: 'Who we serve', v: `${SERVICE_AREA} residents, 18 and older` },
   { k: 'Prescription', v: 'Required. You are charged only if the physician approves.' },

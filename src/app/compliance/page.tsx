@@ -6,6 +6,7 @@ import { getPrescriber } from '@/lib/prescriber';
 import type { PrescriberRecord } from '@/lib/prescriberTypes';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { LegitScriptSeal } from '@/components/ui/LegitScriptSeal';
+import { SERVICE_AREA } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Compliance',
@@ -36,9 +37,7 @@ function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
   { label: 'Prescriber of record', value: p.display },
   {
     label: 'Prescriber licensure',
-    value: p.licenseNumber
-      ? `${p.licenseState === 'NJ' ? 'New Jersey' : p.licenseState} · License ${p.licenseNumber}`
-      : '—',
+    value: `Licensed in ${SERVICE_AREA}`,
   },
   { label: 'NPI', value: p.npi || '—' },
   { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
