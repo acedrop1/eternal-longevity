@@ -39,6 +39,8 @@ export type FieldType =
   | 'text-long'
   | 'number'
   | 'slider'
+  /** One slider in total inches; stores height_ft + height_in (see IntakeWizard). */
+  | 'height'
   | 'email'
   | 'password'
   | 'consent-stack'
@@ -183,24 +185,14 @@ export const STEPS: Step[] = [
     body: 'The doctor uses this for dosing — exact numbers, not ranges.',
     fields: [
       {
-        id: 'height_ft',
-        type: 'number',
-        half: true,
-        label: 'Height — feet',
-        placeholder: '5',
+        // Slider over total inches (4'0" to 7'6"). The answer is still stored
+        // as height_ft + height_in, which is what the prescriber's review reads.
+        id: 'height',
+        type: 'height',
+        label: 'Height',
         required: true,
-        min: 3,
-        max: 8,
-      },
-      {
-        id: 'height_in',
-        type: 'number',
-        half: true,
-        label: 'Height — inches',
-        placeholder: '10',
-        required: true,
-        min: 0,
-        max: 11,
+        min: 48,
+        max: 90,
       },
       {
         id: 'weight_lb',

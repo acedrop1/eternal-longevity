@@ -34,12 +34,16 @@ export default async function DoctorProfilePage() {
       ]}
     >
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-sky-300">
-          PHYSICIAN PROFILE
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Physician profile
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{ fontSize: 'clamp(1.85rem, 4vw, 2.75rem)', letterSpacing: '-0.02em', lineHeight: 1.05 }}
+          className="font-display font-normal text-foreground"
+          style={{
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
+            lineHeight: 1.05,
+          }}
         >
           {record.display || user.name}
         </h1>
@@ -52,7 +56,7 @@ export default async function DoctorProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* === MAIN === */}
         <div className="space-y-6">
-          <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
+          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
             <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
               Your details
             </h2>
@@ -64,7 +68,7 @@ export default async function DoctorProfilePage() {
             <PrescriberForm record={record} mode="doctor" />
           </section>
 
-          <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
+          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
             <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
               Email
             </h2>
@@ -75,7 +79,7 @@ export default async function DoctorProfilePage() {
             </p>
           </section>
 
-          <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
+          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
             <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
               How you're notified
             </h2>
@@ -102,9 +106,9 @@ export default async function DoctorProfilePage() {
 
         {/* === SIDEBAR === */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
-              SUPPORT
+          <div className="rounded-[4px] border border-line bg-surface p-5">
+            <div className="mb-2 font-mono text-[12px] text-foreground/55">
+              Support
             </div>
             <p className="text-sm text-foreground/75 leading-relaxed">
               Something wrong with a case, or a member you need to reach?
@@ -127,7 +131,7 @@ export default async function DoctorProfilePage() {
 
 function Fact({ title, body }: { title: string; body: string }) {
   return (
-    <li className="flex gap-3 rounded-2xl border border-line bg-background p-4">
+    <li className="flex gap-3 rounded-[4px] border border-line bg-background p-4">
       <span
         aria-hidden
         className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-accent"

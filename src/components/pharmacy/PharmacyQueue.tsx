@@ -38,11 +38,11 @@ export interface PharmacyOrderView {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  submitted: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
+  submitted: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
   accepted: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  shipped: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300',
-  delivered: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300',
-  canceled: 'border-line bg-surface text-foreground/45',
+  shipped: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
+  delivered: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
+  canceled: 'border-line bg-surface text-foreground/60',
 };
 
 const CARRIERS = ['FedEx', 'UPS', 'USPS', 'DHL'];
@@ -56,7 +56,7 @@ export function PharmacyQueue({
 }) {
   if (orders.length === 0) {
     return (
-      <p className="rounded-3xl border border-line bg-surface p-8 text-center text-sm text-foreground/55">
+      <p className="rounded-[4px] border border-line bg-surface p-8 text-center text-sm text-foreground/55">
         No orders in the queue. Submitted orders from the clinic appear here.
       </p>
     );
@@ -65,7 +65,7 @@ export function PharmacyQueue({
   return (
     <div className="space-y-4">
       {!live && (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
           Demo data. Real orders flow in once Supabase is connected.
         </div>
       )}
@@ -117,25 +117,26 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
   }
 
   return (
-    <section className="rounded-3xl border border-line bg-surface p-6">
+    <section className="rounded-[4px] border border-line bg-surface p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono text-sm text-foreground/85">
+        <span className="font-mono text-[13px] text-foreground/85">
           {order.orderRef}
         </span>
         <span
           className={cn(
-            'rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-widest',
+            'inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-0.5 font-mono text-[12px]',
             STATUS_STYLE[status] ?? STATUS_STYLE.canceled,
           )}
         >
-          {status.toUpperCase()}
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+          {status}
         </span>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
-          <div className="mb-1 text-[10px] tracking-widest text-foreground/45">
-            PATIENT
+          <div className="mb-1 font-mono text-[12px] text-foreground/60">
+            Patient
           </div>
           <p className="text-sm font-medium text-foreground">
             {order.patientName}
@@ -143,8 +144,8 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
           {order.patientDob && (
             <p className="text-xs text-foreground/55">DOB {order.patientDob}</p>
           )}
-          <div className="mt-3 mb-1 text-[10px] tracking-widest text-foreground/45">
-            SHIP TO
+          <div className="mt-3 mb-1 font-mono text-[12px] text-foreground/60">
+            Ship to
           </div>
           {order.address ? (
             <p className="text-sm text-foreground/85 leading-relaxed">
@@ -154,13 +155,13 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
               {order.address.city}, {order.address.state} {order.address.zip}
             </p>
           ) : (
-            <p className="text-sm text-foreground/45">No address on file.</p>
+            <p className="text-sm text-foreground/60">No address on file.</p>
           )}
         </div>
 
         <div>
-          <div className="mb-1 text-[10px] tracking-widest text-foreground/45">
-            PRESCRIPTION
+          <div className="mb-1 font-mono text-[12px] text-foreground/60">
+            Prescription
           </div>
           <ul className="space-y-1">
             {order.items.map((it, i) => (
@@ -190,7 +191,7 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
             type="button"
             disabled={busy}
             onClick={accept}
-            className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
+            className="rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-50 font-mono"
           >
             {busy ? 'Working…' : 'Accept order'}
           </button>
@@ -202,13 +203,13 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
             className="flex flex-wrap items-end gap-3"
           >
             <div>
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                CARRIER
+              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+                Carrier
               </label>
               <select
                 value={carrier}
                 onChange={(e) => setCarrier(e.target.value)}
-                className="rounded-2xl border border-line bg-background px-4 py-2.5 text-sm text-foreground"
+                className="rounded-[2px] border border-line bg-background px-4 py-2.5 text-sm text-foreground"
               >
                 {CARRIERS.map((c) => (
                   <option key={c}>{c}</option>
@@ -216,8 +217,8 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
               </select>
             </div>
             <div className="flex-1 min-w-[12rem]">
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                TRACKING NUMBER
+              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+                Tracking number
               </label>
               <input
                 aria-label="Tracking number"
@@ -225,13 +226,13 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
                 onChange={(e) => setTracking(e.target.value)}
                 placeholder="1Z…"
                 required
-                className="w-full rounded-2xl border border-line bg-background px-4 py-2.5 text-sm text-foreground placeholder-foreground/30"
+                className="w-full rounded-[2px] border border-line bg-background px-4 py-2.5 text-sm text-foreground placeholder-foreground/30"
               />
             </div>
             <button
               type="submit"
               disabled={busy}
-              className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
+              className="rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-50 font-mono"
             >
               {busy ? 'Working…' : 'Mark shipped'}
             </button>

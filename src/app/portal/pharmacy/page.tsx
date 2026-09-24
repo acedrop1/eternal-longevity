@@ -80,14 +80,14 @@ export default async function PharmacyPortalPage() {
       nav={[{ label: 'Orders', href: '/portal/pharmacy' }]}
     >
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          FULFILLMENT QUEUE
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Fulfillment queue
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >

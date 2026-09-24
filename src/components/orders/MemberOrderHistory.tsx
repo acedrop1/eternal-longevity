@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { EmptyState, SectionTitle, StatusChip, inset, panel, type Tone } from '@/components/portal/ui';
 
 export interface MemberOrderView {
   id: string;
@@ -10,31 +10,15 @@ export interface MemberOrderView {
   trackingNumber: string | null;
 }
 
-const STATUS: Record<string, { label: string; class: string }> = {
-  draft: {
-    label: 'PREPARING',
-    class: 'border-line bg-surface text-foreground/55',
-  },
-  submitted: {
-    label: 'WITH PHARMACY',
-    class: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
-  },
-  accepted: {
-    label: 'COMPOUNDING',
-    class: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  },
-  shipped: {
-    label: 'SHIPPED',
-    class: 'border-accent/40 bg-accent/10 text-accent',
-  },
-  delivered: {
-    label: 'DELIVERED',
-    class: 'border-accent/40 bg-accent/10 text-accent',
-  },
-  canceled: {
-    label: 'CANCELED',
-    class: 'border-line bg-surface text-foreground/45',
-  },
+// Same semantic colours as before (amber with the pharmacy, sky while
+// compounding, gold once it ships), now as dot + label chips.
+const STATUS: Record<string, { label: string; tone: Tone }> = {
+  draft: { label: 'Preparing', tone: 'neutral' },
+  submitted: { label: 'With pharmacy', tone: 'warn' },
+  accepted: { label: 'Compounding', tone: 'info' },
+  shipped: { label: 'Shipped', tone: 'gold' },
+  delivered: { label: 'Delivered', tone: 'gold' },
+  canceled: { label: 'Canceled', tone: 'muted' },
 };
 
 export function MemberOrderHistory({
@@ -44,76 +28,64 @@ export function MemberOrderHistory({
 }) {
   if (orders.length === 0) {
     return (
-      <div className="rounded-3xl border border-line bg-surface p-10 text-center">
-        <h2 className="mb-2 text-lg font-semibold tracking-tight text-foreground">
-          No orders yet
-        </h2>
-        <p className="text-sm text-foreground/65">
-          Once your protocol is confirmed, your first order appears
-          here with live shipment tracking.
-        </p>
-      </div>
+      <EmptyState>
+        Once your protocol is confirmed, your first order appears here with
+        live shipment tracking.
+      </EmptyState>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {orders.map((order) => {
-        const status = STATUS[order.status] ?? STATUS.draft;
-        return (
-          <article
-            key={order.id}
-            className="rounded-3xl border border-line bg-surface p-6"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <span className="font-mono text-sm text-foreground/85">
-                  {order.ref}
-                </span>
-                <span className="ml-3 text-xs text-foreground/55">
-                  {order.placedAt}
-                </span>
-              </div>
-              <span
-                className={cn(
-                  'rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-widest',
-                  status.class,
-                )}
-              >
-                {status.label}
-              </span>
-            </div>
-
-            {order.items.length > 0 && (
-              <ul className="mt-4 space-y-1.5 border-t border-line pt-4">
-                {order.items.map((it, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-foreground">{it.label}</span>
-                    {it.detail && (
-                      <span className="text-foreground/55">{it.detail}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {order.trackingNumber && (
-              <div className="mt-4 rounded-2xl border border-line bg-background px-4 py-3">
-                <div className="text-[10px] tracking-widest text-foreground/50">
-                  TRACKING
+    <section className="space-y-4">
+      <SectionTitle>Pharmacy shipments</SectionTitle>
+      <div className="space-y-3">
+        {orders.map((order) => {
+          const status = STATUS[order.status] ?? STATUS.draft;
+          return (
+            <article key={order.id} className={`${panel} p-5 md:p-6`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-mono text-[14px] text-black">
+                    {order.ref}
+                  </span>
+                  <span className="font-mono text-[13px] tabular-nums text-black/55">
+                    {order.placedAt}
+                  </span>
                 </div>
-                <p className="mt-0.5 font-mono text-sm text-foreground/90">
-                  {order.trackingCarrier ? `${order.trackingCarrier} · ` : ''}
-                  {order.trackingNumber}
-                </p>
+                <StatusChip tone={status.tone}>{status.label}</StatusChip>
               </div>
-            )}
-          </article>
-        );
-      })}
-    </div>
+
+              {order.items.length > 0 && (
+                <ul className="mt-4 space-y-1.5 border-t border-black/10 pt-4">
+                  {order.items.map((it, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center justify-between gap-4 text-[15px]"
+                    >
+                      <span className="text-black">{it.label}</span>
+                      {it.detail && (
+                        <span className="text-right text-black/60">{it.detail}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {order.trackingNumber && (
+                <div className={`${inset} mt-4 px-4 py-3`}>
+                  <div className="font-mono text-[12px] text-black/55">
+                    Tracking
+                  </div>
+                  <p className="mt-0.5 break-all font-mono text-[14px] text-black">
+                    {order.trackingCarrier ? `${order.trackingCarrier} · ` : ''}
+                    {order.trackingNumber}
+                  </p>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

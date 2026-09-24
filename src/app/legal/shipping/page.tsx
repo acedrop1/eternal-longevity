@@ -22,7 +22,6 @@ export const metadata: Metadata = {
 export default function ShippingPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Shipping & Delivery Policy"
       effective="September 2026"
       lead="Every order is compounded to order by a licensed 503A pharmacy after a prescriber approves it, so the clock starts at approval and payment — not at the moment you place the order. This page sets out exactly how long each step takes, how your order travels, and what happens if something goes wrong in transit."

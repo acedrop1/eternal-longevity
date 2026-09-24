@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function StateAvailabilityPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="State Availability"
       effective="September 2026"
       lead={`Two independent licences gate every order: a prescriber licensed in your state, and a pharmacy registered to dispense into it. Both must be true. Today both are true in exactly one state.`}

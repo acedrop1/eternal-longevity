@@ -5,6 +5,7 @@ import { useMemberProfile } from './MemberProfileProvider';
 import { formatAddressOneLine } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
+import { btnPrimary, btnSecondary, btnSmall, field, fieldLabel, inset } from '@/components/portal/ui';
 import { formatPhone } from '@/lib/format';
 
 interface NewAddressDraft {
@@ -64,7 +65,7 @@ export function SavedAddressesManager() {
   return (
     <div className="space-y-3">
       {profile.addresses.length === 0 && !adding && (
-        <p className="text-sm text-foreground/55">
+        <p className="text-[15px] text-black/60">
           No saved addresses yet. Add one to skip re-entering at checkout.
         </p>
       )}
@@ -72,31 +73,27 @@ export function SavedAddressesManager() {
       {profile.addresses.map((a) => (
         <div
           key={a.id}
-          className={cn(
-            'rounded-2xl border p-4',
-            a.isPrimary
-              ? 'border-accent/40 bg-accent/5'
-              : 'border-line bg-background'
-          )}
+          className={cn(inset, 'p-4', a.isPrimary && 'ring-black/30')}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="mb-1 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-[15px] font-medium text-black">
                   {a.label}
                 </span>
                 {a.isPrimary && (
-                  <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest font-semibold">
-                    PRIMARY
+                  <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] leading-none text-black">
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                    Primary
                   </span>
                 )}
               </div>
-              <p className="text-sm text-foreground/85">{a.fullName}</p>
-              <p className="text-xs text-foreground/55 mt-0.5">
+              <p className="text-[15px] text-black/80">{a.fullName}</p>
+              <p className="mt-0.5 text-[14px] text-black/60">
                 {formatAddressOneLine(a)}
               </p>
               {a.phone && (
-                <p className="text-xs text-foreground/55 mt-0.5">{formatPhone(a.phone)}</p>
+                <p className="mt-0.5 text-[14px] tabular-nums text-black/60">{formatPhone(a.phone)}</p>
               )}
             </div>
             <div className="flex flex-shrink-0 gap-2">
@@ -104,17 +101,17 @@ export function SavedAddressesManager() {
                 <button
                   type="button"
                   onClick={() => setPrimaryAddress(a.id)}
-                  className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] tracking-widest text-foreground/85 hover:text-foreground hover:border-foreground/30 transition-colors"
+                  className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
                 >
-                  SET PRIMARY
+                  Set primary
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => removeAddress(a.id)}
-                className="rounded-full border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] tracking-widest text-red-300 hover:bg-red-500/10 transition-colors"
+                className={cn(btnSmall, 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50')}
               >
-                REMOVE
+                Remove
               </button>
             </div>
           </div>
@@ -122,46 +119,43 @@ export function SavedAddressesManager() {
       ))}
 
       {adding ? (
-        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 md:p-5">
-          <div className="mb-4 text-[10px] tracking-widest text-accent">
-            NEW ADDRESS
-          </div>
+        <div className={cn(inset, 'p-4 md:p-5')}>
+          <p className="mb-4 text-[16px] font-medium text-black">New address</p>
           <div className="grid gap-4">
             <Field
-              label="LABEL"
+              label="Label"
               value={draft.label}
               onChange={(v) => setDraft({ ...draft, label: v })}
               placeholder="Home / Work / Mom's"
             />
             <Field
-              label="FULL NAME"
+              label="Full name"
               value={draft.fullName}
               onChange={(v) => setDraft({ ...draft, fullName: v })}
             />
             <Field
-              label="STREET ADDRESS"
+              label="Street address"
               value={draft.line1}
               onChange={(v) => setDraft({ ...draft, line1: v })}
             />
             <Field
-              label="APT / SUITE (OPTIONAL)"
+              label="Apt / suite (optional)"
               value={draft.line2}
               onChange={(v) => setDraft({ ...draft, line2: v })}
             />
             <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
               <Field
-                label="CITY"
+                label="City"
                 value={draft.city}
                 onChange={(v) => setDraft({ ...draft, city: v })}
               />
               <div>
-                <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                  STATE
-                </label>
+                <label className={fieldLabel}>State</label>
                 <select
+                  aria-label="State"
                   value={draft.state}
                   onChange={(e) => setDraft({ ...draft, state: e.target.value })}
-                  className={cn(inputClass, 'appearance-none')}
+                  className={cn(field, 'appearance-none')}
                 >
                   <option value="">—</option>
                   {SERVICEABLE_STATES.map((st) => (
@@ -182,7 +176,7 @@ export function SavedAddressesManager() {
               />
             </div>
             <Field
-              label="PHONE (OPTIONAL)"
+              label="Phone (optional)"
               value={draft.phone}
               onChange={(v) => setDraft({ ...draft, phone: v })}
               type="tel"
@@ -193,14 +187,15 @@ export function SavedAddressesManager() {
               onClick={() =>
                 setDraft({ ...draft, isPrimary: !draft.isPrimary })
               }
-              className="flex items-center gap-3 rounded-2xl border border-line bg-background px-4 py-3 text-left hover:border-foreground/30 transition-colors"
+              aria-pressed={draft.isPrimary}
+              className="flex min-h-[44px] items-center gap-3 rounded-[2px] bg-white px-4 py-3 text-left ring-1 ring-black/15 transition-colors hover:bg-black/[0.02]"
             >
               <span
                 className={cn(
-                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md border-2',
+                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] ring-1',
                   draft.isPrimary
-                    ? 'border-accent bg-accent text-background'
-                    : 'border-line bg-surface'
+                    ? 'bg-black text-white ring-black'
+                    : 'bg-white ring-black/30'
                 )}
               >
                 {draft.isPrimary && (
@@ -218,7 +213,7 @@ export function SavedAddressesManager() {
                   </svg>
                 )}
               </span>
-              <span className="text-sm text-foreground/85">
+              <span className="text-[15px] text-black/80">
                 Make this my primary shipping address
               </span>
             </button>
@@ -226,7 +221,7 @@ export function SavedAddressesManager() {
               <button
                 type="button"
                 onClick={saveDraft}
-                className="rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+                className={btnPrimary}
               >
                 Save address
               </button>
@@ -236,7 +231,7 @@ export function SavedAddressesManager() {
                   setDraft(EMPTY);
                   setAdding(false);
                 }}
-                className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
+                className={btnSecondary}
               >
                 Cancel
               </button>
@@ -247,7 +242,7 @@ export function SavedAddressesManager() {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-soft"
+          className={btnSecondary}
         >
           + Add another address
         </button>
@@ -256,8 +251,6 @@ export function SavedAddressesManager() {
   );
 }
 
-const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
 
 function Field({
   label,
@@ -276,9 +269,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-        {label}
-      </label>
+      <label className={fieldLabel}>{label}</label>
       <input
         aria-label={label}
         type={type}
@@ -286,7 +277,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={inputClass}
+        className={field}
       />
     </div>
   );

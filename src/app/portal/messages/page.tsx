@@ -4,6 +4,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { MessagesPanel } from '@/components/messages/MessagesPanel';
 import { getSession } from '@/lib/auth-server';
 import { listMyMessages } from '@/lib/messages-db';
+import { MEMBER_NAV, PageHeader } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Messages',
@@ -20,32 +21,11 @@ export default async function MemberMessagesPage() {
   ]);
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
-      <div>
-        <p className="mb-2 text-[11px] tracking-widest text-accent">
-          SUPPORT &amp; DOCTOR
-        </p>
-        <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          Messages
-        </h1>
-      </div>
+    <PortalShell user={user} nav={MEMBER_NAV}>
+      <PageHeader
+        title="Messages"
+        intro="Support for orders and billing, or your doctor for treatment."
+      />
       <MessagesPanel threads={{ support, doctor }} />
     </PortalShell>
   );

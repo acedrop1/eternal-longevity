@@ -65,7 +65,7 @@ export function DoctorQueueList({
       {/* === AWAITING REVIEW === */}
       <section>
         <SectionHeader
-          eyebrow="AWAITING REVIEW"
+          eyebrow="Awaiting review"
           title="Sign or decline"
           count={queue.length}
         />
@@ -92,7 +92,7 @@ export function DoctorQueueList({
       {/* === ACTIVE CASES === */}
       <section>
         <SectionHeader
-          eyebrow="ACTIVE CASES"
+          eyebrow="Active cases"
           title="Manage post-sign"
           count={active.length}
         />
@@ -114,7 +114,7 @@ export function DoctorQueueList({
       {recent.length > 0 && (
         <section>
           <SectionHeader
-            eyebrow="RECENT"
+            eyebrow="Recent"
             title="Closed cases"
             count={recent.length}
           />
@@ -141,15 +141,15 @@ function SectionHeader({
   return (
     <div className="mb-4 flex items-end justify-between">
       <div>
-        <p className="text-[10px] tracking-widest text-foreground/55">
+        <p className="font-mono text-[12px] text-foreground/55">
           {eyebrow}
         </p>
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h2>
       </div>
-      <span className="text-[10px] tracking-widest text-foreground/55">
-        {count} {count === 1 ? 'CASE' : 'CASES'}
+      <span className="font-mono text-[12px] text-foreground/55">
+        {count} {count === 1 ? 'case' : 'cases'}
       </span>
     </div>
   );
@@ -157,7 +157,7 @@ function SectionHeader({
 
 function EmptySection({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+    <div className="rounded-[4px] border border-line bg-surface p-8 text-center">
       <h3 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
         {title}
       </h3>
@@ -188,12 +188,12 @@ function DoctorQueueRow({
   const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
 
   return (
-    <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
+    <article className="rounded-[4px] border border-line bg-surface p-5 md:p-6">
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-line"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[4px] border border-line"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -206,8 +206,8 @@ function DoctorQueueRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
-              <span className="font-semibold text-foreground/80">
+            <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[12px] text-foreground/55">
+              <span className="text-foreground/80">
                 {orderRef(order.id)}
               </span>
               <span>·</span>
@@ -223,9 +223,9 @@ function DoctorQueueRow({
             </p>
 
             {order.adminNote && (
-              <div className="mt-3 rounded-xl border border-foreground/15 bg-background p-3">
-                <div className="text-[10px] tracking-widest text-foreground/55 mb-1">
-                  ADMIN NOTE
+              <div className="mt-3 rounded-[4px] border border-foreground/15 bg-background p-3">
+                <div className="font-mono text-[12px] text-foreground/55 mb-1">
+                  Admin note
                 </div>
                 <p className="text-xs text-foreground/85 leading-relaxed">
                   {order.adminNote}
@@ -236,8 +236,9 @@ function DoctorQueueRow({
         </div>
 
         <div className="md:text-right md:flex-shrink-0">
-          <span className="inline-flex items-center rounded-full border border-sky-400/40 bg-sky-500/10 text-sky-300 px-2.5 py-1 text-[10px] tracking-widest font-semibold">
-            AWAITING MY REVIEW
+          <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-sky-400/40 bg-sky-500/10 text-sky-300 px-2.5 py-1 font-mono text-[12px]">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+            Awaiting my review
           </span>
         </div>
       </div>
@@ -254,7 +255,7 @@ function DoctorQueueRow({
               setPassword('');
               setOpen('sign');
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-60 font-mono"
           >
             Approve &amp; sign prescription
           </button>
@@ -262,7 +263,7 @@ function DoctorQueueRow({
             type="button"
             disabled={busy !== null}
             onClick={() => setOpen('ask')}
-            className="rounded-full border border-line bg-background px-5 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+            className="rounded-full border border-line bg-background px-5 py-2 font-mono text-[13px] text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
           >
             Ask for more information
           </button>
@@ -270,7 +271,7 @@ function DoctorQueueRow({
             type="button"
             disabled={busy !== null}
             onClick={() => setOpen('decline')}
-            className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60"
+            className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 font-mono text-[13px] text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60 sm:ml-auto"
           >
             Decline
           </button>
@@ -278,9 +279,9 @@ function DoctorQueueRow({
       )}
 
       {open === 'sign' && (
-        <div className="mt-5 rounded-2xl border border-accent/40 bg-accent/[0.06] p-4 md:p-5">
-          <div className="mb-3 text-[10px] tracking-widest text-accent">
-            SIGN THE PRESCRIPTION
+        <div className="mt-5 rounded-[4px] border border-accent/40 bg-accent/[0.06] p-4 md:p-5">
+          <div className="mb-3 font-mono text-[12px] text-accent">
+            Sign the prescription
           </div>
           <p className="mb-4 text-sm leading-relaxed text-foreground/75">
             Signing writes the prescription under your licence, charges{' '}
@@ -304,9 +305,9 @@ function DoctorQueueRow({
 
               <label
                 htmlFor={`pw-${order.id}`}
-                className="mb-1.5 block text-[10px] tracking-widest text-foreground/50"
+                className="mb-1.5 block font-mono text-[12px] text-foreground/60"
               >
-                YOUR PASSWORD
+                Your password
               </label>
               <input
                 id={`pw-${order.id}`}
@@ -317,13 +318,13 @@ function DoctorQueueRow({
                   setPassword(e.target.value);
                   setSignError(null);
                 }}
-                className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15"
               />
             </>
           )}
 
           {signError && (
-            <p className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+            <p className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
               {signError}
             </p>
           )}
@@ -352,7 +353,7 @@ function DoctorQueueRow({
                   setBusy(null);
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-40 font-mono"
             >
               {busy === 'sign' && <Spinner />}
               {busy === 'sign' ? 'Processing payment…' : 'Confirm and sign'}
@@ -365,7 +366,7 @@ function DoctorQueueRow({
                 setPassword('');
                 setSignError(null);
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
             >
               Cancel
             </button>
@@ -374,9 +375,9 @@ function DoctorQueueRow({
       )}
 
       {open === 'ask' && (
-        <div className="mt-5 rounded-2xl border border-line bg-background p-4 md:p-5">
-          <div className="mb-2 text-[10px] tracking-widest text-foreground/50">
-            WHAT DO YOU NEED FROM THEM?
+        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
+          <div className="mb-2 font-mono text-[12px] text-foreground/60">
+            What do you need from them?
           </div>
           <p className="mb-3 text-xs leading-relaxed text-foreground/55">
             Goes to their portal thread with you and emails them. The order
@@ -387,7 +388,7 @@ function DoctorQueueRow({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="What dose of tadalafil are you on, and how long have you been taking it?"
-            className="w-full resize-none rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="w-full resize-none rounded-[2px] border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -410,7 +411,7 @@ function DoctorQueueRow({
                   setBusy(null);
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-40 font-mono"
             >
               {busy === 'ask' && <Spinner />}
               {busy === 'ask' ? 'Sending…' : 'Send question'}
@@ -421,7 +422,7 @@ function DoctorQueueRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
             >
               Cancel
             </button>
@@ -430,9 +431,9 @@ function DoctorQueueRow({
       )}
 
       {open === 'decline' && (
-        <div className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 md:p-5">
-          <div className="mb-3 text-[10px] tracking-widest text-red-300">
-            REASON FOR CLINICAL DECLINE
+        <div className="mt-5 rounded-[4px] border border-red-500/30 bg-red-500/5 p-4 md:p-5">
+          <div className="mb-3 font-mono text-[12px] text-red-300">
+            Reason for clinical decline
           </div>
           <p className="mb-3 text-xs leading-relaxed text-foreground/55">
             Write this to the patient — they are emailed it word for word, and
@@ -443,7 +444,7 @@ function DoctorQueueRow({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="Your blood pressure readings are too high for this treatment to be safe. Please see your primary physician, and we can revisit this once it is controlled."
-            className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
+            className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -460,10 +461,10 @@ function DoctorQueueRow({
               }}
               disabled={!note.trim() || busy !== null}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                'inline-flex items-center gap-2 rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
                 note.trim() && !busy
-                  ? 'bg-red-500 text-foreground hover:bg-red-600'
-                  : 'bg-foreground/15 text-foreground/40',
+                  ? 'bg-red-700 text-white hover:bg-red-800'
+                  : 'bg-foreground/10 text-foreground/55',
               )}
             >
               {busy === 'decline' && <Spinner />}
@@ -472,7 +473,7 @@ function DoctorQueueRow({
             <button
               type="button"
               onClick={() => setOpen(null)}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
             >
               Cancel
             </button>
@@ -493,13 +494,13 @@ function Metric({
   tone: 'blue' | 'accent' | 'neutral';
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-4">
-      <div className="text-[10px] tracking-widest text-foreground/55 mb-1.5">
-        {label.toUpperCase()}
+    <div className="rounded-[4px] border border-line bg-surface p-4">
+      <div className="font-mono text-[12px] text-foreground/55 mb-1.5">
+        {label}
       </div>
       <div
         className={cn(
-          'text-2xl font-semibold tracking-tight tabular-nums',
+          'text-2xl font-medium tracking-tight tabular-nums',
           tone === 'blue' && 'text-sky-300',
           tone === 'accent' && 'text-accent',
           tone === 'neutral' && 'text-foreground',
@@ -531,12 +532,12 @@ function ActiveCaseRow({
   const [note, setNote] = useState('');
 
   return (
-    <article className="rounded-3xl border border-line bg-surface p-5 md:p-6">
+    <article className="rounded-[4px] border border-line bg-surface p-5 md:p-6">
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-line"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[4px] border border-line"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -549,8 +550,8 @@ function ActiveCaseRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
-              <span className="font-semibold text-foreground/80">
+            <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[12px] text-foreground/55">
+              <span className="text-foreground/80">
                 {orderRef(order.id)}
               </span>
               <span>·</span>
@@ -571,7 +572,8 @@ function ActiveCaseRow({
         </div>
 
         <div className="md:text-right md:flex-shrink-0">
-          <span className="inline-flex items-center rounded-full border border-accent/40 bg-accent/10 text-accent px-2.5 py-1 text-[10px] tracking-widest font-semibold">
+          <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-accent/40 bg-accent/10 text-accent px-2.5 py-1 font-mono text-[12px]">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             {STATUS_LABEL[order.status]}
           </span>
         </div>
@@ -584,7 +586,7 @@ function ActiveCaseRow({
             <button
               type="button"
               onClick={() => markCompounding(order.id, doctorName)}
-              className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
+              className="rounded-full bg-black text-white px-5 py-2 text-[13px] hover:bg-black/85 transition-colors font-mono"
             >
               Mark compounding
             </button>
@@ -593,7 +595,7 @@ function ActiveCaseRow({
             <button
               type="button"
               onClick={() => setOpen('tracking')}
-              className="rounded-full bg-foreground text-background font-semibold px-5 py-2 text-sm hover:bg-accent hover:text-black transition-colors"
+              className="rounded-full bg-black text-white px-5 py-2 font-mono text-[13px] hover:bg-black/85 transition-colors"
             >
               Add tracking &amp; ship
             </button>
@@ -602,7 +604,7 @@ function ActiveCaseRow({
             <button
               type="button"
               onClick={() => markDelivered(order.id, doctorName)}
-              className="rounded-full bg-accent text-black font-semibold px-5 py-2 text-sm hover:bg-accent-soft transition-colors"
+              className="rounded-full bg-black text-white px-5 py-2 text-[13px] hover:bg-black/85 transition-colors font-mono"
             >
               Mark delivered
             </button>
@@ -610,35 +612,35 @@ function ActiveCaseRow({
           <button
             type="button"
             onClick={() => setOpen('note')}
-            className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
+            className="rounded-full border border-line bg-background text-foreground/85 px-4 py-2 font-mono text-[12px] hover:border-foreground/30 transition-colors"
           >
             Add update
           </button>
           <button
             type="button"
             onClick={() => setShowTimeline((v) => !v)}
-            className="ml-auto text-[11px] tracking-widest text-foreground/55 hover:text-foreground transition-colors"
+            className="ml-auto font-mono text-[12px] text-foreground/55 hover:text-foreground transition-colors"
           >
-            {showTimeline ? 'HIDE TIMELINE ↑' : 'TIMELINE ↓'}
+            {showTimeline ? 'Hide timeline ↑' : 'Timeline ↓'}
           </button>
         </div>
       )}
 
       {/* Add tracking panel */}
       {open === 'tracking' && (
-        <div className="mt-5 rounded-2xl border border-accent/30 bg-accent/5 p-4 md:p-5">
-          <div className="mb-3 text-[10px] tracking-widest text-accent">
-            SHIPMENT DETAILS
+        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
+          <div className="mb-3 font-mono text-[12px] text-foreground/60">
+            Shipment details
           </div>
           <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
             <div>
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                CARRIER
+              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+                Carrier
               </label>
               <select
                 value={carrier}
                 onChange={(e) => setCarrier(e.target.value)}
-                className="w-full appearance-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground"
+                className="w-full appearance-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground"
               >
                 <option value="FedEx">FedEx</option>
                 <option value="UPS">UPS</option>
@@ -647,8 +649,8 @@ function ActiveCaseRow({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                TRACKING NUMBER
+              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+                Tracking number
               </label>
               <input
                 aria-label="Tracking number"
@@ -656,20 +658,20 @@ function ActiveCaseRow({
                 value={tracking}
                 onChange={(e) => setTracking(e.target.value)}
                 placeholder="1Z A99 7W2 03 8329 7104"
-                className="w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                className="w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
               />
             </div>
           </div>
           <div className="mt-3">
-            <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-              MESSAGE TO MEMBER (OPTIONAL)
+            <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+              Message to member (optional)
             </label>
             <textarea
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Anything the member should know about this shipment…"
-              className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
             />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -689,10 +691,10 @@ function ActiveCaseRow({
               }}
               disabled={!tracking.trim()}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
                 tracking.trim()
-                  ? 'bg-accent text-black hover:bg-accent-soft'
-                  : 'bg-foreground/15 text-foreground/40',
+                  ? 'bg-black text-white hover:bg-black/85'
+                  : 'bg-foreground/10 text-foreground/55',
               )}
             >
               Save &amp; mark shipped
@@ -703,7 +705,7 @@ function ActiveCaseRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
             >
               Cancel
             </button>
@@ -713,16 +715,16 @@ function ActiveCaseRow({
 
       {/* Add free-form note panel */}
       {open === 'note' && (
-        <div className="mt-5 rounded-2xl border border-line bg-background p-4 md:p-5">
-          <div className="mb-3 text-[10px] tracking-widest text-foreground/55">
-            UPDATE FOR MEMBER + CARE TEAM
+        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
+          <div className="mb-3 font-mono text-[12px] text-foreground/55">
+            Update for member + care team
           </div>
           <textarea
             rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Pharmacy delayed by a day — shipment moves to Friday."
-            className="w-full resize-none rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full resize-none rounded-[2px] border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -735,10 +737,10 @@ function ActiveCaseRow({
               }}
               disabled={!note.trim()}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
                 note.trim()
-                  ? 'bg-accent text-black hover:bg-accent-soft'
-                  : 'bg-foreground/15 text-foreground/40',
+                  ? 'bg-black text-white hover:bg-black/85'
+                  : 'bg-foreground/10 text-foreground/55',
               )}
             >
               Post update
@@ -749,7 +751,7 @@ function ActiveCaseRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
             >
               Cancel
             </button>
@@ -760,8 +762,8 @@ function ActiveCaseRow({
       {/* Timeline (collapsible) */}
       {showTimeline && order.updates && order.updates.length > 0 && (
         <div className="mt-5 border-t border-line pt-5">
-          <div className="mb-3 text-[10px] tracking-widest text-foreground/55">
-            CASE TIMELINE
+          <div className="mb-3 font-mono text-[12px] text-foreground/55">
+            Case timeline
           </div>
           <Timeline updates={order.updates} />
         </div>
@@ -772,7 +774,7 @@ function ActiveCaseRow({
 
 function RecentCaseRow({ order }: { order: Order }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
+    <div className="flex items-center gap-4 rounded-[4px] border border-line bg-surface p-4">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground truncate">
           {order.memberName}{' '}
@@ -786,12 +788,13 @@ function RecentCaseRow({ order }: { order: Order }) {
       </div>
       <span
         className={cn(
-          'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] tracking-widest font-semibold flex-shrink-0',
+          'inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 font-mono text-[12px] flex-shrink-0',
           order.status === 'delivered'
             ? 'bg-foreground/5 text-foreground/65 border-line'
             : 'bg-red-500/10 text-red-300 border-red-500/40',
         )}
       >
+        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
         {STATUS_LABEL[order.status]}
       </span>
     </div>
@@ -807,18 +810,18 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
       {ordered.map((u) => (
         <li
           key={u.id}
-          className="rounded-2xl border border-line bg-background p-3"
+          className="rounded-[4px] border border-line bg-background p-3"
         >
-          <div className="mb-1 flex items-center justify-between gap-2 text-[10px] tracking-widest text-foreground/55">
-            <span className="font-semibold text-foreground/85">
-              {u.author.toUpperCase()} · {u.role.toUpperCase()}
+          <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[12px] text-foreground/55">
+            <span className="text-foreground/85">
+              {u.author} · {u.role}
             </span>
             <span>{relativeTime(u.at)}</span>
           </div>
           <p className="text-sm text-foreground/85 leading-relaxed">{u.note}</p>
           {u.statusChange && (
-            <p className="mt-1.5 text-[10px] tracking-widest text-accent">
-              STATUS · {STATUS_LABEL[u.statusChange]}
+            <p className="mt-1.5 font-mono text-[12px] text-accent">
+              Status · {STATUS_LABEL[u.statusChange]}
             </p>
           )}
         </li>
@@ -897,21 +900,21 @@ function ReviewPanel({
       : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
 
   return (
-    <section className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
+    <section className="mt-5 overflow-hidden rounded-[4px] border border-line bg-surface">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="flex w-full items-center gap-3 bg-background px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.04]"
       >
-        <span className="flex-none text-[10px] tracking-widest text-foreground/45">
-          {open ? 'HIDE RECORD' : 'PATIENT RECORD'}
+        <span className="flex-none font-mono text-[12px] text-foreground/60">
+          {open ? 'Hide record' : 'Patient record'}
         </span>
         {!open && (
           <span
             className={cn(
               'min-w-0 flex-1 truncate text-xs',
-              flags.length ? 'text-accent' : 'text-foreground/45',
+              flags.length ? 'text-accent' : 'text-foreground/60',
             )}
           >
             {summary}
@@ -920,7 +923,7 @@ function ReviewPanel({
         <span
           aria-hidden
           className={cn(
-            'ml-auto flex-none rounded-full border border-line p-1 text-foreground/50 transition-transform',
+            'ml-auto flex-none rounded-full border border-line p-1 text-foreground/60 transition-transform',
             open && 'rotate-180',
           )}
         >
@@ -982,7 +985,7 @@ function ReviewPanel({
 
             {/* The product price and the amount charged are different numbers.
                 Showing only the second one invites the question this answers. */}
-            <dl className="mt-3 rounded-xl border border-line bg-background px-3 py-2.5">
+            <dl className="mt-3 rounded-[4px] border border-line bg-background px-3 py-2.5">
               <Money label="Subtotal" value={order.subtotal} />
               {!!order.discount && (
                 <Money
@@ -1011,8 +1014,8 @@ function Strip({ items }: { items: [string, string][] }) {
     <div className="flex flex-wrap gap-x-7 gap-y-2.5 border-t border-line px-4 py-3">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
-            {label.toUpperCase()}
+          <div className="font-mono text-[12px] text-foreground/55">
+            {label}
           </div>
           <div className="mt-0.5 text-sm font-semibold text-foreground">
             {value}
@@ -1032,8 +1035,8 @@ function Group({
 }) {
   return (
     <div className="border-t border-line px-4 py-3">
-      <div className="mb-2 text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
-        {title.toUpperCase()}
+      <div className="mb-2 font-mono text-[12px] text-foreground/55">
+        {title}
       </div>
       {children}
     </div>
@@ -1138,9 +1141,9 @@ function Money({
 
 function Cell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-line bg-background px-3 py-2">
-      <div className="text-[9px] font-semibold tracking-[0.14em] text-foreground/55">
-        {label.toUpperCase()}
+    <div className="rounded-[4px] border border-line bg-background px-3 py-2">
+      <div className="font-mono text-[12px] text-foreground/55">
+        {label}
       </div>
       <div className="mt-0.5 text-[13px] font-semibold text-foreground/90">
         {value}

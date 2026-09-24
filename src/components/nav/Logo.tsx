@@ -31,7 +31,9 @@ export function Logo({ collapsed = false, className, variant = 'full' }: LogoPro
         <img
           src="/logo.svg"
           alt="Eternal Longevity"
-          className="h-7 w-auto"
+          // 20% wider than the previous header logo (85px), set by width
+          // since the new wordmark is a longer, flatter shape.
+          className="h-auto w-[102px]"
           draggable={false}
         />
       </Link>

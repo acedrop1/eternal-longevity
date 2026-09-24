@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MobileMenuProps {
@@ -9,19 +11,28 @@ interface MobileMenuProps {
 }
 
 /**
- * Saki-style mobile menu:
- *   - Closed state: a white pill "Menu" + chevron that sits in the center of
- *     the header row.
- *   - Open state: chevron flips up, and a clean white dropdown card slides
- *     down below the header showing a list of nav rows with right-chevrons.
+ * Mobile menu: hamburger / X in the header, and a frosted black panel that
+ * drops in under the header (same glass as the header and the product buy
+ * bar) with big condensed links, then the assessment CTA and Log in.
  *
- * Pairs with the monogram-on-the-left + login-on-the-right buttons that the
- * Header component places alongside it.
+ * The panel and scrim render through a portal on document.body: the header
+ * uses backdrop-filter, which makes it the containing block for any fixed
+ * child, so a scrim inside it would only cover the header itself.
  */
 export function MobileMenu({ links }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  // The header's height changes (announcement bar and category strip fold
+  // away on scroll), so open the panel right under wherever it ends now.
+  const [panelTop, setPanelTop] = useState(88);
+  const toggle = () => {
+    const bottom = buttonRef.current?.closest('header')?.getBoundingClientRect().bottom;
+    if (bottom) setPanelTop(bottom + 8);
+    setOpen((s) => !s);
+  };
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Close on outside click or escape
   useEffect(() => {
@@ -65,131 +76,96 @@ export function MobileMenu({ links }: MobileMenuProps) {
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => setOpen((s) => !s)}
+        onClick={toggle}
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
-        className={cn(
-          // z-[45] keeps the pill (and its X) above the dropdown scrim
-          // (z-35) and panel (z-40) so it never gets covered + blurred.
-          'relative z-[45] inline-flex items-center justify-center rounded-full px-5 py-2.5 transition-colors',
-          'bg-black/60 backdrop-blur-xl ring-1 ring-white/10 text-white text-sm font-semibold tracking-wider min-w-[96px] h-[40px]'
-        )}
+        className="relative grid h-9 w-9 place-items-center text-white"
       >
-        {/* "Menu ⌄" label. Fades out when open (opacity-only, no scale —
-            scale transforms leave the icon rasterized + blurry on a
-            composited layer). */}
-        <span
-          className={cn(
-            'absolute inset-0 flex items-center justify-center gap-2',
-            'transition-opacity duration-300 ease-out-expo',
-            open ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+          {open ? (
+            <>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </>
+          ) : (
+            <>
+              <line x1="3" y1="7" x2="21" y2="7" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="17" x2="21" y2="17" />
+            </>
           )}
-        >
-          Menu
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </span>
-
-        {/* "✕" icon. Fades in when open (opacity-only crossfade) */}
-        <span
-          aria-hidden
-          className={cn(
-            'absolute inset-0 flex items-center justify-center',
-            'transition-opacity duration-300 ease-out-expo',
-            open ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          )}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </span>
+        </svg>
       </button>
 
-      {/* Dropdown panel. Slides down below the header on open */}
-      <div
-        ref={panelRef}
-        className={cn(
-          'fixed left-4 right-4 top-[88px] z-40 origin-top overflow-y-auto',
-          'rounded-3xl bg-foreground text-background shadow-2xl',
-          'transition-all duration-500 ease-out-expo',
-          open
-            ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
-            : 'opacity-0 -translate-y-2 scale-[0.97] pointer-events-none'
-        )}
-        style={{ maxHeight: 'calc(100vh - 100px)' }}
-      >
-        <nav className="flex flex-col">
-          {links.map((link, i) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
+      {mounted &&
+        createPortal(
+          <>
+            {/* Scrim over the page, under the header (z-50) so the X stays sharp. */}
+            <div
               className={cn(
-                'group flex items-center justify-between px-6 py-5 text-lg font-semibold tracking-tight',
-                i < links.length - 1 ? 'border-b border-background/10' : ''
+                'fixed inset-0 z-[45] bg-black/40 backdrop-blur-sm transition-opacity duration-500',
+                open ? 'opacity-100' : 'pointer-events-none opacity-0'
               )}
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+
+            <div
+              ref={panelRef}
+              inert={!open}
+              className={cn(
+                'fixed inset-x-3 z-[46] origin-top overflow-y-auto rounded-[4px] bg-black/75 text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)] ring-1 ring-white/15 backdrop-blur-2xl backdrop-saturate-150',
+                'transition-[opacity,transform] duration-500 ease-out-expo motion-reduce:transition-none',
+                open ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
+              )}
+              style={{ top: panelTop, maxHeight: `calc(100svh - ${panelTop + 12}px)` }}
             >
-              <span>{link.label}</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="opacity-50 transition-transform duration-300 group-hover:translate-x-1"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
-          ))}
-        </nav>
+              <nav className="flex flex-col px-5 pt-2">
+                {links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="group flex items-center justify-between border-b border-white/10 py-4"
+                  >
+                    <span
+                      className="font-display font-normal"
+                      style={{ fontSize: '2rem', fontStretch: '75%', lineHeight: 1 }}
+                    >
+                      {link.label}
+                    </span>
+                    <ArrowUpRight
+                      aria-hidden
+                      className="h-5 w-5 text-white/50 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                      strokeWidth={1.5}
+                    />
+                  </Link>
+                ))}
+              </nav>
 
-        {/* Sticky bottom CTA inside the panel */}
-        <div className="border-t border-background/10 p-4">
-          <Link
-            href="/start"
-            onClick={() => setOpen(false)}
-            className="block w-full rounded-full bg-accent text-black font-semibold text-center px-6 py-3.5 hover:bg-accent-soft transition-colors"
-          >
-            Apply Now
-          </Link>
-        </div>
-      </div>
-
-      {/* Subtle scrim behind the dropdown. Taps anywhere to close.
-          z-[35] keeps it above the sticky lead-capture (z-30) and below the
-          dropdown panel (z-40) so the menu panel always reads on top. */}
-      <div
-        className={cn(
-          'fixed inset-0 z-[35] bg-background/50 backdrop-blur-sm transition-opacity duration-500',
-          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              <div className="flex flex-col gap-2 p-5">
+                <Link
+                  href="/start"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-full bg-white px-5 py-3.5 text-center font-mono text-[14px] text-black transition-colors hover:bg-white/85"
+                >
+                  Start your assessment
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-full px-5 py-3.5 text-center font-mono text-[14px] text-white ring-1 ring-white/25 transition-colors hover:bg-white/10"
+                >
+                  Log in
+                </Link>
+                <p className="mt-2 text-center font-mono text-[12px] text-white/50">
+                  New Jersey only · Prescription required · 18+
+                </p>
+              </div>
+            </div>
+          </>,
+          document.body
         )}
-        onClick={() => setOpen(false)}
-        aria-hidden
-      />
     </>
   );
 }

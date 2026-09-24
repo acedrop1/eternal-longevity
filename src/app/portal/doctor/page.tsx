@@ -51,14 +51,14 @@ export default async function DoctorPortalPage() {
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-[11px] tracking-widest text-sky-300">
-            CLINICAL QUEUE
+          <p className="mb-2 font-mono text-[12px] text-foreground/55">
+            Clinical queue
           </p>
           <h1
-            className="font-semibold tracking-tight text-foreground"
+            className="font-display font-normal text-foreground"
             style={{
-              fontSize: "clamp(1.85rem, 4vw, 2.75rem)",
-              letterSpacing: "-0.02em",
+              fontSize: "clamp(1.8rem, 1.5vw + 1rem, 2.6rem)",
+              fontStretch: "75%",
               lineHeight: 1.05,
             }}
           >

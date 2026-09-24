@@ -25,6 +25,7 @@ export const SHOP_CATEGORIES: { key: ShopCategory; label: string }[] = [
   { key: 'immune', label: 'Immune support' },
   { key: 'skin-hair', label: 'Skin & hair' },
   { key: 'longevity', label: 'Longevity' },
+  { key: 'metabolic', label: 'Weight management' },
 ];
 
 export type DeliveryForm = 'sq' | 'im' | 'oral' | 'nasal' | 'topical';
@@ -66,6 +67,8 @@ export interface ShopProduct {
   swatch: string;
   /** Image used in card + gallery hero */
   image: string;
+  /** True when image is a clean product render: shown undimmed, no text over it. */
+  shot?: boolean;
   /** Additional gallery images for the PDP thumb strip */
   gallery: string[];
   /** Whether a quality review is required (always true for these peptides). */
@@ -910,6 +913,21 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
   },
 ];
+
+// Branded vial renders (public/images/products) replace the stock photos.
+// Orders currently ship in the pharmacy's own labelled vials, so product pages
+// mark these as illustrative: an "Image for illustration" tag on the photo and
+// a line in the disclosure (components/shop/pdpParts). Keep both while there
+// is no white-label packaging.
+{
+  const RENDERED = new Set(['nad-plus', 'glutathione', 'pt-141', 'sermorelin']);
+  for (const p of SHOP_PRODUCTS) {
+    if (!RENDERED.has(p.id)) continue;
+    p.image = `/images/products/${p.id}.jpg`;
+    p.shot = true;
+    p.gallery = [p.image, ...p.gallery.slice(1)];
+  }
+}
 
 /** Look up by id (slug). */
 export function getShopProduct(id: string): ShopProduct | null {

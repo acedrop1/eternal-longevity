@@ -3,31 +3,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
+import { type ShowcaseItem } from '@/lib/showcase';
+import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { cn } from '@/lib/utils';
 
 /**
- * The catalogue, directly under the brand statement.
+ * Shop All (David pattern). Sits directly under the hero and rises over it.
  *
- * Someone who has just read what we do should be able to see what we sell
- * without hunting for the nav — every storefront puts a rail here for that
- * reason. It scrolls rather than stacks so five products cost one screen
- * instead of five, and it snaps so a flick lands on a card rather than
- * between two.
+ * Edge-to-edge rail of tall photo cards. Each card carries a frosted
+ * price badge top-left and a frosted name + tagline panel along the bottom.
+ * Desktop gets two small round arrows beside the heading; mobile gets a thin
+ * scroll-position bar under the rail instead.
  */
 export function ProductRail() {
+  const { showcase } = useCatalog();
   const railRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [bar, setBar] = useState({ left: 0, width: 1 });
 
-  /** Which arrows are live. Recomputed on scroll and on resize. */
   const sync = useCallback(() => {
     const el = railRef.current;
     if (!el) return;
     // A pixel of slack: sub-pixel layout means scrollLeft rarely hits the end
-    // exactly, which would otherwise leave the arrow enabled on a dead rail.
+    // exactly, which would otherwise leave the arrow live on a dead rail.
     setAtStart(el.scrollLeft <= 1);
     setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
+    setBar({ left: el.scrollLeft / el.scrollWidth, width: Math.min(1, el.clientWidth / el.scrollWidth) });
   }, []);
 
   useEffect(() => {
@@ -39,151 +41,205 @@ export function ProductRail() {
   const nudge = (direction: 1 | -1) => {
     const el = railRef.current;
     if (!el) return;
-    // One card plus its gap, so a click advances exactly one product.
     const card = el.querySelector('[data-card]') as HTMLElement | null;
-    const step = card ? card.offsetWidth + 16 : el.clientWidth * 0.8;
+    const step = card ? card.offsetWidth + 12 : el.clientWidth * 0.8;
     el.scrollBy({ left: step * direction, behavior: 'smooth' });
   };
 
   return (
-    <section className="bg-background px-6 py-16 md:py-20">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-end justify-between gap-6">
-          <div>
-            <p className="mb-2 text-[11px] tracking-widest text-foreground/45">
-              THE CATALOGUE
-            </p>
-            <h2
-              className="font-semibold tracking-tight text-foreground"
-              style={{
-                fontSize: 'clamp(1.6rem, 3.2vw, 2.5rem)',
-                letterSpacing: '-0.022em',
-                lineHeight: 1.1,
-              }}
-            >
-              What a prescriber can write for you.
-            </h2>
-          </div>
-
-          <div className="hidden shrink-0 items-center gap-2 md:flex">
-            <RailButton
-              label="Previous product"
-              disabled={atStart}
-              onClick={() => nudge(-1)}
-            >
-              ←
-            </RailButton>
-            <RailButton
-              label="Next product"
-              disabled={atEnd}
-              onClick={() => nudge(1)}
-            >
-              →
-            </RailButton>
+    <section className="bg-white py-14 text-black md:py-16">
+      <div className="mb-6 flex items-center justify-between gap-4 px-5 md:mb-7 md:px-4">
+        <h2
+          className="font-display font-normal"
+          style={{ fontSize: 'clamp(1.6rem, 1.9vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1 }}
+        >
+          Shop our best sellers.
+        </h2>
+        <div className="flex shrink-0 items-center gap-5">
+          <Link
+            href="/shop"
+            className="font-mono text-[13px] underline underline-offset-[3px] decoration-black/50 transition-colors hover:decoration-black"
+          >
+            Shop all
+          </Link>
+          <div className="hidden items-center gap-1.5 md:flex">
+            <RailButton label="Previous product" disabled={atStart} onClick={() => nudge(-1)} dir="prev" />
+            <RailButton label="Next product" disabled={atEnd} onClick={() => nudge(1)} dir="next" />
           </div>
         </div>
       </div>
 
-      {/*
-       * On a phone the rail bleeds into the gutter, because a sliced card at
-       * the edge is what tells a thumb there is more to swipe. On a desktop
-       * there is no thumb and the slice just reads as a clipped layout, so the
-       * rail ends exactly where the container does and the cards are sized to
-       * divide it evenly — every resting position lands on clean edges.
-       */}
-      <div className="mx-auto max-w-7xl">
-        <div
-          ref={railRef}
-          onScroll={sync}
-          className="scrollbar-hide -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:px-0"
-          style={{ scrollPaddingLeft: '1.5rem' }}
-        >
-          {PUBLIC_PRODUCTS.map((p) => (
-            <Link
-              key={p.id}
-              data-card
-              href={`/shop/${p.id}`}
-              className="group relative w-[74vw] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-line bg-surface transition-colors duration-500 hover:border-accent/30 sm:w-[46vw] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]"
-            >
-              <div
-                className="relative aspect-[5/6] overflow-hidden"
-                style={{ background: p.swatch }}
-              >
-                <Image
-                  src={p.image}
-                  alt={p.name}
-                  fill
-                  sizes="(max-width: 640px) 74vw, (max-width: 1024px) 46vw, 300px"
-                  className="object-cover opacity-50 transition-transform duration-700 ease-out-expo group-hover:scale-105"
-                />
-                <div
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/75"
-                />
-                <div className="relative flex h-full flex-col justify-end p-5">
-                  <div className="mb-1.5 text-[10px] tracking-widest text-accent">
-                    {p.tagline.toUpperCase()}
-                  </div>
-                  <div
-                    className="font-bold tracking-tight text-white"
-                    style={{
-                      fontSize: 'clamp(1.35rem, 3vw, 1.75rem)',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1,
-                      textShadow: '0 2px 16px rgba(0,0,0,0.6)',
-                    }}
-                  >
-                    {p.name}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-end justify-between gap-3 p-5">
-                <div>
-                  <div className="text-[10px] tracking-widest text-foreground/45">
-                    FROM
-                  </div>
-                  <div className="text-lg font-semibold tracking-tight text-foreground">
-                    ${Math.round(p.pricing.quarterly / 3)}
-                    <span className="text-sm font-normal text-foreground/60">
-                      /mo
-                    </span>
-                  </div>
-                </div>
-                <span className="text-[11px] tracking-widest text-foreground/45 transition-colors group-hover:text-accent">
-                  VIEW →
-                </span>
-              </div>
-            </Link>
-          ))}
-
-          {/* Clears the mobile gutter; unwanted once the rail ends at the container. */}
-          <div aria-hidden className="w-2 shrink-0 md:hidden" />
-        </div>
+      <div
+        ref={railRef}
+        onScroll={sync}
+        className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 md:px-4"
+        style={{ scrollPaddingLeft: '1.25rem' }}
+      >
+        {showcase.map((item) => (
+          <ProductCard
+            key={item.id}
+            item={item}
+            className="w-[80vw] snap-start md:w-[calc((100vw-2rem)/2.4)] lg:w-[calc((100vw-2rem)/3.3)] xl:w-[calc((100vw-2rem)/4.2)] 2xl:w-[calc((100vw-2rem)/5.2)]"
+          />
+        ))}
+        {/* Lets the last card clear the right gutter */}
+        <div aria-hidden className="w-3 shrink-0" />
       </div>
 
-      <div className="mx-auto mt-8 max-w-7xl">
-        <Link
-          href="/shop"
-          className="pill inline-flex items-center gap-2 border border-line bg-surface px-5 py-2.5 text-sm text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
-        >
-          See every product →
-        </Link>
+      {/* Mobile scroll-position bar */}
+      <div className="mx-auto mt-8 h-[3px] w-[62%] bg-black/15 md:hidden">
+        <div className="relative h-full">
+          <span
+            className="absolute inset-y-0 bg-black"
+            style={{ left: `${bar.left * 100}%`, width: `${bar.width * 100}%` }}
+          />
+        </div>
       </div>
     </section>
   );
 }
 
+/**
+ * Tall photo card, shared by the rail and the shop grid; className sizes it.
+ * Both use the site's near-square corners (4px card, 2px overlays). "rail" is
+ * the homepage row; "grid" is the shop page, with tighter overlays scaled
+ * down so two fit across a phone.
+ */
+export function ProductCard({
+  item,
+  className,
+  variant = 'rail',
+  cta = true,
+}: {
+  item: ShowcaseItem;
+  className?: string;
+  variant?: 'rail' | 'grid';
+  /** Start-assessment button. Off in the member portal: members are past it. */
+  cta?: boolean;
+}) {
+  const grid = variant === 'grid';
+  // 4px card, 2px overlay corners, same as every card on the site.
+  const v = grid
+    ? {
+        card: 'rounded-[4px]',
+        overlay: 'rounded-[2px]',
+        top: 'left-2 top-2 md:left-3 md:top-3',
+        panel: 'inset-x-2 bottom-2 p-2 md:inset-x-3 md:bottom-3 md:px-4 md:py-3.5',
+        name: 'clamp(1.05rem, 0.9vw + 0.8rem, 1.75rem)',
+        // Phones: no divider and a tight gap, so name, tagline and button
+        // stay a compact block on a half-width card.
+        tagline: 'mt-0.5 text-[12px] md:mt-3 md:border-t md:pt-3 md:text-[14px]',
+        sizes: '(max-width: 1024px) 50vw, 33vw',
+      }
+    : {
+        card: 'rounded-[4px]',
+        overlay: 'rounded-[2px]',
+        top: 'left-4 top-4',
+        panel: 'inset-x-4 bottom-4 px-4 py-3.5',
+        name: 'clamp(1.4rem, 0.6vw + 1.2rem, 1.75rem)',
+        tagline: 'mt-3 border-t pt-3 text-[14px]',
+        sizes: '(max-width: 768px) 80vw, 34vw',
+      };
+
+  const body = (
+    <>
+      <Image
+        src={item.image}
+        alt=""
+        fill
+        sizes={v.sizes}
+        className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]"
+      />
+
+      {/* Price (monthly struck through beside the quarterly plan's per-month
+          price, the comparison the product page already makes) and, in local
+          dev, the preview tag. Stacked so they never collide on a narrow card. */}
+      <div className={cn('absolute flex flex-col items-start gap-1.5', v.top, !grid && 'right-4 flex-row justify-between')}>
+        {item.price && (
+          <div
+            className={cn(
+              'flex items-baseline gap-1.5 bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-xl',
+              v.overlay,
+              grid ? 'px-2 py-1.5 md:gap-2 md:px-3 md:py-2' : 'gap-2 px-3 py-2'
+            )}
+          >
+            <s className={cn('text-white/50', grid ? 'text-[12px] md:text-[15px]' : 'text-[15px]')}>${item.price.was}</s>
+            <span className={cn('font-medium', grid ? 'text-[14px] md:text-[17px]' : 'text-[17px]')}>${item.price.now}</span>
+            <span className={cn('text-white/80', grid ? 'text-[11px] md:text-[13px]' : 'text-[13px]')}>
+              /mo{grid ? <span className="hidden md:inline"> quarterly</span> : ' quarterly'}
+            </span>
+          </div>
+        )}
+        {item.preview && (
+          <span className={cn('bg-[#EFE7D6] px-2.5 py-1.5 text-[11px] text-black', v.overlay, !grid && 'ml-auto')}>
+            Local preview
+          </span>
+        )}
+      </div>
+
+      {/* Name + tagline panel with a Start assessment button. Grid: full
+          width under the tagline on a phone, beside it from md. Rail: always
+          beside it (the rail card is wide enough on every screen). */}
+      {/* Above the card link (z-2) but click-through, except the button:
+          backdrop-blur makes the panel its own stacking context, so the
+          button can only rise above the link if the panel does. */}
+      <div className={cn('pointer-events-none absolute z-[2] bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-xl', v.overlay, v.panel)}>
+        <p className="font-display font-normal" style={{ fontSize: v.name, fontStretch: '75%', lineHeight: 1.05 }}>
+          {item.name}
+        </p>
+        <div
+          className={cn(
+            'border-white/25',
+            v.tagline,
+            grid ? 'md:flex md:items-center md:justify-between md:gap-3' : 'flex items-center justify-between gap-3'
+          )}
+        >
+          <p className="min-w-0 text-white/90">{item.tagline}</p>
+          {cta && (
+          <Link
+            href={`/start?product=${item.id}`}
+            className={cn(
+              'pointer-events-auto block shrink-0 bg-white text-center font-mono text-black transition-colors hover:bg-white/85',
+              grid
+                ? 'mt-1.5 rounded-[2px] px-2 py-1.5 text-[11px] md:mt-0 md:px-3 md:py-2 md:text-[13px]'
+                : 'rounded-[2px] px-3 py-2 text-[13px]'
+            )}
+          >
+            Start assessment
+          </Link>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  // The card is a box with a stretched link to the product page underneath
+  // its overlays, so a second link (the CTA) can sit on top without nesting
+  // one link inside another.
+  return (
+    <div
+      data-card
+      className={cn('group relative aspect-[3/4] shrink-0 overflow-hidden bg-neutral-200', v.card, className)}
+      aria-label={item.href ? undefined : `${item.name} (local preview, not on the live site)`}
+    >
+      {body}
+      {item.href && (
+        <Link href={item.href} aria-label={`Shop ${item.name}`} className="absolute inset-0 z-[1]" />
+      )}
+    </div>
+  );
+}
+
 function RailButton({
-  children,
   label,
   disabled,
   onClick,
+  dir,
 }: {
-  children: React.ReactNode;
   label: string;
   disabled: boolean;
   onClick: () => void;
+  dir: 'prev' | 'next';
 }) {
   return (
     <button
@@ -192,13 +248,13 @@ function RailButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'flex h-10 w-10 items-center justify-center rounded-full border text-sm transition-colors',
-        disabled
-          ? 'cursor-default border-line text-foreground/20'
-          : 'border-line text-foreground/70 hover:border-accent/40 hover:text-accent',
+        'grid h-7 w-7 place-items-center rounded-full shadow-sm transition-colors',
+        disabled ? 'cursor-default bg-black/5 text-black/25' : 'bg-white text-black ring-1 ring-black/10 hover:bg-black/5'
       )}
     >
-      {children}
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d={dir === 'prev' ? 'M19 12H5M11 18l-6-6 6-6' : 'M5 12h14M13 6l6 6-6 6'} />
+      </svg>
     </button>
   );
 }

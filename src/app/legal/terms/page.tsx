@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Terms of Service"
       effective="May 2026"
       lead="These Terms of Service govern your access to and use of Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) and our products, including the website, product catalog, and any compounded peptide protocols fulfilled by our licensed 503A pharmacy partners. By using any part of our service, you agree to these terms."

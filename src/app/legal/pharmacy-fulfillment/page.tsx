@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function PharmacyFulfillmentPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Pharmacy Fulfillment"
       effective="September 2026"
       lead={`You should be able to check who made your medication without taking our word for it. This page names the pharmacy, explains the rules it operates under, and tells you how to verify its licence in about a minute.`}

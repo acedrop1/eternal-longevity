@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Mulish } from 'next/font/google';
+import { DM_Mono, Instrument_Sans, Mulish } from 'next/font/google';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import './globals.css';
+import { CatalogProvider } from '@/components/catalog/CatalogProvider';
+import { getLiveProducts, toShopProduct } from '@/lib/catalog';
 
 // Mulish loads via next/font as the dev fallback for Proxima Nova.
 // Once the licensed Proxima Nova .woff2 files are dropped into /public/fonts/,
@@ -12,6 +14,23 @@ const mulish = Mulish({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-mulish',
+  display: 'swap',
+});
+
+// Hero + announcement typography (David pattern). David sets headlines in a
+// condensed serif; we never use serifs, so this is Instrument Sans pulled in
+// on its width axis and set condensed. DM Mono carries the typewriter pills.
+const display = Instrument_Sans({
+  subsets: ['latin'],
+  axes: ['wdth'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const mono = DM_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -65,19 +84,22 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Live catalogue (Admin → Products), handed to client components once.
+  const products = (await getLiveProducts()).map(toShopProduct);
+
   return (
-    <html lang="en" className={mulish.variable}>
+    <html lang="en" className={`${mulish.variable} ${display.variable} ${mono.variable}`}>
       {/* suppressHydrationWarning silences the harmless mismatch caused by
           browser extensions (ColorZilla, Grammarly, etc.) that inject
           attributes into <body> before React hydrates. */}
       <body suppressHydrationWarning>
         <SmoothScroll />
-        {children}
+        <CatalogProvider products={products}>{children}</CatalogProvider>
       </body>
     </html>
   );

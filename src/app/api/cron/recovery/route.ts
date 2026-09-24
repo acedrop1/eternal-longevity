@@ -10,7 +10,7 @@ import {
   unfinishedVisitEmail,
 } from '@/lib/email';
 import { SITE_URL } from '@/lib/site';
-import { SHOP_PRODUCTS } from '@/lib/shopProducts';
+import { getLiveProducts } from '@/lib/catalog';
 import type { CartItem } from '@/lib/cartTypes';
 
 /**
@@ -105,9 +105,10 @@ async function recoverCarts(
 
     // A cart can reference a SKU that has since been pulled from the
     // catalogue — do not name something we no longer sell.
+    const live = await getLiveProducts();
     const named: { name: string; cadence: string }[] = [];
     for (const i of items) {
-      const p = SHOP_PRODUCTS.find((sp) => sp.id === i.productId);
+      const p = live.find((sp) => sp.id === i.productId);
       if (p) named.push({ name: p.name, cadence: String(i.cadence) });
     }
 

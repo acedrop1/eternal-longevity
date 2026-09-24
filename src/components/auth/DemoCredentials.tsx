@@ -1,20 +1,12 @@
 'use client';
 
 import { DEMO_USERS, type Role } from '@/lib/auth';
-import { cn } from '@/lib/utils';
 
 const ROLE_LABEL: Record<Role, string> = {
-  member: 'MEMBER',
-  doctor: 'DOCTOR',
-  admin: 'ADMIN',
-  pharmacy: 'PHARMACY',
-};
-
-const ROLE_ACCENT: Record<Role, string> = {
-  member: 'text-accent',
-  doctor: 'text-sky-300',
-  admin: 'text-foreground/85',
-  pharmacy: 'text-emerald-300',
+  member: 'Member',
+  doctor: 'Doctor',
+  admin: 'Admin',
+  pharmacy: 'Pharmacy',
 };
 
 /**
@@ -35,11 +27,9 @@ export function DemoCredentials() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-line" />
-        <span className="text-[10px] tracking-widest text-foreground/45">
-          DEMO LOGINS · TAP TO FILL
-        </span>
-        <span className="h-px flex-1 bg-line" />
+        <span className="h-px flex-1 bg-black/15" />
+        <span className="font-mono text-[12px] text-black/55">Demo logins · tap to fill</span>
+        <span className="h-px flex-1 bg-black/15" />
       </div>
 
       <div className="grid gap-2">
@@ -48,32 +38,19 @@ export function DemoCredentials() {
             key={u.role}
             type="button"
             onClick={() => fill(u.email, u.password)}
-            className={cn(
-              'group flex w-full items-start gap-3 rounded-2xl border border-line bg-background/70 px-4 py-3 text-left transition-all',
-              'hover:border-accent/40 hover:bg-background'
-            )}
+            className="group flex w-full items-start gap-3 rounded-[2px] bg-[#F2F2F0] px-4 py-3 text-left ring-1 ring-black/5 transition-shadow hover:ring-black/30"
           >
-            <span
-              className={cn(
-                'mt-0.5 inline-flex h-6 items-center rounded-full border border-line bg-surface px-2 text-[10px] tracking-widest font-semibold',
-                ROLE_ACCENT[u.role]
-              )}
-            >
+            <span className="mt-0.5 inline-flex h-6 shrink-0 items-center rounded-[2px] bg-black px-2 font-mono text-[12px] text-white">
               {ROLE_LABEL[u.role]}
             </span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-sm font-medium text-foreground">
+            <span className="min-w-0 flex-1">
+              <span className="block break-all text-[14px] font-medium text-black">
                 {u.email}
-                <span className="ml-2 text-foreground/45 font-normal">/ {u.password}</span>
+                <span className="ml-2 font-mono font-normal text-black/50">/ {u.password}</span>
               </span>
-              <span className="block text-xs text-foreground/55 leading-snug mt-0.5">
-                {u.blurb}
-              </span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-black/60">{u.blurb}</span>
             </span>
-            <span
-              aria-hidden
-              className="mt-1 text-foreground/40 group-hover:text-accent transition-colors"
-            >
+            <span aria-hidden className="mt-1 text-black/40 transition-colors group-hover:text-black">
               →
             </span>
           </button>

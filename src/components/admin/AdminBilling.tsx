@@ -32,9 +32,9 @@ export interface BillingSummary {
 }
 
 const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
 
-const labelClass = 'mb-1.5 block text-[11px] tracking-wider text-foreground/60';
+const labelClass = 'mb-1.5 block font-mono text-[12px] text-foreground/60';
 
 function money(cents: number): string {
   return (cents / 100).toLocaleString('en-US', {
@@ -74,7 +74,7 @@ export function AdminBilling({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
           Demo figures. Real revenue and billing actions go live once Stripe and
           Supabase are connected.
         </div>
@@ -101,9 +101,9 @@ export function AdminBilling({
 
       {/* Recent activity */}
       {summary.recent.length > 0 && (
-        <section className="rounded-3xl border border-line bg-surface p-6">
-          <div className="mb-4 text-[10px] tracking-widest text-foreground/50">
-            RECENT ACTIVITY
+        <section className="rounded-[4px] border border-line bg-surface p-6">
+          <div className="mb-4 font-mono text-[12px] text-foreground/60">
+            Recent activity
           </div>
           <ul className="divide-y divide-line">
             {summary.recent.map((r, i) => (
@@ -111,10 +111,10 @@ export function AdminBilling({
                 key={i}
                 className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
               >
-                <span className="font-mono text-xs text-foreground/80">
+                <span className="font-mono text-[12px] text-foreground/80">
                   {r.label}
                 </span>
-                <span className="text-xs text-foreground/50">{r.when}</span>
+                <span className="font-mono text-[12px] tabular-nums text-foreground/60">{r.when}</span>
                 <span className="text-sm font-medium text-foreground tabular-nums">
                   {money(r.amountCents)}
                 </span>
@@ -125,9 +125,9 @@ export function AdminBilling({
       )}
 
       {/* Bill a customer — search */}
-      <section className="rounded-3xl border border-line bg-surface p-6 md:p-7">
-        <div className="mb-1 text-[10px] tracking-widest text-accent">
-          BILL A CUSTOMER
+      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
+        <div className="mb-1 font-mono text-[12px] text-foreground/60">
+          Bill a customer
         </div>
         <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
           {selected ? selected.name : 'Search for a customer'}
@@ -140,7 +140,7 @@ export function AdminBilling({
               setSelectedId(null);
               setQuery('');
             }}
-            className="text-xs tracking-wider text-accent hover:text-accent-soft"
+            className="font-mono text-[12px] text-accent hover:text-accent-soft"
           >
             ← Choose a different customer
           </button>
@@ -155,9 +155,9 @@ export function AdminBilling({
               className={inputClass}
             />
             {query.trim() && (
-              <ul className="mt-2 overflow-hidden rounded-2xl border border-line">
+              <ul className="mt-2 overflow-hidden rounded-[4px] border border-line">
                 {matches.length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-foreground/45">
+                  <li className="px-4 py-3 text-sm text-foreground/60">
                     No customers match.
                   </li>
                 ) : (
@@ -248,7 +248,7 @@ function PromoPanel() {
 
   return (
     <Panel
-      eyebrow="PROMOTIONS"
+      eyebrow="Promotions"
       title="Discount codes"
       description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
     >
@@ -256,7 +256,7 @@ function PromoPanel() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="promo-code" className={labelClass}>
-              CODE
+              Code
             </label>
             <input
               id="promo-code"
@@ -269,7 +269,7 @@ function PromoPanel() {
           </div>
           <div>
             <label htmlFor="promo-value" className={labelClass}>
-              {kind === 'percent' ? 'PERCENT OFF (1–100)' : 'DOLLARS OFF'}
+              {kind === 'percent' ? 'Percent off (1–100)' : 'Dollars off'}
             </label>
             <div className="flex gap-2">
               <select
@@ -294,7 +294,7 @@ function PromoPanel() {
           </div>
           <div>
             <label htmlFor="promo-max" className={labelClass}>
-              MAX USES — BLANK FOR UNLIMITED
+              Max uses — blank for unlimited
             </label>
             <input
               id="promo-max"
@@ -307,14 +307,14 @@ function PromoPanel() {
           </div>
           <div>
             <label htmlFor="promo-expires" className={labelClass}>
-              EXPIRES — BLANK FOR NEVER
+              Expires — blank for never
             </label>
             <input
               id="promo-expires"
               type="date"
               value={expiresAt}
               onChange={(e) => setExpires(e.target.value)}
-              className={cn(inputClass, '[color-scheme:dark]')}
+              className={cn(inputClass, '[color-scheme:light]')}
             />
           </div>
         </div>
@@ -332,9 +332,9 @@ function PromoPanel() {
             return (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-2xl border border-line bg-background px-4 py-3"
+                className="flex items-center gap-3 rounded-[4px] border border-line bg-background px-4 py-3"
               >
-                <span className="font-mono text-sm font-semibold text-foreground">
+                <span className="font-mono text-[13px] text-foreground">
                   {c.code}
                 </span>
                 <span className="text-xs text-foreground/65">
@@ -342,7 +342,7 @@ function PromoPanel() {
                     ? `${c.value}% off`
                     : `${money(c.value)} off`}
                 </span>
-                <span className="text-xs text-foreground/45">
+                <span className="font-mono text-[12px] tabular-nums text-foreground/60">
                   {c.redeemedCount}
                   {c.maxRedemptions !== null ? ` / ${c.maxRedemptions}` : ''} used
                   {expired ? ' · expired' : ''}
@@ -352,10 +352,10 @@ function PromoPanel() {
                   type="button"
                   onClick={() => toggle(c.id, !c.active)}
                   className={cn(
-                    'ml-auto flex-none rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors',
+                    'ml-auto flex-none rounded-full border px-3 py-1 font-mono text-[12px] transition-colors',
                     c.active
                       ? 'border-accent/40 text-accent hover:bg-accent/10'
-                      : 'border-line text-foreground/50 hover:text-foreground',
+                      : 'border-line text-foreground/60 hover:text-foreground',
                   )}
                 >
                   {c.active ? 'Active' : 'Off'}
@@ -379,13 +379,13 @@ function Metric({
   tone?: 'neutral' | 'accent';
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5">
-      <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
-        {label.toUpperCase()}
+    <div className="rounded-[4px] border border-line bg-surface p-5">
+      <div className="mb-2 font-mono text-[12px] text-foreground/55">
+        {label}
       </div>
       <div
         className={cn(
-          'text-2xl font-semibold tracking-tight tabular-nums',
+          'text-2xl font-medium tracking-tight tabular-nums',
           tone === 'accent' ? 'text-accent' : 'text-foreground',
         )}
       >
@@ -411,8 +411,8 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-line bg-surface p-6 md:p-7">
-      <div className="mb-1 text-[10px] tracking-widest text-accent">
+    <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
+      <div className="mb-1 font-mono text-[12px] text-foreground/60">
         {eyebrow}
       </div>
       <h3 className="text-lg font-semibold tracking-tight text-foreground">
@@ -440,10 +440,10 @@ function SubmitButton({
       type="submit"
       disabled={busy}
       className={cn(
-        'inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50',
+        'inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-mono text-[13px] transition-all duration-200 active:scale-[0.98] disabled:opacity-50',
         tone === 'danger'
-          ? 'bg-red-500/90 text-white hover:bg-red-500'
-          : 'bg-accent text-black hover:bg-accent-soft',
+          ? 'bg-red-700 text-white hover:bg-red-800'
+          : 'bg-black text-white hover:bg-black/85',
       )}
     >
       {busy && (
@@ -481,10 +481,10 @@ function ResultBanner({ result }: { result: AdminBillingResult | null }) {
   return (
     <div
       className={cn(
-        'mt-3 rounded-2xl border px-4 py-3 text-sm',
+        'mt-3 rounded-[4px] border px-4 py-3 text-sm',
         result.ok
           ? 'border-accent/30 bg-accent/10 text-accent'
-          : 'border-red-500/30 bg-red-500/10 text-red-200',
+          : 'border-red-500/30 bg-red-500/10 text-red-700',
       )}
     >
       <p>{result.message}</p>
@@ -520,7 +520,7 @@ function CardLinkPanel({ userId }: { userId: string }) {
 
   return (
     <Panel
-      eyebrow="ADD A CARD"
+      eyebrow="Add a card"
       title="Send a card link"
       description="Emails the customer a secure Stripe page to save a card. Use this when they have no card on file."
     >
@@ -563,13 +563,13 @@ function SubscriptionPanel({ userId }: { userId: string }) {
 
   return (
     <Panel
-      eyebrow="SUBSCRIPTION"
+      eyebrow="Subscription"
       title="Create a subscription"
       description="Starts a recurring charge against the customer's saved card."
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className={labelClass}>PROTOCOL / PRODUCT NAME</label>
+          <label className={labelClass}>Protocol / product name</label>
           <input
             aria-label="Protocol or product name"
             value={productName}
@@ -581,7 +581,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelClass}>AMOUNT (USD)</label>
+            <label className={labelClass}>Amount (USD)</label>
             <input
               aria-label="Subscription amount in US dollars"
               value={amount}
@@ -593,7 +593,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
             />
           </div>
           <div>
-            <label className={labelClass}>BILLED</label>
+            <label className={labelClass}>Billed</label>
             <select
               value={cadence}
               onChange={(e) =>
@@ -647,13 +647,13 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
 
   return (
     <Panel
-      eyebrow="ONE-OFF CHARGE"
+      eyebrow="One-off charge"
       title="Charge the card"
       description="Bills the customer's saved card a single amount — an add-on, an adjustment, or a manual cycle."
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className={labelClass}>AMOUNT (USD)</label>
+          <label className={labelClass}>Amount (USD)</label>
           <input
             aria-label="Charge amount in US dollars"
             value={amount}
@@ -665,7 +665,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
           />
         </div>
         <div>
-          <label className={labelClass}>DESCRIPTION</label>
+          <label className={labelClass}>Description</label>
           <input
             aria-label="Charge description"
             value={description}
@@ -726,14 +726,14 @@ function RefundPanel() {
 
   return (
     <Panel
-      eyebrow="REFUND"
+      eyebrow="Refund"
       title="Refund an order"
       description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Stripe pi_ id still works for anything without an order."
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="refund-ref" className={labelClass}>
-            ORDER NUMBER
+            Order number
           </label>
           <input
             id="refund-ref"
@@ -752,7 +752,7 @@ function RefundPanel() {
         </div>
         <div>
           <label htmlFor="refund-amount" className={labelClass}>
-            AMOUNT (USD) — LEAVE BLANK FOR FULL REFUND
+            Amount (USD) — leave blank for full refund
           </label>
           <input
             id="refund-amount"
@@ -766,7 +766,7 @@ function RefundPanel() {
         {!isStripeId && (
           <div>
             <label htmlFor="refund-reason" className={labelClass}>
-              REASON (SHOWN ON THE ORDER TIMELINE)
+              Reason (shown on the order timeline)
             </label>
             <input
               id="refund-reason"

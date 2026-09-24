@@ -55,8 +55,8 @@ function LiveBoard({ orders }: { orders: Order[] }) {
     <section>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
         <div>
-          <p className="text-[11px] tracking-widest text-foreground/50">
-            IN FLIGHT
+          <p className="font-mono text-[12px] text-foreground/60">
+            In flight
           </p>
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             Every live order
@@ -64,24 +64,24 @@ function LiveBoard({ orders }: { orders: Order[] }) {
         </div>
         <span
           className={cn(
-            'text-[11px] tracking-widest',
-            needing ? 'text-accent' : 'text-foreground/45',
+            'font-mono text-[12px]',
+            needing ? 'text-accent' : 'text-foreground/60',
           )}
         >
-          {live.length} OPEN
-          {needing > 0 && ` · ${needing} NEED ATTENTION`}
+          {live.length} open
+          {needing > 0 && ` · ${needing} need attention`}
         </span>
       </div>
 
       {live.length === 0 ? (
-        <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+        <div className="rounded-[4px] border border-line bg-surface p-8 text-center">
           <p className="text-sm text-foreground/55">
             Nothing in flight. Orders appear here from checkout until they are
             delivered.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-3xl border border-line bg-surface">
+        <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
           {rows.map(({ order, attention }) => (
             <OrderRow key={order.id} order={order} attention={attention} />
           ))}
@@ -116,7 +116,7 @@ function OrderRow({
   return (
     <div className="border-b border-line px-4 py-3.5 last:border-0 md:px-5">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="font-mono text-[11px] tracking-wider text-foreground/50">
+        <span className="font-mono text-[12px] text-foreground/60">
           {orderRef(order.id)}
         </span>
         {order.userId ? (
@@ -137,12 +137,12 @@ function OrderRow({
         <span className="tabular-nums text-sm text-foreground/85">
           ${order.total}
         </span>
-        <span className="text-[10px] tracking-widest text-foreground/40">
+        <span className="font-mono text-[12px] text-foreground/60">
           {describeAge(order.placedAt)}
         </span>
         <span
           className={cn(
-            'flex-none rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-widest',
+            'inline-flex flex-none items-center gap-1.5 rounded-[2px] border px-2.5 py-0.5 font-mono text-[12px]',
             order.status === 'assigned'
               ? 'border-sky-400/40 bg-sky-500/10 text-sky-300'
               : order.status === 'shipped'
@@ -150,11 +150,12 @@ function OrderRow({
                 : 'border-line bg-background text-foreground/60',
           )}
         >
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
           {STATUS_LABEL[order.status] ?? order.status}
         </span>
       </div>
       {attention && (
-        <p className="mt-2 rounded-xl border border-accent/40 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
+        <p className="mt-2 rounded-[4px] border border-accent/40 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
           {attention}
         </p>
       )}
@@ -166,16 +167,16 @@ function OrderRow({
             setError(null);
             setOpen(true);
           }}
-          className="mt-2 text-[11px] tracking-widest text-foreground/45 transition-colors hover:text-red-300"
+          className="mt-2 font-mono text-[12px] text-foreground/60 transition-colors hover:text-red-300"
         >
-          CANCEL ORDER
+          Cancel order
         </button>
       )}
 
       {open && (
-        <div className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/5 p-4">
-          <div className="mb-2 text-[10px] tracking-widest text-red-300">
-            WHY ARE YOU CANCELLING?
+        <div className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/5 p-4">
+          <div className="mb-2 font-mono text-[12px] text-red-300">
+            Why are you cancelling?
           </div>
           <p className="mb-3 text-xs leading-relaxed text-foreground/55">
             The member is emailed this sentence and anything charged is refunded
@@ -189,10 +190,10 @@ function OrderRow({
             }}
             rows={3}
             placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
-            className="w-full resize-none rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/20"
           />
           {error && (
-            <p className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+            <p className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
               {error}
             </p>
           )}
@@ -219,10 +220,10 @@ function OrderRow({
                 }
               }}
               className={cn(
-                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
                 reason.trim() && !busy
-                  ? 'bg-red-500 text-foreground hover:bg-red-600'
-                  : 'bg-foreground/15 text-foreground/40',
+                  ? 'bg-red-700 text-white hover:bg-red-800'
+                  : 'bg-foreground/10 text-foreground/55',
               )}
             >
               {busy ? 'Cancelling…' : 'Cancel and refund'}
@@ -235,7 +236,7 @@ function OrderRow({
                 setReason('');
                 setError(null);
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
             >
               Keep it
             </button>

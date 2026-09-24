@@ -16,6 +16,7 @@ import {
   type SavedCard,
 } from '@/lib/cards';
 import { cn } from '@/lib/utils';
+import { btnPrimary, btnSecondary, btnSmall, errorBox, inset } from '@/components/portal/ui';
 
 /**
  * Cards on file, entered inside Stripe's iframe.
@@ -63,18 +64,18 @@ function AddCardForm({ onSaved }: { onSaved: () => void }) {
     <form onSubmit={onSubmit} className="space-y-4">
       <PaymentElement options={{ layout: 'tabs' }} />
       {error && (
-        <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p role="alert" className={errorBox}>
           {error}
         </p>
       )}
       <button
         type="submit"
         disabled={!stripe || busy}
-        className="w-full rounded-full bg-accent py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
+        className={cn(btnPrimary, 'w-full')}
       >
         {busy ? 'Saving…' : 'Save card'}
       </button>
-      <p className="text-center text-[11px] text-foreground/45">
+      <p className="text-center text-[13px] text-black/55">
         Entered directly with Stripe. Card details never reach our servers.
       </p>
     </form>
@@ -121,11 +122,11 @@ export function StripeCardsManager({
   return (
     <div className="space-y-3">
       {loading && (
-        <p className="text-sm text-foreground/55">Loading your cards…</p>
+        <p role="status" className="text-[15px] text-black/55">Loading your cards…</p>
       )}
 
       {!loading && cards.length === 0 && !adding && (
-        <p className="text-sm text-foreground/65">
+        <p className="text-[15px] leading-relaxed text-black/65">
           No card on file. Add one and refills are charged automatically once
           your prescriber approves them — you are never charged before that.
         </p>
@@ -134,20 +135,21 @@ export function StripeCardsManager({
       {cards.map((c) => (
         <div
           key={c.id}
-          className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3"
+          className={cn(inset, 'flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3')}
         >
-          <span className="text-sm font-semibold capitalize text-foreground">
+          <span className="text-[15px] font-medium capitalize text-black">
             {c.brand}
           </span>
-          <span className="text-sm tabular-nums text-foreground/80">
+          <span className="text-[15px] tabular-nums text-black/80">
             •••• {c.last4}
           </span>
-          <span className="text-xs tabular-nums text-foreground/50">
+          <span className="font-mono text-[13px] tabular-nums text-black/55">
             {String(c.expMonth).padStart(2, '0')}/{String(c.expYear).slice(-2)}
           </span>
           {c.isDefault && (
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-accent">
-              DEFAULT
+            <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] leading-none text-black">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+              Default
             </span>
           )}
           <div className="ml-auto flex flex-none gap-2">
@@ -161,7 +163,7 @@ export function StripeCardsManager({
                   setBusyId(null);
                   refresh();
                 }}
-                className="rounded-full border border-line px-3 py-1 text-[11px] text-foreground/70 transition-colors hover:text-foreground disabled:opacity-40"
+                className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
               >
                 Make default
               </button>
@@ -176,7 +178,7 @@ export function StripeCardsManager({
                 setBusyId(null);
                 refresh();
               }}
-              className="rounded-full border border-line px-3 py-1 text-[11px] text-foreground/50 transition-colors hover:border-red-400/40 hover:text-red-300 disabled:opacity-40"
+              className={cn(btnSmall, 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50')}
             >
               Remove
             </button>
@@ -185,18 +187,19 @@ export function StripeCardsManager({
       ))}
 
       {adding && clientSecret ? (
-        <div className="rounded-2xl border border-line bg-surface p-4">
+        <div className={cn(inset, 'p-4')}>
           <Elements
             stripe={stripePromise}
             options={{
               clientSecret,
               appearance: {
-                theme: 'night',
+                // Light, to sit on the white portal. Appearance only.
+                theme: 'stripe',
                 variables: {
-                  colorPrimary: '#d5a850',
-                  colorBackground: '#0f0f0f',
-                  colorText: '#e5e5e5',
-                  borderRadius: '14px',
+                  colorPrimary: '#000000',
+                  colorBackground: '#ffffff',
+                  colorText: '#000000',
+                  borderRadius: '2px',
                 },
               },
             }}
@@ -209,7 +212,7 @@ export function StripeCardsManager({
               setAdding(false);
               setClientSecret(null);
             }}
-            className="mt-3 w-full text-center text-xs text-foreground/50 hover:text-foreground"
+            className="mt-2 min-h-[44px] w-full text-center font-mono text-[13px] text-black/60 hover:text-black"
           >
             Cancel
           </button>
@@ -219,10 +222,7 @@ export function StripeCardsManager({
           <button
             type="button"
             onClick={startAdd}
-            className={cn(
-              'w-full rounded-2xl border border-dashed border-line py-3 text-sm text-foreground/70',
-              'transition-colors hover:border-accent/40 hover:text-foreground',
-            )}
+            className={btnSecondary}
           >
             + Add a card
           </button>
@@ -230,7 +230,7 @@ export function StripeCardsManager({
       )}
 
       {adding && !clientSecret && (
-        <p className="text-sm text-foreground/55">Opening secure form…</p>
+        <p role="status" className="text-[15px] text-black/55">Opening secure form…</p>
       )}
     </div>
   );

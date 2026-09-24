@@ -4,34 +4,30 @@ import { Shimmer } from '@/components/skeletons/Shimmer';
 export default function AccountLoading() {
   return (
     <PortalSkeletonShell>
-      <Shimmer className="mb-3 h-3 w-24" />
-      <Shimmer className="mb-10 h-12 w-1/2" />
-      {/* Account info card */}
-      <div className="mb-6 rounded-3xl border border-line bg-surface p-6 md:p-8">
-        <Shimmer className="mb-4 h-5 w-32" />
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <Shimmer className="mb-1 h-3 w-16" />
-            <Shimmer className="h-5 w-full" />
+      <Shimmer className="mb-10 h-10 w-1/2 max-w-sm" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="hidden h-72 rounded-[4px] bg-[#F2F2F0] lg:block" />
+        <div className="space-y-6 lg:col-span-2">
+          {/* Profile */}
+          <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+            <Shimmer className="mb-6 h-6 w-32" />
+            <div className="grid gap-5 sm:grid-cols-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i}>
+                  <Shimmer className="mb-2 h-3 w-20" />
+                  <div className="h-12 rounded-[2px] bg-white ring-1 ring-black/10" />
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <Shimmer className="mb-1 h-3 w-16" />
-            <Shimmer className="h-5 w-full" />
-          </div>
+          {/* Payment + addresses */}
+          {[0, 1].map((i) => (
+            <div key={i} className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+              <Shimmer className="mb-6 h-6 w-40" />
+              <div className="h-16 rounded-[2px] bg-white ring-1 ring-black/10" />
+            </div>
+          ))}
         </div>
-      </div>
-      {/* Saved addresses */}
-      <div className="mb-6 rounded-3xl border border-line bg-surface p-6 md:p-8">
-        <Shimmer className="mb-4 h-5 w-40" />
-        <div className="space-y-3">
-          <Shimmer className="h-20 w-full rounded-2xl" />
-          <Shimmer className="h-20 w-full rounded-2xl" />
-        </div>
-      </div>
-      {/* Saved cards */}
-      <div className="rounded-3xl border border-line bg-surface p-6 md:p-8">
-        <Shimmer className="mb-4 h-5 w-36" />
-        <Shimmer className="h-16 w-full rounded-2xl" />
       </div>
     </PortalSkeletonShell>
   );

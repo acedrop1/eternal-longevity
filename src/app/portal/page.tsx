@@ -8,6 +8,7 @@ import { getOnboardingSteps } from '@/lib/onboarding';
 import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
 import { listOrders } from '@/lib/orders-db';
 import { STATUS_LABEL } from '@/lib/orders';
+import { MEMBER_NAV, PageHeader, StatusChip, panel, sentenceCase } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Portal',
@@ -41,7 +42,7 @@ export default async function MemberPortalPage() {
       href: '/portal/orders',
       title: 'Orders',
       body: latest
-        ? `Latest: ${STATUS_LABEL[latest.status] ?? latest.status}`
+        ? `Latest: ${sentenceCase(STATUS_LABEL[latest.status] ?? latest.status)}`
         : 'No orders yet.',
     },
     {
@@ -52,37 +53,17 @@ export default async function MemberPortalPage() {
   ];
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
-      {/* Greeting */}
-      <div>
-        <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3rem)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          Hi {firstName}.
-        </h1>
-        <p className="mt-2 text-foreground/60">
-          {pendingVisit
+    <PortalShell user={user} nav={MEMBER_NAV}>
+      <PageHeader
+        title={`Hi ${firstName}.`}
+        intro={
+          pendingVisit
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
-              : 'Ready when you are.'}
-        </p>
-      </div>
+              : 'Ready when you are.'
+        }
+      />
 
       <OnboardingChecklist steps={onboarding} />
 
@@ -93,35 +74,40 @@ export default async function MemberPortalPage() {
       {latest && (
         <Link
           href="/portal/orders"
-          className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-line bg-surface px-6 py-5 transition hover:border-foreground/25"
+          className={`${panel} flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-[#EAEAE7] md:px-6 md:py-5`}
         >
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] tracking-widest text-foreground/50">
-              LATEST ORDER
-            </p>
-            <p className="truncate text-sm text-foreground/85">
+            <p className="mb-1 font-mono text-[13px] text-black/55">Latest order</p>
+            <p className="truncate text-[15px] text-black">
               {latest.lines.map((l) => l.productName).join(', ')}
             </p>
           </div>
-          <span className="flex-none rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[10px] font-semibold tracking-widest text-accent">
-            {(STATUS_LABEL[latest.status] ?? latest.status).toUpperCase()}
+          <span className="flex-none">
+            <StatusChip tone="gold">
+              {sentenceCase(STATUS_LABEL[latest.status] ?? latest.status)}
+            </StatusChip>
           </span>
         </Link>
       )}
 
       {/* Three tiles. That's the whole dashboard. */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         {tiles.map((t) => (
           <Link
             key={t.href}
             href={t.href}
-            className="group rounded-3xl border border-line bg-surface p-6 transition hover:border-accent/40"
+            className="group flex flex-col rounded-[4px] bg-white p-5 ring-1 ring-black/10 transition-colors hover:bg-[#F2F2F0] md:p-6"
           >
-            <p className="text-lg font-semibold text-foreground">{t.title}</p>
-            <p className="mt-1 text-sm text-foreground/55">{t.body}</p>
+            <p
+              className="font-display font-normal text-black"
+              style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+            >
+              {t.title}
+            </p>
+            <p className="mt-1.5 text-[15px] text-black/60">{t.body}</p>
             <span
               aria-hidden
-              className="mt-4 inline-block text-foreground/40 transition group-hover:translate-x-1 group-hover:text-accent"
+              className="mt-6 font-mono text-[13px] text-black/45 transition-transform group-hover:translate-x-1 group-hover:text-black"
             >
               →
             </span>
@@ -129,9 +115,12 @@ export default async function MemberPortalPage() {
         ))}
       </div>
 
-      <p className="mt-8 text-xs text-foreground/40">
+      <p className="text-[14px] text-black/55">
         Need anything?{' '}
-        <Link href="/portal/messages" className="text-accent hover:underline">
+        <Link
+          href="/portal/messages"
+          className="text-black underline decoration-black/40 underline-offset-[3px] hover:decoration-black"
+        >
           Message us
         </Link>{' '}
         — replies within one business day.

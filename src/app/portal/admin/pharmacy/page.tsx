@@ -8,22 +8,12 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { cn } from '@/lib/utils';
+import { ADMIN_NAV } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Pharmacy',
 };
 
-const ADMIN_NAV = [
-  { label: 'Overview', href: '/portal/admin' },
-  { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Applications', href: '/portal/admin/queue' },
-        { label: 'Messages', href: '/portal/admin/messages' },
-  { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Orders', href: '/portal/admin/fulfillment' },
-  { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-  { label: 'Settings', href: '/portal/admin/settings' },
-];
 
 /** Kaduceus business details (from their physician order form). */
 const PHARMACY = {
@@ -112,14 +102,14 @@ export default async function AdminPharmacyPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          PHARMACY PARTNER
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Pharmacy partner
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >
@@ -134,19 +124,19 @@ export default async function AdminPharmacyPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
         {/* Account + contact */}
-        <section className="rounded-3xl border border-line bg-surface p-6">
-          <div className="mb-4 text-[10px] tracking-widest text-accent">
-            ACCOUNT
+        <section className="rounded-[4px] border border-line bg-surface p-6">
+          <div className="mb-4 font-mono text-[12px] text-foreground/60">
+            Account
           </div>
           <Field label="Pharmacy" value={PHARMACY.name} />
           <Field label="Portal login" value={activity.account.email} />
           <Field
             label="Account status"
-            value={activity.account.status.toUpperCase()}
+            value={activity.account.status}
           />
           <div className="my-4 h-px bg-line" />
-          <div className="mb-4 text-[10px] tracking-widest text-accent">
-            CONTACT
+          <div className="mb-4 font-mono text-[12px] text-foreground/60">
+            Contact
           </div>
           <Field label="Address" value={PHARMACY.address} />
           <Field label="Phone" value={formatPhone(PHARMACY.phone)} />
@@ -168,12 +158,12 @@ export default async function AdminPharmacyPage() {
             />
           </section>
 
-          <section className="rounded-3xl border border-line bg-surface p-6">
-            <div className="mb-4 text-[10px] tracking-widest text-foreground/50">
-              RECENT FULFILLMENT
+          <section className="rounded-[4px] border border-line bg-surface p-6">
+            <div className="mb-4 font-mono text-[12px] text-foreground/60">
+              Recent fulfillment
             </div>
             {activity.recent.length === 0 ? (
-              <p className="text-sm text-foreground/45">
+              <p className="text-sm text-foreground/60">
                 No orders sent to the pharmacy yet.
               </p>
             ) : (
@@ -183,17 +173,17 @@ export default async function AdminPharmacyPage() {
                     key={r.ref}
                     className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <span className="font-mono text-xs text-foreground/80">
+                    <span className="font-mono text-[12px] text-foreground/80">
                       {r.ref}
                     </span>
                     <span className="flex-1 truncate text-sm text-foreground">
                       {r.patient}
                     </span>
-                    <span className="text-xs text-foreground/50">
+                    <span className="font-mono text-[12px] tabular-nums text-foreground/60">
                       {r.when}
                     </span>
-                    <span className="text-[10px] tracking-widest text-accent">
-                      {r.status.toUpperCase()}
+                    <span className="font-mono text-[12px] text-accent">
+                      {r.status}
                     </span>
                   </li>
                 ))}
@@ -225,14 +215,14 @@ function Stat({
   tone: 'amber' | 'sky' | 'accent' | 'neutral';
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-4">
-      <div className="mb-1.5 text-[10px] tracking-widest text-foreground/55">
-        {label.toUpperCase()}
+    <div className="rounded-[4px] border border-line bg-surface p-4">
+      <div className="mb-1.5 font-mono text-[12px] text-foreground/55">
+        {label}
       </div>
       <div
         className={cn(
-          'text-2xl font-semibold tracking-tight tabular-nums',
-          tone === 'amber' && 'text-amber-300',
+          'text-2xl font-medium tracking-tight tabular-nums',
+          tone === 'amber' && 'text-amber-800',
           tone === 'sky' && 'text-sky-300',
           tone === 'accent' && 'text-accent',
           tone === 'neutral' && 'text-foreground',

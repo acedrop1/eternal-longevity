@@ -3,8 +3,8 @@
 import { useCart } from './CartProvider';
 
 /**
- * Cart icon button for the portal header. Shows a badge with the item count
- * when the cart isn't empty. Opens the cart drawer on click.
+ * Cart icon button for the portal header, which is black: white icon on a
+ * faint white ring, gold count badge. 44px tap target. Opens the cart drawer.
  */
 export function CartButton() {
   const { itemCount, openDrawer } = useCart();
@@ -18,7 +18,7 @@ export function CartButton() {
           ? 'Open cart'
           : `Open cart, ${itemCount} item${itemCount === 1 ? '' : 's'}`
       }
-      className="relative grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-foreground/75 hover:text-foreground hover:border-foreground/30 transition-colors"
+      className="relative grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white/85 ring-1 ring-white/25 transition-colors hover:bg-white/15 hover:text-white"
     >
       <svg
         width="16"
@@ -36,7 +36,7 @@ export function CartButton() {
       </svg>
       {itemCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-black"
+          className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 font-mono text-[10px] text-black"
           aria-hidden
         >
           {itemCount}

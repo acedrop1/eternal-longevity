@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { IdVerificationForm } from '@/components/portal/IdVerificationForm';
 import { getSession } from '@/lib/auth-server';
+import { MEMBER_NAV, PageHeader, panel } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Verify ID',
@@ -22,49 +23,27 @@ export default async function VerifyIdPage() {
   if (user.role !== 'member') redirect(user.redirectTo);
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
+    <PortalShell user={user} nav={MEMBER_NAV}>
       {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-2 text-[11px] tracking-widest text-foreground/55">
-        <Link
-          href="/portal"
-          className="hover:text-foreground transition-colors"
-        >
-          DASHBOARD
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 font-mono text-[13px] text-black/55">
+        <Link href="/portal" className="transition-colors hover:text-black">
+          Dashboard
         </Link>
         <span aria-hidden>/</span>
-        <span className="text-foreground/85">VERIFY ID</span>
+        <span aria-current="page" className="text-black">Verify ID</span>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
         {/* === MAIN === */}
-        <div>
+        <div className="space-y-8">
           <div>
-            <p className="mb-2 text-[11px] tracking-widest text-accent">
-              REQUIRED · BEFORE FIRST SHIPMENT
-            </p>
-            <h1
-              className="font-semibold tracking-tight text-foreground"
-              style={{
-                fontSize: 'clamp(2rem, 4.5vw, 3rem)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.05,
-              }}
-            >
-              Verify your identity.
-            </h1>
-            <p className="mt-3 max-w-xl text-foreground/65 leading-relaxed">
-              U.S. law requires us to confirm the identity of every person
-              receiving a compounded protocol. Two photos, ~30 seconds.
+            <PageHeader
+              title="Verify your identity."
+              intro="U.S. law requires us to confirm the identity of every person receiving a compounded protocol. Two photos, ~30 seconds."
+            />
+            <p className="mt-3 inline-flex items-center gap-1.5 font-mono text-[13px] text-black/70">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+              Required before first shipment
             </p>
           </div>
 
@@ -73,31 +52,27 @@ export default async function VerifyIdPage() {
 
         {/* === SIDEBAR === */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="mb-2 text-[10px] tracking-widest text-accent">
-              WHAT WE ACCEPT
-            </div>
-            <ul className="space-y-1.5 text-sm text-foreground/85">
+          <div className={`${panel} p-5`}>
+            <h2 className="mb-2 text-[15px] font-medium text-black">What we accept</h2>
+            <ul className="space-y-1.5 text-[15px] text-black/75">
               {ACCEPTED_DOCS.map((d) => (
                 <li key={d} className="flex items-start gap-2">
-                  <span aria-hidden className="text-accent mt-1">·</span>
+                  <span aria-hidden className="mt-[0.55rem] h-1 w-1 flex-none rounded-full bg-black/40" />
                   <span>{d}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
-              HOW WE HANDLE IT
-            </div>
-            <p className="text-sm text-foreground/75 leading-relaxed">
+          <div className={`${panel} p-5`}>
+            <h2 className="mb-2 text-[15px] font-medium text-black">How we handle it</h2>
+            <p className="text-[15px] leading-relaxed text-black/75">
               Your ID is encrypted at rest (AES-256) and accessible only to the
               team members who need to verify it. We do not share with
               third parties. See our{' '}
               <Link
                 href="/legal/privacy"
-                className="text-accent hover:text-accent-soft"
+                className="text-black underline decoration-black/40 underline-offset-[3px] hover:decoration-black"
               >
                 Privacy Policy
               </Link>{' '}
@@ -105,11 +80,9 @@ export default async function VerifyIdPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-accent/40 bg-accent/5 p-5">
-            <div className="mb-2 text-[10px] tracking-widest text-accent">
-              WHY IT&apos;S REQUIRED
-            </div>
-            <p className="text-sm text-foreground/85 leading-relaxed">
+          <div className={`${panel} p-5`}>
+            <h2 className="mb-2 text-[15px] font-medium text-black">Why it&apos;s required</h2>
+            <p className="text-[15px] leading-relaxed text-black/75">
               State pharmacy boards require identity verification before a
               compounded protocol ships. Without this step the pharmacy
               cannot release your order.

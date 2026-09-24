@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
-import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import {
+  AuthShell,
+  AuthLabel,
+  authInputClass,
+  authErrorClass,
+  authNoticeClass,
+  authLinkClass,
+  authSecondaryClass,
+} from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { DemoCredentials } from '@/components/auth/DemoCredentials';
 import { loginAction } from '@/lib/auth-actions';
@@ -21,33 +29,27 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthShell
-      eyebrow={supabaseConfigured ? 'MEMBER PORTAL' : 'MEMBER · DOCTOR · ADMIN'}
+      eyebrow={supabaseConfigured ? 'Member portal' : 'Member · Doctor · Admin'}
       title="Welcome back."
       footer={
         <>
           Trouble signing in?{' '}
-          <Link
-            href="/contact"
-            className="text-foreground/85 hover:text-foreground underline-offset-4 hover:underline"
-          >
+          <Link href="/contact" className={authLinkClass}>
             Contact our team
           </Link>
           .
         </>
       }
     >
-      <form
-        action={loginAction}
-        className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
-      >
+      <form action={loginAction} className="space-y-6">
         {notice === 'check-email' && (
-          <div className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
+          <div role="status" className={authNoticeClass}>
             Account created. Check your email for a confirmation link, then log
             in.
           </div>
         )}
         {error === 'invalid' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             {supabaseConfigured
               ? 'Invalid email or password.'
               : 'Invalid email or password. Tap a demo card below to fill the form.'}
@@ -55,36 +57,36 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         )}
         {/* Being logged out mid-task with no explanation reads as a bug. */}
         {timeout === 'idle' && (
-          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground/75">
+          <div role="status" className={authNoticeClass}>
             You were signed out after a spell of inactivity. Sign in to pick up
             where you left off.
           </div>
         )}
         {timeout === 'expired' && (
-          <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-foreground/75">
+          <div role="status" className={authNoticeClass}>
             Sessions end after 12 hours. Sign in again to continue.
           </div>
         )}
         {error === 'throttled' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             Too many attempts from this connection. Wait a few minutes and try
             again.
           </div>
         )}
         {error === 'mfa_unavailable' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             We could not email your sign-in code. Try again, or contact support
             if it keeps happening.
           </div>
         )}
         {error === 'auth' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             That sign-in link is invalid or has expired. Please try again.
           </div>
         )}
 
         <div>
-          <AuthLabel htmlFor="login-email">EMAIL</AuthLabel>
+          <AuthLabel htmlFor="login-email">Email</AuthLabel>
           <input
             id="login-email"
             name="email"
@@ -97,13 +99,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <AuthLabel htmlFor="login-password">PASSWORD</AuthLabel>
+          <div className="flex items-baseline justify-between">
+            <AuthLabel htmlFor="login-password">Password</AuthLabel>
             <Link
               href={supabaseConfigured ? '/forgot-password' : '/contact'}
-              className="text-[11px] tracking-wider text-accent hover:text-accent-soft"
+              className={`font-mono text-[13px] ${authLinkClass}`}
             >
-              FORGOT?
+              Forgot?
             </Link>
           </div>
           <PasswordField
@@ -125,7 +127,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {supabaseConfigured && (
           <Link
             href="/signup"
-            className="block w-full rounded-full glass text-foreground/85 font-semibold py-3.5 text-base text-center hover:text-foreground transition-colors"
+            className={authSecondaryClass}
           >
             Create an account
           </Link>
@@ -133,7 +135,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <Link
           href="/start"
-          className="block w-full text-center text-sm text-foreground/55 hover:text-foreground transition-colors"
+          className="block w-full text-center font-mono text-[13px] text-black/60 transition-colors hover:text-black"
         >
           Start a new assessment →
         </Link>

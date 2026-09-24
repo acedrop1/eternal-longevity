@@ -20,7 +20,6 @@ export default async function PrescriptionPolicyPage() {
 
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Prescription Policy"
       effective="September 2026"
       lead={`You cannot buy a prescription from us. You can ask a licensed prescriber to consider writing one, and that is what placing an order does. This page explains what actually produces a prescription and what does not.`}

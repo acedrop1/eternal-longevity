@@ -5,20 +5,10 @@ import { getSession } from '@/lib/auth-server';
 import { getPrescriber, listAudit } from '@/lib/prescriber';
 import { formatDateTime } from '@/lib/format';
 import { BUSINESS_LEGAL_NAME, BUSINESS_ADDRESS, SERVICE_AREA } from '@/lib/site';
+import { ADMIN_NAV } from '@/components/portal/ui';
 
 export const metadata: Metadata = { title: 'Compliance & audit' };
 
-const ADMIN_NAV = [
-  { label: 'Overview', href: '/portal/admin' },
-  { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Applications', href: '/portal/admin/queue' },
-  { label: 'Messages', href: '/portal/admin/messages' },
-  { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Orders', href: '/portal/admin/fulfillment' },
-  { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-  { label: 'Settings', href: '/portal/admin/settings' },
-];
 
 /**
  * What a board, a processor or a certifier asks to see, and who changed it.
@@ -56,14 +46,14 @@ export default async function CompliancePage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          COMPLIANCE &amp; AUDIT
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Compliance &amp; audit
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >
@@ -75,14 +65,15 @@ export default async function CompliancePage() {
         </p>
       </div>
 
-      <section className="mb-8 rounded-3xl border border-line bg-surface p-6 md:p-8">
+      <section className="mb-8 rounded-[4px] border border-line bg-surface p-6 md:p-8">
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             On file
           </h2>
           {missing > 0 && (
-            <span className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[10px] font-semibold tracking-widest text-accent">
-              {missing} NOT SET
+            <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-accent/40 bg-accent/10 px-2.5 py-1 font-mono text-[12px] text-accent">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+              {missing} not set
             </span>
           )}
         </div>
@@ -107,7 +98,7 @@ export default async function CompliancePage() {
         </dl>
       </section>
 
-      <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
+      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
         <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
           Audit trail
         </h2>
@@ -117,33 +108,33 @@ export default async function CompliancePage() {
         </p>
 
         {audit.length === 0 ? (
-          <p className="rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground/55">
+          <p className="rounded-[4px] border border-line bg-background px-4 py-3 text-sm text-foreground/55">
             Nothing recorded yet. Changes to the prescriber&apos;s name,
             credential, NPI or licence appear here, as does every staff
             sign-in from a new device.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="max-h-[70vh] overflow-auto">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-[10px] tracking-widest text-foreground/45">
-                  <th className="py-2 pr-4 font-medium">WHEN</th>
-                  <th className="py-2 pr-4 font-medium">WHO</th>
-                  <th className="py-2 pr-4 font-medium">FIELD</th>
-                  <th className="py-2 pr-4 font-medium">FROM</th>
-                  <th className="py-2 font-medium">TO</th>
+              <thead className="sticky top-0 bg-surface">
+                <tr className="border-b border-line text-left font-mono text-[12px] text-foreground/60">
+                  <th className="py-2 pr-4 font-normal">When</th>
+                  <th className="py-2 pr-4 font-normal">Who</th>
+                  <th className="py-2 pr-4 font-normal">Field</th>
+                  <th className="py-2 pr-4 font-normal">From</th>
+                  <th className="py-2 font-normal">To</th>
                 </tr>
               </thead>
               <tbody>
                 {audit.map((a, i) => (
-                  <tr key={i} className="border-t border-line">
-                    <td className="py-2.5 pr-4 text-xs text-foreground/55">
+                  <tr key={i} className="border-t border-line first:border-t-0">
+                    <td className="whitespace-nowrap py-2.5 pr-4 font-mono text-[12px] tabular-nums text-foreground/60">
                       {formatDateTime(a.at)}
                     </td>
                     <td className="py-2.5 pr-4 text-foreground/85">
                       {a.actor}
-                      <span className="ml-1.5 text-[10px] tracking-widest text-foreground/40">
-                        {a.role.toUpperCase()}
+                      <span className="ml-1.5 font-mono text-[12px] text-foreground/55">
+                        {a.role}
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 text-foreground/85">{a.field}</td>

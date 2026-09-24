@@ -32,71 +32,73 @@ export default async function PayPage({ params }: PayPageProps) {
   return (
     <>
       <Header />
-      <main className="theme-light min-h-screen bg-background px-6 pb-16 pt-20 text-foreground">
+      <main className="min-h-screen bg-white px-5 pb-16 pt-[112px] text-black md:px-8 md:pb-24 md:pt-[136px]">
         <div className="mx-auto max-w-lg">
           {!order ? (
-            <div className="rounded-3xl border border-line bg-surface p-8 text-center">
-              <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground">
+            <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+              <h1
+                className="mb-3 font-display font-normal [text-wrap:balance]"
+                style={{ fontSize: 'clamp(1.8rem, 2vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
+              >
                 This link is no longer valid.
               </h1>
-              <p className="mb-6 text-sm text-foreground/60 leading-relaxed">
+              <p className="mb-6 text-[15px] leading-relaxed text-black/70">
                 Payment links expire after seven days, and each one can only be
                 used once. If your order is still open, we can send a fresh
                 link.
               </p>
               <Link
                 href="/portal/messages"
-                className="pill bg-accent px-6 py-3 text-sm font-semibold text-black"
+                className="inline-flex rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
               >
                 Message support
               </Link>
             </div>
           ) : order.alreadyPaid ? (
-            <div className="rounded-3xl border border-line bg-surface p-8 text-center">
-              <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground">
+            <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+              <h1
+                className="mb-3 font-display font-normal [text-wrap:balance]"
+                style={{ fontSize: 'clamp(1.8rem, 2vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
+              >
                 This order is already paid.
               </h1>
-              <p className="mb-6 text-sm text-foreground/60 leading-relaxed">
+              <p className="mb-6 text-[15px] leading-relaxed text-black/70">
                 Order {order.orderNumber} is with the pharmacy. You&apos;ll get
                 tracking as soon as it ships.
               </p>
               <Link
                 href="/portal/orders"
-                className="pill bg-accent px-6 py-3 text-sm font-semibold text-black"
+                className="inline-flex rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
               >
                 View your order
               </Link>
             </div>
           ) : (
             <>
-              <p className="mb-2 text-[11px] tracking-widest text-accent">
-                PRESCRIBER APPROVED
+              <p className="mb-3 font-mono text-[13px] text-black/55">
+                Prescriber approved
               </p>
               <h1
-                className="mb-3 font-semibold tracking-tight text-foreground"
-                style={{
-                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.05,
-                }}
+                className="mb-4 font-display font-normal [text-wrap:balance]"
+                style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
               >
                 Complete your payment.
               </h1>
-              <p className="mb-8 text-foreground/65 leading-relaxed">
+              <p className="mb-8 text-[16px] leading-relaxed text-black/70">
                 Your prescriber approved your treatment, but the card you saved
                 could not be charged. Pay here and your prescription goes
                 straight to the pharmacy for compounding.
               </p>
 
-              <div className="rounded-3xl border border-line bg-surface p-6">
-                <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
-                  ORDER {order.orderNumber}
+              <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+                <p className="mb-4 font-mono text-[13px] text-black/55">
+                  Order {order.orderNumber}
                 </p>
                 <ul className="mb-4 space-y-1.5">
                   {order.items.map((it, i) => (
                     <li
                       key={`${it.name}-${i}`}
-                      className="text-sm font-semibold text-foreground"
+                      className="text-[16px] font-medium text-black"
                     >
                       {it.name}
                       {it.qty > 1 ? ` ×${it.qty}` : ''}
@@ -104,35 +106,35 @@ export default async function PayPage({ params }: PayPageProps) {
                   ))}
                 </ul>
                 {/* The charge is a care program; the drug is one component of it. */}
-                <dl className="mb-5 space-y-2 border-y border-line py-4 text-sm">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <dt className="text-foreground/65">Medication + physician care</dt>
-                    <dd className="tabular-nums text-foreground">
+                <dl className="mb-5 border-t border-black/15 text-[15px]">
+                  <div className="flex items-baseline justify-between gap-4 border-b border-black/15 py-3">
+                    <dt className="text-black/70">Medication + physician care</dt>
+                    <dd className="tabular-nums text-black">
                       ${(order.totalCents / 100).toFixed(2)}
                     </dd>
                   </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <dt className="text-foreground/65">Ongoing prescriber messaging</dt>
-                    <dd className="text-accent">Included</dd>
+                  <div className="flex items-baseline justify-between gap-4 border-b border-black/15 py-3">
+                    <dt className="text-black/70">Ongoing prescriber messaging</dt>
+                    <dd className="text-black">Included</dd>
                   </div>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <dt className="text-foreground/65">Cold-chain shipping</dt>
-                    <dd className="text-accent">Free</dd>
+                  <div className="flex items-baseline justify-between gap-4 border-b border-black/15 py-3">
+                    <dt className="text-black/70">Cold-chain shipping</dt>
+                    <dd className="text-black">Free</dd>
                   </div>
                 </dl>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm text-foreground/55">
+                  <span className="text-[15px] text-black/60">
                     Due today · {order.cadenceLabel} plan
                   </span>
-                  <span className="text-2xl font-semibold tabular-nums text-foreground">
+                  <span className="text-2xl font-medium tabular-nums text-black">
                     ${(order.totalCents / 100).toFixed(2)}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-6 rounded-3xl border border-line bg-surface p-6">
-                <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
-                  PAYMENT DETAILS
+              <div className="mt-4 rounded-[4px] bg-white p-6 ring-1 ring-black/15 md:p-8">
+                <p className="mb-4 font-mono text-[13px] text-black/70">
+                  Payment details
                 </p>
                 {cardReady ? (
                   <PayForm
@@ -144,14 +146,14 @@ export default async function PayPage({ params }: PayPageProps) {
                   />
                 ) : (
                   <>
-                    <p className="mb-4 text-sm text-foreground/75 leading-relaxed">
+                    <p className="mb-5 text-[15px] leading-relaxed text-black/75">
                       Card payment is being enabled on your account. In the
                       meantime, message us and we&apos;ll send payment details
                       and release your order to the pharmacy the same day.
                     </p>
                     <Link
                       href="/portal/messages"
-                      className="pill bg-accent px-6 py-3 text-sm font-semibold text-black"
+                      className="inline-flex rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
                     >
                       Message support to pay
                     </Link>
@@ -160,9 +162,9 @@ export default async function PayPage({ params }: PayPageProps) {
               </div>
 
               {/* What happens next — sets the expectation that stops "where is my order" disputes. */}
-              <div className="mt-6 rounded-3xl border border-line bg-surface p-6">
-                <p className="mb-4 text-[11px] tracking-widest text-foreground/50">
-                  WHAT HAPPENS NEXT
+              <div className="mt-4 rounded-[4px] bg-black p-6 text-white md:p-8">
+                <p className="mb-5 font-mono text-[13px] text-white/60">
+                  What happens next
                 </p>
                 <ol className="grid gap-4 sm:grid-cols-3">
                   {[
@@ -171,32 +173,34 @@ export default async function PayPage({ params }: PayPageProps) {
                     ['At your door', 'Expedited cold-chain, 1–2 business days. Tracking lands in your inbox.'],
                   ].map(([t, d], i) => (
                     <li key={t} className="flex gap-3">
-                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent text-[11px] font-bold text-black">
+                      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-accent font-mono text-[12px] text-black">
                         {i + 1}
                       </span>
                       <span>
-                        <span className="block text-sm font-semibold text-foreground">{t}</span>
-                        <span className="block text-xs text-foreground/55 leading-relaxed">{d}</span>
+                        <span className="block text-[15px] font-medium text-white">{t}</span>
+                        <span className="mt-0.5 block text-[13px] leading-relaxed text-white/65">{d}</span>
                       </span>
                     </li>
                   ))}
                 </ol>
               </div>
 
-              <p className="mt-6 text-center text-xs leading-relaxed text-foreground/45">
+              <p className="mt-6 text-[13px] leading-relaxed text-black/55">
                 Your prescriber has already approved this order, so nothing here
                 is charged on spec. Future cycles are billed only after each one
                 is approved; a cycle that isn&apos;t approved is never charged.
                 Cancel anytime from your account.
               </p>
-              <p className="mt-3 text-center text-xs text-foreground/40">
+              <p className="mt-3 font-mono text-[12px] text-black/50">
                 This link is unique to your order and expires in seven days.
               </p>
             </>
           )}
         </div>
       </main>
-      <Footer />
+      <div className="bg-white">
+        <Footer />
+      </div>
     </>
   );
 }

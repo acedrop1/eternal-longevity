@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default function ConsentPolicyPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Informed Consent & Product Acknowledgement"
       effective="May 2026"
       lead="Eternal Longevity provides access to prescription peptide protocols through a licensed prescriber and a licensed 503A compounding pharmacy. This document explains what you are acknowledging when you place an order, how the telehealth review works, and the risks you accept."

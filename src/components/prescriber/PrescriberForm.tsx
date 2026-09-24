@@ -10,8 +10,8 @@ import { CREDENTIALS, type PrescriberRecord } from '@/lib/prescriberTypes';
 import { cn } from '@/lib/utils';
 
 const field =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30';
-const label = 'mb-1.5 block text-[11px] tracking-wider text-foreground/60';
+  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15';
+const label = 'mb-1.5 block font-mono text-[12px] text-foreground/60';
 
 /**
  * The prescriber's own facts, editable by him and by an admin.
@@ -75,7 +75,7 @@ export function PrescriberForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={label} htmlFor="pf-name">
-            FULL NAME
+            Full name
           </label>
           <input
             id="pf-name"
@@ -84,13 +84,13 @@ export function PrescriberForm({
             placeholder="Bader Elder"
             className={field}
           />
-          <p className="mt-1.5 text-[11px] text-foreground/45">
+          <p className="mt-1.5 text-[12px] text-foreground/60">
             Without the credential — it is added from the field beside this.
           </p>
         </div>
         <div>
           <label className={label} htmlFor="pf-cred">
-            CREDENTIAL
+            Credential
           </label>
           <select
             id="pf-cred"
@@ -105,14 +105,14 @@ export function PrescriberForm({
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-[11px] text-foreground/45">
+          <p className="mt-1.5 text-[12px] text-foreground/60">
             Prints as {form.name || 'Name'}
             {form.credential ? `, ${form.credential}` : ''}.
           </p>
         </div>
         <div>
           <label className={label} htmlFor="pf-npi">
-            NPI (10 DIGITS)
+            NPI (10 digits)
           </label>
           <input
             id="pf-npi"
@@ -128,7 +128,7 @@ export function PrescriberForm({
         {mode === 'doctor' && (
           <div>
             <label className={label} htmlFor="pf-phone">
-              MOBILE
+              Mobile
             </label>
             <input
               id="pf-phone"
@@ -137,7 +137,7 @@ export function PrescriberForm({
               placeholder="(201) 555-0134"
               className={field}
             />
-            <p className="mt-1.5 text-[11px] text-foreground/45">
+            <p className="mt-1.5 text-[12px] text-foreground/60">
               Where a new order texts you.
             </p>
           </div>
@@ -147,7 +147,7 @@ export function PrescriberForm({
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
           <label className={label} htmlFor="pf-state">
-            LICENCE STATE
+            Licence state
           </label>
           <input
             id="pf-state"
@@ -162,7 +162,7 @@ export function PrescriberForm({
         </div>
         <div>
           <label className={label} htmlFor="pf-lic">
-            LICENCE NUMBER
+            Licence number
           </label>
           <input
             id="pf-lic"
@@ -174,7 +174,7 @@ export function PrescriberForm({
         </div>
         <div>
           <label className={label} htmlFor="pf-exp">
-            EXPIRES
+            Expires
           </label>
           <input
             id="pf-exp"
@@ -186,7 +186,7 @@ export function PrescriberForm({
         </div>
       </div>
 
-      <p className="mt-4 text-xs leading-relaxed text-foreground/45">
+      <p className="mt-4 text-xs leading-relaxed text-foreground/60">
         These appear on every prescription sent to the pharmacy and on the
         published prescription policy. Every change is recorded in the audit
         trail with who made it.
@@ -195,7 +195,7 @@ export function PrescriberForm({
       {result && (
         <p
           className={cn(
-            'mt-4 rounded-2xl border px-4 py-3 text-sm',
+            'mt-4 rounded-[4px] border px-4 py-3 text-sm',
             result.ok
               ? 'border-accent/40 bg-accent/5 text-accent'
               : 'border-red-500/30 bg-red-500/5 text-red-300',
@@ -211,10 +211,10 @@ export function PrescriberForm({
           disabled={busy || !dirty}
           onClick={save}
           className={cn(
-            'rounded-full px-5 py-2.5 text-sm font-semibold transition-all active:scale-[0.98]',
+            'rounded-full px-5 py-2.5 font-mono text-[13px] transition-all active:scale-[0.98]',
             busy || !dirty
-              ? 'cursor-not-allowed bg-foreground/15 text-foreground/40'
-              : 'bg-accent text-black hover:bg-accent-soft',
+              ? 'cursor-not-allowed bg-foreground/10 text-foreground/55'
+              : 'bg-black text-white hover:bg-black/85',
           )}
         >
           {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}

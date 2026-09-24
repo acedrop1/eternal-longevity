@@ -9,7 +9,8 @@ import {
 import { getSession } from '@/lib/auth-server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
-import { getShopProduct } from '@/lib/shopProducts';
+import { getLiveProducts } from '@/lib/catalog';
+import { MEMBER_NAV, PageHeader, SectionTitle, btnPrimary, panel } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Subscriptions',
@@ -27,8 +28,9 @@ async function loadSubscriptions(userId: string): Promise<Subscription[]> {
     .order('created_at', { ascending: false });
   if (error || !data) return [];
 
+  const live = new Map((await getLiveProducts()).map((p) => [p.id, p]));
   return data.map((r) => {
-    const product = getShopProduct(r.product_id);
+    const product = live.get(r.product_id);
     return {
       id: r.id,
       productName: r.product_name,
@@ -61,58 +63,37 @@ export default async function SubscriptionsPage() {
   ).length;
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
+    <PortalShell user={user} nav={MEMBER_NAV}>
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          SUBSCRIPTIONS · {activeCount} ACTIVE
-        </p>
-        <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          Manage your subscriptions.
-        </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Pause between cycles, skip a single cycle, or cancel any time before
-          the next cycle is confirmed. No mid-cycle billing.
+        <PageHeader
+          title="Manage your subscriptions."
+          intro="Pause between cycles, skip a single cycle, or cancel any time before the next cycle is confirmed. No mid-cycle billing."
+        />
+        <p className="mt-3 font-mono text-[13px] tabular-nums text-black/55">
+          {activeCount} active
         </p>
       </div>
 
       <SubscriptionsManager subscriptions={SUBSCRIPTIONS} />
 
-      <section className="mt-12 rounded-3xl border border-line bg-surface p-6 md:p-8">
-        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <h2 className="mb-2 text-xl font-semibold tracking-tight text-foreground">
-              Add another peptide
-            </h2>
-            <p className="text-sm text-foreground/65 leading-relaxed">
-              Browse the catalog and subscribe to anything that fits your
-              protocol. Every addition goes back to the prescriber first.
-            </p>
+      {/* With nothing to manage, the manager's empty state already points
+          at the shop. */}
+      {SUBSCRIPTIONS.length > 0 && (
+        <section className={`${panel} p-5 md:p-8`}>
+          <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <SectionTitle className="mb-2">Add another peptide</SectionTitle>
+              <p className="max-w-xl text-[15px] leading-relaxed text-black/65">
+                Browse the catalog and subscribe to anything that fits your
+                protocol. Every addition goes back to the prescriber first.
+              </p>
+            </div>
+            <Link href="/portal/shop" className={`${btnPrimary} self-start md:self-auto`}>
+              Browse the shop →
+            </Link>
           </div>
-          <Link
-            href="/portal/shop"
-            className="inline-flex items-center justify-center rounded-full bg-accent text-black font-semibold px-6 py-3 text-sm hover:bg-accent-soft transition-colors"
-          >
-            Browse the shop →
-          </Link>
-        </div>
-      </section>
+        </section>
+      )}
     </PortalShell>
   );
 }

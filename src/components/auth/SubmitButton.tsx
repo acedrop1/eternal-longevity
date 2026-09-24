@@ -29,7 +29,7 @@ export function SubmitButton({
       disabled={pending}
       aria-busy={pending}
       className={cn(
-        'inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:cursor-wait disabled:opacity-75',
+        'inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-wait disabled:opacity-50',
         className,
       )}
     >

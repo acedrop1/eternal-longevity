@@ -2,65 +2,28 @@ import { PortalSkeletonShell } from '@/components/skeletons/PortalSkeletonShell'
 import { Shimmer } from '@/components/skeletons/Shimmer';
 
 /**
- * Shop catalog skeleton. Search input, category pills, then a 3-column
- * product grid (1 on mobile, 2 on tablet, 3 on desktop).
+ * Shop catalog skeleton. Headline, search + category filter, then the grid
+ * of tall photo cards (2 across on a phone, 3 on desktop, 4 on wide).
  */
 export default function ShopLoading() {
   return (
     <PortalSkeletonShell>
-      {/* Hero text */}
-      <div className="mb-10">
-        <Shimmer className="mb-3 h-3 w-40" />
-        <Shimmer className="mb-3 h-12 w-3/4" />
-        <Shimmer className="mb-5 h-4 w-2/3" />
+      <Shimmer className="mb-4 h-10 w-2/3 max-w-md" />
+      <Shimmer className="mb-10 h-4 w-2/3 max-w-xl" />
 
-        {/* Trust chips */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          <Shimmer className="h-10 rounded-xl" />
-          <Shimmer className="h-10 rounded-xl" />
-          <Shimmer className="h-10 rounded-xl" />
-          <Shimmer className="h-10 rounded-xl" />
+      {/* Search + category filter (sits at the bottom on a phone) */}
+      <div className="mb-8 hidden rounded-[4px] bg-[#F2F2F0] p-3 md:block">
+        <div className="mb-3 h-11 rounded-[2px] bg-white ring-1 ring-black/10" />
+        <div className="flex gap-2">
+          {[96, 110, 100, 90, 105].map((w, i) => (
+            <Shimmer key={i} className="h-9 flex-shrink-0 rounded-full" style={{ width: w }} />
+          ))}
         </div>
       </div>
 
-      {/* Search bar */}
-      <Shimmer className="mb-3 h-11 w-full rounded-full" />
-      {/* Category pills */}
-      <div className="mb-10 flex gap-2 overflow-x-auto scrollbar-hide">
-        {[80, 110, 100, 90, 105].map((w, i) => (
-          <Shimmer
-            key={i}
-            className="h-9 flex-shrink-0 rounded-full"
-            style={{ width: `${w}px` }}
-          />
-        ))}
-      </div>
-
-      {/* Product grid */}
-      <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="rounded-[2rem] border border-line bg-surface overflow-hidden"
-          >
-            <Shimmer className="aspect-[5/6] w-full rounded-none" />
-            <div className="p-5 md:p-6">
-              <div className="mb-3 flex gap-2">
-                <Shimmer className="h-5 w-20 rounded-full" />
-                <Shimmer className="h-5 w-24 rounded-full" />
-              </div>
-              <Shimmer className="mb-2 h-4 w-full" />
-              <Shimmer className="mb-2 h-4 w-3/4" />
-              <Shimmer className="mb-5 h-4 w-1/2" />
-              <div className="flex items-end justify-between">
-                <div>
-                  <Shimmer className="mb-1 h-3 w-16" />
-                  <Shimmer className="h-6 w-20" />
-                </div>
-                <Shimmer className="h-4 w-16 rounded-full" />
-              </div>
-            </div>
-          </div>
+          <Shimmer key={i} className="aspect-[3/4] w-full rounded-[4px]" />
         ))}
       </div>
     </PortalSkeletonShell>

@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
-import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import {
+  AuthShell,
+  AuthLabel,
+  authInputClass,
+  authErrorClass,
+  authLinkClass,
+} from '@/components/auth/AuthShell';
 import { requestPasswordResetAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
@@ -21,15 +27,15 @@ export default async function ForgotPasswordPage({
   // Demo mode — no real accounts to reset.
   if (!supabaseConfigured) {
     return (
-      <AuthShell eyebrow="ACCOUNT" title="Reset your password.">
-        <div className="rounded-3xl border border-line bg-surface p-6 md:p-8 text-center space-y-4">
-          <p className="text-sm text-foreground/70 leading-relaxed">
+      <AuthShell eyebrow="Account" title="Reset your password.">
+        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-black/70">
             Password reset turns on once the backend is connected. Until then,
             the portal uses demo logins — no password needed.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base hover:bg-accent-soft transition-colors"
+            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
           >
             Back to login →
           </Link>
@@ -40,15 +46,12 @@ export default async function ForgotPasswordPage({
 
   return (
     <AuthShell
-      eyebrow="ACCOUNT"
+      eyebrow="Account"
       title="Reset your password."
       footer={
         <>
           Remembered it?{' '}
-          <Link
-            href="/login"
-            className="text-foreground/85 hover:text-foreground underline-offset-4 hover:underline"
-          >
+          <Link href="/login" className={authLinkClass}>
             Back to login
           </Link>
           .
@@ -56,35 +59,32 @@ export default async function ForgotPasswordPage({
       }
     >
       {error === 'expired' && (
-        <div className="mb-4 rounded-2xl border border-red-400/40 bg-red-500/10 px-5 py-4 text-sm text-red-200">
+        <div role="alert" className={`mb-6 ${authErrorClass}`}>
           That reset link has expired or was already used. Enter your email and
           we&apos;ll send a fresh one.
         </div>
       )}
       {sent === '1' ? (
-        <div className="rounded-3xl border border-accent/30 bg-accent/10 p-6 md:p-8 text-center space-y-3">
-          <p className="text-sm text-foreground leading-relaxed">
+        <div role="status" className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-black">
             If an account exists for that email, a password-reset link is on its
             way. Check your inbox.
           </p>
           <Link
             href="/login"
-            className="inline-block text-sm text-accent hover:text-accent-soft"
+            className={`inline-block font-mono text-[13px] ${authLinkClass}`}
           >
             Back to login →
           </Link>
         </div>
       ) : (
-        <form
-          action={requestPasswordResetAction}
-          className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
-        >
-          <p className="text-sm text-foreground/65 leading-relaxed">
+        <form action={requestPasswordResetAction} className="space-y-6">
+          <p className="text-[15px] leading-relaxed text-black/70">
             Enter your account email and we&apos;ll send a link to set a new
             password.
           </p>
           <div>
-            <AuthLabel htmlFor="reset-email">EMAIL</AuthLabel>
+            <AuthLabel htmlFor="reset-email">Email</AuthLabel>
             <input
               id="reset-email"
               name="email"
@@ -96,8 +96,8 @@ export default async function ForgotPasswordPage({
             />
           </div>
           <SubmitButton pendingLabel="Sending…">
-          Send reset link →
-        </SubmitButton>
+            Send reset link →
+          </SubmitButton>
         </form>
       )}
     </AuthShell>

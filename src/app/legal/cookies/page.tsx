@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function CookiesPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Cookie Notice"
       effective="September 2026"
       lead={`This is a short page because we set very few cookies. We run no analytics, no advertising pixels, and no third-party trackers of any kind on this site. That is a deliberate choice, and it is the reason this notice has nothing to opt out of.`}

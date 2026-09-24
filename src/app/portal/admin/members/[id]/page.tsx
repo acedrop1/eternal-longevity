@@ -18,22 +18,12 @@ import {
 import { cn } from '@/lib/utils';
 import { STATUS_LABEL, type OrderStatus } from '@/lib/orders';
 import { reviewForMember, type PatientReview } from '@/lib/clinical-review';
+import { ADMIN_NAV } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Member record',
 };
 
-const ADMIN_NAV = [
-  { label: 'Overview', href: '/portal/admin' },
-  { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Applications', href: '/portal/admin/queue' },
-        { label: 'Messages', href: '/portal/admin/messages' },
-  { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Orders', href: '/portal/admin/fulfillment' },
-  { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-  { label: 'Settings', href: '/portal/admin/settings' },
-];
 
 interface MemberDetail {
   name: string;
@@ -75,8 +65,8 @@ interface MemberDetail {
 
 const STATUS_BADGE: Record<AccountStatus, string> = {
   active: 'border-accent/40 bg-accent/10 text-accent',
-  suspended: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
-  deactivated: 'border-line bg-surface text-foreground/45',
+  suspended: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
+  deactivated: 'border-line bg-surface text-foreground/60',
 };
 
 /**
@@ -281,26 +271,34 @@ export default async function MemberDetailPage({ params }: PageProps) {
     <PortalShell user={user} nav={ADMIN_NAV}>
       <Link
         href="/portal/admin/members"
-        className="mb-6 inline-flex items-center gap-1.5 text-[11px] tracking-widest text-foreground/55 transition-colors hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-1.5 font-mono text-[12px] text-foreground/55 transition-colors hover:text-foreground"
       >
-        <span aria-hidden>←</span> ALL USERS
+        <span aria-hidden>←</span> All users
       </Link>
 
       {/* Header */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+          <h1
+            className="font-display font-normal text-foreground"
+            style={{
+              fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+              fontStretch: '75%',
+              lineHeight: 1.05,
+            }}
+          >
             {detail.name}
           </h1>
           <p className="mt-1 text-sm text-foreground/65">{detail.email}</p>
         </div>
         <span
           className={cn(
-            'rounded-full border px-3 py-1 text-[10px] font-semibold tracking-widest',
+            'inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
             STATUS_BADGE[detail.status],
           )}
         >
-          {detail.status.toUpperCase()}
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+          {detail.status}
         </span>
       </div>
 
@@ -336,14 +334,14 @@ export default async function MemberDetailPage({ params }: PageProps) {
               {detail.subscriptions.map((s, i) => (
                 <li
                   key={i}
-                  className="rounded-2xl border border-line bg-background p-4"
+                  className="rounded-[4px] border border-line bg-background p-4"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">
                       {s.productName}
                     </span>
-                    <span className="text-[10px] tracking-widest text-accent">
-                      {s.status.toUpperCase()}
+                    <span className="font-mono text-[12px] text-accent">
+                      {s.status}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-foreground/55">
@@ -365,10 +363,10 @@ export default async function MemberDetailPage({ params }: PageProps) {
               {detail.orders.map((o) => (
                 <li
                   key={o.ref}
-                  className="rounded-2xl border border-line bg-background p-4"
+                  className="rounded-[4px] border border-line bg-background p-4"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <span className="font-mono text-xs text-foreground/85">
+                    <span className="font-mono text-[12px] text-foreground/85">
                       {o.ref}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm text-foreground/85">
@@ -377,8 +375,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                     <span className="tabular-nums text-sm text-foreground">
                       ${o.total}
                     </span>
-                    <span className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-semibold tracking-widest text-foreground/70">
-                      {(STATUS_LABEL[o.status as OrderStatus] ?? o.status).toUpperCase()}
+                    <span className="rounded-[2px] border border-line px-2.5 py-0.5 font-mono text-[12px] text-foreground/70">
+                      {(STATUS_LABEL[o.status as OrderStatus] ?? o.status)}
                     </span>
                   </div>
 
@@ -386,8 +384,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
                     {o.money.map((m) => (
                       <div key={m.label} className="flex items-baseline gap-1.5">
-                        <dt className="text-[10px] tracking-widest text-foreground/40">
-                          {m.label.toUpperCase()}
+                        <dt className="font-mono text-[12px] text-foreground/60">
+                          {m.label}
                         </dt>
                         <dd
                           className={cn(
@@ -408,8 +406,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <ol className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5">
                     {o.steps.map((st) => (
                       <li key={st.label}>
-                        <div className="text-[10px] tracking-widest text-foreground/40">
-                          {st.label.toUpperCase()}
+                        <div className="font-mono text-[12px] text-foreground/60">
+                          {st.label}
                         </div>
                         <div className="text-xs text-foreground/80">{st.at}</div>
                       </li>
@@ -418,13 +416,13 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
                   {o.tracking && (
                     <p className="mt-3 text-xs text-foreground/70">
-                      <span className="text-foreground/45">Tracking </span>
+                      <span className="text-foreground/60">Tracking </span>
                       {o.tracking.carrier} · {o.tracking.number}
                     </p>
                   )}
 
                   {o.warning && (
-                    <p className="mt-3 rounded-xl border border-accent/40 bg-accent/5 px-3 py-2 text-xs text-accent">
+                    <p className="mt-3 rounded-[4px] border border-accent/40 bg-accent/5 px-3 py-2 text-xs text-accent">
                       {o.warning}
                     </p>
                   )}
@@ -458,7 +456,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       <span className="text-sm font-medium text-foreground">
                         {t.label}
                       </span>
-                      <span className="font-mono text-[10px] tracking-wider text-foreground/40">
+                      <span className="font-mono text-[12px] text-foreground/60">
                         {t.orderNumber}
                       </span>
                     </div>
@@ -467,7 +465,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
                         {t.body}
                       </p>
                     )}
-                    <p className="mt-0.5 text-[11px] text-foreground/40">
+                    <p className="mt-0.5 font-mono text-[12px] text-foreground/60">
                       {t.at}
                       {t.author ? ` · ${t.author}` : ''}
                     </p>
@@ -494,8 +492,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   ] as [string, string][]
                 ).map(([k, v]) => (
                   <div key={k}>
-                    <div className="text-[10px] tracking-widest text-foreground/45">
-                      {k.toUpperCase()}
+                    <div className="font-mono text-[12px] text-foreground/60">
+                      {k}
                     </div>
                     <div className="mt-0.5 text-sm text-foreground">{v}</div>
                   </div>
@@ -522,7 +520,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-line bg-surface p-6">
+    <section className="rounded-[4px] border border-line bg-surface p-6">
       <h2 className="mb-4 text-sm font-semibold tracking-tight text-foreground">
         {title}
       </h2>
@@ -549,8 +547,8 @@ function RecordGroup({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[10px] tracking-widest text-foreground/45">
-        {title.toUpperCase()}
+      <div className="mb-1.5 font-mono text-[12px] text-foreground/60">
+        {title}
       </div>
       <div className="grid gap-x-8 md:grid-cols-2">
         {lines.map((l) => (
@@ -575,5 +573,5 @@ function RecordGroup({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-foreground/45">{children}</p>;
+  return <p className="text-sm text-foreground/60">{children}</p>;
 }

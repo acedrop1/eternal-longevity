@@ -2,105 +2,83 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
-import { ShopCatalog } from '@/components/shop/ShopCatalog';
-import { FadeIn } from '@/components/ui/FadeIn';
-import { PUBLIC_PRODUCTS, PUBLIC_CATEGORIES } from '@/lib/shopProducts';
+import { ProductCard } from '@/components/sections/ProductRail';
+import { Process } from '@/components/sections/Process';
+import { PriceChart } from '@/components/sections/PriceChart';
+import { Reviews } from '@/components/sections/Reviews';
+import { HomeFAQ } from '@/components/sections/HomeFAQ';
+import { buildShowcase } from '@/lib/showcase';
+import { getLiveProducts } from '@/lib/catalog';
 
 export const metadata: Metadata = {
   title: 'Shop',
   description:
-    'Compounded peptide protocols, prescribed by a New Jersey physician and dispensed by a licensed 503A pharmacy. Subscribe monthly, quarterly, or annually.',
+    'Compounded peptide protocols, prescribed by a New Jersey physician and dispensed by a licensed 503A pharmacy. Subscribe monthly or quarterly.',
 };
 
-export default function PublicShopPage() {
+/**
+ * Shop all, in the homepage's language: every product as a tall photo card,
+ * then the same how-it-works, price and FAQ sections. Products come from the
+ * live catalogue (Admin → Products), plus local-preview cards in development.
+ */
+export default async function PublicShopPage() {
+  const SHOWCASE = buildShowcase(await getLiveProducts());
   return (
     <>
-      <Header />
-      <main className="theme-light bg-background text-foreground">
-        {/* HERO */}
-        <section className="relative isolate overflow-hidden pt-20 pb-12 md:pt-24 md:pb-16 px-6">
-          <div
-            aria-hidden
-            className="hidden md:block pointer-events-none absolute -top-1/3 left-1/2 h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
-          />
-          <div className="relative mx-auto max-w-5xl text-center">
-            <FadeIn>
-              <p className="mb-4 text-[11px] tracking-widest text-accent">
-                SHOP · PRESCRIPTION REQUIRED
-              </p>
-            </FadeIn>
-            <FadeIn delay={100}>
-              <h1
-                className="font-semibold tracking-tight text-foreground"
-                style={{
-                  fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1,
-                }}
-              >
-                Compounded to order.
-              </h1>
-            </FadeIn>
-            <FadeIn delay={200}>
-              <p className="mx-auto mt-5 max-w-2xl text-foreground/65 leading-relaxed">
-                Every product is compounded by a U.S.-licensed 503A pharmacy,
-                tested for purity and potency before release, and cold-chain
-                shipped. Complete a short health assessment; a physician decides
-                whether to prescribe.
-              </p>
-            </FadeIn>
-            <FadeIn delay={300}>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/start"
-                  className="pill bg-accent text-black px-7 py-3 text-base font-semibold hover:brightness-110 transition"
+      <Header categoryStrip />
+      <main className="bg-white text-black">
+        {/* Top padding clears the fixed header + product strip (126 / 134px). */}
+        {/* Edge to edge, System Labs style: the grid runs the full width with
+            a thin gutter. */}
+        <section className="px-2 pb-16 pt-[158px] md:px-3 md:pb-24 md:pt-[182px]">
+          <div>
+            <div className="mb-8 flex px-3 md:px-5 flex-col gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1
+                  className="font-display font-normal"
+                  style={{ fontSize: 'clamp(2.4rem, 3.4vw + 1rem, 4.5rem)', fontStretch: '75%', lineHeight: 1 }}
                 >
-                  Start your assessment
-                </Link>
-                <Link
-                  href="/shop"
-                  className="pill glass px-7 py-3 text-base text-foreground/80 hover:text-foreground transition"
-                >
-                  See protocols
-                </Link>
+                  Shop all.
+                </h1>
+                <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-black/70">
+                  Compounded to order by a licensed 503A pharmacy, and prescribed only after a physician reviews your
+                  assessment.
+                </p>
               </div>
-            </FadeIn>
-          </div>
-        </section>
+              <p className="font-mono text-[13px] text-black/55">
+                {SHOWCASE.length} products · Prescription required
+              </p>
+            </div>
 
-        {/* CATALOG */}
-        <section className="px-4 md:px-6 pb-16 md:pb-20">
-          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 xl:max-w-[88rem] xl:px-10 2xl:max-w-[104rem] 2xl:px-14">
-            <ShopCatalog
-              items={PUBLIC_PRODUCTS}
-              categories={PUBLIC_CATEGORIES}
-              basePath="/shop"
-              startPath="/start"
-            />
+            <div className="grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3">
+              {SHOWCASE.map((item) => (
+                <ProductCard key={item.id} item={item} variant="grid" className="w-full" />
+              ))}
+            </div>
 
             {/* Members see the rest of the catalog once signed in. */}
-            <div className="mt-14 rounded-[2rem] border border-line bg-surface p-8 md:p-10 text-center">
-              <p className="mb-2 text-[11px] tracking-widest text-accent">
-                MEMBERS
-              </p>
-              <h2 className="mb-3 text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-                The full catalog lives in your portal.
-              </h2>
-              <p className="mx-auto mb-6 max-w-xl text-sm text-foreground/65 leading-relaxed">
-                Additional compounded formulations are available to members
-                after a completed assessment. Create an account to see
-                everything available for your protocol.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
+            <div className="mx-1 mt-12 flex flex-col gap-6 rounded-[4px] bg-black px-6 py-8 text-white md:mt-16 md:flex-row md:items-center md:justify-between md:px-10 md:py-10">
+              <div>
+                <h2
+                  className="font-display font-normal"
+                  style={{ fontSize: 'clamp(1.6rem, 1.4vw + 1rem, 2.4rem)', fontStretch: '75%', lineHeight: 1.05 }}
+                >
+                  The full catalog lives in your portal.
+                </h2>
+                <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-white/70">
+                  Additional compounded formulations are available to members after a completed assessment.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
                 <Link
                   href="/signup"
-                  className="pill bg-foreground text-background px-6 py-2.5 text-sm font-semibold hover:bg-accent hover:text-black transition-colors"
+                  className="rounded-full bg-white px-4 py-2.5 font-mono text-[13px] text-black transition-colors hover:bg-white/85"
                 >
                   Create an account
                 </Link>
                 <Link
                   href="/login"
-                  className="pill glass px-6 py-2.5 text-sm text-foreground/80 hover:text-foreground transition"
+                  className="rounded-full px-4 py-2.5 font-mono text-[13px] text-white ring-1 ring-white/30 transition-colors hover:bg-white/10"
                 >
                   Log in
                 </Link>
@@ -108,8 +86,15 @@ export default function PublicShopPage() {
             </div>
           </div>
         </section>
+
+        <Process />
+        <PriceChart />
+        <Reviews /> {/* local preview only: renders nothing in production */}
+        <HomeFAQ />
       </main>
-      <Footer />
+      <div className="bg-white">
+        <Footer />
+      </div>
     </>
   );
 }

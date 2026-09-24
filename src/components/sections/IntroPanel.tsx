@@ -1,121 +1,22 @@
 'use client';
 
-import { useRef, type ReactNode } from 'react';
+import { useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { useScrollProgress } from '@/lib/useScrollProgress';
 
 /**
- * IntroPanel. Juvenx-style rounded-top dark card that rises up over the
- * sticky Hero as the user scrolls down. The Hero is position:sticky and the
- * IntroPanel sits at z-10 in normal flow, so natural page scroll makes the
- * card physically slide up over the pinned hero.
- *
- * Three stacked layers inside one rounded card:
- *   1. Thin TEAL/ACCENT bar (rounded top corners) with a short tagline.
- *   2. Black marquee strip. Scrolling row of quality-standard wordmarks
- *      separated by small accent dots, edge-faded both sides. Every item
- *      is a claim the site already makes elsewhere (footer pills, science
- *      standards) — no press or endorsement claims here.
- *   3. The existing Saki-style brand-statement paragraph that reveals
- *      word-by-word as the user scrolls, with inline image pills appearing
- *      at their thresholds.
+ * IntroPanel. Rounded-top black card that rises over the sticky Hero as the
+ * page scrolls (the Hero is sticky, this card is z-10 in normal flow). It
+ * holds the brand statement, revealed word by word, with inline image pills.
+ * The statement is set in the condensed display face; the three ideas it
+ * rests on (medicine, testing, healthspan) reveal in gold.
  */
-
-// --- 1) Quality-standard wordmarks for the marquee --------------------
-interface StandardItem {
-  name: string;
-  el: ReactNode;
-}
-
-const STANDARDS: StandardItem[] = [
-  {
-    name: 'Batch Tested',
-    el: (
-      <span
-        className="font-bold text-lg md:text-xl leading-none"
-        style={{ letterSpacing: '0.08em' }}
-      >
-        BATCH TESTED
-      </span>
-    ),
-  },
-  {
-    name: '99%+ Purity',
-    el: (
-      <span className="font-black italic text-xl md:text-2xl leading-none tracking-tight">
-        99%+ <span className="text-accent">purity</span>
-      </span>
-    ),
-  },
-  {
-    name: '503A Compounded',
-    el: (
-      <span
-        className="inline-flex items-center rounded-sm bg-accent text-black px-2.5 py-1 font-black text-sm md:text-base leading-none"
-        style={{ letterSpacing: '0.05em' }}
-      >
-        503A COMPOUNDED
-      </span>
-    ),
-  },
-  {
-    name: 'Private by Default',
-    el: (
-      <span className="text-lg md:text-xl italic tracking-tight leading-none">
-        <span className="font-black">Private</span>
-        <span className="font-light"> by default</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Cold-Chain Shipped',
-    el: (
-      <span className="flex items-baseline gap-1.5 leading-none">
-        <span className="text-xl md:text-2xl italic font-semibold">Cold-Chain</span>
-        <span className="text-base md:text-lg font-bold tracking-tight">Shipped</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Batch Documented',
-    el: (
-      <span className="flex items-center gap-2 text-lg md:text-xl leading-none">
-        <span
-          aria-hidden
-          className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"
-        />
-        <span className="font-semibold tracking-tight">Batch Documented</span>
-      </span>
-    ),
-  },
-  {
-    name: 'Compounded in the USA',
-    el: (
-      <span
-        className="font-bold text-lg md:text-xl leading-none"
-        style={{ letterSpacing: '0.18em' }}
-      >
-        USA COMPOUNDED
-      </span>
-    ),
-  },
-  {
-    name: '18+',
-    el: (
-      <span
-        className="font-black text-2xl md:text-3xl leading-none"
-        style={{ letterSpacing: '-0.06em' }}
-      >
-        <span>18</span>
-        <span className="text-accent">+</span>
-      </span>
-    ),
-  },
-];
 
 // --- 2) Brand-statement paragraph tokens ------------------------------
 type Tok =
-  | { type: 'word'; text: string }
+  | { type: 'word'; text: string; accent?: true }
   | { type: 'img'; src: string; alt: string };
 
 const TOKENS: Tok[] = [
@@ -124,13 +25,13 @@ const TOKENS: Tok[] = [
   { type: 'word', text: 'Longevity,' },
   { type: 'word', text: 'we' },
   { type: 'word', text: 'pair' },
-  { type: 'word', text: 'longevity' },
-  { type: 'word', text: 'medicine' },
+  { type: 'word', text: 'longevity', accent: true },
+  { type: 'word', text: 'medicine', accent: true },
   { type: 'img', src: '/images/11.jpg', alt: 'longevity medicine' },
   { type: 'word', text: 'with' },
-  { type: 'word', text: 'rigorous' },
-  { type: 'word', text: 'purity' },
-  { type: 'word', text: 'testing' },
+  { type: 'word', text: 'rigorous', accent: true },
+  { type: 'word', text: 'purity', accent: true },
+  { type: 'word', text: 'testing', accent: true },
   { type: 'word', text: 'to' },
   { type: 'word', text: 'deliver' },
   { type: 'img', src: '/images/7.jpg', alt: 'peptide compound detail' },
@@ -142,7 +43,7 @@ const TOKENS: Tok[] = [
   { type: 'img', src: '/images/1.jpg', alt: 'compound in solution' },
   { type: 'word', text: 'extend' },
   { type: 'word', text: 'your' },
-  { type: 'word', text: 'healthspan.' },
+  { type: 'word', text: 'healthspan.', accent: true },
 ];
 
 export function IntroPanel() {
@@ -155,9 +56,6 @@ export function IntroPanel() {
   const REVEAL_END = 0.8;
   const span = REVEAL_END - REVEAL_START;
 
-  // Duplicate standard wordmarks for seamless marquee loop
-  const loop = [...STANDARDS, ...STANDARDS];
-
   return (
     <section
       ref={sectionRef}
@@ -165,59 +63,15 @@ export function IntroPanel() {
     >
       <div className="w-full">
         <div className="relative overflow-hidden rounded-t-[1.75rem] md:rounded-t-[2.25rem] bg-black shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.4)]">
-          {/* ===== 1) Teal accent bar (rounded top, full-bleed) ===== */}
-          <div className="w-full bg-accent text-black text-center py-3 md:py-3.5 px-6">
-            <p className="text-[11px] md:text-[13px] tracking-[0.18em] font-semibold">
-              PHARMACY-GRADE STANDARDS. EVERY BATCH. EVERY VIAL.
-            </p>
-          </div>
-
-          {/* ===== 2) Marquee strip. Press names with accent dot separators ===== */}
-          <div className="relative overflow-hidden border-b border-white/10 py-4 md:py-5">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 md:w-32 bg-gradient-to-r from-black to-transparent"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 md:w-32 bg-gradient-to-l from-black to-transparent"
-            />
-
-            <div className="flex anim-marquee whitespace-nowrap will-change-transform items-center text-white/85">
-              {loop.map((p, i) => (
-                <div
-                  key={`${p.name}-${i}`}
-                  className="flex flex-shrink-0 items-center"
-                >
-                  <span
-                    className="px-8 md:px-12 select-none flex items-center"
-                    title={p.name}
-                  >
-                    {p.el}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="inline-block h-2 w-2 rounded-full bg-accent"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ===== 3) Brand-statement paragraph (word-by-word reveal) ===== */}
-          <div ref={statementRef} className="relative px-6 py-14 md:px-12 md:py-28">
-            {/* Eyebrow pill */}
-            <div className="mb-10 flex justify-center">
-              <span className="pill glass text-[11px] tracking-widest text-white/70 px-5">
-                ETERNAL LONGEVITY
-              </span>
-            </div>
-
+          {/* Brand statement, revealed word by word as the card rises */}
+          <div ref={statementRef} className="relative px-5 py-9 md:px-12 md:py-14">
             <p
-              className="mx-auto max-w-5xl text-center font-semibold tracking-tight leading-[1.15] text-white"
+              className="mx-auto max-w-6xl text-center font-display font-normal text-white [text-wrap:balance]"
               style={{
-                fontSize: 'clamp(1.65rem, 4vw, 4rem)',
-                letterSpacing: '-0.01em',
+                fontSize: 'clamp(1.7rem, 3.8vw + 0.4rem, 4.25rem)',
+                fontStretch: '75%',
+                lineHeight: 1.08,
+                letterSpacing: '-0.005em',
               }}
             >
               {TOKENS.map((tok, i) => {
@@ -234,7 +88,7 @@ export function IntroPanel() {
                         opacity,
                         transition: 'opacity 0.4s cubic-bezier(0.16,1,0.3,1)',
                       }}
-                      className="inline"
+                      className={tok.accent ? 'inline text-accent' : 'inline'}
                     >
                       {tok.text}{' '}
                     </span>
@@ -249,8 +103,8 @@ export function IntroPanel() {
                     key={i}
                     className="relative inline-flex align-middle mx-2 md:mx-3 overflow-hidden rounded-full bg-white/10"
                     style={{
-                      width: 'clamp(3rem, 7vw, 7rem)',
-                      height: 'clamp(2rem, 4.5vw, 4.5rem)',
+                      width: 'clamp(2.6rem, 5vw, 5.25rem)',
+                      height: 'clamp(1.7rem, 3.2vw, 3.3rem)',
                       opacity: imgOpacity,
                       transform: `scale(${scale})`,
                       transition:
@@ -269,14 +123,19 @@ export function IntroPanel() {
               })}
             </p>
 
-            {/* CTA pill */}
-            <div className="mt-14 flex justify-center">
-              <a
+            {/* CTA: gold pill in the buttons' typewriter face, arrow nudges on hover */}
+            <div className="mt-6 flex justify-center md:mt-9">
+              <Link
                 href="/about"
-                className="pill bg-accent text-black px-8 py-3 text-base font-semibold hover:bg-accent-soft transition-colors"
+                className="group inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 font-mono text-[14px] text-black transition-colors hover:bg-white"
               >
                 Meet Eternal Longevity
-              </a>
+                <ArrowRight
+                  aria-hidden
+                  className="h-4 w-4 transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
+                  strokeWidth={1.75}
+                />
+              </Link>
             </div>
           </div>
         </div>

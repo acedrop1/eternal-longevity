@@ -19,6 +19,17 @@ import {
 } from '@/lib/memberProfile';
 import { cn } from '@/lib/utils';
 import {
+  btnPrimary,
+  btnSecondary,
+  btnSmall,
+  errorBox,
+  field,
+  fieldLabel,
+  inset,
+  panel,
+  SectionTitle,
+} from '@/components/portal/ui';
+import {
   changePasswordAction,
   requestDataExportAction,
   requestAccountClosureAction,
@@ -145,16 +156,7 @@ function SaveButton({
       type="button"
       disabled={locked}
       onClick={onClick}
-      className={cn(
-        'inline-flex min-w-[9.5rem] items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-out',
-        'active:scale-[0.97]',
-        status === 'done'
-          ? 'bg-accent text-black shadow-[0_8px_28px_-10px_#d5a850]'
-          : 'bg-foreground text-background hover:bg-accent hover:text-black',
-        disabled &&
-          status === 'idle' &&
-          'cursor-not-allowed opacity-35 hover:bg-foreground hover:text-background',
-      )}
+      className={cn(btnPrimary, 'min-w-[9.5rem]')}
     >
       {status === 'busy' && <Spinner />}
       {status === 'done' && <Check />}
@@ -185,14 +187,12 @@ function SectionCard({
   return (
     <section
       id={id}
-      className="scroll-mt-28 rounded-3xl border border-line bg-surface p-6 md:p-8"
+      className={cn(panel, 'scroll-mt-28 p-5 md:p-8')}
     >
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
-            {title}
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-foreground/55">
+          <SectionTitle>{title}</SectionTitle>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-black/60">
             {description}
           </p>
         </div>
@@ -203,8 +203,6 @@ function SectionCard({
   );
 }
 
-const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
 
 function Field({
   label,
@@ -227,9 +225,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-        {label}
-      </label>
+      <label className={fieldLabel}>{label}</label>
       <input
         aria-label={label}
         type={type}
@@ -239,12 +235,12 @@ function Field({
         readOnly={!onChange || disabled}
         placeholder={placeholder}
         className={cn(
-          inputClass,
-          disabled && 'cursor-not-allowed text-foreground/55 opacity-70',
+          field,
+          disabled && 'cursor-not-allowed bg-white/60 text-black/55',
         )}
       />
       {hint && (
-        <p className="mt-1.5 text-[11px] text-foreground/45">{hint}</p>
+        <p className="mt-1.5 text-[13px] text-black/55">{hint}</p>
       )}
     </div>
   );
@@ -303,14 +299,17 @@ export function AccountSettings({
           server answers — so a failure has to say so rather than leave a tick
           standing over a change that never landed. */}
       {syncError && (
-        <p className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className={cn(errorBox, 'mb-4')}>
           {syncError} Refresh the page and try again.
         </p>
       )}
     <div className="grid gap-6 lg:grid-cols-3">
       {/* ===================== LEFT NAV ===================== */}
       <aside className="lg:col-span-1">
-        <nav className="sticky top-24 rounded-3xl border border-line bg-surface p-3">
+        <nav
+          aria-label="Account sections"
+          className="rounded-[4px] bg-white p-2 ring-1 ring-black/10 lg:sticky lg:top-24"
+        >
           {SECTIONS.map((item) => {
             const active = activeId === item.id;
             return (
@@ -318,29 +317,31 @@ export function AccountSettings({
                 key={item.id}
                 type="button"
                 onClick={() => goTo(item.id)}
+                aria-current={active ? 'true' : undefined}
                 className={cn(
-                  'group relative flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm transition-all duration-200',
+                  'group relative flex min-h-[44px] w-full items-center gap-3 rounded-[2px] px-3 py-2.5 text-left text-[15px] transition-colors',
                   active
-                    ? 'bg-foreground/10 font-medium text-foreground'
-                    : 'text-foreground/65 hover:bg-foreground/5 hover:text-foreground',
+                    ? 'bg-[#F2F2F0] text-black'
+                    : 'text-black/65 hover:bg-black/[0.03] hover:text-black',
                 )}
               >
                 <span
+                  aria-hidden
                   className={cn(
-                    'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-all duration-200',
+                    'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
                     active
-                      ? 'bg-accent scale-100'
-                      : 'bg-foreground/20 scale-75 group-hover:bg-foreground/40',
+                      ? 'bg-[#D5A850]'
+                      : 'bg-black/20 group-hover:bg-black/40',
                   )}
                 />
                 <span>{item.label}</span>
               </button>
             );
           })}
-          <div className="my-2 h-px bg-line" />
+          <div className="mx-3 my-2 h-px bg-black/10" />
           <Link
             href="/portal/subscriptions"
-            className="flex items-center justify-between rounded-2xl px-4 py-3 text-sm text-foreground/65 transition-colors duration-200 hover:bg-foreground/5 hover:text-foreground"
+            className="group flex min-h-[44px] items-center justify-between rounded-[2px] px-3 py-2.5 text-[15px] text-black/65 transition-colors hover:bg-black/[0.03] hover:text-black"
           >
             <span>Subscriptions</span>
             <span
@@ -457,20 +458,20 @@ function ProfileSection({
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
-          label="FULL NAME"
+          label="Full name"
           value={form.fullName}
           onChange={(v) => edit({ fullName: v })}
           autoComplete="name"
         />
         <Field
-          label="EMAIL"
+          label="Email"
           value={userEmail}
           type="email"
           disabled
           hint="Contact your care team to change your sign-in email."
         />
         <Field
-          label="PHONE"
+          label="Phone"
           value={form.phone}
           onChange={(v) => edit({ phone: v })}
           placeholder="(555) 555-5555"
@@ -478,7 +479,7 @@ function ProfileSection({
           autoComplete="tel"
         />
         <Field
-          label="DATE OF BIRTH"
+          label="Date of birth"
           value={form.dob}
           onChange={(v) => edit({ dob: v })}
           placeholder="MM / DD / YYYY"
@@ -487,9 +488,9 @@ function ProfileSection({
       <div className="mt-6 flex items-center justify-end gap-4">
         <span
           className={cn(
-            'text-xs transition-opacity duration-300',
+            'font-mono text-[12px] transition-opacity duration-300',
             dirty && status === 'idle'
-              ? 'text-foreground/45 opacity-100'
+              ? 'text-black/55 opacity-100'
               : 'opacity-0',
           )}
         >
@@ -553,14 +554,14 @@ function PasswordSection() {
     >
       <div className="grid gap-5">
         <Field
-          label="CURRENT PASSWORD"
+          label="Current password"
           value={pw.current}
           onChange={(v) => setPw((p) => ({ ...p, current: v }))}
           type="password"
           autoComplete="current-password"
         />
         <Field
-          label="NEW PASSWORD"
+          label="New password"
           value={pw.next}
           onChange={(v) => setPw((p) => ({ ...p, next: v }))}
           type="password"
@@ -571,14 +572,14 @@ function PasswordSection() {
         />
         <div>
           <Field
-            label="CONFIRM NEW PASSWORD"
+            label="Confirm new password"
             value={pw.confirm}
             onChange={(v) => setPw((p) => ({ ...p, confirm: v }))}
             type="password"
             autoComplete="new-password"
           />
           {mismatch && (
-            <p className="mt-1.5 text-[11px] text-red-300">
+            <p className="mt-1.5 text-[13px] text-red-800">
               Passwords don&apos;t match yet.
             </p>
           )}
@@ -586,7 +587,7 @@ function PasswordSection() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className={cn(errorBox, 'mt-4')}>
           {error}
         </p>
       )}
@@ -641,13 +642,14 @@ function NotificationsSection({
       description="What we email or text you. Order updates can't be turned off."
       action={
         <span
+          role="status"
           className={cn(
-            'inline-flex items-center gap-1.5 text-[11px] tracking-wider text-accent transition-opacity duration-300',
+            'inline-flex items-center gap-1.5 font-mono text-[12px] text-black/70 transition-opacity duration-300',
             flash ? 'opacity-100' : 'opacity-0',
           )}
         >
-          <Check className="h-3 w-3" />
-          SAVED
+          <Check className="h-3 w-3 text-[#A8843A]" />
+          Saved
         </span>
       }
     >
@@ -659,18 +661,18 @@ function NotificationsSection({
           return (
             <div
               key={n.key}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-background p-4 transition-colors duration-200"
+              className={cn(inset, 'flex items-center justify-between gap-3 p-4')}
             >
               <div className="min-w-0">
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-[15px] font-medium text-black">
                   {n.title}
                   {n.required && (
-                    <span className="ml-2 text-[10px] tracking-widest text-foreground/45">
-                      REQUIRED
+                    <span className="ml-2 font-mono text-[12px] font-normal text-black/50">
+                      Required
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 text-xs text-foreground/55">{n.body}</p>
+                <p className="mt-0.5 text-[14px] text-black/60">{n.body}</p>
               </div>
               <button
                 type="button"
@@ -680,15 +682,15 @@ function NotificationsSection({
                 onClick={() => !n.required && toggle(n.key)}
                 className={cn(
                   'relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-300 ease-out',
-                  on ? 'bg-accent' : 'bg-foreground/15',
+                  on ? 'bg-black' : 'bg-black/15',
                   n.required
-                    ? 'cursor-not-allowed opacity-60'
-                    : 'cursor-pointer active:scale-95',
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'cursor-pointer',
                 )}
               >
                 <span
                   className={cn(
-                    'absolute top-0.5 h-5 w-5 rounded-full bg-foreground shadow-sm transition-transform duration-300 ease-out',
+                    'absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-300 ease-out',
                     on ? 'translate-x-5' : 'translate-x-0.5',
                   )}
                 />
@@ -727,13 +729,13 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
     >
       <div className="space-y-2">
         {/* Download */}
-        <div className="rounded-2xl border border-line bg-background p-4">
-          <div className="flex items-center justify-between gap-4">
+        <div className={cn(inset, 'p-4')}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-[15px] font-medium text-black">
                 Download my data
               </div>
-              <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+              <p className="mt-0.5 text-[14px] leading-relaxed text-black/60">
                 A copy of everything we have on file. Labs, intake, orders,
                 messages. Exported as a ZIP.
               </p>
@@ -742,38 +744,33 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
               type="button"
               disabled={exportStatus !== 'idle'}
               onClick={requestExport}
-              className={cn(
-                'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-semibold tracking-widest transition-all duration-200 active:scale-[0.96]',
-                exportStatus === 'done'
-                  ? 'border-accent/40 bg-accent/10 text-accent'
-                  : 'border-line bg-surface text-foreground/85 hover:border-foreground/30 hover:text-foreground',
-              )}
+              className={cn(btnSecondary, 'self-start sm:self-auto')}
             >
               {exportStatus === 'busy' && <Spinner className="h-3 w-3" />}
               {exportStatus === 'done' && <Check className="h-3 w-3" />}
               {exportStatus === 'busy'
-                ? 'SENDING'
+                ? 'Sending'
                 : exportStatus === 'done'
-                  ? 'REQUESTED'
-                  : 'REQUEST'}
+                  ? 'Requested'
+                  : 'Request'}
             </button>
           </div>
           {exportNote && (
-            <p className="mt-3 rounded-xl bg-accent/5 px-3 py-2 text-xs text-foreground/70">
+            <p role="status" className="mt-3 rounded-[2px] bg-[#F2F2F0] px-3 py-2 text-[14px] text-black/70">
               {exportNote} We will send it to{' '}
-              <span className="text-foreground/90">{userEmail}</span>.
+              <span className="text-black">{userEmail}</span>.
             </p>
           )}
         </div>
 
         {/* Close account */}
-        <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.03] p-4">
-          <div className="flex items-center justify-between gap-4">
+        <div className={cn(inset, 'p-4')}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-[15px] font-medium text-black">
                 Close my account
               </div>
-              <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+              <p className="mt-0.5 text-[14px] leading-relaxed text-black/60">
                 Stops all future billing. Medical records are retained per
                 state law.
               </p>
@@ -783,17 +780,18 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
               disabled={!!closedNote}
               onClick={() => setCloseOpen(true)}
               className={cn(
-                'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-[10px] font-semibold tracking-widest transition-all duration-200 active:scale-[0.96]',
+                btnSmall,
+                'self-start px-4 sm:self-auto',
                 closedNote
-                  ? 'cursor-default border-line bg-surface text-foreground/45'
-                  : 'border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/10',
+                  ? 'cursor-default text-black/45 ring-black/10'
+                  : 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50',
               )}
             >
-              {closedNote ? 'REQUESTED' : 'CLOSE ACCOUNT'}
+              {closedNote ? 'Requested' : 'Close account'}
             </button>
           </div>
           {closedNote && (
-            <p className="mt-3 rounded-xl bg-red-500/[0.06] px-3 py-2 text-xs text-foreground/70">
+            <p role="status" className="mt-3 rounded-[2px] bg-[#F2F2F0] px-3 py-2 text-[14px] text-black/70">
               {closedNote} You can keep using your account until then.
             </p>
           )}
@@ -849,16 +847,16 @@ function CloseAccountModal({
         type="button"
         aria-label="Cancel"
         onClick={onCancel}
-        className="absolute inset-0 bg-background/70 backdrop-blur-sm anim-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm anim-fade-in"
       />
-      <div className="relative w-full max-w-md rounded-3xl border border-line bg-surface p-6 shadow-2xl anim-fade-up">
-        <div className="mb-1 text-[10px] tracking-widest text-red-300">
-          CONFIRM
-        </div>
-        <h3 className="text-lg font-semibold tracking-tight text-foreground">
+      <div className="relative w-full max-w-md rounded-[4px] bg-white p-6 text-black shadow-[0_20px_50px_-15px_rgba(0,0,0,0.45)] ring-1 ring-black/10 anim-fade-up md:p-8">
+        <h3
+          className="font-display font-normal"
+          style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+        >
           Close your account?
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/65">
+        <p className="mt-3 text-[15px] leading-relaxed text-black/70">
           This stops all future billing and cancels active subscriptions. Your
           medical records are retained per state law. Our team confirms by
           email before anything is finalized.
@@ -868,7 +866,7 @@ function CloseAccountModal({
             type="button"
             onClick={onCancel}
             disabled={status !== 'idle'}
-            className="rounded-full border border-line bg-background px-5 py-2.5 text-sm font-medium text-foreground/85 transition-colors duration-200 hover:border-foreground/30 hover:text-foreground"
+            className={btnSecondary}
           >
             Keep my account
           </button>
@@ -876,7 +874,7 @@ function CloseAccountModal({
             type="button"
             disabled={status !== 'idle'}
             onClick={() => run(() => { void onConfirm(); })}
-            className="inline-flex min-w-[11rem] items-center justify-center gap-2 rounded-full bg-red-500/90 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-red-500 active:scale-[0.97] disabled:opacity-70"
+            className={cn(btnPrimary, 'min-w-[11rem] bg-red-700 hover:bg-red-800')}
           >
             {status === 'busy' && <Spinner />}
             {status === 'busy' ? 'Submitting' : 'Yes, close my account'}

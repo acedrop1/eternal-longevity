@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useMemberProfile } from './MemberProfileProvider';
 import { cn } from '@/lib/utils';
+import { btnPrimary, btnSecondary, btnSmall, field, fieldLabel, inset } from '@/components/portal/ui';
 
 function formatCardNumber(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 19);
@@ -71,7 +72,7 @@ export function SavedCardsManager() {
   return (
     <div className="space-y-3">
       {profile.cards.length === 0 && !adding && (
-        <p className="text-sm text-foreground/55">
+        <p className="text-[15px] text-black/60">
           No saved cards yet. Add one for faster checkout.
         </p>
       )}
@@ -80,25 +81,25 @@ export function SavedCardsManager() {
         <div
           key={c.id}
           className={cn(
-            'flex items-center gap-4 rounded-2xl border p-4',
-            c.isPrimary
-              ? 'border-accent/40 bg-accent/5'
-              : 'border-line bg-background'
+            inset,
+            'flex flex-wrap items-center gap-x-4 gap-y-3 p-4',
+            c.isPrimary && 'ring-black/30'
           )}
         >
-          <div className="grid h-10 w-14 place-items-center rounded-lg bg-foreground/10 text-[10px] font-bold tracking-widest text-foreground/75">
+          <div className="grid h-10 w-14 flex-none place-items-center rounded-[2px] bg-[#F2F2F0] font-mono text-[11px] text-black/75">
             {c.brand}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-[15px] font-medium tabular-nums text-black">
               •••• {c.last4}
               {c.isPrimary && (
-                <span className="ml-2 rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest font-semibold">
-                  PRIMARY
+                <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] font-normal leading-none text-black">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                  Primary
                 </span>
               )}
             </div>
-            <div className="text-xs text-foreground/55 mt-0.5">
+            <div className="mt-0.5 text-[14px] tabular-nums text-black/60">
               Expires {c.expMonth}/{c.expYear} · {c.nameOnCard}
             </div>
           </div>
@@ -107,32 +108,28 @@ export function SavedCardsManager() {
               <button
                 type="button"
                 onClick={() => setPrimaryCard(c.id)}
-                className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] tracking-widest text-foreground/85 hover:text-foreground hover:border-foreground/30 transition-colors"
+                className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
               >
-                SET PRIMARY
+                Set primary
               </button>
             )}
             <button
               type="button"
               onClick={() => removeCard(c.id)}
-              className="rounded-full border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[10px] tracking-widest text-red-300 hover:bg-red-500/10 transition-colors"
+              className={cn(btnSmall, 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50')}
             >
-              REMOVE
+              Remove
             </button>
           </div>
         </div>
       ))}
 
       {adding ? (
-        <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 md:p-5">
-          <div className="mb-4 text-[10px] tracking-widest text-accent">
-            NEW CARD
-          </div>
+        <div className={cn(inset, 'p-4 md:p-5')}>
+          <p className="mb-4 text-[16px] font-medium text-black">New card</p>
           <div className="grid gap-4">
             <div>
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                CARD NUMBER
-              </label>
+              <label className={fieldLabel}>Card number</label>
               <input
                 aria-label="Card number"
                 type="text"
@@ -147,9 +144,7 @@ export function SavedCardsManager() {
             </div>
             <div className="grid gap-4 grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                  EXPIRY
-                </label>
+                <label className={fieldLabel}>Expiry</label>
                 <input
                   aria-label="Card expiry, MM/YY"
                   type="text"
@@ -164,9 +159,7 @@ export function SavedCardsManager() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                  CVC
-                </label>
+                <label className={fieldLabel}>CVC</label>
                 <input
                   aria-label="Card security code"
                   type="text"
@@ -185,9 +178,7 @@ export function SavedCardsManager() {
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-[11px] tracking-wider text-foreground/60">
-                NAME ON CARD
-              </label>
+              <label className={fieldLabel}>Name on card</label>
               <input
                 aria-label="Name on card"
                 type="text"
@@ -201,14 +192,15 @@ export function SavedCardsManager() {
               onClick={() =>
                 setDraft({ ...draft, isPrimary: !draft.isPrimary })
               }
-              className="flex items-center gap-3 rounded-2xl border border-line bg-background px-4 py-3 text-left hover:border-foreground/30 transition-colors"
+              aria-pressed={draft.isPrimary}
+              className="flex min-h-[44px] items-center gap-3 rounded-[2px] bg-white px-4 py-3 text-left ring-1 ring-black/15 transition-colors hover:bg-black/[0.02]"
             >
               <span
                 className={cn(
-                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md border-2',
+                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] ring-1',
                   draft.isPrimary
-                    ? 'border-accent bg-accent text-background'
-                    : 'border-line bg-surface'
+                    ? 'bg-black text-white ring-black'
+                    : 'bg-white ring-black/30'
                 )}
               >
                 {draft.isPrimary && (
@@ -226,7 +218,7 @@ export function SavedCardsManager() {
                   </svg>
                 )}
               </span>
-              <span className="text-sm text-foreground/85">
+              <span className="text-[15px] text-black/80">
                 Make this my primary payment method
               </span>
             </button>
@@ -234,7 +226,7 @@ export function SavedCardsManager() {
               <button
                 type="button"
                 onClick={save}
-                className="rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
+                className={btnPrimary}
               >
                 Save card
               </button>
@@ -244,7 +236,7 @@ export function SavedCardsManager() {
                   setDraft(EMPTY);
                   setAdding(false);
                 }}
-                className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 text-xs tracking-wider hover:text-foreground hover:border-foreground/30 transition-colors"
+                className={btnSecondary}
               >
                 Cancel
               </button>
@@ -255,7 +247,7 @@ export function SavedCardsManager() {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-soft"
+          className={btnSecondary}
         >
           + Add a new card
         </button>
@@ -264,5 +256,4 @@ export function SavedCardsManager() {
   );
 }
 
-const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+const inputClass = cn(field, 'tabular-nums');

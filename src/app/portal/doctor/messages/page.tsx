@@ -39,14 +39,14 @@ export default async function DoctorMessagesPage() {
       {/* Same eyebrow colour and heading scale as Queue, Profile and Signed Rx
           — this page used to run a size larger in a different accent. */}
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-sky-300">
-          MEMBER MESSAGES
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Member messages
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >

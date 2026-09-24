@@ -9,18 +9,28 @@ import {
   type Order,
   type OrderStatus,
 } from '@/lib/orders';
-import { cn } from '@/lib/utils';
+import {
+  EmptyState,
+  StatusChip,
+  btnPrimary,
+  btnSecondary,
+  inset,
+  panel,
+  sentenceCase,
+  type Tone,
+} from '@/components/portal/ui';
 import { orderRef } from '@/lib/format';
 
-const STATUS_THEME: Record<OrderStatus, string> = {
-  'pending-admin': 'bg-foreground/5 text-foreground/85 border-line',
-  'denied-admin': 'bg-red-500/10 text-red-300 border-red-500/40',
-  assigned: 'bg-accent/10 text-accent border-accent/40',
-  signed: 'bg-accent/10 text-accent border-accent/40',
-  'declined-clinical': 'bg-red-500/10 text-red-300 border-red-500/40',
-  compounding: 'bg-sky-500/10 text-sky-300 border-sky-400/40',
-  shipped: 'bg-accent/10 text-accent border-accent/40',
-  delivered: 'bg-foreground/5 text-foreground/65 border-line',
+// Same semantic colours as before, as dot + label chips.
+const STATUS_TONE: Record<OrderStatus, Tone> = {
+  'pending-admin': 'neutral',
+  'denied-admin': 'error',
+  assigned: 'gold',
+  signed: 'gold',
+  'declined-clinical': 'error',
+  compounding: 'info',
+  shipped: 'gold',
+  delivered: 'muted',
 };
 
 interface MemberOrdersListProps {
@@ -33,25 +43,21 @@ export function MemberOrdersList({ memberEmail }: MemberOrdersListProps) {
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-3xl border border-line bg-surface p-10 text-center">
-        <h2 className="mb-2 text-lg font-semibold tracking-tight text-foreground">
-          No orders yet
-        </h2>
-        <p className="mb-6 text-sm text-foreground/65">
-          Once your first cycle ships, your full history lives here.
-        </p>
-        <Link
-          href="/portal/shop"
-          className="inline-flex rounded-full bg-accent text-black font-semibold px-5 py-2.5 text-sm hover:bg-accent-soft transition-colors"
-        >
-          Browse the shop
-        </Link>
-      </div>
+      <EmptyState
+        action={
+          <Link href="/portal/shop" className={btnPrimary}>
+            Browse the shop
+          </Link>
+        }
+      >
+        No orders yet. Once your first cycle ships, your full history lives
+        here.
+      </EmptyState>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {orders.map((o) => (
         <MemberOrderCard key={o.id} order={o} />
       ))}
@@ -68,12 +74,12 @@ function MemberOrderCard({ order }: { order: Order }) {
   const physician = getPhysicianName(order.assignedToPhysicianId);
 
   return (
-    <article className="rounded-3xl border border-line bg-surface p-5 md:p-7">
-      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+    <article className={`${panel} p-5 md:p-6`}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-line"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[2px] bg-neutral-200"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -86,50 +92,46 @@ function MemberOrderCard({ order }: { order: Order }) {
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-2 text-[10px] tracking-widest text-foreground/55">
-              <span className="font-semibold text-foreground/80">
-                {orderRef(order.id)}
-              </span>
-              <span>·</span>
-              <span>PLACED {placed.toUpperCase()}</span>
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 font-mono text-[13px] tabular-nums text-black/55">
+              <span className="text-black">{orderRef(order.id)}</span>
+              <span aria-hidden>·</span>
+              <span>Placed {placed}</span>
             </div>
-            <h2 className="text-lg md:text-xl font-semibold tracking-tight text-foreground">
+            <h2
+              className="font-display font-normal text-black"
+              style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+            >
               {order.lines.map((l) => l.productName).join(' + ')}
             </h2>
             {physician && (
-              <p className="mt-0.5 text-xs text-foreground/55">
+              <p className="mt-1 text-[14px] text-black/60">
                 Quality review
               </p>
             )}
             {order.adminNote && order.status === 'denied-admin' && (
-              <p className="mt-2 text-xs text-red-300 leading-relaxed max-w-md">
+              <p className="mt-2 max-w-md text-[14px] leading-relaxed text-red-800">
                 {order.adminNote}
               </p>
             )}
           </div>
         </div>
-        <div className="text-right md:flex-shrink-0">
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] tracking-widest font-semibold',
-              STATUS_THEME[order.status]
-            )}
-          >
-            {STATUS_LABEL[order.status]}
-          </span>
-          <div className="mt-2 text-sm md:text-base font-semibold text-foreground tabular-nums">
+        <div className="flex items-center justify-between gap-3 sm:block sm:flex-shrink-0 sm:text-right">
+          <StatusChip tone={STATUS_TONE[order.status]}>
+            {sentenceCase(STATUS_LABEL[order.status])}
+          </StatusChip>
+          <div className="text-[17px] font-medium text-black tabular-nums sm:mt-2">
             ${order.total}
           </div>
         </div>
       </div>
 
       {order.tracking && (
-        <div className="mt-5 rounded-2xl border border-line bg-background p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className={`${inset} mt-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="min-w-0">
-            <div className="text-[10px] tracking-widest text-foreground/55">
-              {order.carrier?.toUpperCase()} · TRACKING
+            <div className="font-mono text-[12px] text-black/55">
+              {order.carrier} · Tracking
             </div>
-            <div className="text-sm font-mono text-foreground/85 truncate mt-0.5">
+            <div className="mt-0.5 truncate font-mono text-[14px] text-black">
               {order.tracking}
             </div>
           </div>
@@ -139,19 +141,19 @@ function MemberOrderCard({ order }: { order: Order }) {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 hover:text-foreground hover:border-foreground/30 transition-colors text-center flex-shrink-0"
+            className={`${btnSecondary} flex-shrink-0`}
           >
-            TRACK PACKAGE →
+            Track package →
           </Link>
         </div>
       )}
 
       {/* Recent updates (latest 2) */}
       {order.updates && order.updates.length > 0 && (
-        <div className="mt-5 border-t border-line pt-5">
-          <div className="mb-3 text-[10px] tracking-widest text-foreground/55">
-            RECENT UPDATES
-          </div>
+        <div className="mt-5 border-t border-black/10 pt-5">
+          <h3 className="mb-3 font-mono text-[13px] text-black/60">
+            Recent updates
+          </h3>
           <ol className="space-y-2">
             {[...order.updates]
               .sort((a, b) => b.at - a.at)
@@ -159,15 +161,13 @@ function MemberOrderCard({ order }: { order: Order }) {
               .map((u) => (
                 <li
                   key={u.id}
-                  className="rounded-2xl border border-line bg-background p-3"
+                  className={`${inset} p-3`}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-2 text-[10px] tracking-widest text-foreground/55">
-                    <span className="font-semibold text-foreground/80">
-                      {u.author.toUpperCase()}
-                    </span>
-                    <span>{relativeTime(u.at)}</span>
+                  <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[12px] text-black/55">
+                    <span className="text-black/80">{u.author}</span>
+                    <span className="tabular-nums">{relativeTime(u.at)}</span>
                   </div>
-                  <p className="text-sm text-foreground/85 leading-relaxed">
+                  <p className="text-[15px] leading-relaxed text-black/85">
                     {u.note}
                   </p>
                 </li>
@@ -176,16 +176,16 @@ function MemberOrderCard({ order }: { order: Order }) {
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-black/10 pt-5">
         <Link
           href="/portal/shop"
-          className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
+          className={btnSecondary}
         >
           Reorder
         </Link>
         <Link
           href="/contact"
-          className="rounded-full border border-line bg-background text-foreground/65 font-medium px-4 py-2 text-xs hover:text-foreground hover:border-foreground/30 transition-colors"
+          className={btnSecondary}
         >
           Issue with this order?
         </Link>

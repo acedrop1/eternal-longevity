@@ -52,25 +52,30 @@ export function IdleTimeout({ idleMinutes }: { idleMinutes: number }) {
 
   if (left === null) return null;
 
+  // Floats like the shop's buy bar: frosted black, inset from the edges.
   return (
     <div
       role="alertdialog"
       aria-labelledby="idle-title"
-      className="fixed inset-x-4 bottom-4 z-[90] mx-auto max-w-sm rounded-2xl border border-accent/40 bg-surface p-5 shadow-2xl"
+      className="fixed inset-x-3 bottom-3 z-[90] mx-auto max-w-sm rounded-[4px] bg-black/75 p-5 text-white shadow-[0_20px_50px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/15 backdrop-blur-2xl backdrop-saturate-150"
       style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
     >
-      <p id="idle-title" className="text-sm font-semibold text-foreground">
+      <p
+        id="idle-title"
+        className="font-display font-normal"
+        style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+      >
         Still there?
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-foreground/60">
+      <p className="mt-2 text-[15px] leading-relaxed text-white/75">
         You&apos;ll be signed out in{' '}
-        <span className="tabular-nums text-foreground/90">{left}s</span> to keep
+        <span className="font-mono tabular-nums text-white">{left}s</span> to keep
         your records private.
       </p>
       <button
         type="button"
         onClick={staySignedIn}
-        className="mt-3 w-full rounded-full bg-accent px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-accent-soft"
+        className="mt-4 min-h-[44px] w-full rounded-full bg-white px-5 py-2.5 font-mono text-[13px] text-black transition-colors hover:bg-white/85"
       >
         Stay signed in
       </button>

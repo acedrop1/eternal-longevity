@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Skeleton primitive — a soft-pulsing block used inside loading.tsx files.
- * Sits on top of bg-surface so it reads as a placeholder, not a real card.
+ * Sits on the white ground or a #F2F2F0 panel as a placeholder, not a real card.
  */
 export function Shimmer({
   className,
@@ -12,7 +12,7 @@ export function Shimmer({
     <div
       aria-hidden
       className={cn(
-        'animate-pulse rounded-md bg-foreground/10',
+        'animate-pulse rounded-[2px] bg-black/[0.07]',
         className,
       )}
       {...rest}

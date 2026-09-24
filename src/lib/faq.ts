@@ -1,3 +1,26 @@
+import type { ShopProduct } from '@/lib/shopProducts';
+
+/*
+ * The pricing answer quotes live prices, which admins edit in Admin →
+ * Products. FAQS carries {{monthly}} / {{quarterly}} placeholders and
+ * withPrices() fills them from the live catalogue wherever FAQs render.
+ */
+const range = (xs: number[]) => {
+  if (!xs.length) return 'varies';
+  const lo = Math.min(...xs);
+  const hi = Math.max(...xs);
+  return lo === hi ? `$${lo}` : `$${lo}–$${hi}`;
+};
+
+export function withPrices(faqs: FAQ[], live: ShopProduct[]): FAQ[] {
+  const monthly = range(live.map((p) => p.pricing.monthly));
+  const quarterly = range(live.map((p) => Math.round(p.pricing.quarterly / 3)));
+  return faqs.map((f) => ({
+    ...f,
+    a: f.a.replaceAll('{{monthly}}', monthly).replaceAll('{{quarterly}}', quarterly),
+  }));
+}
+
 export type FAQCategory =
   | 'Getting Started'
   | 'Eligibility'
@@ -85,7 +108,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'How much does a protocol cost?',
-    a: "Pricing varies by protocol. A single cycle generally runs between four hundred and eight hundred dollars all-in. Which includes the compounded protocol, third-party purity testing, cold-chain shipping, and a mid-cycle protocol check-in. Subscription pricing is lower per cycle. Exact pricing is shown on each protocol page.",
+    a: "Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months. A one-time order is also available. Shipping is free, and you are only charged once the physician approves your prescription. Exact pricing is on each product page.",
   },
   {
     category: 'Pricing',

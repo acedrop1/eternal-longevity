@@ -23,9 +23,9 @@ interface SignedRx {
 
 
 const STATUS_THEME: Record<SignedRx['status'], { label: string; class: string }> = {
-  active: { label: 'ACTIVE', class: 'bg-accent/10 text-accent border-accent/40' },
-  completed: { label: 'COMPLETED', class: 'bg-foreground/5 text-foreground/65 border-line' },
-  declined: { label: 'DECLINED', class: 'bg-red-500/10 text-red-300 border-red-500/40' },
+  active: { label: 'Active', class: 'bg-accent/10 text-accent border-accent/40' },
+  completed: { label: 'Completed', class: 'bg-foreground/5 text-foreground/65 border-line' },
+  declined: { label: 'Declined', class: 'bg-red-500/10 text-red-300 border-red-500/40' },
 };
 
 /** Orders this physician has acted on, newest first. */
@@ -75,12 +75,16 @@ export default async function DoctorHistoryPage() {
       ]}
     >
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-sky-300">
-          MY SIGNED RX · {signed.length} TOTAL
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          My signed Rx · {signed.length} total
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{ fontSize: 'clamp(1.85rem, 4vw, 2.75rem)', letterSpacing: '-0.02em', lineHeight: 1.05 }}
+          className="font-display font-normal text-foreground"
+          style={{
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
+            lineHeight: 1.05,
+          }}
         >
           Your prescription log.
         </h1>
@@ -90,7 +94,7 @@ export default async function DoctorHistoryPage() {
       </div>
 
       {signed.length === 0 ? (
-        <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+        <div className="rounded-[4px] border border-line bg-surface p-8 text-center">
           <h2 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
             Nothing signed yet
           </h2>
@@ -99,17 +103,17 @@ export default async function DoctorHistoryPage() {
           </p>
         </div>
       ) : (
-      <div className="rounded-3xl border border-line bg-surface overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="rounded-[4px] border border-line bg-surface overflow-hidden">
+        <div className="max-h-[75vh] overflow-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[10px] tracking-widest text-foreground/45">
-                <th className="px-4 md:px-6 py-3 font-medium">RX ID</th>
-                <th className="px-4 md:px-6 py-3 font-medium">PATIENT</th>
-                <th className="px-4 md:px-6 py-3 font-medium">PROTOCOL</th>
-                <th className="px-4 md:px-6 py-3 font-medium hidden sm:table-cell">CYCLE</th>
-                <th className="px-4 md:px-6 py-3 font-medium hidden sm:table-cell">SIGNED</th>
-                <th className="px-4 md:px-6 py-3 font-medium text-right">STATUS</th>
+            <thead className="sticky top-0 z-10 bg-surface">
+              <tr className="border-b border-line text-left font-mono text-[12px] text-foreground/60">
+                <th className="px-4 md:px-6 py-3 font-normal">Rx ID</th>
+                <th className="px-4 md:px-6 py-3 font-normal">Patient</th>
+                <th className="px-4 md:px-6 py-3 font-normal">Protocol</th>
+                <th className="px-4 md:px-6 py-3 font-normal hidden sm:table-cell">Cycle</th>
+                <th className="px-4 md:px-6 py-3 font-normal hidden sm:table-cell">Signed</th>
+                <th className="px-4 md:px-6 py-3 font-normal text-right">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -118,9 +122,9 @@ export default async function DoctorHistoryPage() {
                 return (
                   <tr
                     key={r.id}
-                    className="border-t border-line hover:bg-background/40 transition-colors"
+                    className="border-t border-line first:border-t-0 hover:bg-background/40 transition-colors"
                   >
-                    <td className="px-4 md:px-6 py-4 font-mono text-xs text-foreground/85">
+                    <td className="px-4 md:px-6 py-4 font-mono text-[12px] text-foreground/85">
                       {orderRef(r.id)}
                     </td>
                     <td className="px-4 md:px-6 py-4">
@@ -133,16 +137,17 @@ export default async function DoctorHistoryPage() {
                     <td className="px-4 md:px-6 py-4 text-foreground/65 hidden sm:table-cell">
                       {r.cycle}
                     </td>
-                    <td className="px-4 md:px-6 py-4 text-foreground/65 hidden sm:table-cell">
+                    <td className="whitespace-nowrap px-4 md:px-6 py-4 font-mono text-[12px] tabular-nums text-foreground/65 hidden sm:table-cell">
                       {r.signedAt}
                     </td>
                     <td className="px-4 md:px-6 py-4 text-right">
                       <span
                         className={cn(
-                          'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] tracking-widest font-semibold',
+                          'inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
                           theme.class
                         )}
                       >
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
                         {theme.label}
                       </span>
                     </td>
@@ -158,9 +163,9 @@ export default async function DoctorHistoryPage() {
       <p className="mt-6 text-center">
         <Link
           href="/portal/doctor"
-          className="text-[11px] tracking-widest text-accent hover:text-accent-soft"
+          className="font-mono text-[12px] text-accent hover:text-accent-soft"
         >
-          ← BACK TO QUEUE
+          ← Back to queue
         </Link>
       </p>
     </PortalShell>

@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
-import { LoopVideo } from '@/components/ui/LoopVideo';
-import { getShopProduct } from '@/lib/shopProducts';
+import { getLiveProduct } from '@/lib/catalog';
 
 export const metadata: Metadata = {
   title: 'Start Your Assessment',
@@ -18,26 +17,12 @@ interface StartPageProps {
 export default async function StartPage({ searchParams }: StartPageProps) {
   // Visitors arriving from a storefront card land here with ?product=<slug>.
   const { product: slug } = await searchParams;
-  const requested = slug ? getShopProduct(slug) : undefined;
+  const requested = slug ? await getLiveProduct(slug) : undefined;
   return (
     <>
       <Header />
-      <main className="theme-light relative min-h-screen overflow-hidden bg-background text-foreground">
-        {/* Ambient hero video. Dimmed, anchored at the top, fades into bg */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[55vh] md:h-[70vh] -z-10">
-          <LoopVideo src="/videos/4.mp4" className="absolute inset-0 w-full h-full" />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background"
-          />
-        </div>
-
-        {/* Subtle gold halo top */}
-        <div
-          aria-hidden
-          className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[40vh] w-[60vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[100px]"
-        />
-
+      {/* Focused funnel: plain white ground, no product strip, no video. */}
+      <main className="relative min-h-screen bg-white text-black">
         <IntakeWizard
           product={
             requested
@@ -51,7 +36,9 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           }
         />
       </main>
-      <Footer />
+      <div className="bg-white">
+        <Footer />
+      </div>
     </>
   );
 }

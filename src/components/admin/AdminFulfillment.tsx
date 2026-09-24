@@ -26,11 +26,11 @@ export interface SubmittedOrderView {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  submitted: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
+  submitted: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
   accepted: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  shipped: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300',
-  delivered: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300',
-  canceled: 'border-line bg-surface text-foreground/45',
+  shipped: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
+  delivered: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
+  canceled: 'border-line bg-surface text-foreground/60',
 };
 
 export function AdminFulfillment({
@@ -45,16 +45,16 @@ export function AdminFulfillment({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
           Demo data. Real prescriptions and orders flow through once Supabase is
           connected.
         </div>
       )}
 
       {/* Ready to submit */}
-      <section className="rounded-3xl border border-line bg-surface p-6 md:p-7">
-        <div className="mb-1 text-[10px] tracking-widest text-accent">
-          READY TO SUBMIT
+      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
+        <div className="mb-1 font-mono text-[12px] text-foreground/60">
+          Ready to submit
         </div>
         <h2 className="mb-1 text-lg font-semibold tracking-tight text-foreground">
           Signed prescriptions
@@ -77,9 +77,9 @@ export function AdminFulfillment({
       </section>
 
       {/* Submitted orders */}
-      <section className="rounded-3xl border border-line bg-surface p-6 md:p-7">
-        <div className="mb-1 text-[10px] tracking-widest text-foreground/50">
-          SUBMITTED
+      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
+        <div className="mb-1 font-mono text-[12px] text-foreground/60">
+          Submitted
         </div>
         <h2 className="mb-5 text-lg font-semibold tracking-tight text-foreground">
           Orders at the pharmacy
@@ -92,17 +92,17 @@ export function AdminFulfillment({
           <div className="overflow-x-auto -mx-2">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[10px] tracking-widest text-foreground/45">
-                  <th className="px-2 py-2 font-medium">ORDER</th>
-                  <th className="px-2 py-2 font-medium">PATIENT</th>
-                  <th className="px-2 py-2 font-medium">STATUS</th>
-                  <th className="px-2 py-2 font-medium text-right">TRACKING</th>
+                <tr className="text-left font-mono text-[12px] text-foreground/60">
+                  <th className="px-2 py-2 font-normal">Order</th>
+                  <th className="px-2 py-2 font-normal">Patient</th>
+                  <th className="px-2 py-2 font-normal">Status</th>
+                  <th className="px-2 py-2 font-normal text-right">Tracking</th>
                 </tr>
               </thead>
               <tbody>
                 {submittedOrders.map((o) => (
                   <tr key={o.id} className="border-t border-line">
-                    <td className="px-2 py-3 font-mono text-xs text-foreground/85">
+                    <td className="px-2 py-3 font-mono text-[12px] text-foreground/85">
                       {o.orderRef}
                     </td>
                     <td className="px-2 py-3 text-foreground">
@@ -111,14 +111,15 @@ export function AdminFulfillment({
                     <td className="px-2 py-3">
                       <span
                         className={cn(
-                          'rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-widest',
+                          'inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 font-mono text-[12px]',
                           STATUS_STYLE[o.status] ?? STATUS_STYLE.canceled,
                         )}
                       >
-                        {o.status.toUpperCase()}
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+                        {o.status}
                       </span>
                     </td>
-                    <td className="px-2 py-3 text-right text-foreground/65">
+                    <td className="px-2 py-3 text-right font-mono text-[12px] text-foreground/65">
                       {o.trackingNumber
                         ? `${o.trackingCarrier ?? ''} ${o.trackingNumber}`
                         : '—'}
@@ -157,14 +158,14 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
   const done = result?.ok === true;
 
   return (
-    <div className="rounded-2xl border border-line bg-background p-4">
+    <div className="rounded-[4px] border border-line bg-background p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-medium text-foreground">
             {rx.patientName}
             {rx.kind === 'draft' && (
-              <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[9px] tracking-widest text-accent">
-                REFILL
+              <span className="rounded-[2px] border border-accent/40 bg-accent/10 px-2 py-0.5 font-mono text-[12px] text-accent">
+                Refill
               </span>
             )}
           </p>
@@ -175,13 +176,13 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
           disabled={busy || done}
           onClick={submit}
           className={cn(
-            'flex-shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wider transition-colors',
+            'flex-shrink-0 rounded-full px-4 py-2 font-mono text-[12px] transition-colors',
             done
-              ? 'border border-line bg-surface text-foreground/45'
-              : 'bg-accent text-black hover:bg-accent-soft disabled:opacity-50',
+              ? 'border border-line bg-surface text-foreground/60'
+              : 'bg-black text-white hover:bg-black/85 disabled:opacity-50',
           )}
         >
-          {done ? 'SUBMITTED' : busy ? 'SUBMITTING…' : 'SUBMIT TO KADUCEUS'}
+          {done ? 'Submitted' : busy ? 'Submitting…' : 'Submit to Kaduceus'}
         </button>
       </div>
       {result && (

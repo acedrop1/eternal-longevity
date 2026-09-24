@@ -5,33 +5,24 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { ProductPDP, RelatedProducts } from '@/components/shop/ProductPDP';
 import { ProductPDPMobile } from '@/components/shop/ProductPDPMobile';
 import { getSession } from '@/lib/auth-server';
-import {
-  PUBLIC_PRODUCTS,
-  getRelatedProducts,
-  getShopProduct,
-} from '@/lib/shopProducts';
+import { MEMBER_NAV } from '@/components/portal/ui';
+import { getLiveProduct, getLiveProducts, toShopProduct } from '@/lib/catalog';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 /*
- * A withheld product must 404, not render a not-found page with a 200. Next
- * generates an unlisted param on demand, calls notFound(), and the edge caches
- * that render with a success status — so the page reads "404" while the status
- * line says otherwise. Refusing unknown params settles it at the route.
+ * Only live products (Admin → Products) resolve, in the portal as much as on
+ * the public shop: a signed-in member is not a different legal posture.
+ * Rendered per request so a withheld or draft product returns a real 404 and
+ * a product made live in admin appears immediately.
  */
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  // Withheld products get no route at all, in the portal as much as on the
-  // public shop — a signed-in member is not a different legal posture.
-  return PUBLIC_PRODUCTS.map((p) => ({ id: p.id }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const p = getShopProduct(id);
+  const p = await getLiveProduct(id);
   if (!p) return { title: 'Shop' };
   return {
     title: `${p.name}. Eternal Longevity`,
@@ -45,37 +36,36 @@ export default async function ShopProductPage({ params }: PageProps) {
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const { id } = await params;
-  const product = getShopProduct(id);
-  if (!product) notFound();
+  const live = await getLiveProduct(id);
+  if (!live) notFound();
+  const product = toShopProduct(live);
 
-  const related = getRelatedProducts(product, 3);
+  // Same category first, then the rest, three in all.
+  const others = (await getLiveProducts()).filter((p) => p.id !== product.id).map(toShopProduct);
+  const related = [
+    ...others.filter((p) => p.category === product.category),
+    ...others.filter((p) => p.category !== product.category),
+  ].slice(0, 3);
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
-      {/* Breadcrumb. Hidden on mobile where the new PDP takes over full-bleed */}
-      <nav className="mb-8 hidden md:flex items-center gap-2 text-[11px] tracking-widest text-foreground/55">
-        <Link href="/portal/shop" className="hover:text-foreground transition-colors">
-          SHOP
+    <PortalShell user={user} nav={MEMBER_NAV}>
+      {/* Breadcrumb. Hidden on mobile, where the PDP opens on the photo */}
+      <nav
+        aria-label="Breadcrumb"
+        className="hidden items-center gap-2 font-mono text-[13px] text-black/55 md:flex"
+      >
+        <Link href="/portal/shop" className="transition-colors hover:text-black">
+          Shop
         </Link>
         <span aria-hidden>/</span>
-        <span className="text-foreground/85">{product.name.toUpperCase()}</span>
+        <span aria-current="page" className="text-black">{product.name}</span>
       </nav>
 
-      {/* Mobile: sticky-gallery + slide-up info panel */}
+      {/* Mobile: photo + plan picker, with the floating buy bar */}
       <ProductPDPMobile product={product} />
 
-      {/* Desktop: original PDP layout */}
-      <div className="hidden md:block pb-16 lg:pb-0">
+      {/* Desktop: two-column PDP */}
+      <div className="hidden pb-16 md:block lg:pb-0">
         <ProductPDP product={product} related={related} />
         <div className="mt-16">
           <RelatedProducts related={related} basePath="/portal/shop" />

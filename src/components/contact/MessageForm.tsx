@@ -1,9 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { sendContactMessage } from '@/lib/contact-actions';
 import { SUPPORT_EMAIL } from '@/lib/site';
 
+/**
+ * Contact form in the homepage's light style. Same fields, validation and
+ * submission as the previous ContactForm (sendContactMessage server action,
+ * honeypot); only the styling changed.
+ */
 const TOPICS = [
   { value: 'clinical', label: 'Support question (existing member)' },
   { value: 'product', label: 'Question about a protocol' },
@@ -14,11 +20,10 @@ const TOPICS = [
 ];
 
 const fieldClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3.5 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
-const labelClass =
-  'mb-1.5 block text-[11px] tracking-wider text-foreground/60';
+  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
+const labelClass = 'mb-2 block font-mono text-[13px] text-black/70';
 
-export function ContactForm() {
+export function MessageForm() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,27 +53,27 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <div className="rounded-3xl border border-line bg-surface p-7 md:p-10">
-        <h2 className="mb-2 text-xl font-semibold tracking-tight text-foreground">
+      <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-10" role="status">
+        <h2
+          className="font-display font-normal"
+          style={{ fontSize: 'clamp(1.6rem, 1.4vw + 1rem, 2.4rem)', fontStretch: '75%', lineHeight: 1.05 }}
+        >
           Message sent.
         </h2>
-        <p className="text-sm leading-relaxed text-foreground/65">
-          Someone reads every one of these. You&apos;ll hear back at the address
-          you gave, usually within one business day.
+        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-black/70">
+          Someone reads every one of these. You&apos;ll hear back at the address you gave, usually within one business
+          day.
         </p>
       </div>
     );
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-6 rounded-3xl border border-line bg-surface p-7 md:p-10"
-    >
-      <div className="grid gap-5 md:grid-cols-2">
+    <form onSubmit={onSubmit} className="relative space-y-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <div>
           <label htmlFor="name" className={labelClass}>
-            FULL NAME
+            Full name
           </label>
           <input
             id="name"
@@ -82,7 +87,7 @@ export function ContactForm() {
         </div>
         <div>
           <label htmlFor="contact-email" className={labelClass}>
-            EMAIL
+            Email
           </label>
           <input
             id="contact-email"
@@ -98,29 +103,30 @@ export function ContactForm() {
 
       <div>
         <label htmlFor="topic" className={labelClass}>
-          TOPIC
+          Topic
         </label>
-        <select
-          id="topic"
-          name="topic"
-          defaultValue=""
-          required
-          className={`${fieldClass} appearance-none`}
-        >
-          <option value="" disabled>
-            Pick what fits best…
-          </option>
-          {TOPICS.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
+        <div className="relative">
+          <select id="topic" name="topic" defaultValue="" required className={`${fieldClass} appearance-none pr-11`}>
+            <option value="" disabled>
+              Pick what fits best…
             </option>
-          ))}
-        </select>
+            {TOPICS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            aria-hidden
+            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/55"
+            strokeWidth={1.75}
+          />
+        </div>
       </div>
 
       <div>
         <label htmlFor="message" className={labelClass}>
-          MESSAGE
+          Message
         </label>
         <textarea
           id="message"
@@ -144,22 +150,21 @@ export function ContactForm() {
       />
 
       {error && (
-        <p className="rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+        <p role="alert" className="rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
           {error} You can always reach us at {SUPPORT_EMAIL}.
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] leading-relaxed text-foreground/45">
-          Please don&apos;t share urgent medical concerns here. Call 911 or go to
-          the nearest ER first.
+      <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-sm text-[13px] leading-relaxed text-black/55">
+          Please don&apos;t share urgent medical concerns here. Call 911 or go to the nearest ER first.
         </p>
         <button
           type="submit"
           disabled={busy}
-          className="whitespace-nowrap rounded-full bg-accent px-7 py-3 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-60"
+          className="self-start whitespace-nowrap rounded-full bg-black px-4 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-60 sm:self-auto"
         >
-          {busy ? 'Sending…' : 'Send message →'}
+          {busy ? 'Sending…' : 'Send message'}
         </button>
       </div>
     </form>

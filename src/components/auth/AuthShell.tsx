@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
-import { LoopVideo } from '@/components/ui/LoopVideo';
 import { FadeIn } from '@/components/ui/FadeIn';
 
 /**
  * Shared chrome for the auth screens (/login, /signup, /forgot-password,
- * /auth/reset): video background, centered card column, heading.
+ * /auth/reset, /login/verify): white ground, the form column on the left and,
+ * on desktop, a black brand panel on the right.
  */
 export function AuthShell({
   eyebrow,
@@ -24,59 +24,76 @@ export function AuthShell({
   return (
     <>
       <Header />
-      <main className="theme-light relative min-h-screen bg-background overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <LoopVideo
-            src="/videos/3.mp4"
-            className="absolute inset-0 w-full h-full"
-          />
-          <div aria-hidden className="absolute inset-0 bg-background/85" />
-        </div>
-        <div
-          aria-hidden
-          className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[50vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
-        />
-
-        <section className="relative px-6 pt-20 pb-16 md:pt-24">
-          <div className="mx-auto max-w-md">
-            <FadeIn>
-              <div className="text-center mb-10">
-                <p className="mb-3 text-[11px] tracking-widest text-accent">
-                  {eyebrow}
-                </p>
+      <main className="bg-white text-black">
+        {/* Top padding clears the fixed header (80 / 88px). */}
+        <section className="px-5 pb-16 pt-[112px] md:px-8 md:pb-24 md:pt-[136px]">
+          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className="mx-auto w-full max-w-md lg:mx-0 lg:py-8">
+              <FadeIn>
+                <p className="mb-3 font-mono text-[13px] text-black/55">{eyebrow}</p>
                 <h1
-                  className="font-semibold tracking-tight text-foreground"
-                  style={{
-                    fontSize: 'clamp(2rem, 4.5vw, 3rem)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.05,
-                  }}
+                  className="font-display font-normal [text-wrap:balance]"
+                  style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
                 >
                   {title}
                 </h1>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={120}>{children}</FadeIn>
-
-            {footer && (
-              <FadeIn delay={240}>
-                <div className="mt-8 text-center text-xs text-foreground/55 leading-relaxed">
-                  {footer}
-                </div>
               </FadeIn>
-            )}
+
+              <FadeIn delay={120} className="mt-8">
+                {children}
+              </FadeIn>
+
+              {footer && (
+                <FadeIn delay={240}>
+                  <div className="mt-8 font-mono text-[13px] leading-relaxed text-black/60">{footer}</div>
+                </FadeIn>
+              )}
+            </div>
+
+            <aside className="hidden min-h-[560px] flex-col justify-between rounded-[4px] bg-black p-10 text-white lg:flex">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="Eternal Longevity" className="h-9 w-auto self-start" />
+              <div>
+                <p
+                  className="max-w-sm font-display font-normal [text-wrap:balance]"
+                  style={{ fontSize: 'clamp(1.8rem, 1.4vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
+                >
+                  Every protocol is compounded by a licensed 503A pharmacy against a prescription written for you.
+                </p>
+                <p className="mt-6 font-mono text-[12px] text-white/55">
+                  New Jersey only · Prescription required · 18+
+                </p>
+              </div>
+            </aside>
           </div>
         </section>
       </main>
-      <Footer />
+      <div className="bg-white">
+        <Footer />
+      </div>
     </>
   );
 }
 
 /** Shared input styling for auth forms. */
 export const authInputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3.5 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
+
+/** Error message box (server-returned auth errors). */
+export const authErrorClass =
+  'rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20';
+
+/** Neutral notice box (info, confirmations). */
+export const authNoticeClass =
+  'rounded-[2px] bg-[#F2F2F0] px-4 py-3 text-[15px] leading-relaxed text-black/80';
+
+/** Inline text link. */
+export const authLinkClass =
+  'text-black underline decoration-black/50 underline-offset-[3px] transition-colors hover:decoration-black';
+
+/** Secondary (outline) pill, full width. */
+export const authSecondaryClass =
+  'block w-full rounded-full px-5 py-3.5 text-center font-mono text-[14px] text-black ring-1 ring-black/20 transition-colors hover:bg-black/[0.04]';
 
 /** Shared field label. */
 export function AuthLabel({
@@ -87,10 +104,7 @@ export function AuthLabel({
   children: ReactNode;
 }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="mb-1.5 block text-[11px] tracking-wider text-foreground/60"
-    >
+    <label htmlFor={htmlFor} className="mb-2 block font-mono text-[13px] text-black/70">
       {children}
     </label>
   );

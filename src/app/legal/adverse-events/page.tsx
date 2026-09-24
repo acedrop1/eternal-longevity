@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function AdverseEventsPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Adverse Event Reporting"
       effective="September 2026"
       lead={`If something goes wrong, tell us. Reports are how problems with a lot, a preparation, or a protocol get found — yours protects the next person as much as it protects you.`}

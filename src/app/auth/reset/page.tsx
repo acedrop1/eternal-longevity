@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
-import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import { AuthShell, AuthLabel, authErrorClass } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { updatePasswordAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
@@ -26,14 +26,14 @@ export default async function ResetPasswordPage({
 
   if (!supabaseConfigured) {
     return (
-      <AuthShell eyebrow="ACCOUNT" title="Set a new password.">
-        <div className="rounded-3xl border border-line bg-surface p-6 md:p-8 text-center space-y-4">
-          <p className="text-sm text-foreground/70 leading-relaxed">
+      <AuthShell eyebrow="Account" title="Set a new password.">
+        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-black/70">
             Password reset turns on once the backend is connected.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base hover:bg-accent-soft transition-colors"
+            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
           >
             Back to login →
           </Link>
@@ -43,24 +43,21 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <AuthShell eyebrow="ACCOUNT" title="Set a new password.">
-      <form
-        action={updatePasswordAction}
-        className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
-      >
+    <AuthShell eyebrow="Account" title="Set a new password.">
+      <form action={updatePasswordAction} className="space-y-6">
         {error === 'weak' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             Password must be 8+ characters with an uppercase letter, a lowercase letter, and a special character.
           </div>
         )}
         {error === 'failed' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             That reset link has expired. Request a new one from the login page.
           </div>
         )}
 
         <div>
-          <AuthLabel htmlFor="new-password">NEW PASSWORD</AuthLabel>
+          <AuthLabel htmlFor="new-password">New password</AuthLabel>
           <PasswordField
             id="new-password"
             name="password"

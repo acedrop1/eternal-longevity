@@ -10,12 +10,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  SHOP_PRODUCTS,
-  isSellable,
-  cadenceTiersForProduct,
-  type ShopProduct,
-} from '@/lib/shopProducts';
+import { cadenceTiersForProduct, type ShopProduct } from '@/lib/shopProducts';
+import { useCatalog } from '@/components/catalog/CatalogProvider';
 import type { Cadence, CartItem } from '@/lib/cartTypes';
 import { saveCartAction } from '@/lib/profile-db';
 
@@ -203,17 +199,19 @@ export function CartProvider({
     []
   );
 
+  const { products: liveProducts } = useCatalog();
   const { resolvedItems, subtotal, itemCount } = useMemo(() => {
     const resolved: ResolvedCartItem[] = [];
     let sub = 0;
     let count = 0;
     for (const it of state.items) {
       /*
-       * A withheld product drops out of the cart rather than rendering: a
-       * saved cart from before it was withdrawn must not be a way to order it.
+       * Only live catalogue products resolve. A withheld or draft product
+       * drops out of the cart rather than rendering: a saved cart from before
+       * it was withdrawn must not be a way to order it.
        */
-      const product = SHOP_PRODUCTS.find((p) => p.id === it.productId);
-      if (!product || !isSellable(product.id)) continue;
+      const product = liveProducts.find((p) => p.id === it.productId);
+      if (!product) continue;
       const tiers = cadenceTiersForProduct(product);
       const tier = tiers.find((t) => t.key === it.cadence) ?? tiers[0];
       resolved.push({
@@ -227,7 +225,7 @@ export function CartProvider({
       count += it.quantity;
     }
     return { resolvedItems: resolved, subtotal: sub, itemCount: count };
-  }, [state.items]);
+  }, [state.items, liveProducts]);
 
   const api = useMemo<CartAPI>(
     () => ({

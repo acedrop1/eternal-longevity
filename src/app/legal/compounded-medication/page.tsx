@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function CompoundedMedicationPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Compounded Medication Disclosure"
       effective="September 2026"
       lead={`Everything we dispense is compounded: prepared by a licensed pharmacist for one named patient, against a prescription written for that patient. Compounded preparations are regulated differently from the drugs you buy at a retail pharmacy, and the differences are real. This page states them plainly rather than burying them.`}

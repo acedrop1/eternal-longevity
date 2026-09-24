@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function EligibilityPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Patient Eligibility"
       effective="September 2026"
       lead={`Two things are commonly misunderstood about ordering treatment online: that finishing the questionnaire means you are approved, and that paying means you are approved. Neither is true here, and this page says exactly what is.`}

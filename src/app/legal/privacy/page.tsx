@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Privacy Policy"
       effective="May 2026"
       lead="Your health information is sensitive. This policy explains what we collect, why we collect it, who we share it with, and the choices you have. Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) is committed to handling your data with the care it deserves."

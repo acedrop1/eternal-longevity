@@ -34,7 +34,8 @@ import {
 import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
-import { isSellable } from '@/lib/shopProducts';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
+import { getLiveProducts } from '@/lib/catalog';
 import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
@@ -274,17 +275,41 @@ export async function placeOrderAction(input: {
 
   /*
    * Catalogue gate, enforced server-side for the same reason as the geofence.
-   * A withheld product has no tile, no page and no route — but a saved cart or
-   * a crafted request is not stopped by any of those.
+   * A withheld or draft product has no tile, no page and no route — but a
+   * saved cart or a crafted request is not stopped by any of those.
    */
-  const withheld = input.lines.filter((l) => !isSellable(l.productId));
-  if (withheld.length) return { ok: false, error: 'product_unavailable' };
+  const live = new Map((await getLiveProducts()).map((p) => [p.id, p]));
+  if (input.lines.some((l) => !live.has(l.productId))) {
+    return { ok: false, error: 'product_unavailable' };
+  }
+
+  /*
+   * Name, plan and price come from the catalogue, never from the request.
+   * The browser sends what it displayed; this is what gets charged, so an
+   * edited request can't set its own price, and a price changed in
+   * Admin → Products applies from the next order.
+   */
+  const lines: OrderLine[] = input.lines.map((l) => {
+    const product = live.get(l.productId)!;
+    const tiers = cadenceTiersForProduct(product);
+    const tier = tiers.find((t) => t.key === l.cadence) ?? tiers[0];
+    return {
+      ...l,
+      productName: product.name,
+      cadence: tier.key,
+      cadenceLabel: tier.label,
+      perCycle: tier.total,
+      quantity: Math.max(1, Math.floor(l.quantity ?? 1)),
+      image: product.image,
+      swatch: product.swatch,
+    };
+  });
 
   const db = createSupabaseAdminClient();
 
   const lineSubtotal = (l: OrderLine) =>
     Math.round(l.perCycle * 100) * (l.quantity ?? 1);
-  const cartSubtotalCents = input.lines.reduce((s, l) => s + lineSubtotal(l), 0);
+  const cartSubtotalCents = lines.reduce((s, l) => s + lineSubtotal(l), 0);
   if (cartSubtotalCents <= 0) return { ok: false, error: 'empty_cart' };
 
   /*
@@ -308,19 +333,20 @@ export async function placeOrderAction(input: {
   // Shipping and tax belong to the basket, so they are split across it by
   // value, and the rounding remainder lands on the first order.
   const share = (total: number, i: number) => {
-    if (i < input.lines.length - 1) {
-      return Math.round((total * lineSubtotal(input.lines[i])) / cartSubtotalCents);
+    if (i < lines.length - 1) {
+      return Math.round((total * lineSubtotal(lines[i])) / cartSubtotalCents);
     }
     let taken = 0;
-    for (let j = 0; j < input.lines.length - 1; j++) {
-      taken += Math.round((total * lineSubtotal(input.lines[j])) / cartSubtotalCents);
+    for (let j = 0; j < lines.length - 1; j++) {
+      taken += Math.round((total * lineSubtotal(lines[j])) / cartSubtotalCents);
     }
     return total - taken;
   };
 
   const created: string[] = [];
+  let bookedTotalCents = 0;
 
-  for (const [i, line] of input.lines.entries()) {
+  for (const [i, line] of lines.entries()) {
     const subtotalCents = lineSubtotal(line);
     const shippingCents = share(cartShippingCents, i);
     const taxCents = share(cartTaxCents, i);
@@ -388,6 +414,7 @@ export async function placeOrderAction(input: {
     );
 
     created.push(orderNumber);
+    bookedTotalCents += totalCents;
   }
 
   if (!created.length) return { ok: false, error: 'insert_failed' };
@@ -399,12 +426,12 @@ export async function placeOrderAction(input: {
     const msg = orderReceivedEmail({
       firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'there',
       orderNumber: created.join(', '),
-      items: input.lines.map((l) => ({
+      items: lines.map((l) => ({
         name: l.productName,
         qty: l.quantity,
         amount: Math.round(l.perCycle * 100),
       })),
-      total: Math.round(input.total * 100),
+      total: bookedTotalCents,
     });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }

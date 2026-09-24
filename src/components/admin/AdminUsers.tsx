@@ -25,18 +25,18 @@ export interface AdminUserRow {
 const ROLE_BADGE: Record<Role, string> = {
   member: 'border-accent/40 bg-accent/10 text-accent',
   doctor: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  pharmacy: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-300',
+  pharmacy: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
   admin: 'border-foreground/25 bg-foreground/10 text-foreground/85',
 };
 
 const STATUS_BADGE: Record<AccountStatus, string> = {
   active: 'border-accent/40 bg-accent/10 text-accent',
-  suspended: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
-  deactivated: 'border-line bg-surface text-foreground/45',
+  suspended: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
+  deactivated: 'border-line bg-surface text-foreground/60',
 };
 
 const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
 
 const FILTERS: { label: string; role: Role | 'all' }[] = [
   { label: 'All', role: 'all' },
@@ -82,7 +82,7 @@ export function AdminUsers({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
           Demo directory. Adding and suspending users goes live once Supabase
           is connected.
         </div>
@@ -97,13 +97,13 @@ export function AdminUsers({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or email…"
-            className="w-full rounded-full border border-line bg-surface px-5 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full rounded-[2px] border border-line bg-surface px-5 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
           />
         </div>
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
-          className="flex-shrink-0 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-soft"
+          className="flex-shrink-0 rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 font-mono"
         >
           {adding ? 'Close' : '+ Add user'}
         </button>
@@ -124,9 +124,9 @@ export function AdminUsers({
             type="button"
             onClick={() => setFilter(f.role)}
             className={cn(
-              'flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium tracking-wider transition-all',
+              'flex-shrink-0 rounded-full border px-3 py-1.5 font-mono text-[12px] transition-all',
               filter === f.role
-                ? 'border-foreground/30 bg-foreground/10 text-foreground'
+                ? 'border-foreground bg-foreground text-background'
                 : 'border-line bg-surface text-foreground/65 hover:border-foreground/30',
             )}
           >
@@ -136,21 +136,21 @@ export function AdminUsers({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-3xl border border-line bg-surface">
-        <div className="overflow-x-auto">
+      <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
+        <div className="max-h-[75vh] overflow-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[10px] tracking-widest text-foreground/45">
-                <th className="px-4 py-3 font-medium md:px-6">USER</th>
-                <th className="hidden px-4 py-3 font-medium md:table-cell md:px-6">
-                  ROLE
+            <thead className="sticky top-0 z-10 bg-surface">
+              <tr className="border-b border-line text-left font-mono text-[12px] text-foreground/60">
+                <th className="px-4 py-3 font-normal md:px-6">User</th>
+                <th className="hidden px-4 py-3 font-normal md:table-cell md:px-6">
+                  Role
                 </th>
-                <th className="hidden px-4 py-3 font-medium md:table-cell md:px-6">
-                  JOINED
+                <th className="hidden px-4 py-3 font-normal md:table-cell md:px-6">
+                  Joined
                 </th>
-                <th className="px-4 py-3 font-medium md:px-6">STATUS</th>
-                <th className="px-4 py-3 text-right font-medium md:px-6">
-                  ACTIONS
+                <th className="px-4 py-3 font-normal md:px-6">Status</th>
+                <th className="px-4 py-3 text-right font-normal md:px-6">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -219,7 +219,7 @@ function UserRow({
   }
 
   return (
-    <tr className="border-t border-line align-middle">
+    <tr className="border-t border-line align-middle first:border-t-0">
       <td className="px-4 py-4 md:px-6">
         {user.role === 'member' ? (
           <Link
@@ -238,26 +238,27 @@ function UserRow({
       <td className="hidden px-4 py-4 md:table-cell md:px-6">
         <span
           className={cn(
-            'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-widest',
+            'inline-flex rounded-[2px] border px-2 py-0.5 font-mono text-[12px]',
             ROLE_BADGE[user.role],
           )}
         >
-          {user.role.toUpperCase()}
+          {user.role}
         </span>
       </td>
-      <td className="hidden px-4 py-4 text-foreground/65 md:table-cell md:px-6">
+      <td className="hidden whitespace-nowrap px-4 py-4 font-mono text-[12px] tabular-nums text-foreground/65 md:table-cell md:px-6">
         {user.joinedAt}
       </td>
       <td className="px-4 py-4 md:px-6">
         <span
           className={cn(
-            'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-widest',
+            'inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 font-mono text-[12px]',
             STATUS_BADGE[user.status],
           )}
         >
-          {user.status.toUpperCase()}
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+          {user.status}
         </span>
-        {error && <p className="mt-1 text-[11px] text-red-300">{error}</p>}
+        {error && <p className="mt-1 text-[12px] text-red-300">{error}</p>}
       </td>
       <td className="px-4 py-4 text-right md:px-6">
         <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
@@ -285,7 +286,7 @@ function UserRow({
               else onRole(user.id, next);
               setBusy(false);
             }}
-            className="rounded-full border border-line bg-background px-2.5 py-1 text-[11px] text-foreground/80 focus:border-accent focus:outline-none disabled:opacity-40"
+            className="rounded-[2px] border border-line bg-background px-2.5 py-1 font-mono text-[12px] text-foreground/80 focus:border-black focus:outline-none disabled:opacity-40"
           >
             <option value="member">member</option>
             <option value="doctor">doctor</option>
@@ -350,9 +351,9 @@ function ActionButton({
       disabled={busy}
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3 py-1.5 text-[10px] font-semibold tracking-widest transition-colors disabled:opacity-50',
+        'rounded-full border px-3 py-1.5 font-mono text-[12px] transition-colors disabled:opacity-50',
         tone === 'danger'
-          ? 'border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/10'
+          ? 'ml-2 border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/10'
           : 'border-line bg-surface text-foreground/80 hover:border-foreground/30 hover:text-foreground',
       )}
     >
@@ -427,10 +428,10 @@ function AddUserPanel({
   return (
     <form
       onSubmit={submit}
-      className="rounded-3xl border border-accent/30 bg-accent/5 p-5 md:p-6"
+      className="rounded-[4px] border border-line bg-surface p-5 md:p-6"
     >
-      <div className="mb-4 text-[10px] tracking-widest text-accent">
-        ADD A USER
+      <div className="mb-4 font-mono text-[12px] text-foreground/60">
+        Add a user
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <input
@@ -471,14 +472,14 @@ function AddUserPanel({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-accent-soft disabled:opacity-50"
+          className="rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-50 font-mono"
         >
           {busy ? 'Creating…' : 'Create account'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-full border border-line bg-surface px-4 py-2 text-xs tracking-wider text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+          className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
         >
           Close
         </button>
@@ -494,9 +495,9 @@ function AddUserPanel({
         </p>
       )}
       {result?.tempPassword && (
-        <div className="mt-3 rounded-2xl border border-accent/30 bg-background p-4">
-          <div className="mb-2.5 text-[10px] tracking-widest text-accent">
-            SIGN-IN DETAILS
+        <div className="mt-3 rounded-[4px] border border-accent/30 bg-background p-4">
+          <div className="mb-2.5 font-mono text-[12px] text-foreground/60">
+            Sign-in details
           </div>
           <dl className="space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
@@ -513,9 +514,9 @@ function AddUserPanel({
           <button
             type="button"
             onClick={copyDetails}
-            className="mt-3 rounded-full border border-line bg-surface px-4 py-1.5 text-[11px] font-semibold tracking-widest text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
+            className="mt-3 rounded-full border border-line bg-surface px-4 py-1.5 font-mono text-[12px] text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
           >
-            {copied ? 'COPIED' : 'COPY DETAILS'}
+            {copied ? 'Copied' : 'Copy details'}
           </button>
         </div>
       )}

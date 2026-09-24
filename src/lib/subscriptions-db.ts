@@ -11,7 +11,8 @@ import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
-import { getShopProduct, cadenceTiersForProduct } from '@/lib/shopProducts';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
+import { getLiveProduct } from '@/lib/catalog';
 
 type Result = { ok: boolean; error?: string };
 
@@ -34,7 +35,7 @@ export async function changeSubscriptionPlanAction(
     .maybeSingle();
   if (!sub) return { ok: false, error: 'Subscription not found.' };
 
-  const product = getShopProduct(sub.product_id);
+  const product = await getLiveProduct(sub.product_id);
   if (!product) return { ok: false, error: 'Product no longer available.' };
   const tier = cadenceTiersForProduct(product).find((t) => t.key === plan);
   if (!tier) return { ok: false, error: 'Invalid plan.' };

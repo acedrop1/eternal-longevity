@@ -7,6 +7,7 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
+import { ADMIN_NAV } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -129,34 +130,22 @@ export default async function AdminPortalPage() {
   return (
     <PortalShell
       user={user}
-      nav={[
-        { label: 'Overview', href: '/portal/admin' },
-        { label: 'Members', href: '/portal/admin/members' },
-        { label: 'Applications', href: '/portal/admin/queue' },
-        { label: 'Messages', href: '/portal/admin/messages' },
-        { label: 'Billing', href: '/portal/admin/billing' },
-        { label: 'Orders', href: '/portal/admin/fulfillment' },
-        { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-        { label: 'Settings', href: '/portal/admin/settings' },
-      ]}
+      nav={ADMIN_NAV}
     >
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          OPERATIONS ·{' '}
-          {new Date()
-            .toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'short',
-              day: 'numeric',
-            })
-            .toUpperCase()}
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Operations ·{' '}
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric',
+          })}
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >
@@ -168,11 +157,11 @@ export default async function AdminPortalPage() {
       {/* Metrics */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-3xl border border-line bg-surface p-5">
-            <p className="mb-2 text-[10px] tracking-widest text-foreground/50">
-              {m.label.toUpperCase()}
+          <div key={m.label} className="rounded-[4px] border border-line bg-surface p-5">
+            <p className="mb-2 font-mono text-[12px] text-foreground/60">
+              {m.label}
             </p>
-            <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+            <p className="text-3xl font-medium tracking-tight text-foreground tabular-nums">
               {m.value}
             </p>
           </div>
@@ -180,13 +169,13 @@ export default async function AdminPortalPage() {
       </div>
 
       {/* Pipeline */}
-      <div className="mb-8 rounded-3xl border border-line bg-surface p-6">
-        <p className="mb-1 text-[10px] tracking-widest text-foreground/50">PIPELINE</p>
+      <div className="mb-8 rounded-[4px] border border-line bg-surface p-6">
+        <p className="mb-1 font-mono text-[12px] text-foreground/60">Pipeline</p>
         <h2 className="mb-5 text-xl font-semibold tracking-tight text-foreground">
           Members in motion
         </h2>
         {o.pipeline.every((p) => p.count === 0) ? (
-          <p className="text-sm text-foreground/50">
+          <p className="text-sm text-foreground/60">
             Nothing in flight right now. New intakes and orders appear here.
           </p>
         ) : (
@@ -210,20 +199,20 @@ export default async function AdminPortalPage() {
       </div>
 
       {/* Activity */}
-      <div className="rounded-3xl border border-line bg-surface p-6">
-        <p className="mb-1 text-[10px] tracking-widest text-foreground/50">RECENT ACTIVITY</p>
+      <div className="rounded-[4px] border border-line bg-surface p-6">
+        <p className="mb-1 font-mono text-[12px] text-foreground/60">Recent activity</p>
         <h2 className="mb-5 text-xl font-semibold tracking-tight text-foreground">
           What just happened
         </h2>
         {o.activity.length === 0 ? (
-          <p className="text-sm text-foreground/50">
+          <p className="text-sm text-foreground/60">
             No activity yet. Order and clinical updates land here as they happen.
           </p>
         ) : (
           <ul className="divide-y divide-line">
             {o.activity.map((a, i) => (
               <li key={i} className="flex items-baseline gap-4 py-3">
-                <span className="w-28 flex-none text-xs text-foreground/45 tabular-nums">
+                <span className="w-28 flex-none font-mono text-[12px] text-foreground/55 tabular-nums">
                   {a.time}
                 </span>
                 <span className="text-sm text-foreground/85">{a.action}</span>

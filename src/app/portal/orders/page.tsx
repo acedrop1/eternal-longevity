@@ -8,6 +8,7 @@ import {
   type MemberOrderView,
 } from '@/components/orders/MemberOrderHistory';
 import { getSession } from '@/lib/auth-server';
+import { MEMBER_NAV, PageHeader } from '@/components/portal/ui';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -72,36 +73,11 @@ export default async function OrdersPage() {
   }
 
   return (
-    <PortalShell
-      user={user}
-      nav={[
-        { label: 'Dashboard', href: '/portal' },
-        { label: 'Shop', href: '/portal/shop' },
-        { label: 'Orders', href: '/portal/orders' },
-        { label: 'Messages', href: '/portal/messages' },
-        { label: 'Subscriptions', href: '/portal/subscriptions' },
-        { label: 'Account', href: '/portal/account' },
-      ]}
-    >
-      <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          ORDERS
-        </p>
-        <h1
-          className="font-semibold tracking-tight text-foreground"
-          style={{
-            fontSize: 'clamp(2rem, 4.5vw, 3.25rem)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
-          }}
-        >
-          Your shipments &amp; receipts.
-        </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Every cycle you&apos;ve ordered, with live status from order
-          confirmation through delivery.
-        </p>
-      </div>
+    <PortalShell user={user} nav={MEMBER_NAV}>
+      <PageHeader
+        title="Your shipments & receipts."
+        intro="Every cycle you've ordered, with live status from order confirmation through delivery."
+      />
 
       {/* Two complementary views: the workflow orders the member placed, and
           the pharmacy shipment history from fulfillment_orders. */}

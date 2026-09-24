@@ -23,7 +23,7 @@
    * wrapper by adding .theme-light.
    */
   --bg-rgb: 0 0 0;                /* #000000 pure black */
-  --fg-rgb: 244 240 232;          /* #F4F0E8 warm ivory */
+  --fg-rgb: 255 255 255;          /* pure white, matches the redesign */
   --muted-rgb: 154 154 154;       /* neutral mid gray */
   --surface-rgb: 10 10 10;        /* #0a0a0a deep card */
   --surface-raised-rgb: 20 20 20; /* #141414 raised card */
@@ -45,15 +45,15 @@
  * the long-term path; these direct properties are the safety net).
  */
 .theme-light {
-  background-color: #F5F2EC !important;
-  color: rgb(20 17 12);
+  background-color: #FFFFFF !important;
+  color: rgb(0 0 0);
 
-  /* Warm cream, so the gold accent reads as gold and not as mustard. */
-  --bg-rgb: 245 242 236;          /* #F5F2EC cream */
-  --fg-rgb: 20 17 12;             /* #14110C warm near-black */
-  --muted-rgb: 110 102 90;        /* warm mid */
-  --surface-rgb: 255 255 255;     /* card white */
-  --surface-raised-rgb: 238 234 226;
+  /* Redesign palette: pure white ground, black ink, #F2F2F0 panels. */
+  --bg-rgb: 255 255 255;          /* #FFFFFF */
+  --fg-rgb: 0 0 0;                /* #000000 */
+  --muted-rgb: 102 102 102;       /* #666 neutral */
+  --surface-rgb: 242 242 240;     /* #F2F2F0 panel grey */
+  --surface-raised-rgb: 238 238 236;
   --line-rgb: 0 0 0;            /* line tint follows forest */
   --line-opacity: 0.10;
   --glass-bg: rgba(0, 0, 0, 0.04);
@@ -65,37 +65,37 @@
 /* Descendant overrides for the most-used Tailwind utilities so the light
  * theme reads correctly even without the variable-driven Tailwind config.
  * Cards, surfaces, borders, and text-foreground all flip. */
-.theme-light .bg-background      { background-color: #F5F2EC; }
-.theme-light .bg-background\/95  { background-color: rgb(245 242 236 / 0.95); }
-.theme-light .bg-background\/90  { background-color: rgb(245 242 236 / 0.90); }
-.theme-light .bg-background\/85  { background-color: rgb(245 242 236 / 0.85); }
-.theme-light .bg-background\/80  { background-color: rgb(245 242 236 / 0.80); }
-.theme-light .bg-background\/75  { background-color: rgb(245 242 236 / 0.75); }
-.theme-light .bg-background\/70  { background-color: rgb(245 242 236 / 0.70); }
-.theme-light .bg-background\/50  { background-color: rgb(245 242 236 / 0.50); }
-.theme-light .bg-background\/40  { background-color: rgb(245 242 236 / 0.40); }
-.theme-light .bg-surface         { background-color: #FFFFFF; }
-.theme-light .bg-surface\/85     { background-color: rgb(255 255 255 / 0.85); }
-.theme-light .bg-surface\/80     { background-color: rgb(255 255 255 / 0.80); }
-.theme-light .bg-surface-raised  { background-color: #F0EEE6; }
-.theme-light .text-foreground    { color: rgb(20 17 12); }
-.theme-light .text-foreground\/85 { color: rgb(20 17 12 / 0.85); }
-.theme-light .text-foreground\/80 { color: rgb(20 17 12 / 0.80); }
-.theme-light .text-foreground\/75 { color: rgb(20 17 12 / 0.75); }
-.theme-light .text-foreground\/70 { color: rgb(20 17 12 / 0.70); }
-.theme-light .text-foreground\/65 { color: rgb(20 17 12 / 0.65); }
-.theme-light .text-foreground\/60 { color: rgb(20 17 12 / 0.60); }
-.theme-light .text-foreground\/55 { color: rgb(20 17 12 / 0.55); }
-.theme-light .text-foreground\/50 { color: rgb(20 17 12 / 0.50); }
-.theme-light .text-foreground\/45 { color: rgb(20 17 12 / 0.45); }
-.theme-light .text-foreground\/40 { color: rgb(20 17 12 / 0.40); }
-.theme-light .text-foreground\/30 { color: rgb(20 17 12 / 0.30); }
+.theme-light .bg-background      { background-color: #FFFFFF; }
+.theme-light .bg-background\/95  { background-color: rgb(255 255 255 / 0.95); }
+.theme-light .bg-background\/90  { background-color: rgb(255 255 255 / 0.90); }
+.theme-light .bg-background\/85  { background-color: rgb(255 255 255 / 0.85); }
+.theme-light .bg-background\/80  { background-color: rgb(255 255 255 / 0.80); }
+.theme-light .bg-background\/75  { background-color: rgb(255 255 255 / 0.75); }
+.theme-light .bg-background\/70  { background-color: rgb(255 255 255 / 0.70); }
+.theme-light .bg-background\/50  { background-color: rgb(255 255 255 / 0.50); }
+.theme-light .bg-background\/40  { background-color: rgb(255 255 255 / 0.40); }
+.theme-light .bg-surface         { background-color: #F2F2F0; }
+.theme-light .bg-surface\/85     { background-color: rgb(242 242 240 / 0.85); }
+.theme-light .bg-surface\/80     { background-color: rgb(242 242 240 / 0.80); }
+.theme-light .bg-surface-raised  { background-color: #EEEEEC; }
+.theme-light .text-foreground    { color: rgb(0 0 0); }
+.theme-light .text-foreground\/85 { color: rgb(0 0 0 / 0.85); }
+.theme-light .text-foreground\/80 { color: rgb(0 0 0 / 0.80); }
+.theme-light .text-foreground\/75 { color: rgb(0 0 0 / 0.75); }
+.theme-light .text-foreground\/70 { color: rgb(0 0 0 / 0.70); }
+.theme-light .text-foreground\/65 { color: rgb(0 0 0 / 0.65); }
+.theme-light .text-foreground\/60 { color: rgb(0 0 0 / 0.60); }
+.theme-light .text-foreground\/55 { color: rgb(0 0 0 / 0.55); }
+.theme-light .text-foreground\/50 { color: rgb(0 0 0 / 0.50); }
+.theme-light .text-foreground\/45 { color: rgb(0 0 0 / 0.45); }
+.theme-light .text-foreground\/40 { color: rgb(0 0 0 / 0.40); }
+.theme-light .text-foreground\/30 { color: rgb(0 0 0 / 0.30); }
 .theme-light .border-line         { border-color: rgb(0 0 0 / 0.10); }
-.theme-light .border-foreground\/20 { border-color: rgb(20 17 12 / 0.20); }
-.theme-light .border-foreground\/30 { border-color: rgb(20 17 12 / 0.30); }
-.theme-light .placeholder-foreground\/30::placeholder { color: rgb(20 17 12 / 0.30); }
+.theme-light .border-foreground\/20 { border-color: rgb(0 0 0 / 0.20); }
+.theme-light .border-foreground\/30 { border-color: rgb(0 0 0 / 0.30); }
+.theme-light .placeholder-foreground\/30::placeholder { color: rgb(0 0 0 / 0.30); }
 .theme-light .ring-line           { --tw-ring-color: rgb(0 0 0 / 0.10); }
-.theme-light .ring-foreground\/30 { --tw-ring-color: rgb(20 17 12 / 0.30); }
+.theme-light .ring-foreground\/30 { --tw-ring-color: rgb(0 0 0 / 0.30); }
 /* Colours tuned for a black ground and unreadable on cream. The staff portals
  * run light, so the ones they actually use need a darker counterpart. */
 .theme-light .text-accent          { color: #7D4E0C; }
@@ -116,9 +116,9 @@
 .theme-light .border-line\/50      { border-color: rgb(0 0 0 / 0.07); }
 
 /* Subtle dark overlays used in dark theme don't translate — soften them */
-.theme-light .bg-foreground\/5  { background-color: rgb(20 17 12 / 0.05); }
-.theme-light .bg-foreground\/10 { background-color: rgb(20 17 12 / 0.10); }
-.theme-light .bg-foreground\/15 { background-color: rgb(20 17 12 / 0.15); }
+.theme-light .bg-foreground\/5  { background-color: rgb(0 0 0 / 0.05); }
+.theme-light .bg-foreground\/10 { background-color: rgb(0 0 0 / 0.10); }
+.theme-light .bg-foreground\/15 { background-color: rgb(0 0 0 / 0.15); }
 
 @layer base {
   html {
@@ -303,3 +303,45 @@ select:-webkit-autofill {
   .anim-route { animation: none; }
   .animate-ping { animation: none; opacity: 0.7; }
 }
+
+/* Range slider (intake height): gold fill to the thumb (--pct), black thumb
+   big enough to grab on a phone. */
+.el-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.el-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #D5A850 var(--pct, 0%), rgb(0 0 0 / 0.12) var(--pct, 0%));
+}
+.el-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #D5A850 var(--pct, 0%), rgb(0 0 0 / 0.12) var(--pct, 0%));
+}
+.el-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -11px;
+  height: 28px;
+  width: 28px;
+  border-radius: 999px;
+  background: #000;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.3);
+}
+.el-range::-moz-range-thumb {
+  height: 22px;
+  width: 22px;
+  border-radius: 999px;
+  background: #000;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.3);
+}
+.el-range:focus-visible { outline: none; }
+.el-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(0 0 0 / 0.25); }
+.el-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(0 0 0 / 0.25); }

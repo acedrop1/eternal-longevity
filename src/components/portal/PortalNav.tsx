@@ -30,33 +30,30 @@ function NavDot({ isActive }: { isActive: boolean }) {
   const { pending } = useLinkStatus();
   return (
     <span
+      aria-hidden
       className={cn(
         'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
         pending
-          ? 'animate-ping bg-accent'
+          ? 'animate-ping bg-[#D5A850]'
           : isActive
-            ? 'bg-accent'
-            : 'bg-foreground/20 group-hover:bg-foreground/40',
+            ? 'bg-[#D5A850]'
+            : 'bg-black/20 group-hover:bg-black/40',
       )}
     />
   );
 }
 
-/** Same idea for the mobile pills, which have no dot to pulse. */
+/** Same idea for the mobile row, which has no dot to pulse. */
 function PillLabel({ label }: { label: string }) {
   const { pending } = useLinkStatus();
-  return (
-    <span className={cn(pending && 'opacity-60')}>
-      {label.toUpperCase()}
-    </span>
-  );
+  return <span className={cn(pending && 'opacity-60')}>{label}</span>;
 }
 
 /**
- * Portal navigation. Renders a vertical left-rail on desktop and a horizontal
- * scrolling pill row on mobile. Active state is derived from the current
- * pathname, with longest-prefix-match so that e.g. /portal/shop/ghk-cu still
- * highlights the "Shop" tab.
+ * Portal navigation. Renders a vertical left rail on desktop and a swipeable
+ * row inside the black top bar on mobile. Active state is derived from the
+ * current pathname, with longest-prefix-match so that e.g. /portal/shop/ghk-cu
+ * still highlights the "Shop" tab.
  */
 export function PortalNav({ nav, variant }: PortalNavProps) {
   const pathname = usePathname() ?? '';
@@ -74,67 +71,62 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
   })();
 
   if (variant === 'mobile') {
+    // Sits on the frosted black bar. Scrolls sideways inside itself, so the
+    // page never does; each item is a 44px-tall tap target.
     return (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2">
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+      <nav aria-label="Portal" className="mx-auto max-w-7xl">
+        <div className="flex overflow-x-auto px-1.5 scrollbar-hide">
           {nav.map((item) => {
             const isActive = item.href === activeHref;
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex-shrink-0 rounded-full border px-3 py-1.5 text-xs tracking-wider transition-colors',
-                  isActive
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-line bg-surface text-foreground/75 hover:text-foreground hover:border-foreground/30'
+                  'relative flex h-11 flex-shrink-0 items-center gap-1.5 px-3 text-[14px] transition-colors',
+                  isActive ? 'text-white' : 'text-white/65 hover:text-white'
                 )}
               >
                 <PillLabel label={item.label} />
                 {!!item.badge && (
-                  <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-black">
+                  <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#D5A850] px-1 font-mono text-[11px] leading-[1.25rem] text-black tabular-nums">
                     {item.badge}
                   </span>
+                )}
+                {isActive && (
+                  <span aria-hidden className="absolute inset-x-3 bottom-0 h-[2px] bg-[#D5A850]" />
                 )}
               </Link>
             );
           })}
         </div>
-      </div>
+      </nav>
     );
   }
 
-  // Desktop sidebar (vertical rail)
+  // Desktop sidebar (vertical rail), on the white ground.
   return (
-    <nav className="sticky top-[4.5rem]">
-      <div className="mb-3 px-3 text-[10px] tracking-widest text-foreground/45">
-        NAVIGATION
-      </div>
-      <ul className="space-y-1">
+    <nav aria-label="Portal">
+      <ul className="space-y-0.5">
         {nav.map((item) => {
           const isActive = item.href === activeHref;
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors',
+                  'group flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[15px] transition-colors',
                   isActive
-                    ? 'bg-foreground/10 text-foreground font-medium'
-                    : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'
+                    ? 'bg-[#F2F2F0] text-black'
+                    : 'text-black/65 hover:bg-black/[0.03] hover:text-black'
                 )}
               >
                 <NavDot isActive={isActive} />
                 <span className="flex-1 truncate">{item.label}</span>
                 {!!item.badge && (
-                  <span
-                    className={cn(
-                      'inline-flex min-w-[1.3rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
-                      isActive
-                        ? 'bg-accent text-black'
-                        : 'bg-accent/15 text-accent'
-                    )}
-                  >
+                  <span className="inline-flex min-w-[1.4rem] items-center justify-center rounded-full bg-black px-1.5 py-0.5 font-mono text-[11px] leading-none text-white tabular-nums">
                     {item.badge}
                   </span>
                 )}

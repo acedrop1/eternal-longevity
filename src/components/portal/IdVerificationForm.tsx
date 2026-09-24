@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabaseConfigured } from '@/lib/env';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { btnPrimary, btnSecondary, errorBox, panel } from '@/components/portal/ui';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ACCEPT = 'image/*,application/pdf';
@@ -81,20 +82,24 @@ export function IdVerificationForm() {
 
   if (status === 'done') {
     return (
-      <section className="rounded-3xl border border-accent/30 bg-accent/5 p-6 md:p-8 text-center">
-        <div className="mb-2 text-[10px] tracking-widest text-accent">
-          SUBMITTED
-        </div>
-        <h2 className="mb-2 text-xl font-semibold tracking-tight text-foreground">
+      <section role="status" className={cn(panel, 'p-6 text-center md:p-8')}>
+        <p className="mb-3 inline-flex items-center gap-1.5 font-mono text-[13px] text-black/70">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+          Submitted
+        </p>
+        <h2
+          className="mb-2 font-display font-normal text-black"
+          style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+        >
           Your ID is under review.
         </h2>
-        <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-foreground/65">
+        <p className="mx-auto mb-5 max-w-md text-[15px] leading-relaxed text-black/65">
           {message} Verification usually completes within one business day.
           We&apos;ll email you the moment it clears.
         </p>
         <Link
           href="/portal"
-          className="inline-block rounded-full bg-accent px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-accent-soft"
+          className={btnPrimary}
         >
           Back to dashboard
         </Link>
@@ -118,7 +123,7 @@ export function IdVerificationForm() {
       />
 
       {status === 'error' && (
-        <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p role="alert" className={errorBox}>
           {message}
         </p>
       )}
@@ -126,7 +131,7 @@ export function IdVerificationForm() {
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
         <Link
           href="/portal"
-          className="rounded-full border border-line bg-surface px-5 py-3 text-center text-sm text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+          className={btnSecondary}
         >
           Save &amp; finish later
         </Link>
@@ -134,12 +139,7 @@ export function IdVerificationForm() {
           type="button"
           disabled={!ready}
           onClick={submit}
-          className={cn(
-            'rounded-full px-7 py-3 text-sm font-semibold transition-all duration-200',
-            ready
-              ? 'bg-accent text-black hover:bg-accent-soft active:scale-[0.98]'
-              : 'cursor-not-allowed bg-foreground/15 text-foreground/40',
-          )}
+          className={btnPrimary}
         >
           {status === 'uploading'
             ? 'Uploading…'
@@ -165,24 +165,22 @@ function FilePick({
 
   return (
     <div>
-      <h2 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
-        {title}
-      </h2>
-      <p className="mb-3 text-xs text-foreground/55">{hint}</p>
+      <h2 className="mb-1 text-[16px] font-medium text-black">{title}</h2>
+      <p className="mb-3 text-[14px] text-black/60">{hint}</p>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'flex w-full items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-left transition-colors',
+          'flex w-full items-center gap-4 rounded-[4px] px-4 py-4 text-left transition-colors md:px-5 md:py-5',
           file
-            ? 'border-accent/50 bg-accent/5'
-            : 'border-line bg-background hover:border-foreground/30',
+            ? 'border border-black/30 bg-[#F2F2F0]'
+            : 'border border-dashed border-black/25 bg-[#F2F2F0] hover:bg-[#EAEAE7]',
         )}
       >
         <span
           className={cn(
-            'grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl',
-            file ? 'bg-accent/15 text-accent' : 'bg-foreground/10 text-foreground/55',
+            'grid h-10 w-10 flex-shrink-0 place-items-center rounded-[2px]',
+            file ? 'bg-black text-white' : 'bg-white text-black/60 ring-1 ring-black/10',
           )}
         >
           <svg
@@ -208,10 +206,10 @@ function FilePick({
           </svg>
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-foreground">
+          <span className="block truncate text-[15px] font-medium text-black">
             {file ? file.name : `Upload the ${title.toLowerCase()}`}
           </span>
-          <span className="block text-xs text-foreground/55">
+          <span className="block font-mono text-[12px] text-black/55">
             {file ? 'Tap to replace' : 'PDF or image, up to 10 MB'}
           </span>
         </span>

@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default function RefundsPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Refund Policy"
       effective="May 2026"
       lead="We want you to feel good about every order. This policy explains when refunds are issued, when they are not, and how to request one. We try to be fair and transparent. And we say no when the rules require us to."

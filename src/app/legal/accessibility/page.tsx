@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Accessibility Statement"
       effective="September 2026"
       lead={`Health services should not be harder to use because of a disability. We build against WCAG 2.1 Level AA. We do not claim to have got everything right, so this page also tells you how to report what we have missed.`}

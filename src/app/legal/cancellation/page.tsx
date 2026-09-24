@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function CancellationPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Cancellation Policy"
       effective="September 2026"
       lead={`You can cancel yourself, in your account, in a few seconds. There is no retention call, no cancellation fee, and no minimum term. This page states exactly how, and what happens to an order already in flight.`}

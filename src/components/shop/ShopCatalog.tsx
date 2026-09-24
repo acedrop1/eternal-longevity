@@ -6,16 +6,17 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   SHOP_CATEGORIES,
-  PUBLIC_PRODUCTS,
   DELIVERY_LABEL,
   type ShopCategory,
+  type ShopProduct,
 } from '@/lib/shopProducts';
+import { useCatalog } from '@/components/catalog/CatalogProvider';
 
 type Filter = 'all' | ShopCategory;
 
 interface ShopCatalogProps {
-  /** Products to list. Defaults to the full member catalog. */
-  items?: typeof PUBLIC_PRODUCTS;
+  /** Products to list. Defaults to the live catalogue. */
+  items?: ShopProduct[];
   /** Category pills to offer. Defaults to all categories. */
   categories?: typeof SHOP_CATEGORIES;
   /** Route prefix for product links. '/shop' on the public storefront. */
@@ -30,11 +31,13 @@ interface ShopCatalogProps {
 }
 
 export function ShopCatalog({
-  items = PUBLIC_PRODUCTS,
+  items: itemsProp,
   categories = SHOP_CATEGORIES,
   basePath = '/portal/shop',
   startPath,
 }: ShopCatalogProps = {}) {
+  const { products: live } = useCatalog();
+  const items = itemsProp ?? live;
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
 
@@ -58,25 +61,23 @@ export function ShopCatalog({
 
   return (
     <div>
-      {/* Search + Category pill row. Sticky on scroll.
-          On mobile the portal header has a sub-nav row, so sticky-top is higher. */}
       {/* Search + category filter.
           Was a full-bleed bar pulled outside its container with -mx-4, which
           made the page wider than the viewport — and with overflow-x:clip on
           the root that surplus was sliced off rather than scrolled, taking the
           right edge of every card with it.
           Now an inset frosted panel: fixed to the bottom on a phone, where the
-          thumb is and where it stops covering the cards, and sticky at the top
-          from md where a filter bar belongs. */}
+          thumb is and where it stops covering the cards, and sticky under the
+          top bar from md where a filter bar belongs. */}
       <div
         className={cn(
-          'z-40 rounded-2xl border border-white/[0.10] bg-background/70 px-3 py-3 backdrop-blur-xl',
-          'fixed inset-x-3 bottom-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.9)]',
-          'md:static md:inset-x-auto md:bottom-auto md:sticky md:top-16 md:mb-10 md:px-4 md:py-4 md:shadow-none',
+          'z-30 rounded-[4px] bg-white/85 p-2.5 ring-1 ring-black/10 backdrop-blur-xl backdrop-saturate-150',
+          'fixed inset-x-3 bottom-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)]',
+          'md:sticky md:inset-x-auto md:bottom-auto md:top-[4.5rem] md:mb-8 md:p-3 md:shadow-none',
         )}
       >
         {/* Search input */}
-        <div className="mb-3 relative">
+        <div className="relative mb-2.5">
           <svg
             aria-hidden
             width="16"
@@ -87,7 +88,7 @@ export function ShopCatalog({
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/65"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-black/55"
           >
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
@@ -97,7 +98,7 @@ export function ShopCatalog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search peptides. Name, category, benefit…"
-            className="w-full rounded-full border border-line bg-surface pl-11 pr-10 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/20 transition-colors"
+            className="w-full rounded-[2px] bg-white py-3 pl-11 pr-12 text-[16px] text-black ring-1 ring-black/15 placeholder:text-black/40 transition-shadow focus:outline-none focus:ring-2 focus:ring-black"
             aria-label="Search shop"
           />
           {query && (
@@ -105,7 +106,7 @@ export function ShopCatalog({
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full text-foreground/72 hover:bg-foreground/10 hover:text-foreground transition-colors"
+              className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-black/60 transition-colors hover:text-black"
             >
               <svg
                 width="12"
@@ -124,7 +125,7 @@ export function ShopCatalog({
           )}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           <Pill active={filter === 'all'} onClick={() => setFilter('all')}>
             All products
           </Pill>
@@ -140,133 +141,89 @@ export function ShopCatalog({
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="grid grid-cols-2 gap-2.5 pb-40 sm:gap-4 md:gap-6 md:pb-0 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Product grid. Photo tile (price + popular on frosted chips, as on
+          the public shop), then name, plan facts and price underneath. */}
+      <div className="grid grid-cols-2 gap-x-2 gap-y-8 pb-44 md:gap-x-3 md:gap-y-10 md:pb-0 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => (
-          <div
-            key={p.id}
-            className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl sm:rounded-[2rem] border border-line bg-surface transition-all duration-500 ease-out-expo hover:-translate-y-1 hover:border-accent/30"
-            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}
-          >
-            {/* Image header on swatch */}
+          <div key={p.id} className="group flex min-w-0 flex-col">
             <Link
               href={`${basePath}/${p.id}`}
-              className="relative block aspect-[5/6] overflow-hidden"
-              style={{ background: p.swatch }}
+              className="flex min-w-0 flex-1 flex-col"
             >
-              <Image
-                src={p.image}
-                alt={p.name}
-                fill
-                sizes="(max-width: 768px) 50vw, 25vw"
-                className="object-cover opacity-50 transition-transform duration-700 ease-out-expo group-hover:scale-105"
-              />
               <div
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70"
-              />
-
-              {/* Popular badge */}
-              {p.popular && (
-                <span className="absolute top-4 left-4 inline-flex items-center rounded-full bg-accent/95 text-black px-2.5 py-1 text-[10px] tracking-widest font-semibold">
-                  POPULAR
-                </span>
-              )}
-
-              {/* Centered name overlay */}
-              <div className="relative flex h-full flex-col items-center justify-end p-3 text-center sm:p-6">
-                <span className="text-[10px] tracking-widest text-white/65 mb-2">
-                  ETERNAL LONGEVITY
-                </span>
-                <div style={{ textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}>
-                  <div className="mb-2 text-[10px] tracking-widest text-accent">
-                    {p.tagline.toUpperCase()}
-                  </div>
-                  <div
-                    className="font-bold tracking-tight text-white"
-                    style={{
-                      fontSize: 'clamp(1.15rem, 4.5vw, 2.25rem)',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {p.name}
-                  </div>
+                className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-neutral-200"
+                style={p.shot ? undefined : { background: p.swatch }}
+              >
+                <Image
+                  src={p.image}
+                  alt={p.name}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className={`object-cover ${p.shot ? '' : 'opacity-50'} transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]`}
+                />
+                <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5 md:left-3 md:top-3">
+                  <span className="flex items-baseline gap-1 rounded-[2px] bg-black/70 px-2 py-1.5 text-white ring-1 ring-white/10 backdrop-blur-xl md:px-3 md:py-2">
+                    <span className="text-[14px] font-medium tabular-nums md:text-[16px]">
+                      ${Math.round(p.pricing.quarterly / 3)}
+                    </span>
+                    <span className="text-[11px] text-white/80 md:text-[13px]">/mo</span>
+                  </span>
+                  {p.popular && (
+                    <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-white/90 px-2 py-1 font-mono text-[11px] text-black md:text-[12px]">
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                      Popular
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              <div className="mt-3 flex min-w-0 flex-1 flex-col px-0.5">
+                <p
+                  className="font-display font-normal text-black"
+                  style={{ fontSize: 'clamp(1.2rem, 0.8vw + 0.95rem, 1.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
+                >
+                  {p.name}
+                </p>
+                <p className="mt-1 text-[14px] text-black/70 md:text-[15px]">{p.tagline}</p>
+                <p className="mt-2 font-mono text-[12px] text-black/55">
+                  {DELIVERY_LABEL[p.delivery]}
+                  <span className="hidden sm:inline"> · {p.cycleLength}</span>
+                </p>
+                <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-black/60 sm:text-[14px]">
+                  {p.shortDescription}
+                </p>
+                <p className="mt-auto pt-3 font-mono text-[12px] text-black/55">
+                  {startPath ? 'From' : 'Subscribe from'}{' '}
+                  <span className="text-[14px] text-black tabular-nums">
+                    ${Math.round(p.pricing.quarterly / 3)}/mo
+                  </span>
+                </p>
               </div>
             </Link>
 
-            {/* Bottom row. Description, price, CTA */}
-            <div className="flex min-w-0 flex-1 flex-col p-3.5 sm:p-5 md:p-6">
-              {/* One chip on a phone; the cycle length repeats the hero. */}
-              <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full border border-line bg-background px-2 py-0.5 text-[9px] tracking-wider text-foreground/78 sm:text-[10px]">
-                  {DELIVERY_LABEL[p.delivery].toUpperCase()}
-                </span>
-                <span className="hidden rounded-full border border-line bg-background px-2 py-0.5 text-[10px] tracking-wider text-foreground/78 sm:inline">
-                  {p.cycleLength.toUpperCase()}
-                </span>
+            {startPath && (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href={`${startPath}?product=${p.id}`}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-black px-3 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 md:min-h-[40px]"
+                >
+                  Get started
+                </Link>
+                <Link
+                  href={`${basePath}/${p.id}`}
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-white px-3 py-2.5 font-mono text-[13px] text-black ring-1 ring-black/15 transition-colors hover:bg-black/[0.04] md:min-h-[40px]"
+                >
+                  Learn more
+                </Link>
               </div>
-              <p className="mb-4 text-[12px] leading-relaxed text-foreground/82 line-clamp-2 sm:mb-5 sm:text-sm sm:line-clamp-3">
-                {p.shortDescription}
-              </p>
-              <div className="mt-auto">
-                <div className="mb-3">
-                  <div className="text-[10px] tracking-widest text-foreground/65">
-                    {startPath ? 'FROM' : 'SUBSCRIBE FROM'}
-                  </div>
-                  <div className="text-lg font-semibold text-foreground tracking-tight">
-                    ${Math.round(p.pricing.quarterly / 3)}
-                    <span className="text-sm text-foreground/72 font-normal">
-                      /mo
-                    </span>
-                  </div>
-                </div>
-
-                {startPath ? (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Link
-                      href={`${startPath}?product=${p.id}`}
-                      className="flex-1 rounded-full bg-accent px-3 py-2.5 text-center text-xs font-semibold tracking-wide text-black transition-colors hover:bg-accent-soft"
-                    >
-                      Get started
-                    </Link>
-                    <Link
-                      href={`${basePath}/${p.id}`}
-                      className="flex-1 rounded-full border border-line bg-background px-3 py-2.5 text-center text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
-                    >
-                      Learn more
-                    </Link>
-                  </div>
-                ) : (
-                  <Link
-                    href={`${basePath}/${p.id}`}
-                    className="inline-flex items-center gap-1.5 text-[11px] tracking-widest text-accent transition-transform duration-300 ease-out-expo group-hover:translate-x-1"
-                  >
-                    EXPLORE
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </Link>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         ))}
       </div>
 
       {products.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-foreground/72 mb-4">
+        <div className="rounded-[4px] bg-[#F2F2F0] px-6 py-10 text-center">
+          <p className="text-[15px] text-black/70">
             {query
               ? `No products match "${query}"${filter !== 'all' ? ' in this category' : ''}.`
               : 'No products in this category yet.'}
@@ -278,9 +235,9 @@ export function ShopCatalog({
                 setQuery('');
                 setFilter('all');
               }}
-              className="text-sm tracking-wider text-accent hover:underline"
+              className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-full bg-black px-5 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 md:min-h-[40px]"
             >
-              Clear filters →
+              Clear filters
             </button>
           )}
         </div>
@@ -302,11 +259,12 @@ function Pill({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        'flex-shrink-0 rounded-full px-4 py-2 text-xs tracking-wider font-medium border transition-all',
+        'min-h-[44px] flex-shrink-0 rounded-full px-4 font-mono text-[13px] transition-colors md:min-h-[36px]',
         active
-          ? 'bg-foreground text-background border-foreground'
-          : 'bg-surface text-foreground/82 border-line hover:border-foreground/30 hover:text-foreground'
+          ? 'bg-black text-white'
+          : 'bg-white text-black/75 ring-1 ring-black/15 hover:text-black'
       )}
     >
       {children}

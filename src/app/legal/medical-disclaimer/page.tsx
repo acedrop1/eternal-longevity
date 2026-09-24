@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function MedicalDisclaimerPage() {
   return (
     <LegalLayout
-      eyebrow="LEGAL"
       title="Medical Disclaimer"
       effective="September 2026"
       lead={`Many companies in this category describe themselves as technology platforms that merely connect you to independent physicians. We do not, because it would not be true of us: our prescriber practises within this company. That makes it more important, not less, to be exact about what this relationship is and is not.`}

@@ -7,22 +7,12 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
+import { ADMIN_NAV } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
   title: 'Users',
 };
 
-const ADMIN_NAV = [
-  { label: 'Overview', href: '/portal/admin' },
-  { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Applications', href: '/portal/admin/queue' },
-        { label: 'Messages', href: '/portal/admin/messages' },
-  { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Orders', href: '/portal/admin/fulfillment' },
-  { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-  { label: 'Settings', href: '/portal/admin/settings' },
-];
 
 // Empty fallback: only renders if the Supabase query fails. Inventing
 // members for an admin screen would be worse than showing none.
@@ -74,14 +64,14 @@ export default async function AdminUsersPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[11px] tracking-widest text-foreground/55">
-          USERS · {users.length} TOTAL · {memberCount} MEMBERS
+        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+          Users · {users.length} total · {memberCount} members
         </p>
         <h1
-          className="font-semibold tracking-tight text-foreground"
+          className="font-display font-normal text-foreground"
           style={{
-            fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-            letterSpacing: '-0.02em',
+            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
+            fontStretch: '75%',
             lineHeight: 1.05,
           }}
         >

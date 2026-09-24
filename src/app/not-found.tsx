@@ -7,65 +7,45 @@ export const metadata = {
   description: 'The page you are looking for does not exist.',
 };
 
-/**
- * Branded 404. Replaces the unstyled Next.js default with a centered hero
- * pattern that matches the rest of the site (dark + gold accent).
- */
+/** Branded 404, in the site's white editorial style. */
 export default function NotFound() {
   return (
     <>
-      <Header />
-      <main className="theme-light relative min-h-screen bg-background overflow-hidden">
-        {/* Soft halo */}
-        <div
-          aria-hidden
-          className="hidden md:block pointer-events-none absolute -top-1/4 left-1/2 h-[60vh] w-[80vh] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[120px]"
-        />
-
-        <section className="relative mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 text-center pt-20 pb-16">
-          <p className="mb-6 text-[11px] tracking-widest text-accent">
-            404 / PAGE NOT FOUND
-          </p>
-          <h1
-            className="mb-6 font-semibold tracking-tight text-foreground"
-            style={{
-              fontSize: 'clamp(3rem, 9vw, 6.5rem)',
-              letterSpacing: '-0.03em',
-              lineHeight: 0.95,
-            }}
-          >
-            This page
-            <br />
-            <span className="text-foreground/40">went missing.</span>
-          </h1>
-          <p className="mx-auto mb-10 max-w-md text-foreground/65 leading-relaxed">
-            The link may be broken, the page may have moved, or it never
-            existed. Try one of the routes below.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <Link
-              href="/"
-              className="pill bg-accent text-black font-semibold px-7 py-3 hover:bg-accent-soft transition-colors"
+      <Header categoryStrip />
+      <main>
+        {/* Top padding clears the fixed header + product strip (126 / 134px). */}
+        <section className="bg-white px-5 pb-24 pt-[158px] text-black md:px-8 md:pb-32 md:pt-[182px]">
+          <div className="mx-auto max-w-7xl">
+            <p className="font-mono text-[13px] text-black/55">404</p>
+            <h1
+              className="mt-4 max-w-4xl font-display font-normal [text-wrap:balance]"
+              style={{ fontSize: 'clamp(3rem, 6vw + 1rem, 7rem)', fontStretch: '75%', lineHeight: 0.95 }}
             >
-              Back to home
-            </Link>
-            <Link
-              href="/shop"
-              className="pill glass text-foreground/85 hover:text-foreground px-7 py-3"
-            >
-              See the protocols
-            </Link>
-            <Link
-              href="/contact"
-              className="pill text-foreground/55 hover:text-foreground transition-colors px-5 py-3"
-            >
-              Contact support
-            </Link>
+              This page went missing.
+            </h1>
+            <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-black/70">
+              The link may be broken, the page may have moved, or it never existed.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/"
+                className="rounded-full bg-black px-5 py-3 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+              >
+                Back to home
+              </Link>
+              <Link
+                href="/shop"
+                className="rounded-full bg-[#F2F2F0] px-5 py-3 font-mono text-[14px] text-black transition-colors hover:bg-black/10"
+              >
+                Shop all
+              </Link>
+            </div>
           </div>
         </section>
       </main>
-      <Footer />
+      <div className="bg-white">
+        <Footer />
+      </div>
     </>
   );
 }

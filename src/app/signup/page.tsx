@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
-import { AuthShell, AuthLabel, authInputClass } from '@/components/auth/AuthShell';
+import {
+  AuthShell,
+  AuthLabel,
+  authInputClass,
+  authErrorClass,
+  authLinkClass,
+} from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
@@ -21,21 +27,21 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   // Demo mode — accounts open once the backend is connected.
   if (!supabaseConfigured) {
     return (
-      <AuthShell eyebrow="GET STARTED" title="Create your account.">
-        <div className="rounded-3xl border border-line bg-surface p-6 md:p-8 text-center space-y-4">
-          <p className="text-sm text-foreground/70 leading-relaxed">
+      <AuthShell eyebrow="Get started" title="Create your account.">
+        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-black/70">
             Account sign-up turns on once the backend is connected. For now you
             can explore the portal with a demo login.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-accent text-black font-semibold py-3.5 text-base hover:bg-accent-soft transition-colors"
+            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
           >
             Go to login →
           </Link>
           <Link
             href="/start"
-            className="block w-full text-center text-sm text-foreground/55 hover:text-foreground transition-colors"
+            className="block w-full text-center font-mono text-[13px] text-black/60 transition-colors hover:text-black"
           >
             Start a new assessment →
           </Link>
@@ -46,45 +52,39 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   return (
     <AuthShell
-      eyebrow="GET STARTED"
+      eyebrow="Get started"
       title="Create your account."
       footer={
         <>
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="text-foreground/85 hover:text-foreground underline-offset-4 hover:underline"
-          >
+          <Link href="/login" className={authLinkClass}>
             Log in
           </Link>
           .
         </>
       }
     >
-      <form
-        action={signupAction}
-        className="rounded-3xl border border-line bg-surface p-6 md:p-8 space-y-5"
-      >
+      <form action={signupAction} className="space-y-6">
         {error === 'invalid' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             Enter a valid email and a password of at least 8 characters.
           </div>
         )}
         {error === 'throttled' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             Too many attempts from this connection. Wait a few minutes and try
             again.
           </div>
         )}
         {error === 'taken' && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div role="alert" className={authErrorClass}>
             We couldn&apos;t create that account. The email may already be
             registered — try logging in instead.
           </div>
         )}
 
         <div>
-          <AuthLabel htmlFor="signup-name">FULL NAME</AuthLabel>
+          <AuthLabel htmlFor="signup-name">Full name</AuthLabel>
           <input
             id="signup-name"
             name="name"
@@ -97,7 +97,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </div>
 
         <div>
-          <AuthLabel htmlFor="signup-email">EMAIL</AuthLabel>
+          <AuthLabel htmlFor="signup-email">Email</AuthLabel>
           <input
             id="signup-email"
             name="email"
@@ -110,7 +110,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </div>
 
         <div>
-          <AuthLabel htmlFor="signup-password">PASSWORD</AuthLabel>
+          <AuthLabel htmlFor="signup-password">Password</AuthLabel>
           <PasswordField
             id="signup-password"
             name="password"
@@ -124,7 +124,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           Create account →
         </SubmitButton>
 
-        <p className="text-center text-[11px] text-foreground/45 leading-relaxed">
+        <p className="text-[13px] leading-relaxed text-black/55">
           Creating an account doesn&apos;t place an order. Every protocol is
           compounded by a licensed 503A pharmacy against a prescription written
           for you.

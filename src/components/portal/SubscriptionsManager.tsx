@@ -5,6 +5,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
+  EmptyState,
+  StatusChip,
+  btnDanger,
+  btnPrimary,
+  btnSecondary,
+  panel,
+  type Tone,
+} from '@/components/portal/ui';
+import {
   changeSubscriptionPlanAction,
   setSubscriptionStatusAction,
   type PlanKey,
@@ -51,17 +60,11 @@ function saveState(s: Record<string, PerSubState>) {
   }
 }
 
-const STATUS_THEME: Record<
-  LiveStatus,
-  { label: string; class: string }
-> = {
-  active: { label: 'ACTIVE', class: 'bg-accent/10 text-accent border-accent/40' },
-  paused: { label: 'PAUSED', class: 'bg-amber-500/10 text-amber-300 border-amber-400/40' },
-  'pending-review': {
-    label: 'IN REVIEW',
-    class: 'bg-sky-500/10 text-sky-300 border-sky-400/40',
-  },
-  cancelled: { label: 'CANCELLED', class: 'bg-foreground/10 text-foreground/55 border-foreground/20' },
+const STATUS_THEME: Record<LiveStatus, { label: string; tone: Tone }> = {
+  active: { label: 'Active', tone: 'gold' },
+  paused: { label: 'Paused', tone: 'warn' },
+  'pending-review': { label: 'In review', tone: 'info' },
+  cancelled: { label: 'Cancelled', tone: 'muted' },
 };
 
 interface Props {
@@ -134,9 +137,23 @@ export function SubscriptionsManager({ subscriptions }: Props) {
     void changeSubscriptionPlanAction(s.id, plan);
   };
 
+  if (subscriptions.length === 0) {
+    return (
+      <EmptyState
+        action={
+          <Link href="/portal/shop" className={btnPrimary}>
+            Browse the shop
+          </Link>
+        }
+      >
+        You have no subscriptions yet.
+      </EmptyState>
+    );
+  }
+
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {subscriptions.map((s) => {
           const status = getStatus(s);
           const skippedDate = state[s.id]?.skipNextCycleAt ?? null;
@@ -148,14 +165,15 @@ export function SubscriptionsManager({ subscriptions }: Props) {
             <article
               key={s.id}
               className={cn(
-                'rounded-3xl border border-line bg-surface p-5 md:p-7 transition-opacity',
+                panel,
+                'p-5 transition-opacity md:p-6',
                 isCancelled && 'opacity-60',
               )}
             >
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                <div className="flex gap-4 min-w-0 flex-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 flex-1 gap-4">
                   <div
-                    className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border border-line"
+                    className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[2px] md:h-20 md:w-20"
                     style={{ background: s.swatch }}
                   >
                     <Image
@@ -168,27 +186,21 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   </div>
                   <div className="min-w-0">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span
-                        className={cn(
-                          'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] tracking-widest font-semibold',
-                          theme.class,
-                        )}
-                      >
-                        {theme.label}
-                      </span>
+                      <StatusChip tone={theme.tone}>{theme.label}</StatusChip>
                       {skippedDate && status === 'active' && (
-                        <span className="inline-flex items-center rounded-full border border-amber-400/30 bg-amber-500/5 text-amber-300 px-2.5 py-0.5 text-[10px] tracking-widest font-semibold">
-                          NEXT CYCLE SKIPPED
-                        </span>
+                        <StatusChip tone="warn">Next cycle skipped</StatusChip>
                       )}
                     </div>
-                    <h2 className="text-lg md:text-xl font-semibold tracking-tight text-foreground">
+                    <h2
+                      className="font-display font-normal text-black"
+                      style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+                    >
                       {s.productName}
                     </h2>
-                    <p className="mt-0.5 text-sm text-foreground/65">
+                    <p className="mt-1 text-[15px] text-black/65">
                       {s.cycleLabel} · {s.cadenceLabel}
                     </p>
-                    <p className="mt-1 text-xs text-foreground/55">
+                    <p className="mt-1 text-[14px] tabular-nums text-black/55">
                       {isCancelled
                         ? 'Cancelled. No further shipments will be sent.'
                         : isPaused
@@ -200,23 +212,23 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   </div>
                 </div>
 
-                <div className="text-right md:flex-shrink-0">
-                  <div className="text-xl font-semibold text-foreground tabular-nums">
+                <div className="sm:flex-shrink-0 sm:text-right">
+                  <div className="text-[20px] font-medium text-black tabular-nums">
                     ${s.perMonth}
-                    <span className="text-sm text-foreground/55 font-normal">
+                    <span className="text-[15px] font-normal text-black/55">
                       /mo
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
+              <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-black/10 pt-5">
                 {/* Resume — only when paused */}
                 {isPaused && (
                   <button
                     type="button"
                     onClick={() => togglePause(s)}
-                    className="rounded-full bg-accent text-black font-semibold px-4 py-2 text-xs hover:bg-accent-soft transition-colors"
+                    className={btnPrimary}
                   >
                     Resume
                   </button>
@@ -227,7 +239,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   <button
                     type="button"
                     onClick={() => reactivate(s)}
-                    className="rounded-full bg-accent text-black font-semibold px-4 py-2 text-xs hover:bg-accent-soft transition-colors"
+                    className={btnPrimary}
                   >
                     Reactivate
                   </button>
@@ -235,8 +247,8 @@ export function SubscriptionsManager({ subscriptions }: Props) {
 
                 {/* Billing plan — the one thing a member can change */}
                 {status === 'active' && (
-                  <label className="flex items-center gap-2 rounded-full border border-line bg-background px-3 py-1.5 text-xs text-foreground/85">
-                    <span className="text-[10px] tracking-widest text-foreground/50">PLAN</span>
+                  <label className="flex min-h-[44px] items-center gap-2 rounded-full bg-white px-4 font-mono text-[13px] text-black ring-1 ring-black/15 md:min-h-[40px]">
+                    <span className="text-black/55">Plan</span>
                     <select
                       value={
                         planFor[s.id] ??
@@ -247,7 +259,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                             : 'monthly')
                       }
                       onChange={(e) => changePlan(s, e.target.value as PlanKey)}
-                      className="bg-transparent text-xs text-foreground outline-none"
+                      className="bg-transparent font-mono text-[13px] text-black outline-none"
                     >
                       <option value="monthly">Monthly</option>
                       <option value="quarterly">Quarterly</option>
@@ -262,7 +274,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                     <button
                       type="button"
                       onClick={() => togglePause(s)}
-                      className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
+                      className={btnSecondary}
                     >
                       Pause
                     </button>
@@ -276,7 +288,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                             productName: s.productName,
                           })
                         }
-                        className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
+                        className={btnSecondary}
                       >
                         Skip next cycle
                       </button>
@@ -285,7 +297,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                       <button
                         type="button"
                         onClick={() => update(s.id, { skipNextCycleAt: null })}
-                        className="rounded-full border border-line bg-background text-foreground/85 font-medium px-4 py-2 text-xs hover:border-foreground/30 transition-colors"
+                        className={btnSecondary}
                       >
                         Undo skip
                       </button>
@@ -299,7 +311,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                           productName: s.productName,
                         })
                       }
-                      className="rounded-full border border-red-500/30 bg-red-500/5 text-red-300 font-medium px-4 py-2 text-xs hover:bg-red-500/10 transition-colors"
+                      className={btnDanger}
                     >
                       Cancel
                     </button>
@@ -308,16 +320,16 @@ export function SubscriptionsManager({ subscriptions }: Props) {
 
                 {/* Pending-review: read-only */}
                 {status === 'pending-review' && (
-                  <p className="text-xs text-foreground/55">
+                  <p className="text-[14px] text-black/60">
                     In review. Controls unlock once your order is confirmed.
                   </p>
                 )}
 
                 <Link
                   href="/portal/orders"
-                  className="ml-auto text-[11px] tracking-widest text-accent hover:text-accent-soft"
+                  className="ml-auto inline-flex min-h-[44px] items-center font-mono text-[13px] text-black underline decoration-black/40 underline-offset-[3px] hover:decoration-black md:min-h-0"
                 >
-                  ORDER HISTORY →
+                  Order history →
                 </Link>
               </div>
             </article>
@@ -333,19 +345,19 @@ export function SubscriptionsManager({ subscriptions }: Props) {
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
         >
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setConfirm(null)}
           />
-          <div className="relative w-full max-w-md rounded-3xl border border-line bg-surface-raised p-6 md:p-8 shadow-2xl">
-            <p className="mb-2 text-[10px] tracking-widest text-foreground/55">
-              {confirm.kind === 'cancel' ? 'CANCEL SUBSCRIPTION' : 'SKIP NEXT CYCLE'}
-            </p>
-            <h3 className="mb-3 text-xl font-semibold tracking-tight text-foreground">
+          <div className="relative w-full max-w-md rounded-[4px] bg-white p-6 text-black shadow-[0_20px_50px_-15px_rgba(0,0,0,0.45)] ring-1 ring-black/10 md:p-8">
+            <h3
+              className="mb-3 font-display font-normal"
+              style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+            >
               {confirm.kind === 'cancel'
                 ? `Cancel ${confirm.productName}?`
                 : `Skip the next ${confirm.productName} cycle?`}
             </h3>
-            <p className="mb-6 text-sm text-foreground/65 leading-relaxed">
+            <p className="mb-6 text-[15px] leading-relaxed text-black/70">
               {confirm.kind === 'cancel'
                 ? "You won't be billed again. You can reactivate later — your protocol stays on file for reordering."
                 : "You won't be charged or shipped for the next cycle. Billing automatically resumes on the cycle after."}
@@ -354,7 +366,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
               <button
                 type="button"
                 onClick={() => setConfirm(null)}
-                className="rounded-full border border-line bg-background text-foreground/85 font-medium px-5 py-2.5 text-sm hover:border-foreground/30 transition-colors"
+                className={btnSecondary}
               >
                 Never mind
               </button>
@@ -367,10 +379,8 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   else skipNextCycle(sub);
                 }}
                 className={cn(
-                  'rounded-full font-semibold px-5 py-2.5 text-sm transition-colors',
-                  confirm.kind === 'cancel'
-                    ? 'bg-red-500/90 hover:bg-red-500 text-white'
-                    : 'bg-accent hover:bg-accent-soft text-black',
+                  btnPrimary,
+                  confirm.kind === 'cancel' && 'bg-red-700 hover:bg-red-800',
                 )}
               >
                 {confirm.kind === 'cancel'

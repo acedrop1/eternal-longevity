@@ -60,7 +60,7 @@ function CardCapture({
       <PaymentElement options={{ layout: 'tabs' }} />
 
       {error && (
-        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p role="alert" className="mt-4 rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
           {error}
         </p>
       )}
@@ -68,13 +68,13 @@ function CardCapture({
       <button
         type="submit"
         disabled={!stripe || busy}
-        className="mt-5 w-full rounded-full bg-accent py-3.5 text-base font-semibold text-black transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-5 w-full rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? 'Saving…' : 'Save card and continue'}
       </button>
 
-      <p className="mt-3 text-center text-[11px] leading-relaxed text-foreground/50">
-        <strong className="text-foreground/70">Nothing is charged now.</strong>{' '}
+      <p className="mt-3 text-center text-[13px] leading-relaxed text-black/55">
+        <strong className="font-medium text-black">Nothing is charged now.</strong>{' '}
         If your prescriber approves your treatment, this card is charged{' '}
         {amountLabel}. If they decide it is not right for you, it never is.
       </p>
@@ -125,11 +125,11 @@ export function CheckoutCardStep({
 
   if (saved) {
     return (
-      <div className="flex items-center gap-2.5 rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-3.5">
-        <span aria-hidden className="text-accent">
+      <div role="status" className="flex items-center gap-2.5 rounded-[2px] bg-[#F2F2F0] px-4 py-3.5">
+        <span aria-hidden className="text-black">
           ✓
         </span>
-        <p className="text-sm text-foreground/85">
+        <p className="text-[15px] text-black/85">
           Card saved. You are charged {amountLabel} only if your prescriber
           approves — never before, and never if they decline.
         </p>
@@ -139,7 +139,7 @@ export function CheckoutCardStep({
 
   if (error) {
     return (
-      <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+      <p role="alert" className="rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
         {error}
       </p>
     );
@@ -147,10 +147,10 @@ export function CheckoutCardStep({
 
   if (!clientSecret) {
     return (
-      <div className="flex items-center gap-3 text-sm text-foreground/55">
+      <div className="flex items-center gap-3 font-mono text-[13px] text-black/55">
         <span
           aria-hidden
-          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-foreground/20 border-t-accent"
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black/15 border-t-black"
         />
         Loading secure card form…
       </div>
@@ -163,12 +163,12 @@ export function CheckoutCardStep({
       options={{
         clientSecret,
         appearance: {
-          theme: 'night',
+          theme: 'stripe',
           variables: {
-            colorPrimary: '#d5a850',
-            colorBackground: '#0f0f0f',
-            colorText: '#e5e5e5',
-            borderRadius: '14px',
+            colorPrimary: '#000000',
+            colorBackground: '#ffffff',
+            colorText: '#000000',
+            borderRadius: '2px',
             fontSizeBase: '16px',
           },
         },

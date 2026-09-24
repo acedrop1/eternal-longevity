@@ -23,7 +23,7 @@ export interface AdminSettingsProps {
 }
 
 const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
 
 export function AdminSettings({
   services,
@@ -39,10 +39,10 @@ export function AdminSettings({
       {/* Mode */}
       <div
         className={cn(
-          'rounded-2xl border px-4 py-3 text-sm',
+          'rounded-[4px] border px-4 py-3 text-sm',
           live
             ? 'border-accent/30 bg-accent/10 text-accent'
-            : 'border-amber-400/30 bg-amber-500/10 text-amber-200',
+            : 'border-amber-700/30 bg-amber-500/10 text-amber-800',
         )}
       >
         {live
@@ -56,7 +56,7 @@ export function AdminSettings({
           {services.map((s) => (
             <li
               key={s.name}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-background p-4"
+              className="flex items-center justify-between gap-3 rounded-[4px] border border-line bg-background p-4"
             >
               <div className="min-w-0">
                 <div className="text-sm font-medium text-foreground">
@@ -68,19 +68,20 @@ export function AdminSettings({
               </div>
               <span
                 className={cn(
-                  'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-widest',
+                  'inline-flex flex-shrink-0 items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
                   s.connected
                     ? 'border-accent/40 bg-accent/10 text-accent'
-                    : 'border-line bg-surface text-foreground/45',
+                    : 'border-line bg-surface text-foreground/60',
                 )}
               >
                 <span
+                  aria-hidden
                   className={cn(
                     'h-1.5 w-1.5 rounded-full',
                     s.connected ? 'bg-accent' : 'bg-foreground/30',
                   )}
                 />
-                {s.connected ? 'CONNECTED' : 'NOT SET'}
+                {s.connected ? 'Connected' : 'Not set'}
               </span>
             </li>
           ))}
@@ -125,7 +126,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-line bg-surface p-6 md:p-8">
+    <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
       <h2 className="text-lg font-semibold tracking-tight text-foreground">
         {title}
       </h2>
@@ -139,7 +140,7 @@ function Card({
 
 function ReadRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-line bg-background p-4">
+    <div className="flex items-center justify-between gap-4 rounded-[4px] border border-line bg-background p-4">
       <span className="text-sm text-foreground/65">{label}</span>
       <span className="truncate text-sm text-foreground/90">{value}</span>
     </div>

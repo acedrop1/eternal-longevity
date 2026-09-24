@@ -19,6 +19,7 @@ import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
+import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -333,7 +334,10 @@ export function CheckoutFlow({
    * order for a product we cannot sell. Taken from the live catalogue instead,
    * so it can never name something that is not on it.
    */
-  const fallbackProduct = PUBLIC_PRODUCTS[0];
+  // Live catalogue first; the seed list only if the catalogue is empty. The
+  // server re-checks that the product is live before any order is placed.
+  const liveProducts = useCatalog().products;
+  const fallbackProduct = liveProducts[0] ?? PUBLIC_PRODUCTS[0];
   const fallbackLine = useMemo(
     () => ({
       key: `fallback-${fallbackProduct.id}`,
@@ -345,6 +349,7 @@ export function CheckoutFlow({
       sub: fallbackProduct.cycleLength,
       image: fallbackProduct.image,
       swatch: fallbackProduct.swatch,
+      shot: fallbackProduct.shot,
     }),
     [fallbackProduct]
   );
@@ -363,6 +368,7 @@ export function CheckoutFlow({
         sub: it.product.cycleLength,
         image: it.product.image,
         swatch: it.product.swatch,
+        shot: it.product.shot,
       }));
     }
     return [
@@ -378,6 +384,7 @@ export function CheckoutFlow({
         sub: fallbackLine.sub,
         image: fallbackLine.image,
         swatch: fallbackLine.swatch,
+        shot: fallbackLine.shot,
       },
     ];
   }, [hasCart, resolvedItems, fallbackLine]);
@@ -649,15 +656,15 @@ export function CheckoutFlow({
       <div className="mb-8 flex items-center justify-between">
         <Link
           href="/portal"
-          className="flex items-center gap-2 text-foreground hover:text-accent transition-colors"
+          className="flex items-center gap-3 text-black"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="Eternal Longevity" className="h-6 w-auto" />
-          <span className="hidden sm:inline text-[11px] tracking-widest text-foreground/55">
-            CHECKOUT
+          <span className="hidden font-mono text-[13px] text-black/55 sm:inline">
+            Checkout
           </span>
         </Link>
-        <span className="inline-flex items-center gap-1.5 text-[11px] tracking-wider text-foreground/55">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[12px] text-black/60">
           <svg
             width="12"
             height="12"
@@ -672,7 +679,7 @@ export function CheckoutFlow({
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          SECURE CHECKOUT
+          Secure checkout
         </span>
       </div>
 
@@ -682,7 +689,7 @@ export function CheckoutFlow({
             but lg:order-2 puts it in the right column on desktop. */}
         <aside className="lg:order-2">
           <div className="lg:sticky lg:top-8">
-            <div className="rounded-3xl border border-line bg-surface overflow-hidden">
+            <div className="overflow-hidden rounded-[4px] bg-[#F2F2F0]">
               {/* Compact mobile header. Tap to expand. Hidden on lg+ where the
                   full summary is always visible in the sidebar. */}
               <button
@@ -692,7 +699,7 @@ export function CheckoutFlow({
                 className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
               >
                 <span className="flex items-center gap-3 min-w-0">
-                  <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-foreground/5 text-foreground/70">
+                  <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-[2px] bg-black/[0.06] text-black/70">
                     <svg
                       width="14"
                       height="14"
@@ -709,17 +716,17 @@ export function CheckoutFlow({
                     </svg>
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-foreground">
+                    <span className="block text-[15px] font-medium text-black">
                       Order summary
                     </span>
-                    <span className="block text-[11px] tracking-wider text-foreground/55">
+                    <span className="block font-mono text-[12px] text-black/55">
                       {lines.length} item{lines.length === 1 ? '' : 's'} ·{' '}
-                      {summaryExpanded ? 'TAP TO COLLAPSE' : 'TAP TO EXPAND'}
+                      {summaryExpanded ? 'Tap to collapse' : 'Tap to expand'}
                     </span>
                   </span>
                 </span>
                 <span className="flex flex-shrink-0 items-center gap-2">
-                  <span className="text-base font-semibold text-foreground tabular-nums">
+                  <span className="text-[16px] font-medium text-black tabular-nums">
                     ${total}
                   </span>
                   <svg
@@ -732,7 +739,7 @@ export function CheckoutFlow({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className={cn(
-                      'text-foreground/55 transition-transform duration-300',
+                      'text-black/55 transition-transform duration-300',
                       summaryExpanded ? 'rotate-180' : ''
                     )}
                   >
@@ -746,43 +753,43 @@ export function CheckoutFlow({
                 className={cn(
                   'lg:block lg:p-7 px-5 pb-5 pt-1',
                   summaryExpanded
-                    ? 'block border-t border-line lg:border-t-0'
+                    ? 'block border-t border-black/15 lg:border-t-0'
                     : 'hidden'
                 )}
               >
                 <div className="mb-5 hidden lg:flex items-center justify-between">
-                  <h2 className="text-[11px] tracking-widest text-foreground/55">
-                    ORDER DETAILS
+                  <h2 className="font-mono text-[13px] text-black/70">
+                    Order details
                   </h2>
-                  <span className="text-[11px] tracking-wider text-foreground/55">
+                  <span className="font-mono text-[13px] text-black/55">
                     {lines.length} item{lines.length === 1 ? '' : 's'}
                   </span>
                 </div>
 
-                <ul className="space-y-4 mb-5">
+                <ul className="mb-5 border-t border-black/15">
                   {lines.map((l) => (
-                    <li key={l.key} className="flex gap-3">
+                    <li key={l.key} className="flex gap-3 border-b border-black/15 py-4">
                       <div
-                        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-line"
-                        style={{ background: l.swatch }}
+                        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[2px] bg-neutral-200"
+                        style={l.shot ? undefined : { background: l.swatch }}
                       >
                         <Image
                           src={l.image}
                           alt={l.name}
                           fill
                           sizes="64px"
-                          className="object-cover opacity-50"
+                          className={l.shot ? 'object-cover' : 'object-cover opacity-50'}
                         />
                       </div>
                       <div className="flex flex-1 min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-foreground">
+                          <div className="truncate text-[15px] font-medium text-black">
                             {l.name}
                           </div>
-                          <div className="text-[11px] tracking-wider text-foreground/55 mt-0.5">
-                            {l.cadenceLabel.toUpperCase()}
+                          <div className="mt-0.5 font-mono text-[12px] text-black/60">
+                            {l.cadenceLabel}
                           </div>
-                          <div className="text-xs text-foreground/55 mt-0.5">
+                          <div className="mt-0.5 text-[13px] text-black/55">
                             {l.sub} · Qty {l.qty}
                           </div>
                           {l.productId && l.cadence && (
@@ -794,13 +801,13 @@ export function CheckoutFlow({
                                   l.cadence as Cadence
                                 )
                               }
-                              className="mt-1 text-[10px] tracking-widest text-foreground/45 hover:text-red-300 transition-colors"
+                              className="mt-1.5 font-mono text-[12px] text-black/55 underline decoration-black/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
                             >
-                              REMOVE
+                              Remove
                             </button>
                           )}
                         </div>
-                        <div className="text-sm font-semibold text-foreground tabular-nums">
+                        <div className="text-[15px] font-medium text-black tabular-nums">
                           ${l.total}
                         </div>
                       </div>
@@ -808,8 +815,8 @@ export function CheckoutFlow({
                   ))}
                 </ul>
 
-                <div className="mb-5 flex items-center gap-2 text-[11px] tracking-wider text-foreground/65">
-                  <span className="grid h-5 w-5 place-items-center rounded-full bg-accent/10 text-accent">
+                <div className="mb-5 flex items-center gap-2 font-mono text-[12px] text-black/60">
+                  <span className="grid h-5 w-5 place-items-center rounded-[2px] bg-black text-white">
                     <svg
                       width="11"
                       height="11"
@@ -823,11 +830,11 @@ export function CheckoutFlow({
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </span>
-                  <span className="font-semibold text-foreground/85">Prescription required</span>
+                  <span className="text-black">Prescription required</span>
                   <span>· 503A compounded</span>
                 </div>
 
-                <div className="space-y-2 text-sm border-t border-line pt-4">
+                <div className="space-y-2 border-t border-black/15 pt-4 text-[15px]">
                   <SummaryRow label="Subtotal" value={`$${subtotal}`} />
                   <SummaryRow
                     label="Shipping"
@@ -856,29 +863,30 @@ export function CheckoutFlow({
                         }
                       }}
                       placeholder="Promo code"
-                      className="min-w-0 flex-1 rounded-full border border-line bg-background px-4 py-2 text-sm uppercase tracking-wide text-foreground placeholder-foreground/30 focus:border-accent focus:outline-none"
+                      className="min-w-0 flex-1 rounded-[2px] bg-white px-4 py-2.5 text-[16px] uppercase text-black ring-1 ring-black/10 placeholder:normal-case placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black"
                     />
                     <button
                       type="button"
                       onClick={applyPromo}
                       disabled={!promoInput.trim() || promoBusy}
-                      className="flex-none rounded-full border border-line px-4 py-2 text-xs font-semibold tracking-wide text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-40"
+                      className="flex-none rounded-full px-4 py-2.5 font-mono text-[13px] text-black ring-1 ring-black/20 transition-colors hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {promoBusy ? '…' : 'Apply'}
                     </button>
                   </div>
                   {promo && (
                     <p
+                      role={promo.ok ? 'status' : 'alert'}
                       className={cn(
-                        'mt-1.5 text-xs',
-                        promo.ok ? 'text-accent' : 'text-red-300',
+                        'mt-1.5 font-mono text-[12px]',
+                        promo.ok ? 'text-black' : 'text-red-700',
                       )}
                     >
                       {promo.ok ? `${promo.label} applied.` : promo.error}
                     </p>
                   )}
 
-                  <div className="my-2 h-px bg-line" />
+                  <div className="my-2 h-px bg-black/15" />
                   <SummaryRow
                     label="Total if approved"
                     value={`$${total}`}
@@ -886,8 +894,8 @@ export function CheckoutFlow({
                   />
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-accent/25 bg-accent/[0.05] px-4 py-3 text-xs text-foreground/70 leading-relaxed">
-                  <span className="font-semibold text-foreground">
+                <div className="mt-5 rounded-[2px] bg-white px-4 py-3 text-[13px] leading-relaxed text-black/70">
+                  <span className="font-medium text-black">
                     Nothing is charged today.
                   </span>{' '}
                   You only pay if your prescriber approves your treatment.
@@ -901,12 +909,8 @@ export function CheckoutFlow({
         {/* ============ LEFT. FORM SECTIONS ============ */}
         <div className="lg:order-1 space-y-3">
           <h1
-            className="mb-6 font-semibold tracking-tight text-foreground"
-            style={{
-              fontSize: 'clamp(1.85rem, 4vw, 2.75rem)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.05,
-            }}
+            className="mb-6 font-display font-normal [text-wrap:balance]"
+            style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
           >
             Start your cycle.
           </h1>
@@ -921,7 +925,7 @@ export function CheckoutFlow({
             onEdit={() => setOpen('email')}
             sectionRef={sectionRefs.email}
           >
-            <FieldLabel htmlFor="co-email">EMAIL</FieldLabel>
+            <FieldLabel htmlFor="co-email">Email</FieldLabel>
             <input
               ref={emailRef}
               id="co-email"
@@ -937,7 +941,7 @@ export function CheckoutFlow({
               placeholder="you@example.com"
               className={inputClass}
             />
-            <p className="mt-2 text-xs text-foreground/55">
+            <p className="mt-2 font-mono text-[12px] text-black/55">
               We&apos;ll send your receipt and shipping updates here.
             </p>
             <ContinueButton disabled={!emailValid} onClick={continueEmail}>
@@ -966,8 +970,8 @@ export function CheckoutFlow({
             {/* Saved-address picker. Shows when the member has saved addresses */}
             {profile.addresses.length > 0 && (
               <div className="mb-5 space-y-2">
-                <div className="mb-2 text-[10px] tracking-widest text-foreground/55">
-                  SHIP TO
+                <div className="mb-2 font-mono text-[13px] text-black/70">
+                  Ship to
                 </div>
                 {profile.addresses.map((a) => {
                   const isActive = selectedAddressId === a.id;
@@ -977,37 +981,37 @@ export function CheckoutFlow({
                       type="button"
                       onClick={() => setSelectedAddressId(a.id)}
                       className={cn(
-                        'flex w-full items-start gap-4 rounded-2xl border px-5 py-4 text-left transition-all',
+                        'flex w-full items-start gap-4 rounded-[2px] px-5 py-4 text-left transition-[box-shadow,background-color]',
                         isActive
-                          ? 'border-accent bg-accent/5'
-                          : 'border-line bg-surface hover:border-foreground/30'
+                          ? 'bg-white ring-2 ring-black'
+                          : 'bg-black/[0.04] ring-1 ring-black/10 hover:ring-black/30'
                       )}
                     >
                       <span
                         className={cn(
                           'mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                          isActive ? 'border-accent' : 'border-line'
+                          isActive ? 'border-black' : 'border-black/30'
                         )}
                       >
                         {isActive && (
-                          <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-black" />
                         )}
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">
+                          <span className="text-[15px] font-medium text-black">
                             {a.label}
                           </span>
                           {a.isPrimary && (
-                            <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[10px] tracking-widest font-semibold">
-                              PRIMARY
+                            <span className="rounded-[2px] bg-black/[0.08] px-1.5 py-0.5 font-mono text-[12px] text-black/70">
+                              Primary
                             </span>
                           )}
                         </span>
-                        <span className="block text-sm text-foreground/85 mt-0.5">
+                        <span className="mt-0.5 block text-[15px] text-black/85">
                           {a.fullName}
                         </span>
-                        <span className="block text-xs text-foreground/55 mt-0.5">
+                        <span className="mt-0.5 block text-[13px] text-black/55">
                           {formatAddressOneLine(a)}
                         </span>
                       </span>
@@ -1018,16 +1022,16 @@ export function CheckoutFlow({
                   type="button"
                   onClick={() => setSelectedAddressId('new')}
                   className={cn(
-                    'flex w-full items-center gap-4 rounded-2xl border-2 border-dashed px-5 py-4 text-left transition-all',
+                    'flex w-full items-center gap-4 rounded-[2px] border border-dashed px-5 py-4 text-left transition-colors',
                     selectedAddressId === 'new'
-                      ? 'border-accent bg-accent/5'
-                      : 'border-line bg-background hover:border-foreground/30'
+                      ? 'border-black bg-white'
+                      : 'border-black/30 bg-white hover:border-black/60'
                   )}
                 >
-                  <span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground/65 text-xs">
+                  <span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-black/10 text-[13px] text-black/70">
                     +
                   </span>
-                  <span className="text-sm font-medium text-foreground/85">
+                  <span className="text-[15px] font-medium text-black/85">
                     Use a new address
                   </span>
                 </button>
@@ -1038,7 +1042,7 @@ export function CheckoutFlow({
             {(selectedAddressId === 'new' || profile.addresses.length === 0) && (
             <div className="grid gap-4">
               <div>
-                <FieldLabel htmlFor="ship-name">FULL NAME</FieldLabel>
+                <FieldLabel htmlFor="ship-name">Full name</FieldLabel>
                 <input
                   ref={fullNameRef}
                   id="ship-name"
@@ -1059,7 +1063,7 @@ export function CheckoutFlow({
                 />
               </div>
               <div>
-                <FieldLabel htmlFor="ship-addr1">STREET ADDRESS</FieldLabel>
+                <FieldLabel htmlFor="ship-addr1">Street address</FieldLabel>
                 <div className="relative">
                   <input
                     ref={address1Ref}
@@ -1115,7 +1119,7 @@ export function CheckoutFlow({
                     <ul
                       id="ship-addr-suggestions"
                       role="listbox"
-                      className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl"
+                      className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-[2px] bg-white shadow-[0_16px_40px_-12px_rgba(0,0,0,0.3)] ring-1 ring-black/10"
                     >
                       {places.suggestions.map((sg, i) => (
                         <li key={sg.id}>
@@ -1131,10 +1135,10 @@ export function CheckoutFlow({
                               void applySuggestion(sg);
                             }}
                             className={cn(
-                              'block w-full px-4 py-3 text-left text-sm transition-colors',
+                              'block w-full px-4 py-3 text-left text-[15px] transition-colors',
                               i === highlight
-                                ? 'bg-accent/10 text-foreground'
-                                : 'text-foreground/75 hover:bg-foreground/5',
+                                ? 'bg-black/[0.06] text-black'
+                                : 'text-black/75 hover:bg-black/[0.04]',
                             )}
                           >
                             {sg.text}
@@ -1146,7 +1150,7 @@ export function CheckoutFlow({
                 </div>
               </div>
               <div>
-                <FieldLabel htmlFor="ship-addr2">APT / SUITE (OPTIONAL)</FieldLabel>
+                <FieldLabel htmlFor="ship-addr2">Apt / suite (optional)</FieldLabel>
                 <input
                   ref={address2Ref}
                   id="ship-addr2"
@@ -1194,7 +1198,7 @@ export function CheckoutFlow({
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="ship-city">CITY</FieldLabel>
+                  <FieldLabel htmlFor="ship-city">City</FieldLabel>
                   <input
                     ref={cityRef}
                     id="ship-city"
@@ -1216,7 +1220,7 @@ export function CheckoutFlow({
                   />
                 </div>
                 <div>
-                  <FieldLabel htmlFor="ship-state">STATE</FieldLabel>
+                  <FieldLabel htmlFor="ship-state">State</FieldLabel>
                   {/* One state served, so this is shown rather than chosen. */}
                   <input
                     id="ship-state"
@@ -1225,12 +1229,12 @@ export function CheckoutFlow({
                     readOnly
                     aria-readonly
                     autoComplete="address-level1"
-                    className={cn(inputClass, 'cursor-default text-foreground/60')}
+                    className={cn(inputClass, 'cursor-default text-black/60')}
                   />
                 </div>
               </div>
               <div>
-                <FieldLabel htmlFor="ship-phone">PHONE</FieldLabel>
+                <FieldLabel htmlFor="ship-phone">Phone</FieldLabel>
                 <input
                   ref={phoneRef}
                   id="ship-phone"
@@ -1243,7 +1247,7 @@ export function CheckoutFlow({
                   placeholder="(555) 555-5555"
                   className={inputClass}
                 />
-                <p className="mt-2 text-xs text-foreground/55">
+                <p className="mt-2 font-mono text-[12px] text-black/55">
                   Used only for delivery updates and emergencies.
                 </p>
               </div>
@@ -1288,31 +1292,31 @@ export function CheckoutFlow({
                     type="button"
                     onClick={() => setShippingMethod(opt.id)}
                     className={cn(
-                      'flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all',
+                      'flex w-full items-center gap-4 rounded-[2px] px-5 py-4 text-left transition-[box-shadow,background-color]',
                       isActive
-                        ? 'border-accent bg-accent/5'
-                        : 'border-line bg-surface hover:border-foreground/30'
+                        ? 'bg-white ring-2 ring-black'
+                        : 'bg-black/[0.04] ring-1 ring-black/10 hover:ring-black/30'
                     )}
                   >
                     <span
                       className={cn(
                         'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                        isActive ? 'border-accent' : 'border-line'
+                        isActive ? 'border-black' : 'border-black/30'
                       )}
                     >
                       {isActive && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-black" />
                       )}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-semibold text-foreground">
+                      <span className="block text-[15px] font-medium text-black">
                         {opt.label}
                       </span>
-                      <span className="block text-xs text-foreground/55 mt-0.5">
+                      <span className="mt-0.5 block text-[13px] text-black/55">
                         {opt.eta}
                       </span>
                     </span>
-                    <span className="flex-shrink-0 text-sm font-semibold text-foreground tabular-nums">
+                    <span className="flex-shrink-0 text-[15px] font-medium text-black tabular-nums">
                       {opt.price === 0 ? 'Included' : `+$${opt.price}`}
                     </span>
                   </button>
@@ -1335,11 +1339,11 @@ export function CheckoutFlow({
             onEdit={() => setOpen('payment')}
             sectionRef={sectionRefs.payment}
           >
-            <div className="rounded-2xl border border-accent/30 bg-accent/[0.06] px-4 py-4">
-              <p className="mb-1 text-[11px] tracking-widest text-accent">
-                NOT CHARGED UNTIL APPROVED
+            <div className="rounded-[2px] bg-[#F2F2F0] px-4 py-4">
+              <p className="mb-1 font-mono text-[13px] text-black">
+                Not charged until approved
               </p>
-              <p className="text-sm text-foreground/80 leading-relaxed">
+              <p className="text-[15px] leading-relaxed text-black/80">
                 Your card is saved now but not charged. Your prescriber reviews
                 your visit first — if they approve, this card is charged and
                 your prescription goes straight to the pharmacy. If they decide
@@ -1349,7 +1353,7 @@ export function CheckoutFlow({
                   clinical decision; a different product is. Saying so stops a
                   returning member expecting a review that will not happen, and
                   a plan member fearing one that will. */}
-              <p className="mt-2 text-sm leading-relaxed text-foreground/60">
+              <p className="mt-2 text-[15px] leading-relaxed text-black/60">
                 A plan keeps shipping on this prescription until it expires. A
                 different product is a new prescription, so it is reviewed
                 again.
@@ -1358,8 +1362,8 @@ export function CheckoutFlow({
 
             {stripePublishableKey && (
               <div className="mt-4">
-                <p className="mb-2.5 text-[10px] tracking-widest text-foreground/50">
-                  PAYMENT METHOD
+                <p className="mb-2.5 font-mono text-[13px] text-black/70">
+                  Payment method
                 </p>
                 <CheckoutCardStep
                   publishableKey={stripePublishableKey}
@@ -1372,37 +1376,37 @@ export function CheckoutFlow({
               </div>
             )}
 
-            <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-              <span className="text-sm text-foreground/55">Total if approved</span>
-              <span className="text-xl font-semibold tabular-nums text-foreground">
+            <div className="mt-4 flex items-baseline justify-between border-t border-black/15 pt-4">
+              <span className="text-[15px] text-black/60">Total if approved</span>
+              <span className="text-xl font-medium tabular-nums text-black">
                 ${total}
               </span>
             </div>
 
-            <label className="mt-5 flex cursor-pointer gap-3 rounded-2xl border border-line bg-background px-4 py-3.5 text-[13px] leading-relaxed text-foreground/85">
+            <label className="mt-5 flex cursor-pointer gap-3 rounded-[2px] bg-black/[0.04] px-4 py-3.5 text-[14px] leading-relaxed text-black/85 ring-1 ring-black/10">
               <input
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-1 h-4 w-4 flex-none accent-[#d5a850]"
+                className="mt-1 h-4 w-4 flex-none accent-black"
               />
               <span>
                 I am 18 or older and a New Jersey resident, the health
                 information I provided is accurate and complete, and I agree to
                 the{' '}
-                <Link href="/legal/terms" className="text-accent underline underline-offset-2" target="_blank">
+                <Link href="/legal/terms" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
                   Terms of Service
                 </Link>
                 ,{' '}
-                <Link href="/legal/consent" className="text-accent underline underline-offset-2" target="_blank">
+                <Link href="/legal/consent" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
                   Informed Consent
                 </Link>
                 ,{' '}
-                <Link href="/legal/refunds" className="text-accent underline underline-offset-2" target="_blank">
+                <Link href="/legal/refunds" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
                   Refund Policy
                 </Link>{' '}
                 and{' '}
-                <Link href="/legal/privacy" className="text-accent underline underline-offset-2" target="_blank">
+                <Link href="/legal/privacy" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
                   Privacy Policy
                 </Link>
                 . I understand this order is a request for a prescriber to
@@ -1415,22 +1419,17 @@ export function CheckoutFlow({
               type="button"
               onClick={handlePay}
               disabled={isPaying || !termsAccepted || (!!stripePublishableKey && !cardSaved)}
-              className={cn(
-                'mt-6 w-full rounded-full font-semibold py-3.5 text-base transition-colors inline-flex items-center justify-center gap-2',
-                !isPaying && termsAccepted && (!stripePublishableKey || cardSaved)
-                  ? 'bg-accent text-black hover:bg-accent-soft'
-                  : 'bg-foreground/15 text-foreground/40 cursor-not-allowed'
-              )}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
             >
               {isPaying && (
                 <span
                   aria-hidden
-                  className="h-4 w-4 inline-block rounded-full border-2 border-black/30 border-t-black animate-spin"
+                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                 />
               )}
               {isPaying ? 'Placing order…' : 'Place order'}
             </button>
-            <p className="mt-3 text-center text-[11px] text-foreground/45">
+            <p className="mt-3 text-center font-mono text-[12px] leading-relaxed text-black/55">
               Placing an order costs nothing. You can pause or cancel between
               cycles at any time.
             </p>
@@ -1446,7 +1445,7 @@ export function CheckoutFlow({
 // ============================================================================
 
 const inputClass =
-  'w-full rounded-2xl border border-line bg-background px-4 py-3.5 text-base text-foreground placeholder-foreground/30 transition-all focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30';
+  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
 
 function FieldLabel({
   htmlFor,
@@ -1458,7 +1457,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1.5 block text-[11px] tracking-wider text-foreground/60"
+      className="mb-2 block font-mono text-[13px] text-black/70"
     >
       {children}
     </label>
@@ -1479,12 +1478,7 @@ function ContinueButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={cn(
-        'mt-6 rounded-full font-semibold px-7 py-3 text-sm transition-colors w-full sm:w-auto',
-        disabled
-          ? 'bg-foreground/15 text-foreground/40 cursor-not-allowed'
-          : 'bg-foreground text-background hover:bg-accent hover:text-black'
-      )}
+      className="mt-6 w-full rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black sm:w-auto"
     >
       {children} →
     </button>
@@ -1518,24 +1512,22 @@ function Section({
       // Pad top so the header doesn't sit flush against the sticky bar when
       // scrolled into view on mobile.
       className={cn(
-        'scroll-mt-4 rounded-3xl border bg-surface transition-all',
+        'scroll-mt-4 rounded-[4px] bg-white ring-1 transition-[box-shadow,opacity]',
         isOpen
-          ? 'border-foreground/20'
+          ? 'ring-black/40'
           : disabled
-            ? 'border-line opacity-60'
-            : 'border-line'
+            ? 'opacity-60 ring-black/10'
+            : 'ring-black/15'
       )}
     >
-      <header className="flex items-center justify-between px-6 py-4 md:px-7">
+      <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-7">
         <div className="flex items-center gap-3 min-w-0">
           <span
             className={cn(
-              'grid h-7 w-7 flex-shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums',
-              isComplete
-                ? 'bg-accent text-background'
-                : isOpen
-                  ? 'bg-foreground text-background'
-                  : 'bg-foreground/10 text-foreground/55'
+              'grid h-7 w-7 flex-shrink-0 place-items-center rounded-full font-mono text-[12px] tabular-nums',
+              isComplete || isOpen
+                ? 'bg-black text-white'
+                : 'bg-black/10 text-black/55'
             )}
           >
             {isComplete ? (
@@ -1556,11 +1548,11 @@ function Section({
             )}
           </span>
           <div className="min-w-0">
-            <h3 className="text-sm md:text-base font-semibold tracking-tight text-foreground">
+            <h3 className="text-[16px] font-medium text-black">
               {title}
             </h3>
             {!isOpen && summary && (
-              <p className="mt-0.5 text-xs text-foreground/55 truncate">
+              <p className="mt-0.5 truncate text-[13px] text-black/55">
                 {summary}
               </p>
             )}
@@ -1570,14 +1562,14 @@ function Section({
           <button
             type="button"
             onClick={onEdit}
-            className="text-[11px] tracking-wider text-accent hover:text-accent-soft flex-shrink-0"
+            className="flex-shrink-0 font-mono text-[13px] text-black underline decoration-black/50 underline-offset-[3px] transition-colors hover:decoration-black"
           >
-            EDIT
+            Edit
           </button>
         )}
       </header>
       {isOpen && (
-        <div className="px-6 pb-6 md:px-7 md:pb-7 pt-1">{children}</div>
+        <div className="px-5 pb-6 pt-1 md:px-7 md:pb-7">{children}</div>
       )}
     </section>
   );
@@ -1596,7 +1588,7 @@ function SummaryRow({
     <div
       className={cn(
         'flex items-center justify-between',
-        emphasis ? 'text-base font-semibold text-foreground' : 'text-foreground/75'
+        emphasis ? 'text-[16px] font-medium text-black' : 'text-black/70'
       )}
     >
       <span>{label}</span>
@@ -1619,12 +1611,12 @@ function SaveToggle({
       type="button"
       onClick={() => onChange(!checked)}
       aria-pressed={checked}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-background px-4 py-3 text-left transition-all hover:border-foreground/30"
+      className="flex items-center gap-3 rounded-[2px] bg-black/[0.04] px-4 py-3 text-left ring-1 ring-black/10 transition-shadow hover:ring-black/30"
     >
       <span
         className={cn(
-          'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md border-2 transition-all',
-          checked ? 'border-accent bg-accent text-background' : 'border-line bg-surface'
+          'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] border-2 transition-colors',
+          checked ? 'border-black bg-black text-white' : 'border-black/30 bg-white'
         )}
       >
         {checked && (
@@ -1642,7 +1634,7 @@ function SaveToggle({
           </svg>
         )}
       </span>
-      <span className="text-sm text-foreground/85">{label}</span>
+      <span className="text-[15px] text-black/85">{label}</span>
     </button>
   );
 }

@@ -29,3 +29,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .claude/launch.json
+
+# local product catalogue + uploads (Admin → Products without Supabase)
+/.data/
+/public/uploads/
+
+# macOS metadata written on the exFAT drive
+._*
+
+# GLP-1 renders are local preview only; never publish them on the live domain
+/public/images/products/semaglutide.jpg
+/public/images/products/tirzepatide.jpg
