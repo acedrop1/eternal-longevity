@@ -76,7 +76,7 @@ export const DEMO_USERS: DemoUser[] = [
     role: 'pharmacy',
     email: 'pharmacy@eternal.test',
     password: 'pharmacy',
-    name: 'Kaduceus Pharmacy',
+    name: 'Pharmacy',
     redirectTo: '/portal/pharmacy',
     blurb: 'The compounding pharmacy. Sees submitted orders, accepts them, and adds shipment tracking.',
   },

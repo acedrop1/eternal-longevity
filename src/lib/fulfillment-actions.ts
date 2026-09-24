@@ -27,14 +27,14 @@ export interface FulfillmentResult {
 }
 
 async function requireRole(
-  role: 'admin' | 'pharmacy',
+  ...roles: ('admin' | 'pharmacy')[]
 ): Promise<FulfillmentResult | null> {
   if (!supabaseAdminConfigured()) {
     return { ok: false, message: 'Connect Supabase to enable fulfillment.' };
   }
   const session = await getSession();
-  if (!session || session.role !== role) {
-    return { ok: false, message: `${role} access is required.` };
+  if (!session || !roles.includes(session.role as 'admin' | 'pharmacy')) {
+    return { ok: false, message: `${roles.join(' or ')} access is required.` };
   }
   return null;
 }
@@ -190,7 +190,7 @@ export async function submitDraftOrder(
 export async function pharmacyAcceptOrder(
   fulfillmentId: string,
 ): Promise<FulfillmentResult> {
-  const blocked = await requireRole('pharmacy');
+  const blocked = await requireRole('pharmacy', 'admin');
   if (blocked) return blocked;
 
   const db = createSupabaseAdminClient();
@@ -211,7 +211,9 @@ export async function pharmacyAddTracking(input: {
   carrier: string;
   trackingNumber: string;
 }): Promise<FulfillmentResult> {
-  const blocked = await requireRole('pharmacy');
+  // Admin too: the pharmacy works from its own platform, so the team keys in
+  // the tracking it sends back.
+  const blocked = await requireRole('pharmacy', 'admin');
   if (blocked) return blocked;
 
   if (!input.trackingNumber.trim()) {

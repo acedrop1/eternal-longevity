@@ -22,7 +22,7 @@ import 'server-only';
  *   the Stripe webhook and may not have landed yet.
  *
  *   The prescriber's NPI. It prints on the prescription and a pharmacy will
- *   reject one without it. Submitting anyway wastes a cycle with Kaduceus and
+ *   reject one without it. Submitting anyway wastes a cycle with the pharmacy and
  *   leaves the member waiting, so a missing NPI holds the order and tells the
  *   team instead.
  */
@@ -102,7 +102,7 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
 
   if (!doctor?.npi) {
     const why =
-      'The prescriber has no NPI on file. Kaduceus will reject a prescription without one — set it in Admin → Settings, then submit this order manually.';
+      'The prescriber has no NPI on file. The pharmacy will reject a prescription without one — set it in Admin → Settings, then submit this order manually.';
     await db.from('order_updates').insert({
       order_id: order.id,
       label: 'Held before the pharmacy — missing NPI',
@@ -150,7 +150,7 @@ export async function autoSubmitToPharmacy(orderNumber: string): Promise<{
   await db.from('order_updates').insert({
     order_id: order.id,
     label: 'Sent to the pharmacy',
-    body: `Submitted to Kaduceus as ${orderRef}. Compounding usually starts the same business day.`,
+    body: `Submitted to the pharmacy as ${orderRef}. Compounding usually starts the same business day.`,
     author: 'System',
     author_role: 'system',
   });

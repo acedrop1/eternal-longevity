@@ -128,9 +128,9 @@ export default async function AdminFulfillmentPage() {
           Every order, and where it is.
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
-          Once a physician signs a prescription it lands here. Submit it to
-          Kaduceus and they drop-ship straight to the patient — track every
-          order through to delivery.
+          Once a physician signs a prescription it lands here. Send it to the
+          pharmacy, then add the tracking they send back so the patient is
+          notified.
         </p>
       </div>
 

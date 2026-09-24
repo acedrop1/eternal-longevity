@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import {
+  pharmacyAddTracking,
   submitDraftOrder,
   submitToPharmacy,
   type FulfillmentResult,
@@ -60,7 +61,7 @@ export function AdminFulfillment({
           Signed prescriptions
         </h2>
         <p className="mb-5 text-sm text-foreground/55 leading-relaxed">
-          A physician has signed these off. Submit each one to Kaduceus — they
+          A physician has signed these off. Send each one to the pharmacy — they
           drop-ship straight to the patient.
         </p>
         {readyPrescriptions.length === 0 ? (
@@ -120,9 +121,13 @@ export function AdminFulfillment({
                       </span>
                     </td>
                     <td className="px-2 py-3 text-right font-mono text-[12px] text-foreground/65">
-                      {o.trackingNumber
-                        ? `${o.trackingCarrier ?? ''} ${o.trackingNumber}`
-                        : '—'}
+                      {o.trackingNumber ? (
+                        `${o.trackingCarrier ?? ''} ${o.trackingNumber}`
+                      ) : o.status === 'canceled' ? (
+                        '—'
+                      ) : (
+                        <TrackingForm fulfillmentId={o.id} />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -182,7 +187,7 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
               : 'bg-black text-white hover:bg-black/85 disabled:opacity-50',
           )}
         >
-          {done ? 'Submitted' : busy ? 'Submitting…' : 'Submit to Kaduceus'}
+          {done ? 'Submitted' : busy ? 'Submitting…' : 'Mark sent to pharmacy'}
         </button>
       </div>
       {result && (
@@ -195,6 +200,66 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
           {result.message}
         </p>
       )}
+    </div>
+  );
+}
+
+const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL'];
+
+/**
+ * The pharmacy ships from its own platform and sends tracking back; the team
+ * keys it in here, which marks the order shipped and emails/texts the patient.
+ */
+function TrackingForm({ fulfillmentId }: { fulfillmentId: string }) {
+  const [carrier, setCarrier] = useState(CARRIERS[0]);
+  const [tracking, setTracking] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<FulfillmentResult | null>(null);
+
+  if (result?.ok) return <span className="text-accent">{carrier} {tracking.trim()}</span>;
+
+  async function save() {
+    setBusy(true);
+    setResult(null);
+    try {
+      setResult(await pharmacyAddTracking({ fulfillmentId, carrier, trackingNumber: tracking }));
+    } catch {
+      setResult({ ok: false, message: 'Request failed.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center justify-end gap-1.5">
+        <select
+          aria-label="Carrier"
+          value={carrier}
+          onChange={(e) => setCarrier(e.target.value)}
+          className="rounded-[2px] border border-line bg-background px-2 py-1.5 text-[12px] text-foreground"
+        >
+          {CARRIERS.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+        <input
+          aria-label="Tracking number"
+          value={tracking}
+          onChange={(e) => setTracking(e.target.value)}
+          placeholder="Tracking number"
+          className="w-40 rounded-[2px] border border-line bg-background px-2 py-1.5 text-[12px] text-foreground placeholder-foreground/35"
+        />
+        <button
+          type="button"
+          disabled={busy || !tracking.trim()}
+          onClick={save}
+          className="rounded-full bg-black px-3 py-1.5 text-[12px] text-white transition-colors hover:bg-black/85 disabled:opacity-40"
+        >
+          {busy ? 'Saving…' : 'Shipped'}
+        </button>
+      </div>
+      {result && !result.ok && <span className="text-red-700">{result.message}</span>}
     </div>
   );
 }
