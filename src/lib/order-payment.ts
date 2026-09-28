@@ -26,6 +26,7 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
+import { intentBelongsTo } from '@/lib/order-rules';
 
 /**
  * Create the setup the member confirms at checkout.
@@ -42,7 +43,6 @@ import {
 export async function createOrderAuthAction(amountCents: number): Promise<{
   ok: boolean;
   clientSecret?: string;
-  paymentIntentId?: string;
   error?: string;
 }> {
   const user = await getSession();
@@ -114,9 +114,30 @@ export async function refundDeclinedOrder(
   if (!order?.stripe_payment_intent_id) return { ok: true, refunded: false };
 
   try {
-    await getStripe().refunds.create({
-      payment_intent: order.stripe_payment_intent_id,
-    });
+    const stripe = getStripe();
+    const pi = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
+    // Never refund an intent this order did not create — the id on the row is
+    // only trusted as far as the intent's own metadata agrees.
+    if (!intentBelongsTo(pi, order)) return { ok: true, refunded: false };
+
+    if (pi.status !== 'succeeded') {
+      /*
+       * Nothing moved yet, but a pay form left open still holds this intent's
+       * client secret. Cancel it so the order cannot be paid after the fact.
+       * A 'processing' intent can't be cancelled; if it lands, the webhook
+       * refunds it.
+       */
+      if (pi.status !== 'canceled' && pi.status !== 'processing') {
+        await stripe.paymentIntents.cancel(pi.id);
+      }
+      return { ok: true, refunded: false };
+    }
+
+    await stripe.refunds.create(
+      { payment_intent: pi.id },
+      // A retried cancel must not refund twice.
+      { idempotencyKey: `refund-${pi.id}` },
+    );
 
     await db
       .from('orders')

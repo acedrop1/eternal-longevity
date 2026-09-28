@@ -73,20 +73,15 @@ export default async function AdminQueuePage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/55">
           Members · applications
         </p>
         <h1
-          className="font-display font-normal text-foreground"
-          style={{
-            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
-            fontStretch: '75%',
-            lineHeight: 1.05,
-          }}
+          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
         >
           Applications.
         </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
+        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
           Everyone who has completed the intake. Signing up is not a request
           for anything — the prescriber reviews each order under Orders when it
           is placed. Request info or close an application only if something in

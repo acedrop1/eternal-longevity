@@ -4,111 +4,98 @@ import {
   BUSINESS_LEGAL_NAME,
   BUSINESS_ADDRESS,
   SUPPORT_EMAIL,
-  STATEMENT_DESCRIPTOR,
   SERVICE_AREA,
 } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Informed Consent & Product Acknowledgement',
-  description: 'What you acknowledge when ordering compounded peptide protocols, including risks and limitations.',
+  title: 'Telehealth Informed Consent',
+  description: 'How our asynchronous telehealth review works, its limits and risks, and your rights, including the right to withdraw.',
 };
 
 export default function ConsentPolicyPage() {
   return (
     <LegalLayout
-      title="Informed Consent & Product Acknowledgement"
+      title="Telehealth Informed Consent"
       effective="September 2026"
-      lead="Eternal Longevity provides access to prescription peptide protocols through a licensed prescriber and a licensed 503A compounding pharmacy. This document explains what you are acknowledging when you place an order, how the telehealth review works, and the risks you accept."
+      lead="Eternal Longevity is a telehealth medical practice. This consent explains how our care works, what it can and cannot do, and your rights. You agree to it when you check the acknowledgement box in your intake."
       sections={[
         {
-          heading: 'What This Acknowledgement Covers',
+          heading: 'How Our Care Works',
           paragraphs: [
-            'When you order a compounded peptide protocol from Eternal Longevity, your order is submitted to a licensed 503A pharmacy that compounds and fulfills it. This document explains what you are acknowledging when you place that order, including that nothing here is medical advice and that you are responsible for consulting your own healthcare provider before use.',
-            `Every order is reviewed by a licensed prescriber before anything is compounded or shipped. The review is a safety assessment based on the health information you provide — it screens whether the protocol you selected is appropriate for you, and orders that fail that screen are declined and never billed. We serve ${SERVICE_AREA} only: our prescriber is licensed in each of those states and our partner pharmacy is registered to dispense there. Orders with a shipping address in any other state are rejected at checkout.`,
+            `Our care is asynchronous: you complete a written medical intake online, and Dr. Bader Elder, DO, a physician licensed in ${SERVICE_AREA}, reviews it later rather than in a live visit. He decides whether a treatment is appropriate for you. He may prescribe, decline, or ask you for more information before deciding.`,
+            'When he prescribes, a physician–patient relationship exists between you and Dr. Elder for that treatment. Prescriptions are dispensed by a state-licensed 503A compounding pharmacy. Refills on a plan ship on the same prescription until it expires or runs out of refills; the prescriber can pause or stop a plan at any time, and a new product needs a new review.',
+            `We serve patients located in ${SERVICE_AREA} only, and you must be 18 or older.`,
           ],
         },
         {
-          heading: 'What This Product Is Not',
+          heading: 'Limits of Telehealth',
           paragraphs: [
-            'There are important limitations you should understand:',
+            'You should understand the following before you consent:',
           ],
           bullets: [
-            'Eternal Longevity does not provide medical examinations, diagnosis, or treatment.',
-            'Some conditions cannot be properly evaluated without in-person testing.',
-            'Lab work and imaging should be arranged with your own healthcare provider.',
-            'Technical failures (lost connection, lost messages) can delay order processing or communication.',
-            'Ordering from us is not a substitute for your primary care provider or ongoing medical care.',
-          ],
-          // ↑ keeping primary care relationship clear is important for safety + liability
-        },
-        {
-          heading: 'Risks & Benefits',
-          paragraphs: [
-            'Benefits include convenient online access to compounded peptide protocols, fast turnaround on orders, written records of every interaction, and delivery to your door.',
-            'Risks include: the limitations described above; the possibility that a peptide protocol is not appropriate for you because we do not evaluate you in person; the general risks of using compounded products; security risks inherent to electronic communication despite our safeguards; and the possibility that in-person medical care you need is delayed. You are responsible for consulting your own healthcare provider before use.',
+            'There is no physical examination. The prescriber relies on the information you provide, so it must be complete and true.',
+            'Some conditions cannot be assessed without an in-person exam, testing, or imaging. The prescriber may decline and recommend in-person care.',
+            'Our care is limited to the treatments we offer. It is not primary care, and it does not replace your own doctor. Tell your doctor what you take.',
+            'Technical problems can delay a review or a message.',
           ],
         },
         {
-          heading: 'Scope of the Telehealth Relationship',
+          heading: 'Risks and Benefits',
           paragraphs: [
-            'The prescriber review is limited to assessing whether the protocol you selected is safe and appropriate for you, and to issuing or declining a prescription on that basis. It is not primary care: the prescriber does not diagnose, treat, or manage general medical conditions, and is not your primary care provider. You remain responsible for maintaining a relationship with your own healthcare provider for everything beyond this medication review.',
+            'Benefits include convenient access to a physician and to prescription treatment without an office visit.',
+            'Risks include: a decision based on incomplete or inaccurate information; side effects or interactions of the medication; the specific risks of compounded medications, which are not FDA-approved; delays in care you might need in person; and the security risks of electronic communication despite our safeguards. Results vary, and no outcome is guaranteed.',
           ],
         },
         {
           heading: 'Emergencies',
           paragraphs: [
-            'Our store is not for emergencies. If you are experiencing chest pain, difficulty breathing, sudden severe pain, a serious injury, signs of stroke, suicidal thoughts, or any condition you believe is life-threatening, call 911 or go to the nearest emergency room. Do not wait for a message reply.',
+            'This service is not for emergencies. If you have chest pain, difficulty breathing, signs of stroke, a severe allergic reaction, thoughts of harming yourself, or any condition you believe is life-threatening, call 911 or go to the nearest emergency room. Do not wait for a message reply.',
           ],
         },
         {
           heading: 'Your Responsibilities',
           paragraphs: [
-            'For the service to work, you agree to:',
+            'You agree to:',
           ],
           bullets: [
-            'Provide accurate, complete information when you place an order.',
-            'Review your medications, supplements, allergies, and relevant medical history with your own healthcare provider before use.',
-            'Follow the product instructions and the guidance of your own healthcare provider, including dosing, off-cycles, and follow-up labs.',
-            'Stop the protocol and consult your own healthcare provider promptly if you experience an adverse reaction.',
-            'See your primary care provider for routine care and emergencies.',
+            'Give accurate, complete information, including every medication and supplement you take.',
+            'Tell us promptly about changes in your health, medications, or pregnancy status.',
+            'Follow the directions on your prescription label.',
+            'Stop the medication and contact us if you have a reaction, and seek emergency care when needed.',
+            'Keep a primary care provider for routine care.',
           ],
         },
         {
-          heading: 'Confidentiality',
+          heading: 'Records and Privacy',
           paragraphs: [
-            'Your information is protected under our Privacy Policy and applicable law. Despite our security measures, no electronic communication system is completely private. By placing an order, you accept the residual risk that electronic communication carries.',
+            'Your intake, the prescriber’s notes, prescriptions, and messages form your medical record. We keep it as the law requires, and you can view your messages and orders in your member portal.',
+            'Your health information is shared only as needed to provide your care (for example, with the pharmacy that fills your prescription) and as described in our Privacy Policy. No electronic system is completely secure, and you accept the residual risk of electronic communication.',
           ],
         },
         {
-          heading: 'Recording',
+          heading: 'Your Right to Withdraw',
           paragraphs: [
-            'We do not record calls. Written messages between you and our support team are stored as part of your account record and are accessible to you through your member portal.',
-          ],
-        },
-        {
-          heading: 'Withdrawing Consent',
-          paragraphs: [
-            `You may withdraw this consent at any time. To withdraw consent, message our support team through the portal or email ${SUPPORT_EMAIL}. Withdrawal of consent will stop future orders but does not erase records already created.`,
+            `You may withdraw this consent at any time by emailing ${SUPPORT_EMAIL} or messaging us in the portal. Withdrawing stops future care and cancels future shipments; it does not erase records already created, which we must keep by law.`,
           ],
         },
         {
           heading: 'Your Acknowledgement',
           paragraphs: [
-            'By checking the acknowledgement box when you order, you confirm that you are at least 18 years old, have read this document, understand the limitations and risks described above, accept those risks, and agree that you are responsible for consulting your own healthcare provider before use.',
+            'By checking the acknowledgement box in your intake, you confirm that you are at least 18, have read and understood this consent, have had the chance to ask questions, and agree to receive care through telehealth.',
           ],
         },
         {
           heading: 'Contact',
           paragraphs: [
-            `Questions about this acknowledgement? Email ${SUPPORT_EMAIL}, or write to ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
+            `Questions about this consent? Email ${SUPPORT_EMAIL}, or write to ${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}.`,
           ],
         },
       ]}
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
-        { label: 'Refund Policy', href: '/legal/refunds' },
-        { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
+        { label: 'Medical Disclaimer', href: '/legal/medical-disclaimer' },
+        { label: 'Prescription Policy', href: '/legal/prescription-policy' },
       ]}
     />
   );

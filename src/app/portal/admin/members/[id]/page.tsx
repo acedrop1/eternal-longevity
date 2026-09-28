@@ -64,9 +64,9 @@ interface MemberDetail {
 }
 
 const STATUS_BADGE: Record<AccountStatus, string> = {
-  active: 'border-accent/40 bg-accent/10 text-accent',
-  suspended: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
-  deactivated: 'border-line bg-surface text-foreground/60',
+  active: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
+  suspended: 'border-amber-600/25 bg-amber-50 text-amber-800',
+  deactivated: 'border-ink/10 bg-milk text-ink/60',
 };
 
 /**
@@ -271,7 +271,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
     <PortalShell user={user} nav={ADMIN_NAV}>
       <Link
         href="/portal/admin/members"
-        className="mb-6 inline-flex items-center gap-1.5 font-mono text-[12px] text-foreground/55 transition-colors hover:text-foreground"
+        className="mb-6 inline-flex items-center gap-1.5 text-[12px] text-ink/55 transition-colors hover:text-ink"
       >
         <span aria-hidden>←</span> All users
       </Link>
@@ -280,20 +280,15 @@ export default async function MemberDetailPage({ params }: PageProps) {
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
-            className="font-display font-normal text-foreground"
-            style={{
-              fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
-              fontStretch: '75%',
-              lineHeight: 1.05,
-            }}
+            className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
           >
             {detail.name}
           </h1>
-          <p className="mt-1 text-sm text-foreground/65">{detail.email}</p>
+          <p className="mt-1 text-sm text-ink/65">{detail.email}</p>
         </div>
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
             STATUS_BADGE[detail.status],
           )}
         >
@@ -334,17 +329,17 @@ export default async function MemberDetailPage({ params }: PageProps) {
               {detail.subscriptions.map((s, i) => (
                 <li
                   key={i}
-                  className="rounded-[4px] border border-line bg-background p-4"
+                  className="rounded-inner border border-ink/10 bg-white p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
+                    <span className="text-sm font-medium text-ink">
                       {s.productName}
                     </span>
-                    <span className="font-mono text-[12px] text-accent">
+                    <span className="text-[12px] font-medium text-emerald-700">
                       {s.status}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-foreground/55">
+                  <p className="mt-1 text-xs text-ink/55">
                     {s.cadence} · ${s.perCycle} per cycle
                   </p>
                 </li>
@@ -363,19 +358,19 @@ export default async function MemberDetailPage({ params }: PageProps) {
               {detail.orders.map((o) => (
                 <li
                   key={o.ref}
-                  className="rounded-[4px] border border-line bg-background p-4"
+                  className="rounded-inner border border-ink/10 bg-white p-4"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <span className="font-mono text-[12px] text-foreground/85">
+                    <span className="text-[12px] text-ink/85">
                       {o.ref}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-foreground/85">
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink/85">
                       {o.products}
                     </span>
-                    <span className="tabular-nums text-sm text-foreground">
+                    <span className="tabular-nums text-sm text-ink">
                       ${o.total}
                     </span>
-                    <span className="rounded-[2px] border border-line px-2.5 py-0.5 font-mono text-[12px] text-foreground/70">
+                    <span className="rounded-full border border-ink/10 px-2.5 py-0.5 text-[12px] text-ink/70">
                       {(STATUS_LABEL[o.status as OrderStatus] ?? o.status)}
                     </span>
                   </div>
@@ -384,15 +379,15 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
                     {o.money.map((m) => (
                       <div key={m.label} className="flex items-baseline gap-1.5">
-                        <dt className="font-mono text-[12px] text-foreground/60">
+                        <dt className="text-[12px] text-ink/60">
                           {m.label}
                         </dt>
                         <dd
                           className={cn(
                             'tabular-nums text-xs',
                             m.strong
-                              ? 'font-semibold text-foreground'
-                              : 'text-foreground/75',
+                              ? 'font-semibold text-ink'
+                              : 'text-ink/75',
                           )}
                         >
                           {m.value < 0 ? '−' : ''}${Math.abs(m.value)}
@@ -406,23 +401,23 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <ol className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5">
                     {o.steps.map((st) => (
                       <li key={st.label}>
-                        <div className="font-mono text-[12px] text-foreground/60">
+                        <div className="text-[12px] text-ink/60">
                           {st.label}
                         </div>
-                        <div className="text-xs text-foreground/80">{st.at}</div>
+                        <div className="text-xs text-ink/80">{st.at}</div>
                       </li>
                     ))}
                   </ol>
 
                   {o.tracking && (
-                    <p className="mt-3 text-xs text-foreground/70">
-                      <span className="text-foreground/60">Tracking </span>
+                    <p className="mt-3 text-xs text-ink/70">
+                      <span className="text-ink/60">Tracking </span>
                       {o.tracking.carrier} · {o.tracking.number}
                     </p>
                   )}
 
                   {o.warning && (
-                    <p className="mt-3 rounded-[4px] border border-accent/40 bg-accent/5 px-3 py-2 text-xs text-accent">
+                    <p className="mt-3 rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                       {o.warning}
                     </p>
                   )}
@@ -439,7 +434,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
         <Section title="Activity">
           {detail.timeline.length === 0 ? (
-            <p className="text-sm text-foreground/55">
+            <p className="text-sm text-ink/55">
               Nothing yet. Applying, ordering, prescriber decisions, charges and
               shipments all appear here.
             </p>
@@ -449,23 +444,23 @@ export default async function MemberDetailPage({ params }: PageProps) {
                 <li key={i} className="flex gap-3">
                   <span
                     aria-hidden
-                    className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-accent"
+                    className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-butter-deep"
                   />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="text-sm font-medium text-ink">
                         {t.label}
                       </span>
-                      <span className="font-mono text-[12px] text-foreground/60">
+                      <span className="text-[12px] text-ink/60">
                         {t.orderNumber}
                       </span>
                     </div>
                     {t.body && (
-                      <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+                      <p className="mt-0.5 text-xs leading-relaxed text-ink/55">
                         {t.body}
                       </p>
                     )}
-                    <p className="mt-0.5 font-mono text-[12px] text-foreground/60">
+                    <p className="mt-0.5 text-[12px] text-ink/60">
                       {t.at}
                       {t.author ? ` · ${t.author}` : ''}
                     </p>
@@ -492,10 +487,10 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   ] as [string, string][]
                 ).map(([k, v]) => (
                   <div key={k}>
-                    <div className="font-mono text-[12px] text-foreground/60">
+                    <div className="text-[12px] text-ink/60">
                       {k}
                     </div>
-                    <div className="mt-0.5 text-sm text-foreground">{v}</div>
+                    <div className="mt-0.5 text-sm text-ink">{v}</div>
                   </div>
                 ))}
               </div>
@@ -520,8 +515,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[4px] border border-line bg-surface p-6">
-      <h2 className="mb-4 text-sm font-semibold tracking-tight text-foreground">
+    <section className="rounded-shell bg-milk p-6">
+      <h2 className="mb-4 text-[17px] font-semibold tracking-[-0.02em] text-ink">
         {title}
       </h2>
       {children}
@@ -531,9 +526,9 @@ function Section({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-line py-2.5 text-sm last:border-0">
-      <span className="text-foreground/55">{label}</span>
-      <span className="text-foreground/90">{value}</span>
+    <div className="flex items-center justify-between border-b border-ink/10 py-2.5 text-sm last:border-0">
+      <span className="text-ink/55">{label}</span>
+      <span className="text-ink/90">{value}</span>
     </div>
   );
 }
@@ -547,20 +542,20 @@ function RecordGroup({
 }) {
   return (
     <div>
-      <div className="mb-1.5 font-mono text-[12px] text-foreground/60">
+      <div className="mb-1.5 text-[13px] font-medium text-ink/55">
         {title}
       </div>
       <div className="grid gap-x-8 md:grid-cols-2">
         {lines.map((l) => (
           <div
             key={l.label}
-            className="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0"
+            className="flex items-baseline justify-between gap-3 border-b border-ink/[0.06] py-1.5 last:border-0"
           >
-            <span className="text-[13px] text-foreground/60">{l.label}</span>
+            <span className="text-[13px] text-ink/60">{l.label}</span>
             <span
               className={cn(
                 'text-right text-[13px] font-medium',
-                l.flag ? 'text-accent' : 'text-foreground/90',
+                l.flag ? 'text-amber-800' : 'text-ink/90',
               )}
             >
               {l.value}
@@ -573,5 +568,5 @@ function RecordGroup({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-foreground/60">{children}</p>;
+  return <p className="text-sm text-ink/60">{children}</p>;
 }

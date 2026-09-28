@@ -53,19 +53,19 @@ function LiveBoard({ orders }: { orders: Order[] }) {
 
   return (
     <section>
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-ink/10 pb-3">
         <div>
-          <p className="font-mono text-[12px] text-foreground/60">
+          <p className="text-[13px] font-medium text-ink/55">
             In flight
           </p>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
             Every live order
           </h2>
         </div>
         <span
           className={cn(
-            'font-mono text-[12px]',
-            needing ? 'text-accent' : 'text-foreground/60',
+            'text-[13px]',
+            needing ? 'font-medium text-amber-800' : 'text-ink/60',
           )}
         >
           {live.length} open
@@ -74,14 +74,14 @@ function LiveBoard({ orders }: { orders: Order[] }) {
       </div>
 
       {live.length === 0 ? (
-        <div className="rounded-[4px] border border-line bg-surface p-8 text-center">
-          <p className="text-sm text-foreground/55">
+        <div className="rounded-shell bg-milk p-8 text-center">
+          <p className="text-sm text-ink/55">
             Nothing in flight. Orders appear here from checkout until they are
             delivered.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
+        <div className="overflow-hidden rounded-shell bg-milk">
           {rows.map(({ order, attention }) => (
             <OrderRow key={order.id} order={order} attention={attention} />
           ))}
@@ -114,40 +114,40 @@ function OrderRow({
   const cancellable = !['shipped', 'delivered'].includes(order.status);
 
   return (
-    <div className="border-b border-line px-4 py-3.5 last:border-0 md:px-5">
+    <div className="border-b border-ink/10 px-4 py-3.5 last:border-0 md:px-6">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="font-mono text-[12px] text-foreground/60">
+        <span className="text-[12px] text-ink/60">
           {orderRef(order.id)}
         </span>
         {order.userId ? (
           <Link
             href={`/portal/admin/members/${order.userId}`}
-            className="font-medium text-foreground underline-offset-4 hover:underline"
+            className="font-medium text-ink underline-offset-4 hover:underline"
           >
             {order.memberName}
           </Link>
         ) : (
-          <span className="font-medium text-foreground">
+          <span className="font-medium text-ink">
             {order.memberName}
           </span>
         )}
-        <span className="min-w-0 flex-1 truncate text-sm text-foreground/60">
+        <span className="min-w-0 flex-1 truncate text-sm text-ink/60">
           {order.lines.map((l) => l.productName).join(' + ')}
         </span>
-        <span className="tabular-nums text-sm text-foreground/85">
+        <span className="tabular-nums text-sm text-ink/85">
           ${order.total}
         </span>
-        <span className="font-mono text-[12px] text-foreground/60">
+        <span className="text-[12px] text-ink/60">
           {describeAge(order.placedAt)}
         </span>
         <span
           className={cn(
-            'inline-flex flex-none items-center gap-1.5 rounded-[2px] border px-2.5 py-0.5 font-mono text-[12px]',
+            'inline-flex flex-none items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px]',
             order.status === 'assigned'
-              ? 'border-sky-400/40 bg-sky-500/10 text-sky-300'
+              ? 'border-sky-600/25 bg-sky-50 text-sky-800'
               : order.status === 'shipped'
-                ? 'border-accent/40 bg-accent/10 text-accent'
-                : 'border-line bg-background text-foreground/60',
+                ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+                : 'border-ink/10 bg-white text-ink/60',
           )}
         >
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -155,7 +155,7 @@ function OrderRow({
         </span>
       </div>
       {attention && (
-        <p className="mt-2 rounded-[4px] border border-accent/40 bg-accent/5 px-3 py-2 text-xs leading-relaxed text-accent">
+        <p className="mt-2 rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
           {attention}
         </p>
       )}
@@ -167,18 +167,18 @@ function OrderRow({
             setError(null);
             setOpen(true);
           }}
-          className="mt-2 font-mono text-[12px] text-foreground/60 transition-colors hover:text-red-300"
+          className="mt-2 text-[12px] text-ink/60 transition-colors hover:text-red-700"
         >
           Cancel order
         </button>
       )}
 
       {open && (
-        <div className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/5 p-4">
-          <div className="mb-2 font-mono text-[12px] text-red-300">
+        <div className="mt-3 rounded-inner border border-red-600/20 bg-red-50 p-4">
+          <div className="mb-2 text-[13px] font-medium text-red-700">
             Why are you cancelling?
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+          <p className="mb-3 text-xs leading-relaxed text-ink/55">
             The member is emailed this sentence and anything charged is refunded
             in full. It is not recorded as a clinical decision.
           </p>
@@ -190,10 +190,10 @@ function OrderRow({
             }}
             rows={3}
             placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
-            className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-red-500/40"
           />
           {error && (
-            <p className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+            <p className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               {error}
             </p>
           )}
@@ -220,10 +220,10 @@ function OrderRow({
                 }
               }}
               className={cn(
-                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
+                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
                 reason.trim() && !busy
                   ? 'bg-red-700 text-white hover:bg-red-800'
-                  : 'bg-foreground/10 text-foreground/55',
+                  : 'bg-ink/10 text-ink/55',
               )}
             >
               {busy ? 'Cancelling…' : 'Cancel and refund'}
@@ -236,7 +236,7 @@ function OrderRow({
                 setReason('');
                 setError(null);
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
             >
               Keep it
             </button>

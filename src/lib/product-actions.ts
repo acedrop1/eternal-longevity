@@ -14,7 +14,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getSession } from './auth-server';
 import { recordAudit } from './prescriber';
-import { DELIVERY_LABEL, type DeliveryForm, type ShopCategory, type ShopProduct } from './shopProducts';
+import { DELIVERY_LABEL, NEVER_LIVE, type DeliveryForm, type ShopCategory, type ShopProduct } from './shopProducts';
 import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, writeRow, type ProductStatus } from './catalog';
 import { createSupabaseAdminClient } from './supabase/admin';
 
@@ -34,7 +34,8 @@ export interface ProductInput {
   whatsIncluded: string[];
   sideEffects: string[];
   contraindications: string[];
-  pricing: { monthly: number; quarterly: number; annual: number };
+  /** sixMonth 0 or missing: the product has no 6-month plan. */
+  pricing: { monthly: number; quarterly: number; sixMonth?: number; annual: number };
   image: string;
   popular: boolean;
   fdaApproved: boolean;
@@ -91,9 +92,10 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
   const pricing = {
     monthly: price(input.pricing?.monthly),
     quarterly: price(input.pricing?.quarterly),
+    sixMonth: input.pricing?.sixMonth ? price(input.pricing.sixMonth) : undefined,
     annual: price(input.pricing?.annual),
   };
-  if (!pricing.monthly || !pricing.quarterly || !pricing.annual) {
+  if (!pricing.monthly || !pricing.quarterly || !pricing.annual || pricing.sixMonth === null) {
     return { ok: false, message: 'Prices are whole dollars between $1 and $10,000.' };
   }
 
@@ -104,6 +106,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
 
   // The gate: a live product must carry what its page and a certifier expect.
   if (input.status === 'live') {
+    if (NEVER_LIVE.has(id)) return { ok: false, message: 'This product can never be listed publicly.' };
     const missing = [
       !image && 'a photo',
       !text(input.shortDescription, 240) && 'a short description',
@@ -126,7 +129,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     whatsIncluded: lists.whatsIncluded!,
     sideEffects: lists.sideEffects!,
     contraindications: lists.contraindications!,
-    pricing: { monthly: pricing.monthly, quarterly: pricing.quarterly, annual: pricing.annual },
+    pricing: { monthly: pricing.monthly, quarterly: pricing.quarterly, sixMonth: pricing.sixMonth, annual: pricing.annual },
     image,
     // A photo set here is a product shot (shown full strength, no text over
     // it); an untouched photo keeps whatever treatment it had.
@@ -164,6 +167,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
         ['Tagline', was?.tagline, data.tagline],
         ['Monthly price', was ? `$${was.pricing.monthly}` : null, `$${data.pricing.monthly}`],
         ['Quarterly price', was ? `$${was.pricing.quarterly}` : null, `$${data.pricing.quarterly}`],
+        ['6-month price', was?.pricing.sixMonth ? `$${was.pricing.sixMonth}` : null, data.pricing.sixMonth ? `$${data.pricing.sixMonth}` : ''],
         ['Annual price', was ? `$${was.pricing.annual}` : null, `$${data.pricing.annual}`],
         ['Photo', was?.image, data.image],
         ['Category', was?.category, data.category],

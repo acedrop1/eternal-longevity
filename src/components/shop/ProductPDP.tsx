@@ -6,13 +6,15 @@ import { Check } from 'lucide-react';
 import { ProductCard } from '@/components/sections/ProductRail';
 import {
   cadenceTiersForProduct,
+  defaultTier,
   SHOP_CATEGORIES,
   type CadenceTier,
   type ShopProduct,
 } from '@/lib/shopProducts';
+import { fromPrice } from '@/lib/lineup';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, useCtaOffscreen } from './BuyBar';
-import { Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage } from './pdpParts';
+import { coldChain, Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage } from './pdpParts';
 
 interface ProductPDPProps {
   /** Route prefix for shop links. '/shop' on the public storefront. */
@@ -35,9 +37,9 @@ interface ProductPDPProps {
  */
 export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
   const tiers = cadenceTiersForProduct(product);
-  const defaultTier = tiers.find((t) => t.key === 'quarterly') ?? tiers[0];
-  const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(defaultTier.key);
-  const active = tiers.find((t) => t.key === selectedTier) ?? defaultTier;
+  const initialTier = defaultTier(tiers);
+  const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(initialTier.key);
+  const active = tiers.find((t) => t.key === selectedTier) ?? initialTier;
 
   // Fixed buy bar once the buy column's CTA is off screen.
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -48,24 +50,21 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
   const { addItem } = useCart();
 
   return (
-    <div className="space-y-16 text-black md:space-y-24">
+    <div className="space-y-16 text-ink md:space-y-24">
       <section className="grid items-start gap-8 md:grid-cols-2 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
         <ProductImage product={product} sizes="(max-width: 1024px) 50vw, 760px" className="aspect-[4/5] w-full" />
 
         <div className="md:sticky md:top-[var(--pdp-sticky-top,5rem)]">
-          <p className="flex items-center gap-2 font-mono text-[13px] text-black/55">
+          <p className="flex items-center gap-2 text-[13px] font-medium text-ink/55">
             {categoryLabel}
             {product.popular && (
-              <span className="rounded-full bg-[#D5A850] px-2 py-0.5 text-[12px] text-black">Popular</span>
+              <span className="rounded-full bg-butter px-2.5 py-0.5 text-[12px] font-semibold text-ink">Popular</span>
             )}
           </p>
-          <h1
-            className="mt-3 font-display font-normal [text-wrap:balance]"
-            style={{ fontSize: 'clamp(2.4rem, 3.4vw + 1rem, 4.5rem)', fontStretch: '75%', lineHeight: 1 }}
-          >
+          <h1 className="mt-3 text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] lg:text-[64px]">
             {product.name}
           </h1>
-          <p className="mt-3 text-[16px] leading-relaxed text-black/70">{product.tagline}</p>
+          <p className="mt-3 text-[16px] leading-relaxed text-ink-soft">{product.tagline}</p>
 
           <div className="mt-6">
             <PriceBlock product={product} active={active} />
@@ -80,7 +79,7 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
             {ctaHref ? (
               <Link
                 href={ctaHref}
-                className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+                className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
               >
                 Start assessment
               </Link>
@@ -88,15 +87,15 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
               <button
                 type="button"
                 onClick={() => addItem(product.id, selectedTier)}
-                className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+                className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
               >
                 {active.key === 'once' ? 'Buy once' : 'Subscribe'}
               </button>
             )}
           </div>
 
-          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-[13px] text-black/70">
-            {['Only charged if approved', 'Free cold-chain shipping', 'Tested before release', 'Cancel anytime'].map(
+          <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] text-ink-soft">
+            {['Only charged if approved', coldChain(product) ? 'Free cold-chain shipping' : 'Free shipping', 'Physician-reviewed', 'Cancel anytime'].map(
               (t) => (
                 <li key={t} className="flex items-start gap-1.5">
                   <Check aria-hidden className="mt-[2px] h-3.5 w-3.5 shrink-0" strokeWidth={2} />
@@ -106,7 +105,7 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
             )}
           </ul>
 
-          <div className="mt-6 border-t border-black/15 pt-5">
+          <div className="mt-6 border-t border-ink/10 pt-5">
             <Disclosure />
           </div>
         </div>
@@ -135,17 +134,12 @@ export function RelatedProducts({ related, basePath }: { related: ShopProduct[];
   const items = related;
   if (items.length === 0) return null;
   return (
-    <div className="text-black">
+    <div className="text-ink">
       <div className="mb-8 flex items-end justify-between gap-4 md:mb-10">
-        <h2
-          className="font-display font-normal"
-          style={{ fontSize: 'clamp(2rem, 3vw + 1rem, 3.75rem)', fontStretch: '75%', lineHeight: 1 }}
-        >
-          Keep exploring.
-        </h2>
+        <h2 className="text-[36px] font-semibold leading-[1] tracking-[-0.05em] text-ink md:text-[56px]">Keep exploring.</h2>
         <Link
           href={basePath}
-          className="shrink-0 font-mono text-[13px] underline decoration-black/50 underline-offset-[3px] transition-colors hover:decoration-black"
+          className="shrink-0 text-[14px] font-medium underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink"
         >
           Shop all
         </Link>
@@ -161,7 +155,7 @@ export function RelatedProducts({ related, basePath }: { related: ShopProduct[];
               name: r.name,
               tagline: r.tagline,
               image: r.image,
-              price: { was: r.pricing.monthly, now: Math.round(r.pricing.quarterly / 3) },
+              price: { was: r.pricing.monthly, now: fromPrice(r.pricing) },
               href: `${basePath}/${r.id}`,
               preview: false,
             }}

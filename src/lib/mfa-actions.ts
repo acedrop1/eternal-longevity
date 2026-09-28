@@ -2,7 +2,7 @@
 
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth-server';
+import { getSessionBeforeMfa } from '@/lib/auth-server';
 import { redirectForRole } from '@/lib/auth';
 import {
   MFA_COOKIE,
@@ -34,7 +34,7 @@ const MESSAGES: Record<string, string> = {
  * stuck on a screen they cannot get past.
  */
 export async function verifyMfaAction(formData: FormData): Promise<void> {
-  const user = await getSession();
+  const user = await getSessionBeforeMfa();
   if (!user) redirect('/login');
 
   /*
@@ -88,7 +88,7 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
 
 /** Send another code, for the one that never arrived. */
 export async function resendMfaAction(): Promise<void> {
-  const user = await getSession();
+  const user = await getSessionBeforeMfa();
   if (!user) redirect('/login');
   if (!(await allow('mfa', LIMITS.mfa))) {
     redirect('/login/verify?error=throttled');

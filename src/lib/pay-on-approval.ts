@@ -13,12 +13,10 @@ import 'server-only';
  */
 
 import { randomBytes } from 'crypto';
-import { revalidatePath } from 'next/cache';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
-import { getSession } from '@/lib/auth-server';
 import { SITE_URL } from '@/lib/site';
 import {
   approvedPayNowEmail,
@@ -28,6 +26,7 @@ import {
 } from '@/lib/email';
 import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
+import { AWAITING_PAYMENT, intentBelongsTo } from '@/lib/order-rules';
 
 const TOKEN_TTL_DAYS = 7;
 
@@ -36,7 +35,7 @@ export interface PayableOrder {
   memberName: string;
   totalCents: number;
   items: { name: string; qty: number }[];
-  /** 'Monthly' | 'Quarterly' | 'Annual' | 'One-time' — drives the billing consent copy. */
+  /** 'Monthly' | 'Quarterly' | '6-month' | 'Annual' | 'One-time' — drives the billing consent copy. */
   cadenceLabel: string;
   alreadyPaid: boolean;
 }
@@ -55,11 +54,12 @@ export async function issuePayLink(orderNumber: string): Promise<{
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, member_email, total_cents, paid_confirmed_at')
+    .select('id, order_number, member_name, member_email, total_cents, paid_confirmed_at, status')
     .eq('order_number', orderNumber)
     .maybeSingle();
   if (!order) return { ok: false, error: 'not_found' };
   if (order.paid_confirmed_at) return { ok: false, error: 'already_paid' };
+  if (!AWAITING_PAYMENT.includes(order.status)) return { ok: false, error: 'not_payable' };
 
   const token = randomBytes(32).toString('base64url');
   const expires = new Date(Date.now() + TOKEN_TTL_DAYS * 86400_000).toISOString();
@@ -97,10 +97,15 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, total_cents, pay_token_expires, paid_confirmed_at')
+    .select('id, order_number, member_name, total_cents, pay_token_expires, paid_confirmed_at, status')
     .eq('pay_token', token)
     .maybeSingle();
   if (!order) return null;
+  // A link outlives the order it was minted for: cancelled or declined since,
+  // it is dead, not payable.
+  if (!AWAITING_PAYMENT.includes(order.status) && !order.paid_confirmed_at) {
+    return null;
+  }
 
   const expired =
     order.pay_token_expires !== null &&
@@ -123,57 +128,6 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
     cadenceLabel: items?.[0]?.cadence_label ?? 'Monthly',
     alreadyPaid: Boolean(order.paid_confirmed_at),
   };
-}
-
-/**
- * Mark an order paid. Called by the payment confirmation once a rail is live;
- * until then, admin can also confirm a manual payment (wire/ACH) by hand.
- */
-export async function confirmPaymentAction(input: {
-  token?: string;
-  orderNumber?: string;
-  reference?: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  if (!supabaseAdminConfigured()) return { ok: false, error: 'not_configured' };
-
-  // Confirming by order number is an admin action; by token it is the member
-  // completing their own emailed link.
-  if (!input.token) {
-    const user = await getSession();
-    if (!user || user.role !== 'admin') return { ok: false, error: 'not_authorized' };
-  }
-
-  const db = createSupabaseAdminClient();
-  const query = db.from('orders').select('id, paid_confirmed_at');
-  const { data: order } = input.token
-    ? await query.eq('pay_token', input.token).maybeSingle()
-    : await query.eq('order_number', input.orderNumber ?? '').maybeSingle();
-
-  if (!order) return { ok: false, error: 'not_found' };
-  if (order.paid_confirmed_at) return { ok: true }; // idempotent
-
-  const { error } = await db
-    .from('orders')
-    .update({
-      paid_confirmed_at: new Date().toISOString(),
-      // Burn the token so the link cannot be reused or forwarded.
-      pay_token: null,
-      pay_token_expires: null,
-    })
-    .eq('id', order.id);
-  if (error) return { ok: false, error: error.message };
-
-  await db.from('order_updates').insert({
-    order_id: order.id,
-    label: 'Payment received',
-    body: input.reference ? `Reference: ${input.reference}` : null,
-    author: 'System',
-    author_role: 'system',
-  });
-
-  revalidatePath('/portal/orders');
-  revalidatePath('/portal/admin/fulfillment');
-  return { ok: true };
 }
 
 /* ----------------------------- card payment ------------------------------ */
@@ -199,13 +153,16 @@ export async function createPayIntentAction(token: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id, shipping_address, ship_state',
+      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id, shipping_address, ship_state, status',
     )
     .eq('pay_token', token)
     .maybeSingle();
 
   if (!order) return { ok: false, error: 'invalid_link' };
   if (order.paid_confirmed_at) return { ok: false, error: 'already_paid' };
+  if (!AWAITING_PAYMENT.includes(order.status)) {
+    return { ok: false, error: 'invalid_link' };
+  }
   if (
     order.pay_token_expires &&
     new Date(order.pay_token_expires).getTime() < Date.now()
@@ -226,6 +183,7 @@ export async function createPayIntentAction(token: string): Promise<{
         order.stripe_payment_intent_id,
       );
       if (
+        intentBelongsTo(existing, order) &&
         existing.client_secret &&
         existing.amount === amount &&
         ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(
@@ -385,7 +343,12 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
   if (order.stripe_payment_intent_id) {
     try {
       const prior = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
-      if (prior.status === 'succeeded' || prior.status === 'processing') {
+      // Only this order's own intent counts. An id that came from anywhere
+      // else must not make an unpaid order look paid.
+      if (
+        intentBelongsTo(prior, order) &&
+        (prior.status === 'succeeded' || prior.status === 'processing')
+      ) {
         return { ok: true, charged: prior.status === 'succeeded' };
       }
     } catch {

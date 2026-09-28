@@ -192,7 +192,7 @@ function SectionCard({
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <SectionTitle>{title}</SectionTitle>
-          <p className="mt-1.5 text-[15px] leading-relaxed text-black/60">
+          <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">
             {description}
           </p>
         </div>
@@ -236,11 +236,11 @@ function Field({
         placeholder={placeholder}
         className={cn(
           field,
-          disabled && 'cursor-not-allowed bg-white/60 text-black/55',
+          disabled && 'cursor-not-allowed bg-white/60 text-ink/55',
         )}
       />
       {hint && (
-        <p className="mt-1.5 text-[13px] text-black/55">{hint}</p>
+        <p className="mt-1.5 text-[13px] text-ink/55">{hint}</p>
       )}
     </div>
   );
@@ -308,7 +308,7 @@ export function AccountSettings({
       <aside className="lg:col-span-1">
         <nav
           aria-label="Account sections"
-          className="rounded-[4px] bg-white p-2 ring-1 ring-black/10 lg:sticky lg:top-24"
+          className="rounded-shell bg-milk p-2 lg:sticky lg:top-24"
         >
           {SECTIONS.map((item) => {
             const active = activeId === item.id;
@@ -319,10 +319,10 @@ export function AccountSettings({
                 onClick={() => goTo(item.id)}
                 aria-current={active ? 'true' : undefined}
                 className={cn(
-                  'group relative flex min-h-[44px] w-full items-center gap-3 rounded-[2px] px-3 py-2.5 text-left text-[15px] transition-colors',
+                  'group relative flex min-h-[44px] w-full items-center gap-3 rounded-full px-4 py-2.5 text-left text-[15px] font-medium transition-colors',
                   active
-                    ? 'bg-[#F2F2F0] text-black'
-                    : 'text-black/65 hover:bg-black/[0.03] hover:text-black',
+                    ? 'bg-white text-ink shadow-sm ring-1 ring-ink/5'
+                    : 'text-ink/65 hover:bg-white/60 hover:text-ink',
                 )}
               >
                 <span
@@ -330,18 +330,18 @@ export function AccountSettings({
                   className={cn(
                     'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
                     active
-                      ? 'bg-[#D5A850]'
-                      : 'bg-black/20 group-hover:bg-black/40',
+                      ? 'bg-butter-deep'
+                      : 'bg-ink/20 group-hover:bg-ink/40',
                   )}
                 />
                 <span>{item.label}</span>
               </button>
             );
           })}
-          <div className="mx-3 my-2 h-px bg-black/10" />
+          <div className="mx-4 my-2 h-px bg-ink/10" />
           <Link
             href="/portal/subscriptions"
-            className="group flex min-h-[44px] items-center justify-between rounded-[2px] px-3 py-2.5 text-[15px] text-black/65 transition-colors hover:bg-black/[0.03] hover:text-black"
+            className="group flex min-h-[44px] items-center justify-between rounded-full px-4 py-2.5 text-[15px] font-medium text-ink/65 transition-colors hover:bg-white/60 hover:text-ink"
           >
             <span>Subscriptions</span>
             <span
@@ -488,9 +488,9 @@ function ProfileSection({
       <div className="mt-6 flex items-center justify-end gap-4">
         <span
           className={cn(
-            'font-mono text-[12px] transition-opacity duration-300',
+            'text-[13px] font-medium transition-opacity duration-300',
             dirty && status === 'idle'
-              ? 'text-black/55 opacity-100'
+              ? 'text-ink/55 opacity-100'
               : 'opacity-0',
           )}
         >
@@ -644,11 +644,11 @@ function NotificationsSection({
         <span
           role="status"
           className={cn(
-            'inline-flex items-center gap-1.5 font-mono text-[12px] text-black/70 transition-opacity duration-300',
+            'inline-flex items-center gap-1.5 font-medium text-[12px] text-ink/70 transition-opacity duration-300',
             flash ? 'opacity-100' : 'opacity-0',
           )}
         >
-          <Check className="h-3 w-3 text-[#A8843A]" />
+          <Check className="h-3 w-3 text-emerald-600" />
           Saved
         </span>
       }
@@ -664,15 +664,15 @@ function NotificationsSection({
               className={cn(inset, 'flex items-center justify-between gap-3 p-4')}
             >
               <div className="min-w-0">
-                <div className="text-[15px] font-medium text-black">
+                <div className="text-[15px] font-medium text-ink">
                   {n.title}
                   {n.required && (
-                    <span className="ml-2 font-mono text-[12px] font-normal text-black/50">
+                    <span className="ml-2 text-[12px] font-normal text-ink/50">
                       Required
                     </span>
                   )}
                 </div>
-                <p className="mt-0.5 text-[14px] text-black/60">{n.body}</p>
+                <p className="mt-0.5 text-[14px] text-ink/60">{n.body}</p>
               </div>
               <button
                 type="button"
@@ -682,7 +682,7 @@ function NotificationsSection({
                 onClick={() => !n.required && toggle(n.key)}
                 className={cn(
                   'relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-300 ease-out',
-                  on ? 'bg-black' : 'bg-black/15',
+                  on ? 'bg-ink' : 'bg-ink/15',
                   n.required
                     ? 'cursor-not-allowed opacity-50'
                     : 'cursor-pointer',
@@ -732,10 +732,10 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
         <div className={cn(inset, 'p-4')}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="min-w-0">
-              <div className="text-[15px] font-medium text-black">
+              <div className="text-[15px] font-medium text-ink">
                 Download my data
               </div>
-              <p className="mt-0.5 text-[14px] leading-relaxed text-black/60">
+              <p className="mt-0.5 text-[14px] leading-relaxed text-ink/60">
                 A copy of everything we have on file. Labs, intake, orders,
                 messages. Exported as a ZIP.
               </p>
@@ -756,9 +756,9 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
             </button>
           </div>
           {exportNote && (
-            <p role="status" className="mt-3 rounded-[2px] bg-[#F2F2F0] px-3 py-2 text-[14px] text-black/70">
+            <p role="status" className="mt-3 rounded-inner bg-milk px-3 py-2 text-[14px] text-ink/70">
               {exportNote} We will send it to{' '}
-              <span className="text-black">{userEmail}</span>.
+              <span className="text-ink">{userEmail}</span>.
             </p>
           )}
         </div>
@@ -767,10 +767,10 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
         <div className={cn(inset, 'p-4')}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="min-w-0">
-              <div className="text-[15px] font-medium text-black">
+              <div className="text-[15px] font-medium text-ink">
                 Close my account
               </div>
-              <p className="mt-0.5 text-[14px] leading-relaxed text-black/60">
+              <p className="mt-0.5 text-[14px] leading-relaxed text-ink/60">
                 Stops all future billing. Medical records are retained per
                 state law.
               </p>
@@ -783,7 +783,7 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
                 btnSmall,
                 'self-start px-4 sm:self-auto',
                 closedNote
-                  ? 'cursor-default text-black/45 ring-black/10'
+                  ? 'cursor-default text-ink/45 ring-ink/10'
                   : 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50',
               )}
             >
@@ -791,7 +791,7 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
             </button>
           </div>
           {closedNote && (
-            <p role="status" className="mt-3 rounded-[2px] bg-[#F2F2F0] px-3 py-2 text-[14px] text-black/70">
+            <p role="status" className="mt-3 rounded-inner bg-milk px-3 py-2 text-[14px] text-ink/70">
               {closedNote} You can keep using your account until then.
             </p>
           )}
@@ -847,16 +847,15 @@ function CloseAccountModal({
         type="button"
         aria-label="Cancel"
         onClick={onCancel}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm anim-fade-in"
+        className="absolute inset-0 bg-ink/50 backdrop-blur-sm anim-fade-in"
       />
-      <div className="relative w-full max-w-md rounded-[4px] bg-white p-6 text-black shadow-[0_20px_50px_-15px_rgba(0,0,0,0.45)] ring-1 ring-black/10 anim-fade-up md:p-8">
+      <div className="relative w-full max-w-md rounded-shell bg-white p-6 text-ink shadow-[0_24px_60px_-24px_rgba(17,17,17,0.45)] ring-1 ring-ink/5 anim-fade-up md:p-8">
         <h3
-          className="font-display font-normal"
-          style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+          className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] md:text-[26px]"
         >
           Close your account?
         </h3>
-        <p className="mt-3 text-[15px] leading-relaxed text-black/70">
+        <p className="mt-3 text-[15px] leading-relaxed text-ink/70">
           This stops all future billing and cancels active subscriptions. Your
           medical records are retained per state law. Our team confirms by
           email before anything is finalized.

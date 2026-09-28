@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { sendContactMessage } from '@/lib/contact-actions';
 import { SUPPORT_EMAIL } from '@/lib/site';
 
@@ -20,8 +20,8 @@ const TOPICS = [
 ];
 
 const fieldClass =
-  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
-const labelClass = 'mb-2 block font-mono text-[13px] text-black/70';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-shadow focus:bg-white focus:outline-none focus:ring-ink/20';
+const labelClass = 'mb-2 block text-[13px] font-medium text-ink/70';
 
 export function MessageForm() {
   const [busy, setBusy] = useState(false);
@@ -53,14 +53,9 @@ export function MessageForm() {
 
   if (sent) {
     return (
-      <div className="rounded-[4px] bg-[#F2F2F0] p-6 md:p-10" role="status">
-        <h2
-          className="font-display font-normal"
-          style={{ fontSize: 'clamp(1.6rem, 1.4vw + 1rem, 2.4rem)', fontStretch: '75%', lineHeight: 1.05 }}
-        >
-          Message sent.
-        </h2>
-        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-black/70">
+      <div className="rounded-inner bg-butter-soft p-6 md:p-10" role="status">
+        <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-ink md:text-[26px]">Message sent.</h2>
+        <p className="mt-3 max-w-md text-[15px] leading-relaxed text-ink-soft">
           Someone reads every one of these. You&apos;ll hear back at the address you gave, usually within one business
           day.
         </p>
@@ -69,8 +64,8 @@ export function MessageForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
+    <form onSubmit={onSubmit} className="relative space-y-5">
+      <div className="grid gap-5 md:grid-cols-2">
         <div>
           <label htmlFor="name" className={labelClass}>
             Full name
@@ -118,7 +113,7 @@ export function MessageForm() {
           </select>
           <ChevronDown
             aria-hidden
-            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black/55"
+            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/55"
             strokeWidth={1.75}
           />
         </div>
@@ -150,21 +145,24 @@ export function MessageForm() {
       />
 
       {error && (
-        <p role="alert" className="rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
+        <p role="alert" className="rounded-inner bg-red-50 px-4 py-3 text-[14px] leading-relaxed text-red-700">
           {error} You can always reach us at {SUPPORT_EMAIL}.
         </p>
       )}
 
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-sm text-[13px] leading-relaxed text-black/55">
+        <p className="max-w-sm text-[13px] leading-relaxed text-ink/55">
           Please don&apos;t share urgent medical concerns here. Call 911 or go to the nearest ER first.
         </p>
         <button
           type="submit"
           disabled={busy}
-          className="self-start whitespace-nowrap rounded-full bg-black px-4 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-60 sm:self-auto"
+          className="group flex items-center gap-2 self-start whitespace-nowrap rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60 sm:self-auto"
         >
           {busy ? 'Sending…' : 'Send message'}
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-white transition-transform duration-300 group-hover:rotate-45">
+            <ArrowUpRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </span>
         </button>
       </div>
     </form>

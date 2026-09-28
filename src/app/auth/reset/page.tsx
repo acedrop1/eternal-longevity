@@ -27,13 +27,13 @@ export default async function ResetPasswordPage({
   if (!supabaseConfigured) {
     return (
       <AuthShell eyebrow="Account" title="Set a new password.">
-        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
-          <p className="text-[15px] leading-relaxed text-black/70">
+        <div className="space-y-4 rounded-shell bg-milk p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-ink-soft">
             Password reset turns on once the backend is connected.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+            className="block w-full rounded-full bg-ink px-5 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-ink/85"
           >
             Back to login →
           </Link>

@@ -18,6 +18,8 @@ import { getPrescriber } from '@/lib/prescriber';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
+import { isLive } from '@/lib/catalog';
+import { cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
 
 /**
  * How long a prescription written here stays good for.
@@ -32,12 +34,8 @@ export const PRESCRIPTION_MONTHS = 12;
 function refillsFor(cadence: string): number {
   if (cadence === 'monthly') return PRESCRIPTION_MONTHS - 1;
   if (cadence === 'quarterly') return Math.floor(PRESCRIPTION_MONTHS / 3) - 1;
+  if (cadence === 'sixMonth') return Math.floor(PRESCRIPTION_MONTHS / 6) - 1;
   return 0; // one-time: dispensed once, nothing recurring
-}
-
-/** Months between shipments. */
-export function monthsPerCycle(cadence: string): number {
-  return cadence === 'quarterly' ? 3 : 1;
 }
 
 function addMonths(from: Date, months: number): Date {
@@ -172,11 +170,16 @@ export async function renewSubscription(
   const { data: sub } = await db
     .from('subscriptions')
     .select(
-      'id, user_id, product_id, product_name, per_cycle_cents, cadence_label, prescription_id, next_billing_date',
+      'id, user_id, product_id, product_name, per_cycle_cents, cadence_label, prescription_id, next_billing_date, stripe_subscription_id',
     )
     .eq('id', subscriptionId)
     .maybeSingle();
   if (!sub) return { subscriptionId, result: 'error', detail: 'not_found' };
+  // Billed by Stripe itself (created in Admin → Billing); charging here too
+  // would bill the member twice.
+  if (sub.stripe_subscription_id) {
+    return { subscriptionId, result: 'error', detail: 'stripe_managed' };
+  }
 
   const { data: rx } = sub.prescription_id
     ? await db
@@ -190,11 +193,14 @@ export async function renewSubscription(
   const lapsed =
     !rx ||
     (rx.expires_at !== null && rx.expires_at < today) ||
-    (rx.refills_remaining ?? 0) <= 0;
+    (rx.refills_remaining ?? 0) <= 0 ||
+    !(await isLive(String(sub.product_id)));
 
   /*
-   * Out of date or out of refills. Charging here would be dispensing without a
-   * current prescription, so the plan pauses and goes back for review instead.
+   * Out of date, out of refills, or a product we no longer sell (withheld or
+   * back to draft). Charging here would be dispensing without a current
+   * prescription or shipping something off the catalogue, so the plan pauses
+   * and goes back for review instead.
    */
   if (lapsed) {
     await db
@@ -223,6 +229,11 @@ export async function renewSubscription(
     }
     return { subscriptionId, result: 'needs_review' };
   }
+
+  // Bill and schedule on the plan the member is on now, not the one they
+  // started on: charging a 6-month total and then renewing a month later
+  // would bill six times over.
+  const cadence = cadenceOfLabel(sub.cadence_label, String(rx.cadence ?? 'monthly'));
 
   const { data: profile } = await db
     .from('profiles')
@@ -322,7 +333,7 @@ export async function renewSubscription(
     product_name: sub.product_name,
     quantity: 1,
     unit_price_cents: amount,
-    cadence: rx.cadence ?? 'monthly',
+    cadence,
     cadence_label: sub.cadence_label ?? 'Monthly',
   });
 
@@ -350,7 +361,7 @@ export async function renewSubscription(
             },
           }
         : undefined,
-      metadata: { order_number: orderNumber, refill: 'true' },
+      metadata: { order_number: orderNumber, order_id: order.id, refill: 'true' },
     }, {
       // One charge per plan per billing date, even if two cron runs overlap.
       // ponytail: an overlapping run still inserts a second (unpaid) order row;
@@ -379,7 +390,7 @@ export async function renewSubscription(
   }
 
   // Burn a refill and schedule the next cycle.
-  const months = monthsPerCycle(String(rx.cadence ?? 'monthly'));
+  const months = monthsPerCycle(cadence);
   await Promise.all([
     db
       .from('prescriptions')
@@ -415,6 +426,8 @@ export async function dueSubscriptionIds(limit = 100): Promise<string[]> {
     .from('subscriptions')
     .select('id')
     .eq('status', 'active')
+    // Stripe bills its own subscriptions; the cron only renews ours.
+    .is('stripe_subscription_id', null)
     .lte('next_billing_date', isoDate(new Date()))
     .limit(limit);
   return (data ?? []).map((r) => r.id);

@@ -1,9 +1,13 @@
+import type { Metadata } from 'next';
 import { CartProvider } from '@/components/cart/CartProvider';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
 import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
 import { loadCart, loadProfile, profileDbConfigured } from '@/lib/profile-db';
+
+// Private: never indexed.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * Shared layout for everything under /portal/*.

@@ -75,7 +75,7 @@ function AddCardForm({ onSaved }: { onSaved: () => void }) {
       >
         {busy ? 'Saving…' : 'Save card'}
       </button>
-      <p className="text-center text-[13px] text-black/55">
+      <p className="text-center text-[13px] text-ink/55">
         Entered directly with Stripe. Card details never reach our servers.
       </p>
     </form>
@@ -122,11 +122,11 @@ export function StripeCardsManager({
   return (
     <div className="space-y-3">
       {loading && (
-        <p role="status" className="text-[15px] text-black/55">Loading your cards…</p>
+        <p role="status" className="text-[15px] text-ink/55">Loading your cards…</p>
       )}
 
       {!loading && cards.length === 0 && !adding && (
-        <p className="text-[15px] leading-relaxed text-black/65">
+        <p className="text-[15px] leading-relaxed text-ink/65">
           No card on file. Add one and refills are charged automatically once
           your prescriber approves them — you are never charged before that.
         </p>
@@ -137,18 +137,18 @@ export function StripeCardsManager({
           key={c.id}
           className={cn(inset, 'flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3')}
         >
-          <span className="text-[15px] font-medium capitalize text-black">
+          <span className="text-[15px] font-medium capitalize text-ink">
             {c.brand}
           </span>
-          <span className="text-[15px] tabular-nums text-black/80">
+          <span className="text-[15px] tabular-nums text-ink/80">
             •••• {c.last4}
           </span>
-          <span className="font-mono text-[13px] tabular-nums text-black/55">
+          <span className="text-[13px] font-medium tabular-nums text-ink/55">
             {String(c.expMonth).padStart(2, '0')}/{String(c.expYear).slice(-2)}
           </span>
           {c.isDefault && (
-            <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] leading-none text-black">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-2.5 py-1 text-[12px] font-medium leading-none text-ink ring-1 ring-inset ring-butter-deep/60">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
               Default
             </span>
           )}
@@ -163,7 +163,7 @@ export function StripeCardsManager({
                   setBusyId(null);
                   refresh();
                 }}
-                className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
+                className={cn(btnSmall, 'bg-white text-ink ring-ink/10 hover:bg-milk')}
               >
                 Make default
               </button>
@@ -196,10 +196,10 @@ export function StripeCardsManager({
                 // Light, to sit on the white portal. Appearance only.
                 theme: 'stripe',
                 variables: {
-                  colorPrimary: '#000000',
+                  colorPrimary: '#111111',
                   colorBackground: '#ffffff',
-                  colorText: '#000000',
-                  borderRadius: '2px',
+                  colorText: '#111111',
+                  borderRadius: '18px',
                 },
               },
             }}
@@ -212,7 +212,7 @@ export function StripeCardsManager({
               setAdding(false);
               setClientSecret(null);
             }}
-            className="mt-2 min-h-[44px] w-full text-center font-mono text-[13px] text-black/60 hover:text-black"
+            className="mt-2 min-h-[44px] w-full text-center text-[13px] font-medium text-ink/60 hover:text-ink"
           >
             Cancel
           </button>
@@ -230,7 +230,7 @@ export function StripeCardsManager({
       )}
 
       {adding && !clientSecret && (
-        <p role="status" className="text-[15px] text-black/55">Opening secure form…</p>
+        <p role="status" className="text-[15px] text-ink/55">Opening secure form…</p>
       )}
     </div>
   );

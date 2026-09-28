@@ -66,6 +66,11 @@ export const NOTIFICATION_DEFS: NotificationDef[] = [
     body: 'When to dose, when an off-cycle starts.',
   },
   {
+    key: 'checkins',
+    title: 'Check-ins',
+    body: 'A one-question note a month after your treatment arrives.',
+  },
+  {
     key: 'product',
     title: 'Product updates',
     body: 'New peptides, formulary changes.',
@@ -81,6 +86,7 @@ export const DEFAULT_NOTIFICATIONS: Record<string, boolean> = {
   shipment: true,
   clinical: true,
   cycle: true,
+  checkins: true,
   product: false,
   marketing: false,
 };

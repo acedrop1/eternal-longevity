@@ -1,8 +1,12 @@
+import type { Metadata } from 'next';
 import { CartProvider } from '@/components/cart/CartProvider';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
 import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
 import { loadCart, loadProfile, profileDbConfigured } from '@/lib/profile-db';
+
+// Private: never indexed.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * /checkout mirrors /portal's providers so cart and saved profile carry

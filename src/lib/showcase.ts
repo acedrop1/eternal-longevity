@@ -1,4 +1,5 @@
 import { getAnyShopProduct, type ShopProduct } from '@/lib/shopProducts';
+import { fromPrice } from '@/lib/lineup';
 
 /**
  * Products shown in the homepage Shop All rail and the mobile category strip.
@@ -15,8 +16,8 @@ export interface ShowcaseItem {
   tagline: string;
   image: string;
   /**
-   * Monthly price struck through beside the per-month price on the quarterly
-   * plan: the same comparison the product page makes. null when unpriced.
+   * Monthly price struck through beside the cheapest plan's per-month price
+   * (fromPrice): the same comparison the product page makes. null when unpriced.
    */
   price: { was: number; now: number } | null;
   /** null for preview cards: they have no live page to link to. */
@@ -29,7 +30,7 @@ const DEV = process.env.NODE_ENV === 'development';
 
 const priceOf = (p: ShopProduct) => ({
   was: p.pricing.monthly,
-  now: Math.round(p.pricing.quarterly / 3),
+  now: fromPrice(p.pricing),
 });
 
 const sermorelin = getAnyShopProduct('sermorelin');

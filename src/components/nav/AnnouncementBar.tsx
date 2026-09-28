@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { SERVICE_AREA_SHORT } from '@/lib/site';
 
 /**
  * Rotating announcement bar (David pattern): one underlined line, arrows
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils';
  * makes and links to the page that backs it up.
  */
 const MESSAGES = [
-  { text: 'Prescribed by a licensed physician. NJ, NY, PA & MI.', href: '/about' },
+  { text: `Prescribed by a licensed physician. ${SERVICE_AREA_SHORT}.`, href: '/about' },
   { text: 'Compounded by a licensed 503A pharmacy.', href: '/legal/pharmacy-fulfillment' },
   { text: 'Free shipping on every cycle.', href: '/legal/shipping' },
 ];

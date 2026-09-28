@@ -11,7 +11,7 @@ export default function OrdersLoading() {
       <Shimmer className="mb-10 h-4 w-2/3 max-w-lg" />
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-[4px] bg-[#F2F2F0] p-5 md:p-6">
+          <div key={i} className="rounded-shell bg-milk p-5 md:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div className="flex-1">
                 <Shimmer className="mb-2 h-3 w-32" />

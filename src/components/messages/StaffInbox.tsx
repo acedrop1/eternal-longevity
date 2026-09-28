@@ -60,7 +60,7 @@ export function StaffInbox({
 
   if (threads.length === 0) {
     return (
-      <div className="rounded-[4px] border border-line bg-surface p-10 text-center">
+      <div className="rounded-shell bg-milk p-10 text-center">
         <p className="text-sm text-foreground/60">
           No messages yet. Member conversations will appear here.
         </p>
@@ -69,7 +69,7 @@ export function StaffInbox({
   }
 
   return (
-    <div className="grid h-[calc(100vh-16rem)] min-h-[28rem] grid-cols-1 overflow-hidden rounded-[4px] border border-line bg-surface md:grid-cols-[minmax(14rem,1fr)_2fr]">
+    <div className="grid h-[calc(100vh-16rem)] min-h-[28rem] grid-cols-1 overflow-hidden rounded-shell bg-milk md:grid-cols-[minmax(14rem,1fr)_2fr]">
       {/* thread list */}
       <div className="overflow-y-auto border-b border-line md:border-b-0 md:border-r">
         {threads.map((t) => (
@@ -87,11 +87,11 @@ export function StaffInbox({
                 {t.memberName}
               </span>
               {t.awaitingReply && (
-                <span aria-label="Awaiting reply" className="h-2 w-2 flex-none rounded-full bg-accent" />
+                <span aria-label="Awaiting reply" className="h-2 w-2 flex-none rounded-full bg-amber-400" />
               )}
             </span>
             <span className="block truncate text-xs text-foreground/60">{t.lastBody}</span>
-            <span className="block font-mono text-[12px] tabular-nums text-foreground/55">{fmtTime(t.lastAt)}</span>
+            <span className="block font-medium text-[12px] tabular-nums text-foreground/55">{fmtTime(t.lastAt)}</span>
           </button>
         ))}
       </div>
@@ -101,7 +101,7 @@ export function StaffInbox({
         {active && (
           <div className="border-b border-line px-4 py-3">
             <p className="text-sm font-semibold text-foreground">{active.memberName}</p>
-            <p className="font-mono text-[12px] text-foreground/60">{active.memberEmail}</p>
+            <p className="font-medium text-[12px] text-foreground/60">{active.memberEmail}</p>
           </div>
         )}
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -110,15 +110,15 @@ export function StaffInbox({
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[80%] rounded-[4px] px-4 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[80%] rounded-inner px-4 py-2.5 text-sm leading-relaxed ${
                     mine
-                      ? 'bg-black text-white'
+                      ? 'bg-ink text-white'
                       : 'border border-line bg-background text-foreground/90'
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{m.body}</p>
                   <span
-                    className={`mt-1 block font-mono text-[12px] tabular-nums ${mine ? 'text-white/65' : 'text-foreground/55'}`}
+                    className={`mt-1 block font-medium text-[12px] tabular-nums ${mine ? 'text-white/65' : 'text-foreground/55'}`}
                   >
                     {fmtTime(m.createdAt)}
                   </span>
@@ -141,12 +141,12 @@ export function StaffInbox({
               }}
               rows={2}
               placeholder="Reply…"
-              className="flex-1 resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder:text-foreground/35 focus:border-black focus:outline-none"
+              className="flex-1 resize-none rounded-inner border border-line bg-background px-4 py-3 text-sm text-foreground placeholder:text-foreground/35 focus:border-ink focus:outline-none"
             />
             <button
               onClick={send}
               disabled={isPending || !draft.trim() || !activeId}
-              className="rounded-full bg-black px-6 py-3 text-[13px] text-white transition hover:bg-black/85 disabled:opacity-40 font-mono"
+              className="rounded-full bg-ink px-6 py-3 text-[14px] font-semibold text-white transition hover:bg-ink/85 disabled:opacity-40"
             >
               Send
             </button>

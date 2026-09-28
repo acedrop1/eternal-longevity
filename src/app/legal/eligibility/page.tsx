@@ -29,8 +29,8 @@ export default function EligibilityPage() {
         {
           heading: `Paying Is Not Approval`,
           paragraphs: [
-            `On our platform this question does not arise, because you are not asked to pay until after a prescriber has already approved your order. There is no scenario in which you have paid and are then declined.`,
-            `If a prescriber declines your order, you never receive a payment link and you are never charged.`,
+            `You save a card at checkout, but it is not charged until a prescriber approves your order. There is no scenario in which you have paid and are then declined.`,
+            `If a prescriber declines your order, you are never charged.`,
           ],
         },
         {
@@ -55,7 +55,7 @@ export default function EligibilityPage() {
         {
           heading: `Continued Treatment Is Not Guaranteed`,
           paragraphs: [
-            `Initial approval does not guarantee refills. A prescriber may change or discontinue treatment at any time based on your response, new health information, or clinical judgement.`,
+            `Refills on a plan ship on the same prescription until it expires or runs out of refills, without a new review each time. The prescriber may pause, change, or stop treatment at any time based on your response, new health information, or clinical judgement, and renewing an expired prescription needs a new review.`,
           ],
         },
         {

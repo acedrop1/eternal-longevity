@@ -24,7 +24,7 @@ export default function ShippingPage() {
     <LegalLayout
       title="Shipping & Delivery Policy"
       effective="September 2026"
-      lead="Every order is compounded to order by a licensed 503A pharmacy after a prescriber approves it, so the clock starts at approval and payment — not at the moment you place the order. This page sets out exactly how long each step takes, how your order travels, and what happens if something goes wrong in transit."
+      lead="Every order is prepared by a licensed 503A pharmacy after a prescriber approves it, so the clock starts at approval — not at the moment you place the order. This page sets out how long each step typically takes, how your order travels, and what happens if something goes wrong in transit."
       sections={[
         {
           heading: 'Where We Ship',
@@ -36,35 +36,33 @@ export default function ShippingPage() {
         {
           heading: 'Order Timeline',
           paragraphs: [
-            'A typical order moves through four stages. Each stage begins only when the one before it finishes:',
+            'A typical order moves through three stages. Each stage begins only when the one before it finishes:',
           ],
           bullets: [
-            'Prescriber review — within 24 hours of you submitting your order, and usually the same business day. Nothing is charged during this stage.',
-            'Payment — you receive a secure payment link once your prescriber approves. The link is valid for 7 days.',
-            'Compounding and dispatch — your prescription reaches the pharmacy as soon as payment clears. Orders that clear before 4:00 p.m. ET are compounded and dispatched the same business day; orders after that cutoff, or on a weekend or federal holiday, go out the next business day.',
-            'Transit — 1 to 2 business days on an expedited cold-chain service.',
+            'Prescriber review — a physician usually reviews your intake within 1 business day. He may ask you questions first, which adds time. Your card is saved at checkout but nothing is charged during this stage.',
+            'Approval and payment — when the prescriber approves, the card you saved is charged for the plan you chose and the prescription goes to the pharmacy. If that card cannot be charged, we email you a secure link to pay; nothing ships until payment goes through.',
+            'Preparation and shipping — after approval, the pharmacy typically prepares and ships within a few business days, then the carrier delivers.',
           ],
         },
         {
-          heading: 'Total Delivery Estimate',
+          heading: 'Shipping Cost',
           paragraphs: [
-            'From payment to your door, expect 1 to 3 business days for most orders. Your medication is compounded individually for you — it is not pulled off a shelf — which is why the clock starts at payment rather than at checkout.',
-            'Shipping is expedited on every order and included in the price. There is no shipping charge at checkout, no standard tier, and no upgrade to buy.',
-            'Refill orders on an active subscription follow the same timeline, and we begin the prescriber review ahead of your refill date so shipments do not gap.',
+            'Shipping is free on every order. There is no shipping charge at checkout and no upgrade to buy.',
+            'Refills on an active plan ship on their scheduled date on the same prescription, without a new review, and follow the same preparation and shipping timeline.',
           ],
         },
         {
           heading: 'Beyond-Use Date & Testing',
           paragraphs: [
-            'Compounded preparations carry a beyond-use date rather than a manufacturer expiry. Ours is typically 90 days from the date of compounding, and the date is printed on the vial label. Do not use a vial past its beyond-use date, and do not order more than you will use within it.',
-            `A certificate of analysis for the lot your order was compounded from is available on request — email ${SUPPORT_EMAIL} with your order number.`,
+            'Compounded preparations carry a beyond-use date rather than a manufacturer expiry. The pharmacy dates each supply, and the date is printed on the label; it varies by preparation. Do not use a medication past its beyond-use date.',
+            `Each batch is tested by the pharmacy as required for its preparation type. A certificate of analysis for the lot your order came from is available on request — email ${SUPPORT_EMAIL} with your order number.`,
           ],
         },
         {
           heading: 'Cold-Chain Handling',
           paragraphs: [
-            'Peptides are temperature-sensitive. Orders ship in an insulated container with a cold pack, on an expedited service, and are timed so they are not sitting in a carrier facility over a weekend.',
-            'Refrigerate your vials on arrival. If a package arrives warm to the touch, or the cold pack is fully thawed and the vials are at room temperature, do not use the contents. Photograph the package as it arrived and contact us the same day.',
+            'Temperature-sensitive medications ship cold-chain, in an insulated container with a cold pack. Other medications ship by standard service.',
+            'Store your medication as its label says. If a cold-chain package arrives warm to the touch, or the cold pack is fully thawed and the medication is at room temperature, do not use the contents. Photograph the package as it arrived and contact us the same day.',
           ],
         },
         {
@@ -85,13 +83,13 @@ export default function ShippingPage() {
           heading: 'Late, Lost, or Damaged Shipments',
           paragraphs: [
             `If tracking has not updated for three business days, or your package is confirmed lost by the carrier, contact us at ${SUPPORT_EMAIL} with your order number. We will open a carrier trace and, once loss is confirmed, resend your order at no cost to you.`,
-            `If your shipment arrives damaged, leaking, or thermally compromised, email ${SUPPORT_EMAIL} within 7 days with photographs of the package and its contents. We will replace the affected vials at no cost. Full refund terms are in our Refund Policy.`,
+            `If your shipment arrives damaged, leaking, or thermally compromised, email ${SUPPORT_EMAIL} within 7 days with photographs of the package and its contents. We will replace the affected medication at no cost. Full refund terms are in our Refund Policy.`,
           ],
         },
         {
           heading: 'Returns',
           paragraphs: [
-            'Do not mail medication back to us. Federal and state pharmacy law prohibits a compounded preparation from being re-dispensed once it has left the pharmacy, so a returned package cannot be restocked, credited, or refunded. Dispose of unused vials through a pharmaceutical take-back program.',
+            'Do not mail medication back to us. Federal and state pharmacy law prohibits a compounded preparation from being re-dispensed once it has left the pharmacy, so a returned package cannot be restocked, credited, or refunded. Dispose of unused medication through a pharmaceutical take-back program.',
           ],
         },
         {

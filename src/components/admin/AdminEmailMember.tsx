@@ -50,7 +50,7 @@ export function AdminEmailMember({
   }
 
   const field =
-    'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
+    'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
   return (
     <div>
@@ -69,10 +69,10 @@ export function AdminEmailMember({
               setResult(null);
             }}
             className={cn(
-              'rounded-full border px-4 py-2 font-mono text-[12px] transition-colors',
+              'rounded-full border px-4 py-2 text-[13px] font-medium transition-colors',
               template === key
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-line bg-surface text-foreground/65 hover:border-foreground/30 hover:text-foreground',
+                ? 'border-ink bg-ink text-white'
+                : 'border-ink/10 bg-white text-ink/70 hover:border-ink/25 hover:text-ink',
             )}
           >
             {label}
@@ -81,7 +81,7 @@ export function AdminEmailMember({
       </div>
 
       {template === 'welcome' ? (
-        <p className="mb-4 rounded-[4px] border border-line bg-background px-4 py-3 text-sm leading-relaxed text-foreground/60">
+        <p className="mb-4 rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm leading-relaxed text-ink/60">
           Sends the standard welcome — what happens next, and a link to complete
           their visit. Useful when the first one bounced or went to spam.
         </p>
@@ -90,7 +90,7 @@ export function AdminEmailMember({
           <div>
             <label
               htmlFor="admin-email-subject"
-              className="mb-1.5 block font-mono text-[12px] text-foreground/60"
+              className="mb-1.5 block text-[13px] font-medium text-ink/70"
             >
               Subject
             </label>
@@ -105,7 +105,7 @@ export function AdminEmailMember({
           <div>
             <label
               htmlFor="admin-email-body"
-              className="mb-1.5 block font-mono text-[12px] text-foreground/60"
+              className="mb-1.5 block text-[13px] font-medium text-ink/70"
             >
               Message
             </label>
@@ -121,7 +121,7 @@ export function AdminEmailMember({
               className={cn(field, 'resize-none')}
             />
           </div>
-          <p className="text-xs leading-relaxed text-foreground/60">
+          <p className="text-xs leading-relaxed text-ink/60">
             Don&apos;t put clinical advice in here — that is the prescriber&apos;s
             to give, and it belongs in their portal thread.
           </p>
@@ -131,10 +131,10 @@ export function AdminEmailMember({
       {result && (
         <p
           className={cn(
-            'mb-4 rounded-[4px] border px-4 py-3 text-sm',
+            'mb-4 rounded-inner border px-4 py-3 text-sm',
             result.ok
-              ? 'border-accent/40 bg-accent/5 text-accent'
-              : 'border-red-500/30 bg-red-500/5 text-red-300',
+              ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+              : 'border-red-600/20 bg-red-50 text-red-700',
           )}
         >
           {result.message}
@@ -146,11 +146,11 @@ export function AdminEmailMember({
           type="button"
           disabled={!ready || busy}
           onClick={send}
-          className="rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-40 font-mono"
+          className="rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
         >
           {busy ? 'Sending…' : 'Send'}
         </button>
-        <span className="font-mono text-[12px] text-foreground/60">to {email}</span>
+        <span className="text-[12px] text-ink/60">to {email}</span>
       </div>
     </div>
   );

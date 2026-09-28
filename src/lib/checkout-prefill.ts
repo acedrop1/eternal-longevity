@@ -7,6 +7,7 @@ export interface CheckoutPrefill {
   fullName: string;
   phone: string;
   zip: string;
+  state: string;
 }
 
 /**
@@ -16,7 +17,7 @@ export interface CheckoutPrefill {
  * — and the intake fills whatever is missing behind it.
  */
 export async function checkoutPrefill(userId: string): Promise<CheckoutPrefill> {
-  const empty = { fullName: '', phone: '', zip: '' };
+  const empty = { fullName: '', phone: '', zip: '', state: '' };
   if (!supabaseAdminConfigured()) return empty;
 
   try {
@@ -58,6 +59,7 @@ export async function checkoutPrefill(userId: string): Promise<CheckoutPrefill> 
       ),
       phone: pick(addr.phone, profile?.phone, a.phone),
       zip: pick(addr.zip, a.zip),
+      state: pick(addr.state, a.state),
     };
   } catch {
     return empty;

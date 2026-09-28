@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { logoutAction } from '@/lib/auth-actions';
 import { type Role, type SessionUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { Wordmark } from '@/components/nav/Wordmark';
 import { CartButton } from '@/components/cart/CartButton';
 import { PortalNav, type NavItem } from '@/components/portal/PortalNav';
 import { enrichNavWithCounts } from '@/lib/pending-counts';
@@ -10,10 +11,14 @@ import { PortalContent } from '@/components/portal/PortalContent';
 import { IDLE_MINUTES } from '@/lib/session-policy';
 
 /** Role chip in the top bar: a label and a dot, so no role reads on colour alone. */
+/** Frosted bar, as the public header (src/components/nav/Header.tsx) wears it once scrolled. */
+const GLASS_BAR =
+  'rounded-inner bg-white/70 text-ink shadow-[0_10px_40px_-16px_rgba(17,17,17,0.22)] ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150';
+
 const ROLE_THEME: Record<Role, { label: string; shortLabel: string; dot: string }> = {
-  member: { label: 'Member', shortLabel: 'Member', dot: 'bg-[#D5A850]' },
+  member: { label: 'Member', shortLabel: 'Member', dot: 'bg-butter-deep' },
   doctor: { label: 'Doctor · Clinical', shortLabel: 'Doctor', dot: 'bg-sky-400' },
-  admin: { label: 'Admin · Operations', shortLabel: 'Admin', dot: 'bg-white/70' },
+  admin: { label: 'Admin · Operations', shortLabel: 'Admin', dot: 'bg-ink/60' },
   pharmacy: { label: 'Pharmacy · Fulfillment', shortLabel: 'Pharmacy', dot: 'bg-emerald-400' },
 };
 
@@ -23,7 +28,7 @@ interface PortalShellProps {
    *  horizontal scroll row (mobile, inside the top bar). */
   nav?: NavItem[];
   /** Body theme. 'light' (default) gives the content area the white ground;
-   *  the top bar is always the frosted black of the public header. */
+   *  the top bar is always the frosted glass of the public header. */
   bodyTheme?: 'dark' | 'light';
   children: React.ReactNode;
 }
@@ -31,9 +36,9 @@ interface PortalShellProps {
 /**
  * Shared chrome for /portal/*, every role.
  *
- *   Top bar (frosted black, like the public header):
+ *   Top bar (frosted glass, like the public header):
  *     logo · role chip · cart (member) · name · log out
- *     + on mobile, a swipeable nav row underneath
+ *     + on mobile, a swipeable glass nav strip underneath
  *
  *   Desktop (md+): left sidebar nav · main content on the right
  *   Mobile (<md):  main content full width
@@ -59,22 +64,23 @@ export async function PortalShell({
           user.role === 'member' ? IDLE_MINUTES.member : IDLE_MINUTES.staff
         }
       />
-      <div className={cn('min-h-screen', lightBody ? 'bg-white text-black' : 'bg-black text-white')}>
+      <div className={cn('min-h-screen', lightBody ? 'bg-white text-ink' : 'bg-ink text-white')}>
         {/* ============ TOP BAR ============ */}
-        {/* 75% black keeps white text above 7:1 over a white page. */}
-        <header className="sticky top-0 z-40 bg-black/75 text-white backdrop-blur-2xl backdrop-saturate-150">
-          <div className="border-b border-white/10">
-            <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-4 md:px-6">
+        {/* The public header's frosted glass: a floating rounded bar, milky
+            white so it reads over anything scrolling beneath it. */}
+        <header className="sticky top-0 z-40 px-3 pt-3 md:px-5">
+          <div className={GLASS_BAR}>
+            <div className="flex h-14 items-center gap-2 px-2 sm:gap-3 sm:px-3 md:px-4">
               <Link
                 href={user.redirectTo}
-                className="flex min-h-[44px] flex-shrink-0 items-center gap-2.5 text-white/90 transition-colors hover:text-white"
+                className="flex min-h-[44px] flex-shrink-0 items-center gap-2.5 rounded-full px-1 transition-opacity hover:opacity-80"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.svg" alt="Eternal Longevity" className="h-6 w-auto md:h-7" />
-                <span className="hidden font-mono text-[13px] text-white/60 sm:inline">Portal</span>
+                {/* Same mark and deep-butter tint as the public header. */}
+                <Wordmark href={null} className="text-[26px] text-[#F2D060] md:text-[30px]" />
+                <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">Portal</span>
               </Link>
 
-              <span className="ml-auto inline-flex flex-shrink-0 items-center gap-1.5 rounded-[2px] px-2 py-1 font-mono text-[12px] leading-none text-white/85 ring-1 ring-white/20">
+              <span className="ml-auto inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-medium leading-none text-ink/80 ring-1 ring-ink/5">
                 <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', theme.dot)} />
                 <span className="sm:hidden">{theme.shortLabel}</span>
                 <span className="hidden sm:inline">{theme.label}</span>
@@ -82,7 +88,7 @@ export async function PortalShell({
 
               {user.role === 'member' && <CartButton />}
 
-              <span className="hidden max-w-[10rem] truncate text-[13px] text-white/75 md:inline">
+              <span className="hidden max-w-[10rem] truncate text-[13px] font-medium text-ink/70 md:inline">
                 {user.name}
               </span>
 
@@ -90,7 +96,7 @@ export async function PortalShell({
                 <button
                   type="submit"
                   aria-label="Log out"
-                  className="grid h-11 w-11 place-items-center rounded-full font-mono text-[13px] text-white/85 transition-colors hover:bg-white/10 hover:text-white sm:flex sm:h-auto sm:w-auto sm:px-3.5 sm:py-1.5 sm:ring-1 sm:ring-white/25"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-white/70 text-[13px] font-semibold text-ink ring-1 ring-ink/5 transition-colors hover:bg-white sm:flex sm:h-auto sm:w-auto sm:px-4 sm:py-2"
                 >
                   <svg
                     className="sm:hidden"
@@ -114,9 +120,9 @@ export async function PortalShell({
             </div>
           </div>
 
-          {/* Mobile-only nav row, swipeable */}
+          {/* Mobile-only nav strip, swipeable, same glass as the bar */}
           {navItems.length > 0 && (
-            <div className="border-b border-white/10 md:hidden">
+            <div className={cn(GLASS_BAR, 'mt-2 md:hidden')}>
               <PortalNav nav={navItems} variant="mobile" />
             </div>
           )}
@@ -126,18 +132,18 @@ export async function PortalShell({
         {/* theme-light stays on the content wrapper: staff pages (admin,
             doctor, pharmacy) still colour themselves through the theme
             tokens (text-foreground, bg-surface, border-line), and this is
-            what resolves those to black on white. */}
+            what resolves those to ink on white. */}
         <div className={cn(lightBody && 'theme-light')}>
-          <div className="mx-auto max-w-7xl md:flex md:items-start">
+          <div className="px-3 md:flex md:items-start md:gap-6 md:px-5">
             {/* Left sidebar. Desktop only */}
             {navItems.length > 0 && (
-              <aside className="sticky top-14 hidden max-h-[calc(100vh-3.5rem)] self-start overflow-y-auto border-r border-black/10 px-3 py-8 md:block md:w-56 md:flex-shrink-0 md:py-10 lg:w-60 lg:px-4">
+              <aside className="sticky top-[5.5rem] mt-6 hidden max-h-[calc(100vh-7rem)] self-start overflow-y-auto rounded-shell bg-milk p-2 md:block md:w-56 md:flex-shrink-0 lg:w-60">
                 <PortalNav nav={navItems} variant="sidebar" />
               </aside>
             )}
 
             {/* Main content */}
-            <main className="min-h-[calc(100vh-3.5rem)] min-w-0 flex-1">
+            <main className="min-h-[calc(100vh-5rem)] min-w-0 flex-1">
               <PortalContent>{children}</PortalContent>
             </main>
           </div>

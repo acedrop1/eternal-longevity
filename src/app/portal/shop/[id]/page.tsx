@@ -52,13 +52,13 @@ export default async function ShopProductPage({ params }: PageProps) {
       {/* Breadcrumb. Hidden on mobile, where the PDP opens on the photo */}
       <nav
         aria-label="Breadcrumb"
-        className="hidden items-center gap-2 font-mono text-[13px] text-black/55 md:flex"
+        className="hidden items-center gap-2 text-[13px] font-medium text-ink/55 md:flex"
       >
-        <Link href="/portal/shop" className="transition-colors hover:text-black">
+        <Link href="/portal/shop" className="transition-colors hover:text-ink">
           Shop
         </Link>
         <span aria-hidden>/</span>
-        <span aria-current="page" className="text-black">{product.name}</span>
+        <span aria-current="page" className="text-ink">{product.name}</span>
       </nav>
 
       {/* Mobile: photo + plan picker, with the floating buy bar */}

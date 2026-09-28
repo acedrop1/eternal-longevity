@@ -12,8 +12,8 @@ export default function ShopLoading() {
       <Shimmer className="mb-10 h-4 w-2/3 max-w-xl" />
 
       {/* Search + category filter (sits at the bottom on a phone) */}
-      <div className="mb-8 hidden rounded-[4px] bg-[#F2F2F0] p-3 md:block">
-        <div className="mb-3 h-11 rounded-[2px] bg-white ring-1 ring-black/10" />
+      <div className="mb-8 hidden rounded-shell bg-milk p-3 md:block">
+        <div className="mb-3 h-11 rounded-inner bg-white ring-1 ring-ink/10" />
         <div className="flex gap-2">
           {[96, 110, 100, 90, 105].map((w, i) => (
             <Shimmer key={i} className="h-9 flex-shrink-0 rounded-full" style={{ width: w }} />
@@ -23,7 +23,7 @@ export default function ShopLoading() {
 
       <div className="grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3 xl:grid-cols-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Shimmer key={i} className="aspect-[3/4] w-full rounded-[4px]" />
+          <Shimmer key={i} className="aspect-[3/4] w-full rounded-shell" />
         ))}
       </div>
     </PortalSkeletonShell>

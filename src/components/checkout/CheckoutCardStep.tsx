@@ -57,10 +57,12 @@ function CardCapture({
 
   return (
     <form onSubmit={onSubmit}>
-      <PaymentElement options={{ layout: 'tabs' }} />
+      <div className="rounded-inner bg-milk p-3 md:p-4">
+        <PaymentElement options={{ layout: 'tabs' }} />
+      </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
+        <p role="alert" className="mt-4 rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-700 ring-1 ring-red-600/20">
           {error}
         </p>
       )}
@@ -68,13 +70,13 @@ function CardCapture({
       <button
         type="submit"
         disabled={!stripe || busy}
-        className="mt-5 w-full rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-5 min-h-[48px] w-full rounded-full bg-ink px-5 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {busy ? 'Saving…' : 'Save card and continue'}
       </button>
 
-      <p className="mt-3 text-center text-[13px] leading-relaxed text-black/55">
-        <strong className="font-medium text-black">Nothing is charged now.</strong>{' '}
+      <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/55">
+        <strong className="font-semibold text-ink">Nothing is charged now.</strong>{' '}
         If your prescriber approves your treatment, this card is charged{' '}
         {amountLabel}. If they decide it is not right for you, it never is.
       </p>
@@ -88,15 +90,12 @@ export function CheckoutCardStep({
   amountCents,
   saved,
   onSaved,
-  onAuthorized,
 }: {
   publishableKey: string;
   amountLabel: string;
   amountCents: number;
   saved: boolean;
   onSaved: () => void;
-  /** The PaymentIntent holding the funds, so the order can be tied to it. */
-  onAuthorized: (paymentIntentId: string) => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +112,6 @@ export function CheckoutCardStep({
       if (cancelled) return;
       if (res.ok && res.clientSecret) {
         setClientSecret(res.clientSecret);
-        onAuthorized(res.paymentIntentId ?? '');
       } else {
         setError('Card entry is unavailable right now.');
       }
@@ -121,15 +119,15 @@ export function CheckoutCardStep({
     return () => {
       cancelled = true;
     };
-  }, [saved, amountCents, onAuthorized]);
+  }, [saved, amountCents]);
 
   if (saved) {
     return (
-      <div role="status" className="flex items-center gap-2.5 rounded-[2px] bg-[#F2F2F0] px-4 py-3.5">
-        <span aria-hidden className="text-black">
+      <div role="status" className="flex items-center gap-3 rounded-inner bg-butter-soft px-4 py-3.5 ring-1 ring-butter-deep/40">
+        <span aria-hidden className="grid h-6 w-6 flex-none place-items-center rounded-full bg-butter text-[13px] text-ink">
           ✓
         </span>
-        <p className="text-[15px] text-black/85">
+        <p className="text-[15px] text-ink">
           Card saved. You are charged {amountLabel} only if your prescriber
           approves — never before, and never if they decline.
         </p>
@@ -139,7 +137,7 @@ export function CheckoutCardStep({
 
   if (error) {
     return (
-      <p role="alert" className="rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
+      <p role="alert" className="rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-700 ring-1 ring-red-600/20">
         {error}
       </p>
     );
@@ -147,10 +145,10 @@ export function CheckoutCardStep({
 
   if (!clientSecret) {
     return (
-      <div className="flex items-center gap-3 font-mono text-[13px] text-black/55">
+      <div className="flex items-center gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] text-ink/55">
         <span
           aria-hidden
-          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black/15 border-t-black"
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/15 border-t-ink"
         />
         Loading secure card form…
       </div>
@@ -165,10 +163,10 @@ export function CheckoutCardStep({
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#000000',
+            colorPrimary: '#111111',
             colorBackground: '#ffffff',
-            colorText: '#000000',
-            borderRadius: '2px',
+            colorText: '#111111',
+            borderRadius: '18px', // rounded-inner, same as the site's inputs
             fontSizeBase: '16px',
           },
         },

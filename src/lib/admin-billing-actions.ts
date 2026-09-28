@@ -22,6 +22,8 @@ import {
   supabaseAdminConfigured,
 } from './supabase/admin';
 import { noticeEmail, refundedEmail, sendEmail } from './email';
+import { getStripe } from './stripe';
+import { intentBelongsTo } from './order-rules';
 
 export interface AdminBillingResult {
   ok: boolean;
@@ -62,12 +64,16 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong.';
 }
 
+export type AdminCadence = 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
+
 const CADENCE: Record<
-  'monthly' | 'quarterly' | 'annual',
+  AdminCadence,
   { interval: BillingInterval; intervalCount: number; label: string }
 > = {
   monthly: { interval: 'month', intervalCount: 1, label: 'Monthly' },
   quarterly: { interval: 'month', intervalCount: 3, label: 'Quarterly' },
+  sixMonth: { interval: 'month', intervalCount: 6, label: '6-month' },
+  // Not sold to customers any more; kept for subscriptions already on it.
   annual: { interval: 'year', intervalCount: 1, label: 'Annual' },
 };
 
@@ -116,7 +122,7 @@ export async function adminCreateSubscription(input: {
   userId: string;
   productName: string;
   amountDollars: number;
-  cadence: 'monthly' | 'quarterly' | 'annual';
+  cadence: AdminCadence;
 }): Promise<AdminBillingResult> {
   const blocked = await guard();
   if (blocked) return blocked;
@@ -278,6 +284,15 @@ export async function adminRefundOrder(input: {
   }
 
   try {
+    // The id on the row is only trusted as far as the intent's own metadata
+    // agrees; older rows could carry an intent from a different order.
+    const pi = await getStripe().paymentIntents.retrieve(order.stripe_payment_intent_id);
+    if (!intentBelongsTo(pi, order)) {
+      return {
+        ok: false,
+        message: 'The payment on file does not belong to this order. Refund it from Stripe directly.',
+      };
+    }
     const { status } = await refundPayment(order.stripe_payment_intent_id, cents);
     const full = cents === undefined || cents === order.total_cents;
 

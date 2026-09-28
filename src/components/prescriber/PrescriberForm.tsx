@@ -10,8 +10,8 @@ import { CREDENTIALS, type PrescriberRecord } from '@/lib/prescriberTypes';
 import { cn } from '@/lib/utils';
 
 const field =
-  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15';
-const label = 'mb-1.5 block font-mono text-[12px] text-foreground/60';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+const label = 'mb-1.5 block text-[13px] font-medium text-ink/70';
 
 /**
  * The prescriber's own facts, editable by him and by an admin.
@@ -84,7 +84,7 @@ export function PrescriberForm({
             placeholder="Bader Elder"
             className={field}
           />
-          <p className="mt-1.5 text-[12px] text-foreground/60">
+          <p className="mt-1.5 text-[12px] text-ink/60">
             Without the credential — it is added from the field beside this.
           </p>
         </div>
@@ -105,7 +105,7 @@ export function PrescriberForm({
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-[12px] text-foreground/60">
+          <p className="mt-1.5 text-[12px] text-ink/60">
             Prints as {form.name || 'Name'}
             {form.credential ? `, ${form.credential}` : ''}.
           </p>
@@ -137,7 +137,7 @@ export function PrescriberForm({
               placeholder="(201) 555-0134"
               className={field}
             />
-            <p className="mt-1.5 text-[12px] text-foreground/60">
+            <p className="mt-1.5 text-[12px] text-ink/60">
               Where a new order texts you.
             </p>
           </div>
@@ -186,7 +186,7 @@ export function PrescriberForm({
         </div>
       </div>
 
-      <p className="mt-4 text-xs leading-relaxed text-foreground/60">
+      <p className="mt-4 text-xs leading-relaxed text-ink/60">
         These appear on every prescription sent to the pharmacy and on the
         published prescription policy. Every change is recorded in the audit
         trail with who made it.
@@ -195,10 +195,10 @@ export function PrescriberForm({
       {result && (
         <p
           className={cn(
-            'mt-4 rounded-[4px] border px-4 py-3 text-sm',
+            'mt-4 rounded-inner border px-4 py-3 text-sm',
             result.ok
-              ? 'border-accent/40 bg-accent/5 text-accent'
-              : 'border-red-500/30 bg-red-500/5 text-red-300',
+              ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+              : 'border-red-600/20 bg-red-50 text-red-700',
           )}
         >
           {result.message}
@@ -211,10 +211,10 @@ export function PrescriberForm({
           disabled={busy || !dirty}
           onClick={save}
           className={cn(
-            'rounded-full px-5 py-2.5 font-mono text-[13px] transition-all active:scale-[0.98]',
+            'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
             busy || !dirty
-              ? 'cursor-not-allowed bg-foreground/10 text-foreground/55'
-              : 'bg-black text-white hover:bg-black/85',
+              ? 'cursor-not-allowed bg-ink/10 text-ink/55'
+              : 'bg-ink text-white hover:bg-ink/85',
           )}
         >
           {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}

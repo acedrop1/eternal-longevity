@@ -15,12 +15,35 @@
  *
  * Two things gate a state: a prescriber licensed there (medicine is practiced
  * where the patient is) and a pharmacy licensed to dispense there. Both must
- * be true. Dr. Elder is licensed in NJ, NY, PA and MI, and the partner
- * pharmacy must hold a (non-resident) licence for each. Add or remove a state
- * here and every consumer follows: the server geofence, checkout, saved
- * addresses and the compliance page. Keep SERVICE_AREA in lib/site in step.
+ * be true: Dr. Elder must be licensed there, and the partner pharmacy must
+ * hold a (non-resident) licence for it. Add or remove a state
+ * here and every consumer follows: the first intake question, the server
+ * intake + order geofences, checkout, saved addresses, and every piece of
+ * site copy (SERVICE_AREA* in lib/site are derived from this list).
  */
 export const SERVICEABLE_STATES = ['NJ', 'NY', 'PA', 'MI'];
+
+/** Full names, for the state question, the checkout dropdown and prose. */
+export const STATE_NAMES: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+  CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia',
+  FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois',
+  IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana',
+  ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan',
+  MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana',
+  NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
+  NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota',
+  OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
+  RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota',
+  TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia',
+  WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+};
+
+/** 'New Jersey, New York, Pennsylvania and Michigan' (conj = 'and' | 'or'). */
+export function serviceAreaProse(conj: 'and' | 'or'): string {
+  const names = SERVICEABLE_STATES.map((s) => STATE_NAMES[s] ?? s);
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} ${conj} ${names.at(-1)}`;
+}
 
 /** All US state abbreviations. Billing addresses only — never shipping. */
 export const STATES_AVAILABLE = [
@@ -42,6 +65,8 @@ export type FieldType =
   | 'slider'
   /** One slider in total inches; stores height_ft + height_in (see IntakeWizard). */
   | 'height'
+  /** Native <select>; used for the state question. */
+  | 'select'
   | 'email'
   | 'password'
   | 'consent-stack'
@@ -92,15 +117,42 @@ const YES_NO: Option[] = [
 
 export const STEPS: Step[] = [
   // -------------------------------------------------------------
+  // 0. STATE — first, so nobody outside the service area fills anything in.
+  // Any state we do not serve is a knockout (see KNOCKOUT_MESSAGES.out_of_state).
+  // -------------------------------------------------------------
+  {
+    id: 'state',
+    eyebrow: 'YOUR STATE',
+    heading: 'Which state do you live in?',
+    body: 'Our physician can only treat you in a state where he is licensed.',
+    fields: [
+      {
+        id: 'state',
+        type: 'select',
+        label: 'State',
+        placeholder: 'Choose your state',
+        required: true,
+        options: Object.entries(STATE_NAMES)
+          .sort(([, a], [, b]) => a.localeCompare(b))
+          .map(([value, label]) => ({ value, label })),
+        knockoutOn: {
+          values: Object.keys(STATE_NAMES).filter((s) => !SERVICEABLE_STATES.includes(s)),
+          key: 'out_of_state',
+        },
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------
   // 1. ABOUT YOU — name, DOB, phone, ZIP, sex. Nothing else belongs here.
   // -------------------------------------------------------------
   {
     id: 'about',
     eyebrow: '01 / ABOUT YOU',
     heading: 'A few quick facts.',
-    body: 'We use this to tailor your protocol options.',
+    body: 'The prescriber uses this in his review.',
     smsDisclaimer:
-      'By entering your phone number and continuing, you consent to Eternal Longevity calling or sending text messages to you for the purpose of verifying your phone number, ensuring patient safety, and for any other lawful purposes related to your Eternal Longevity account and use of our services. This includes cart reminders, promotions, order confirmations, shipment notifications, and messages from your prescriber. You must be 18 or older to opt in. Message and data rates may apply. Message frequency varies. Reply HELP for assistance or STOP to opt out.',
+      'By entering your phone number and continuing, you agree that Eternal Longevity may call or text you about your care and account: verifying your number, questions from your prescriber, order and shipping updates, and account security. These are not marketing messages. Marketing texts are sent only if you tick the separate, optional box later. Message and data rates may apply. Message frequency varies. Reply HELP for help or STOP to opt out.',
     fields: [
       {
         id: 'first_name',
@@ -162,7 +214,7 @@ export const STEPS: Step[] = [
   {
     id: 'email-capture',
     eyebrow: '02 / STAY IN TOUCH',
-    heading: "We'll send your protocol here.",
+    heading: 'Where should we reach you?',
     body: "If you don't finish today, we'll save your progress.",
     isEmailCapture: true,
     fields: [
@@ -214,7 +266,7 @@ export const STEPS: Step[] = [
     id: 'health',
     eyebrow: '04 / HEALTH SCREEN',
     heading: 'A few important screening questions.',
-    body: 'Honest answers protect you. Used to match you with suitable protocols.',
+    body: 'Honest answers protect you. The prescriber uses them to decide what is safe for you.',
     fields: [
       {
         id: 'cancer',
@@ -259,12 +311,12 @@ export const STEPS: Step[] = [
     body: "Take a moment to review the statements below. You'll confirm with the single acknowledgement at the bottom.",
     disclaimers: [
       'All information provided is accurate and complete to the best of my knowledge.',
-      'I consent to have my information reviewed by the prescribing physician for the purpose of evaluating my responses and deciding whether to prescribe.',
-      'I understand that this information is for informational and educational purposes only and does not constitute medical advice, diagnosis, or a substitute for consulting my own healthcare provider.',
-      'I understand that results from peptide protocols may vary, and I accept the potential risks associated with their use.',
-      'I understand that I may be contacted for follow-up, clarification, or adjustments to my order.',
-      'I understand that no payment is collected when I submit this form. When I place an order, my saved payment method is charged for the first cycle when the order is compounded, and on a recurring basis thereafter, until I pause or cancel.',
-      'I acknowledge that submitting this form does not guarantee that a given protocol will be available to order, and product availability may vary.',
+      'I consent to have my information reviewed by the prescribing physician, who will decide whether to prescribe. He may decline or ask me for more information.',
+      'I understand this is asynchronous telehealth, without a physical exam, and that it is not for emergencies. In an emergency I will call 911.',
+      'I understand that compounded medications are not FDA-approved, that results vary, and that treatment carries risks, including side effects.',
+      'I understand that I may be contacted for follow-up or clarification about my care or my order.',
+      'I understand that no payment is taken when I submit this form. At checkout I save a card, which is charged only if the prescriber approves.',
+      'I understand that submitting this form does not guarantee a prescription, and product availability may vary.',
       'I understand that my information will be handled in accordance with the Eternal Longevity Privacy Policy.',
       'I understand that my information will be handled in accordance with the Eternal Longevity Terms of Service.',
     ],
@@ -285,7 +337,7 @@ export const STEPS: Step[] = [
     id: 'account',
     eyebrow: '07 / CREATE ACCOUNT',
     heading: 'Last step. Set up your portal.',
-    body: 'Your account is how you review your protocol, message your care team, and check out securely. Your shipping address is collected at checkout.',
+    body: 'Your account is how you track your order, message your care team, and check out securely. Your shipping address is collected at checkout.',
     fields: [
       {
         id: 'account',
@@ -310,44 +362,42 @@ export function passwordValid(p: string): boolean {
 }
 
 export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> = {
+  out_of_state: {
+    title: "We're not in your state yet",
+    body: 'Our physician is licensed only in the states below for now. We hope to add more.',
+  },
   under18: {
-    title: 'Sorry. Our store is limited to adults 18+',
-    body: "Our protocols require informed consent from an adult of legal age. If you're under 18, we recommend speaking with your own healthcare provider about your goals.",
+    title: 'You must be 18 or older',
+    body: 'Our care is for adults only. Please speak with your own doctor about your health goals.',
   },
   cancer: {
-    title: "This protocol isn't a fit right now",
-    body: "Given your history, these peptide protocols aren't a fit right now. We recommend speaking with your own healthcare provider about your goals.",
+    title: "We can't treat you online right now",
+    body: 'With a recent cancer diagnosis or treatment, the treatments we offer need in-person oversight. Please speak with your oncologist or your own doctor.',
   },
   pregnant: {
-    title: "This protocol isn't a fit right now",
-    body: 'These peptide protocols are not safe during pregnancy or breastfeeding. We recommend speaking with your own healthcare provider; you can come back when ready.',
+    title: "We can't treat you online right now",
+    body: 'The treatments we offer are not recommended during pregnancy or breastfeeding. Please speak with your own doctor. You are welcome to come back later.',
   },
   organ: {
-    title: "This protocol isn't a fit right now",
-    body: 'End-stage kidney or liver disease calls for specialized medical supervision beyond what these peptide protocols are intended for. Please consult your own specialist.',
+    title: "We can't treat you online right now",
+    body: 'Advanced kidney or liver disease needs care from a specialist who can monitor you in person. Please speak with your own doctor.',
   },
 };
 
-export const CONSENT_VERSION = '2026-05';
+export const CONSENT_VERSION = '2026-09';
 
 export const CONSENT_ITEMS = [
   {
     id: 'master_ack',
     required: true,
     label:
-      'I have read and understood the above disclaimers. I consent to the collection and review of my information for the purpose of receiving peptide protocol recommendations. I understand that this form is informational only and does not constitute medical advice.',
-  },
-  {
-    id: 'billing_auth',
-    required: true,
-    label:
-      'I authorize Eternal Longevity to charge my saved payment method for my protocol. The first cycle is charged when I place my order and it is compounded, and each recurring cycle thereafter, until I pause or cancel.',
+      'I have read and agree to the Telehealth Informed Consent (etlongevity.com/legal/consent) and the statements above, and I consent to receive care through telehealth.',
   },
   {
     id: 'sms',
     required: false,
     label:
-      'I agree to receive recurring promotional or informational SMS messages from Eternal Longevity at the number provided. Message frequency may vary. Message and data rates may apply. Reply HELP for help or STOP to cancel. Consent is not a condition of purchase.',
+      'Optional: I agree to receive recurring marketing text messages from Eternal Longevity at the number provided, which may be sent using automated technology. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to cancel.',
   },
   {
     id: 'research',
@@ -400,7 +450,7 @@ export function productScreeningStep(product: {
 /** Knockout shown when a product-specific contraindication is reported. */
 export const PRODUCT_KNOCKOUT = {
   title: "This product isn't a fit right now",
-  body: 'Based on what you told us, this product is not appropriate for you. Please talk to your own healthcare provider — and feel free to browse our other protocols.',
+  body: 'Based on what you told us, this product may not be safe for you. Please talk to your own doctor. You are welcome to look at our other treatments.',
 };
 
 /* -------------------------------------------------------------------------- */

@@ -116,7 +116,7 @@ export async function autoSubmitToPharmacy(
     try {
       await sendEmail({
         to: SUPPORT_EMAIL,
-        subject: `${order.member_name ?? 'An order'} is paid but cannot go to the pharmacy · ${orderLabel(order.order_number)}`,
+        subject: `A paid order cannot go to the pharmacy · ${orderLabel(order.order_number)}`,
         html: noticeEmail({
           eyebrow: 'Held',
           heading: 'An order cannot go to the pharmacy',

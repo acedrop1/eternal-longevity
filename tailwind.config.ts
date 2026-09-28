@@ -4,13 +4,17 @@ const config: Config = {
   content: [
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/lib/lineup.ts',
   ],
   theme: {
     extend: {
+      // One radius system: shell = every surface, inner = anything nested in a surface, thumb = tiny images.
+      borderRadius: { shell: '28px', inner: '18px', thumb: '10px' },
       fontFamily: {
-        sans: ['var(--font-proxima)', 'var(--font-mulish)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-geist)', 'var(--font-mulish)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-geist)', 'system-ui', 'sans-serif'],
+        // Redesign: the typewriter mono is retired; labels read in Geist.
+        mono: ['var(--font-geist)', 'system-ui', 'sans-serif'],
       },
       colors: {
         // All tokens resolve through CSS variables (set in globals.css :root)
@@ -20,11 +24,20 @@ const config: Config = {
         background: 'rgb(var(--bg-rgb) / <alpha-value>)',
         foreground: 'rgb(var(--fg-rgb) / <alpha-value>)',
         muted: 'rgb(var(--muted-rgb) / <alpha-value>)',
+        // Legacy name kept so older portal/admin code still compiles; now the butter palette, not gold.
         accent: {
-          DEFAULT: '#d5a850',           // brand gold (stays — matches the logo)
-          soft: '#e8c789',
-          deep: '#a88438',
+          DEFAULT: '#F7DD74',
+          soft: '#FFEC9F',
+          deep: '#E6C54F',
         },
+        // Redesign palette: one signature colour (butter), milk panels, soft ink.
+        butter: { DEFAULT: '#FFEC9F', deep: '#F7DD74', soft: '#FFF8DC' }, // brand yellow from the logo
+        milk: { DEFAULT: '#F4F4F2', deep: '#EBEBE8' },
+        // Aura pastels: only ever as soft glows behind frosted glass.
+        peach: '#FFC9A8',
+        lilac: '#CFC4F6',
+        sky: '#BFE0F5',
+        ink: { DEFAULT: '#111111', soft: '#55565A' },
         surface: {
           DEFAULT: 'rgb(var(--surface-rgb) / <alpha-value>)',
           raised: 'rgb(var(--surface-raised-rgb) / <alpha-value>)',

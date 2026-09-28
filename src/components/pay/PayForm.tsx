@@ -74,56 +74,57 @@ function CardFields({
       <PaymentElement options={{ layout: 'tabs' }} />
 
       {error && (
-        <p role="alert" className="mt-4 rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
+        <p role="alert" className="mt-4 rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
           {error}
         </p>
       )}
 
       {/* Card-network subscription rules: amount, frequency, cancel terms,
           and explicit consent — all before the button enables. */}
-      <label className="mt-5 flex cursor-pointer gap-3 rounded-[2px] bg-black/[0.04] px-4 py-3.5 text-[14px] leading-relaxed text-black/85 ring-1 ring-black/10">
+      <label className="mt-5 flex cursor-pointer gap-3 rounded-inner bg-milk px-4 py-3.5 text-[14px] leading-relaxed text-ink/85 ring-1 ring-transparent">
         <input
           type="checkbox"
           checked={authorized}
           onChange={(e) => setAuthorized(e.target.checked)}
-          className="mt-1 h-4 w-4 flex-none accent-black"
+          className="mt-1 h-4 w-4 flex-none accent-ink"
         />
         <span>
-          <span className="mb-1 block font-mono text-[13px] text-black/70">
+          <span className="mb-1 block text-[13px] font-semibold text-ink">
             Billing authorization
           </span>
-          I authorize <strong className="font-medium text-black">{amountLabel} today</strong> for
+          I authorize <strong className="font-medium text-ink">{amountLabel} today</strong> for
           order {orderNumber}
           {recurring ? (
             <>
-              , on the <strong className="font-medium text-black">{cadenceLabel.toLowerCase()} plan</strong>.
-              Each refill is billed only after my prescriber approves that
-              cycle, using this card, until I cancel. I can{' '}
-              <strong className="font-medium text-black">cancel anytime</strong> from my account.
+              , on the <strong className="font-medium text-ink">{cadenceLabel.toLowerCase()} plan</strong>.
+              Refills ship on this same prescription and are charged to this
+              card on that schedule, without a new review, until I cancel, my
+              prescriber pauses or stops the plan, or the prescription runs
+              out. I can{' '}
+              <strong className="font-medium text-ink">pause or cancel anytime</strong> from my account.
             </>
           ) : (
             <> as a one-time purchase.</>
           )}{' '}
-          My prescriber has already approved this treatment; if a future cycle
-          is not approved, I am not charged for it.
+          My prescriber has already approved this treatment.
         </span>
       </label>
 
       <button
         type="submit"
         disabled={!stripe || submitting || !authorized}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-butter px-5 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting && (
           <span
             aria-hidden
-            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/20 border-t-ink"
           />
         )}
         {submitting ? 'Processing…' : `Pay ${amountLabel} — Start treatment`}
       </button>
 
-      <p className="mt-3 text-center font-mono text-[12px] text-black/55">
+      <p className="mt-3 text-center text-[12px] text-ink/55">
         Secured by Stripe. Your card details never touch our servers.
       </p>
     </form>
@@ -165,7 +166,7 @@ export function PayForm({
 
   if (error) {
     return (
-      <p role="alert" className="rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
+      <p role="alert" className="rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
         {error}
       </p>
     );
@@ -173,10 +174,10 @@ export function PayForm({
 
   if (!clientSecret) {
     return (
-      <div className="flex items-center gap-3 font-mono text-[13px] text-black/55">
+      <div className="flex items-center gap-3 text-[13px] font-medium text-ink/55">
         <span
           aria-hidden
-          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black/15 border-t-black"
+          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/15 border-t-ink"
         />
         Loading secure payment…
       </div>
@@ -191,10 +192,10 @@ export function PayForm({
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#000000',
+            colorPrimary: '#111111',
             colorBackground: '#ffffff',
-            colorText: '#000000',
-            borderRadius: '2px',
+            colorText: '#111111',
+            borderRadius: '18px',
             fontSizeBase: '16px',
           },
         },

@@ -41,11 +41,12 @@ export async function clientKey(): Promise<string> {
 /**
  * Returns false when the caller has spent their attempts.
  * `scope` separates buckets, so a login flood cannot lock out password resets.
+ * `id` keys the bucket on something other than the IP — an email address, say.
  */
-export async function allow(scope: string, limit: Limit): Promise<boolean> {
+export async function allow(scope: string, limit: Limit, id?: string): Promise<boolean> {
   const now = Date.now();
   sweep(now);
-  const key = `${scope}:${await clientKey()}`;
+  const key = `${scope}:${id ? `id:${id}` : await clientKey()}`;
   const hit = buckets.get(key);
 
   if (!hit || hit.resetAt < now) {

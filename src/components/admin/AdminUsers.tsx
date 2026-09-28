@@ -23,20 +23,20 @@ export interface AdminUserRow {
 }
 
 const ROLE_BADGE: Record<Role, string> = {
-  member: 'border-accent/40 bg-accent/10 text-accent',
-  doctor: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  pharmacy: 'border-emerald-700/30 bg-emerald-600/10 text-emerald-800',
-  admin: 'border-foreground/25 bg-foreground/10 text-foreground/85',
+  member: 'border-butter-deep/70 bg-butter-soft text-ink/85',
+  doctor: 'border-sky-600/25 bg-sky-50 text-sky-800',
+  pharmacy: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
+  admin: 'border-ink/25 bg-ink/10 text-ink/85',
 };
 
 const STATUS_BADGE: Record<AccountStatus, string> = {
-  active: 'border-accent/40 bg-accent/10 text-accent',
-  suspended: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
-  deactivated: 'border-line bg-surface text-foreground/60',
+  active: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
+  suspended: 'border-amber-600/25 bg-amber-50 text-amber-800',
+  deactivated: 'border-ink/10 bg-milk text-ink/60',
 };
 
 const inputClass =
-  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
 const FILTERS: { label: string; role: Role | 'all' }[] = [
   { label: 'All', role: 'all' },
@@ -82,7 +82,7 @@ export function AdminUsers({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Demo directory. Adding and suspending users goes live once Supabase
           is connected.
         </div>
@@ -97,13 +97,13 @@ export function AdminUsers({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or email…"
-            className="w-full rounded-[2px] border border-line bg-surface px-5 py-2.5 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
+            className="w-full rounded-inner bg-white px-5 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
           />
         </div>
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
-          className="flex-shrink-0 rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 font-mono"
+          className="flex-shrink-0 rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85"
         >
           {adding ? 'Close' : '+ Add user'}
         </button>
@@ -124,10 +124,10 @@ export function AdminUsers({
             type="button"
             onClick={() => setFilter(f.role)}
             className={cn(
-              'flex-shrink-0 rounded-full border px-3 py-1.5 font-mono text-[12px] transition-all',
+              'flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all',
               filter === f.role
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-line bg-surface text-foreground/65 hover:border-foreground/30',
+                ? 'border-ink bg-ink text-white'
+                : 'border-ink/10 bg-white text-ink/70 hover:border-ink/25 hover:text-ink',
             )}
           >
             {f.label}
@@ -136,11 +136,11 @@ export function AdminUsers({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
+      <div className="overflow-hidden rounded-shell bg-milk">
         <div className="max-h-[75vh] overflow-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-surface">
-              <tr className="border-b border-line text-left font-mono text-[12px] text-foreground/60">
+            <thead className="sticky top-0 z-10 bg-milk">
+              <tr className="border-b border-ink/10 text-left text-[12px] text-ink/60">
                 <th className="px-4 py-3 font-normal md:px-6">User</th>
                 <th className="hidden px-4 py-3 font-normal md:table-cell md:px-6">
                   Role
@@ -159,7 +159,7 @@ export function AdminUsers({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-10 text-center text-sm text-foreground/55"
+                    className="px-6 py-10 text-center text-sm text-ink/55"
                   >
                     No users match.
                   </td>
@@ -219,46 +219,46 @@ function UserRow({
   }
 
   return (
-    <tr className="border-t border-line align-middle first:border-t-0">
+    <tr className="border-t border-ink/10 align-middle first:border-t-0">
       <td className="px-4 py-4 md:px-6">
         {user.role === 'member' ? (
           <Link
             href={`/portal/admin/members/${user.id}`}
-            className="text-foreground hover:text-accent transition-colors"
+            className="text-ink underline decoration-transparent underline-offset-[3px] transition-colors hover:decoration-ink/40"
           >
             {user.name}
           </Link>
         ) : (
-          <span className="text-foreground">{user.name}</span>
+          <span className="text-ink">{user.name}</span>
         )}
-        <div className="max-w-[220px] truncate text-xs text-foreground/55">
+        <div className="max-w-[220px] truncate text-xs text-ink/55">
           {user.email}
         </div>
       </td>
       <td className="hidden px-4 py-4 md:table-cell md:px-6">
         <span
           className={cn(
-            'inline-flex rounded-[2px] border px-2 py-0.5 font-mono text-[12px]',
+            'inline-flex rounded-full border px-2 py-0.5 text-[12px]',
             ROLE_BADGE[user.role],
           )}
         >
           {user.role}
         </span>
       </td>
-      <td className="hidden whitespace-nowrap px-4 py-4 font-mono text-[12px] tabular-nums text-foreground/65 md:table-cell md:px-6">
+      <td className="hidden whitespace-nowrap px-4 py-4 text-[12px] tabular-nums text-ink/65 md:table-cell md:px-6">
         {user.joinedAt}
       </td>
       <td className="px-4 py-4 md:px-6">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 font-mono text-[12px]',
+            'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px]',
             STATUS_BADGE[user.status],
           )}
         >
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
           {user.status}
         </span>
-        {error && <p className="mt-1 text-[12px] text-red-300">{error}</p>}
+        {error && <p className="mt-1 text-[12px] text-red-700">{error}</p>}
       </td>
       <td className="px-4 py-4 text-right md:px-6">
         <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
@@ -286,7 +286,7 @@ function UserRow({
               else onRole(user.id, next);
               setBusy(false);
             }}
-            className="rounded-[2px] border border-line bg-background px-2.5 py-1 font-mono text-[12px] text-foreground/80 focus:border-black focus:outline-none disabled:opacity-40"
+            className="rounded-full border border-ink/10 bg-white px-2.5 py-1 text-[12px] text-ink/80 focus:outline-none focus:ring-ink/30 disabled:opacity-40"
           >
             <option value="member">member</option>
             <option value="doctor">doctor</option>
@@ -351,10 +351,10 @@ function ActionButton({
       disabled={busy}
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3 py-1.5 font-mono text-[12px] transition-colors disabled:opacity-50',
+        'rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-50',
         tone === 'danger'
-          ? 'ml-2 border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/10'
-          : 'border-line bg-surface text-foreground/80 hover:border-foreground/30 hover:text-foreground',
+          ? 'ml-2 border-red-600/20 bg-red-50 text-red-700 hover:bg-red-100'
+          : 'border-ink/10 bg-white text-ink/80 hover:border-ink/25 hover:text-ink',
       )}
     >
       {label}
@@ -428,9 +428,9 @@ function AddUserPanel({
   return (
     <form
       onSubmit={submit}
-      className="rounded-[4px] border border-line bg-surface p-5 md:p-6"
+      className="rounded-shell bg-milk p-5 md:p-6"
     >
-      <div className="mb-4 font-mono text-[12px] text-foreground/60">
+      <div className="mb-4 text-[13px] font-medium text-ink/55">
         Add a user
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -462,7 +462,7 @@ function AddUserPanel({
           <option value="admin">Admin</option>
         </select>
       </div>
-      <p className="mt-3 text-xs text-foreground/55">
+      <p className="mt-3 text-xs text-ink/55">
         The account is created right away and the user gets a branded welcome
         email with a temporary password to change after signing in. If email
         delivery is not connected yet, the password appears here so you can
@@ -472,14 +472,14 @@ function AddUserPanel({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-full bg-black px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-50 font-mono"
+          className="rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-50"
         >
           {busy ? 'Creating…' : 'Create account'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+          className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
         >
           Close
         </button>
@@ -488,33 +488,33 @@ function AddUserPanel({
         <p
           className={cn(
             'mt-3 text-sm',
-            result.ok ? 'text-accent' : 'text-red-300',
+            result.ok ? 'text-emerald-700' : 'text-red-700',
           )}
         >
           {result.message}
         </p>
       )}
       {result?.tempPassword && (
-        <div className="mt-3 rounded-[4px] border border-accent/30 bg-background p-4">
-          <div className="mb-2.5 font-mono text-[12px] text-foreground/60">
+        <div className="mt-3 rounded-inner border border-ink/10 bg-white p-4">
+          <div className="mb-2.5 text-[13px] font-medium text-ink/55">
             Sign-in details
           </div>
           <dl className="space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-foreground/55">Email</dt>
-              <dd className="font-mono text-foreground">
+              <dt className="text-ink/55">Email</dt>
+              <dd className="text-ink">
                 {result.createdEmail}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-foreground/55">Temporary password</dt>
-              <dd className="font-mono text-accent">{result.tempPassword}</dd>
+              <dt className="text-ink/55">Temporary password</dt>
+              <dd className="font-semibold text-ink">{result.tempPassword}</dd>
             </div>
           </dl>
           <button
             type="button"
             onClick={copyDetails}
-            className="mt-3 rounded-full border border-line bg-surface px-4 py-1.5 font-mono text-[12px] text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
+            className="mt-3 rounded-full bg-milk px-4 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
           >
             {copied ? 'Copied' : 'Copy details'}
           </button>

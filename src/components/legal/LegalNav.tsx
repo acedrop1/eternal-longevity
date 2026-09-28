@@ -12,10 +12,10 @@ export function LegalNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Legal documents" className="space-y-8">
+    <nav aria-label="Legal documents" className="space-y-7 rounded-shell bg-milk p-4">
       {GROUPS.map((g) => (
         <div key={g.label}>
-          <p className="mb-3 font-mono text-[13px] text-black/55">{g.label}</p>
+          <p className="mb-2 px-3 pt-1 text-[13px] font-medium text-ink/55">{g.label}</p>
           <ul className="space-y-0.5">
             {g.links.map((l) => {
               const current = pathname === l.href;
@@ -26,8 +26,8 @@ export function LegalNav() {
                     aria-current={current ? 'page' : undefined}
                     className={
                       current
-                        ? 'block rounded-[2px] bg-[#F2F2F0] px-3 py-1.5 text-[14px] text-black'
-                        : 'block rounded-[2px] px-3 py-1.5 text-[14px] text-black/60 transition-colors hover:text-black'
+                        ? 'block rounded-full bg-white px-3 py-2 text-[14px] font-semibold text-ink shadow-[0_6px_18px_-10px_rgba(17,17,17,0.25)]'
+                        : 'block rounded-full px-3 py-2 text-[14px] text-ink/65 transition-colors hover:bg-white/60 hover:text-ink'
                     }
                   >
                     {l.title}

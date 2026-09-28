@@ -45,10 +45,10 @@ export function MemberOrderHistory({
             <article key={order.id} className={`${panel} p-5 md:p-6`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-mono text-[14px] text-black">
+                  <span className="font-medium text-[14px] text-ink">
                     {order.ref}
                   </span>
-                  <span className="font-mono text-[13px] tabular-nums text-black/55">
+                  <span className="text-[13px] font-medium tabular-nums text-ink/55">
                     {order.placedAt}
                   </span>
                 </div>
@@ -56,15 +56,15 @@ export function MemberOrderHistory({
               </div>
 
               {order.items.length > 0 && (
-                <ul className="mt-4 space-y-1.5 border-t border-black/10 pt-4">
+                <ul className="mt-4 space-y-1.5 border-t border-ink/10 pt-4">
                   {order.items.map((it, i) => (
                     <li
                       key={i}
                       className="flex items-center justify-between gap-4 text-[15px]"
                     >
-                      <span className="text-black">{it.label}</span>
+                      <span className="text-ink">{it.label}</span>
                       {it.detail && (
-                        <span className="text-right text-black/60">{it.detail}</span>
+                        <span className="text-right text-ink/60">{it.detail}</span>
                       )}
                     </li>
                   ))}
@@ -73,10 +73,10 @@ export function MemberOrderHistory({
 
               {order.trackingNumber && (
                 <div className={`${inset} mt-4 px-4 py-3`}>
-                  <div className="font-mono text-[12px] text-black/55">
+                  <div className="font-medium text-[12px] text-ink/55">
                     Tracking
                   </div>
-                  <p className="mt-0.5 break-all font-mono text-[14px] text-black">
+                  <p className="mt-0.5 break-all font-medium text-[14px] text-ink">
                     {order.trackingCarrier ? `${order.trackingCarrier} · ` : ''}
                     {order.trackingNumber}
                   </p>

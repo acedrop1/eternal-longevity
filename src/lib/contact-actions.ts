@@ -18,13 +18,6 @@ const TOPIC_LABELS: Record<string, string> = {
   other: 'Something else',
 };
 
-function escape(s: string) {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 /**
  * Delivers a message from the public contact form to the support inbox.
  *
@@ -65,15 +58,16 @@ export async function sendContactMessage(input: {
   const sent = await sendEmail({
     to: SUPPORT_EMAIL,
     replyTo: email,
-    subject: `Contact form — ${name} · ${topic}`,
+    subject: `Contact form — ${topic}`,
     html: noticeEmail({
       eyebrow: 'Contact form',
       heading: `${name} got in touch`,
       rows: [
-        ['From', `${escape(name)} &lt;${escape(email)}&gt;`],
-        ['Topic', escape(topic)],
+        ['From', `${name} <${email}>`],
+        ['Topic', topic],
       ],
-      body: `<span style="white-space:pre-wrap">${escape(message)}</span>`,
+      // noticeEmail escapes this and keeps the line breaks.
+      body: message,
       footnote: 'Replying to this email goes straight back to them.',
     }),
   });

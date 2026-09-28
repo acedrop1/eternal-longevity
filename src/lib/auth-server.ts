@@ -9,14 +9,36 @@ import {
 } from './auth';
 import { supabaseConfigured } from './env';
 import { createSupabaseServerClient } from './supabase/server';
+import { MFA_COOKIE, mfaConfigured, mfaRequiredFor, verifyTicket } from './mfa';
 
 /**
  * Read the current session.
  *   • Supabase Auth when the project is configured.
  *   • Demo cookie otherwise.
  * Either way the return shape is identical, so portal pages never branch.
+ *
+ * A staff account that has not cleared the second factor gets no session.
+ * The middleware only guards staff page paths; server actions post to
+ * whatever path they were rendered on, so without this a stolen staff
+ * password reached every action with the code never asked for. Every guarded
+ * page and action goes through here, so one check covers all of them.
  */
 export async function getSession(): Promise<SessionUser | null> {
+  const user = await getSessionBeforeMfa();
+  if (!user || !supabaseConfigured) return user;
+  // Same condition the login flow uses to decide whether to ask for a code.
+  if (mfaRequiredFor(user.role) && mfaConfigured()) {
+    const ticket = (await cookies()).get(MFA_COOKIE)?.value;
+    if (!verifyTicket(ticket, user.id)) return null;
+  }
+  return user;
+}
+
+/**
+ * The password session alone. Only the second-factor screen and its actions
+ * may use this — they are what a staff member needs before the code.
+ */
+export async function getSessionBeforeMfa(): Promise<SessionUser | null> {
   if (supabaseConfigured) return getSupabaseSession();
   /*
    * Demo mode is a development convenience and must never be reachable in

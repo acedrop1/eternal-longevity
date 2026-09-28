@@ -1,8 +1,9 @@
 import type { ShopProduct } from '@/lib/shopProducts';
+import { SERVICE_AREA } from '@/lib/site';
 
 /*
  * The pricing answer quotes live prices, which admins edit in Admin →
- * Products. FAQS carries {{monthly}} / {{quarterly}} placeholders and
+ * Products. FAQS carries {{monthly}} / {{quarterly}} / {{sixMonth}} placeholders and
  * withPrices() fills them from the live catalogue wherever FAQs render.
  */
 const range = (xs: number[]) => {
@@ -15,16 +16,20 @@ const range = (xs: number[]) => {
 export function withPrices(faqs: FAQ[], live: ShopProduct[]): FAQ[] {
   const monthly = range(live.map((p) => p.pricing.monthly));
   const quarterly = range(live.map((p) => Math.round(p.pricing.quarterly / 3)));
+  const sixMonth = range(live.flatMap((p) => (p.pricing.sixMonth ? [Math.round(p.pricing.sixMonth / 6)] : [])));
   return faqs.map((f) => ({
     ...f,
-    a: f.a.replaceAll('{{monthly}}', monthly).replaceAll('{{quarterly}}', quarterly),
+    a: f.a
+      .replaceAll('{{monthly}}', monthly)
+      .replaceAll('{{quarterly}}', quarterly)
+      .replaceAll('{{sixMonth}}', sixMonth),
   }));
 }
 
 export type FAQCategory =
   | 'Getting Started'
   | 'Eligibility'
-  | 'Protocols'
+  | 'Treatments'
   | 'Pricing'
   | 'Safety';
 
@@ -37,7 +42,7 @@ export interface FAQ {
 export const FAQ_CATEGORIES: FAQCategory[] = [
   'Getting Started',
   'Eligibility',
-  'Protocols',
+  'Treatments',
   'Pricing',
   'Safety',
 ];
@@ -47,109 +52,109 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How does Eternal Longevity work?',
-    a: "You complete a quick profile. About three minutes. That covers your goals, history, and a few targeted questions. A licensed physician reviews it and decides whether to prescribe. If he does, a U.S.-licensed 503A pharmacy compounds it and ships it to your door — typically three to five days. If he declines, you are not charged.",
+    a: "You complete a short online intake about your health. Dr. Bader Elder, DO, a licensed physician, reviews it and decides whether to prescribe; he may decline or ask you questions first. At checkout you save a card, and nothing is charged unless he approves. A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days.",
   },
   {
     category: 'Getting Started',
     q: 'Do I need bloodwork before ordering?',
-    a: "Recent bloodwork helps you match a protocol to your goals, but it isn't required to order. If you don't have recent labs, you can order from a thorough profile or add targeted labs through a partner lab. Mid-cycle bloodwork is recommended for most protocols so you can track your response.",
+    a: "Not usually. If the prescriber needs recent lab results to decide safely, he will ask for them before prescribing.",
   },
   {
     category: 'Getting Started',
-    q: 'How long until I see results?',
-    a: "It depends on the protocol and the goal. Sleep, recovery, and energy shifts often show up in two to four weeks. Body-composition and metabolic shifts are usually visible by week eight. Deeper longevity markers. IGF-1 trends, fasting insulin, hs-CRP. Are measured at the end of the cycle so you have a paper trail, not just a feeling.",
+    q: 'How long until my order arrives?',
+    a: "A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days. Shipping is free. Results vary by person and treatment, and we don't promise specific results or timelines.",
   },
 
   // === Eligibility ===
   {
     category: 'Eligibility',
     q: 'Which states do you ship to?',
-    a: "We currently serve members in New Jersey, New York, Pennsylvania and Michigan. Our prescriber is licensed in all four states, and orders ship only to addresses in them. We're adding states as we expand. If you're somewhere else, leave your email and we'll notify you the moment we go live in your state.",
+    a: `We currently serve members in ${SERVICE_AREA}. Our prescriber is licensed in each of them, and orders ship only to addresses in them. We're adding states as we expand. If you're somewhere else, send us a note through our contact page and we'll tell you when we go live in your state.`,
   },
   {
     category: 'Eligibility',
     q: 'Is there an age requirement?',
-    a: "Yes. You must be at least 18 years old to order. Most of our protocols are formulated for adults from their late twenties onward. Match a protocol to your goals from the profile, and order online.",
+    a: "Yes. You must be 18 or older. Some treatments have their own health criteria, which the prescriber applies during his review.",
   },
   {
     category: 'Eligibility',
-    q: 'Can I use peptides if I have a medical condition?',
-    a: "It depends entirely on the condition and the peptide. Some conditions. Active cancer, certain organ transplants, current pregnancy. Are categorical exclusions. Others simply call for careful protocol selection and additional monitoring. Share your full history in your profile so you can choose what's appropriate — and this is not medical advice or a substitute for consulting your own healthcare provider.",
+    q: 'Can I get treatment if I have a medical condition?',
+    a: "It depends on the condition and the treatment. Some, such as pregnancy or recent cancer treatment, rule out treatment online. Others just need the prescriber to know about them. List your full history in your intake; the prescriber decides what is safe for you, and may ask questions or decline.",
   },
   {
     category: 'Eligibility',
     q: 'What if I take other medications?',
-    a: "Most medications are compatible with peptides, but interactions matter. List every medication and supplement in your profile. Including dose. Review these alongside the protocol you're considering and flag anything with your own healthcare provider that needs adjusting before you start.",
+    a: "List every medication and supplement, with the dose, in your intake. The prescriber checks for interactions before deciding and may ask you about them. Keep your own doctor informed of what you take.",
   },
 
-  // === Protocols ===
+  // === Treatments ===
   {
-    category: 'Protocols',
-    q: 'How are the protocols designed?',
-    a: "Each protocol is a stack. Two or three peptides chosen because their mechanisms complement each other. The prescriber decides what is appropriate for you, and each preparation is compounded to a structured, titrated dose. We don't run one-size-fits-all kits.",
+    category: 'Treatments',
+    q: 'What treatments do you offer?',
+    a: "Prescription treatments for longevity, sexual health, hormones, hair and skin. Depending on the product, they come as injections, nasal sprays, tablets, capsules, creams or foams. Each product page explains what it is, how it's used, and its possible side effects.",
   },
   {
-    category: 'Protocols',
-    q: 'How long is a cycle?',
-    a: "Most protocols run eight to twelve weeks on-cycle, followed by a four-week off-cycle. Continuous dosing erodes receptor sensitivity, so structured rest periods preserve the effect. Some protocols (metabolic, primarily) run longer; the schedule for each is shown on its protocol page.",
+    category: 'Treatments',
+    q: 'How does the prescriber decide what is right for me?',
+    a: "He reviews your intake (your history, medications, allergies, and the safety questions for the product you chose) and decides whether that treatment is appropriate for you. He may prescribe, decline, or ask for more information first.",
   },
   {
-    category: 'Protocols',
-    q: 'Can I stack protocols?',
-    a: "Some protocols stack cleanly (recovery with longevity, for example). Others should not be combined. Don't stack on your own without checking the combined dosing schedule and ruling out interactions. If you want to combine two, note it in your profile for guidance on what pairs well.",
+    category: 'Treatments',
+    q: 'How do refills work?',
+    a: "On a plan, refills ship on the same prescription until it expires or runs out of refills. They are not reviewed again each time, but the prescriber can pause or stop your plan at any time. When the prescription runs out, your plan pauses until he reviews it again. You can pause, change or cancel your plan any time in Portal › Subscriptions, with no fee.",
   },
   {
-    category: 'Protocols',
-    q: 'What happens at the end of a cycle?',
-    a: "You receive a written summary of your cycle. What was dosed, what changed, and what to consider next. Many members continue with the same protocol after a short off-cycle. Others rotate to a different goal (e.g., recovery → longevity). Either way, the next cycle is a deliberate choice, not an automatic renewal.",
+    category: 'Treatments',
+    q: 'Can I take more than one treatment?',
+    a: "Possibly. Each new product needs its own review, and the prescriber checks it against everything else you take. Don't combine treatments on your own.",
   },
 
   // === Pricing ===
   {
     category: 'Pricing',
-    q: 'How much does a protocol cost?',
-    a: "Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months. A one-time order is also available. Shipping is free, and you are only charged once the physician approves your prescription. Exact pricing is on each product page.",
+    q: 'How much does treatment cost?',
+    a: "Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months, and the 6-month plan to {{sixMonth}} a month, billed every six months. A one-time order is also available. Shipping is free. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.",
   },
   {
     category: 'Pricing',
     q: 'Do you accept insurance?',
-    a: "No. Peptide protocols are not covered by U.S. insurance plans, and we'd rather be upfront about that than pretend otherwise. All payments are out-of-pocket through the portal.",
+    a: "No. We don't bill insurance, and compounded medications are generally not covered, so all payments are out-of-pocket.",
   },
   {
     category: 'Pricing',
-    q: 'What does the subscription include?',
-    a: "A subscription locks in a lower price per cycle and includes scheduled re-shipments, a mid-cycle protocol check-in, and priority access to our team. You can pause or cancel between cycles. No penalty, no awkward call.",
+    q: 'What does a plan include?',
+    a: "Refills on your prescription on the schedule you choose, free shipping, and access to our team and the prescriber through the portal. Longer plans cost less per month. You can pause, change or cancel any time from Portal › Subscriptions, with no fee.",
   },
   {
     category: 'Pricing',
     q: 'What is your refund policy?',
-    a: "We don't refund opened or shipped vials. Compounded protocols cannot legally be re-dispensed. If an order can't be filled after you complete your profile, you are refunded in full. If a shipment is damaged in transit, we replace it at no cost.",
+    a: "If the prescriber declines, you are not charged. Once the pharmacy has prepared or shipped your medication we can't refund it, because compounded medications can't be re-dispensed. If a shipment arrives damaged, contact us within 7 days and we'll replace it at no cost.",
   },
 
   // === Safety ===
   {
     category: 'Safety',
-    q: 'Are these peptides FDA-approved?',
-    a: "Some are (e.g., PT-141). Many are compounded under 503A authority for off-label or non-FDA-approved use. Compounded medications occupy a legitimate but distinct regulatory category. The specific status of each peptide is noted on its protocol page. This is not medical advice or a substitute for consulting your own healthcare provider.",
+    q: 'Are these medications FDA-approved?',
+    a: "No. Our medications are compounded preparations, including PT-141, and compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or quality. Some contain ingredients that are also found in FDA-approved drugs. Each is prescribed only after a physician's review and prepared by a state-licensed 503A pharmacy.",
   },
   {
     category: 'Safety',
     q: 'What are the most common side effects?',
-    a: "Most side effects are mild and dose-related: injection-site irritation, transient water retention, head-fog the first week. More significant side effects (elevated fasting glucose, persistent appetite shifts) are why mid-cycle labs are recommended. Talk to your own healthcare provider about anything that feels off; the protocol can be adjusted between cycles.",
+    a: "It depends on the medication. Each product page lists the common ones, and you can ask the prescriber through the portal. If something feels wrong, stop the medication and contact us. For anything severe, call 911.",
   },
   {
     category: 'Safety',
     q: 'How is the pharmacy quality controlled?',
-    a: "The dispensing pharmacy tests each lot for purity and potency and releases it against a certificate of analysis. That testing is the pharmacy's own, not an independent laboratory's — we would rather say so than imply an outside audit that does not happen. The pharmacy is licensed and inspected by its state board, and we will share the certificate of analysis for your lot on request.",
+    a: "Each batch is tested by the pharmacy as required for its preparation type. That testing is the pharmacy's own, not an independent laboratory's. The pharmacy, MedShiftRx, is licensed and inspected by its state board of pharmacy, and we will share the certificate of analysis for your lot on request.",
   },
   {
     category: 'Safety',
-    q: 'How are peptides shipped?',
-    a: "Peptides are temperature-sensitive. Every shipment leaves the pharmacy in an insulated container with phase-change packs that hold temperature for at least 48 hours. You'll receive a tracking number, and shipments are signature-required for security.",
+    q: 'How are medications shipped?',
+    a: "Shipping is free. Temperature-sensitive medications ship cold-chain in insulated packaging; others ship by standard service. You'll get a tracking number when your order ships.",
   },
   {
     category: 'Safety',
     q: 'What if I have a bad reaction?',
-    a: "Stop dosing and reach our team through the portal. We reply within one business day, and a same-day callback is available if it's urgent. For any reaction that feels like an emergency, call 911 or go to the nearest ER first, then notify us.",
+    a: "Stop the medication and message us through the portal; we reply within one business day. For anything that feels like an emergency, call 911 or go to the nearest emergency room first, then let us know.",
   },
 ];

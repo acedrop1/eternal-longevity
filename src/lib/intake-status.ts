@@ -26,7 +26,8 @@ export async function intakeStateFor(userId: string): Promise<IntakeState> {
     .maybeSingle();
 
   const s = data?.status;
-  if (s === 'submitted' || s === 'approved') return 'submitted';
+  // In review / needs info are still a completed intake: no second visit, ordering stays open.
+  if (s === 'submitted' || s === 'approved' || s === 'in_review' || s === 'needs_info') return 'submitted';
   if (s === 'awaiting_visit') return 'awaiting_visit';
   if (s === 'declined') return 'declined';
   return 'none';

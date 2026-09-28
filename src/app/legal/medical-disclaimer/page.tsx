@@ -22,14 +22,14 @@ export default function MedicalDisclaimerPage() {
         {
           heading: `Who Provides Your Care`,
           paragraphs: [
-            `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, DO, an osteopathic physician licensed to practise medicine and surgery in ${SERVICE_AREA}, who reviews and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
-            `A prescriber–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by an independently licensed 503A compounding pharmacy.`,
+            `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, DO, an osteopathic physician licensed to practise medicine and surgery in ${SERVICE_AREA}, who makes every prescription decision and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
+            `A physician–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by MedShiftRx, an independently owned, state-licensed 503A compounding pharmacy.`,
           ],
         },
         {
           heading: `A Narrow Relationship`,
           paragraphs: [
-            `That relationship is limited to assessing whether the protocol you selected is appropriate for you, issuing or declining a prescription, and answering questions about that treatment. It is not primary care.`,
+            `That relationship covers evaluating whether a treatment we offer is appropriate for you, prescribing or declining it, and your follow-up questions about that treatment. It is not primary care.`,
             `We do not diagnose or manage general medical conditions, order routine screening, or coordinate your overall care. Keep your own physician, and tell them what you are taking.`,
           ],
         },
@@ -41,15 +41,15 @@ export default function MedicalDisclaimerPage() {
           ],
         },
         {
-          heading: `Informational Content`,
+          heading: `General Website Content`,
           paragraphs: [
-            `Product descriptions, articles, and educational material on this site are general information, not medical advice, and are not tailored to you. Do not use them to diagnose or treat a condition.`,
+            `Product descriptions, articles, and other general material on this website are not tailored to you and are not a substitute for the prescriber’s review. Medical decisions about you are made only through that review.`,
           ],
         },
         {
           heading: `No Guaranteed Outcome`,
           paragraphs: [
-            `We make no promise about results. Peptides affect different people differently, evidence for several uses is limited, and individual results vary. Anyone guaranteeing you an outcome from these preparations is misleading you.`,
+            `We make no promise about results. Medications affect different people differently, evidence for some uses is limited, and individual results vary. Anyone guaranteeing you an outcome from these preparations is misleading you.`,
           ],
         },
         {

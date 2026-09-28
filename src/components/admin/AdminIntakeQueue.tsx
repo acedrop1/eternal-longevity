@@ -7,6 +7,7 @@ import {
   type ClinicalResult,
 } from '@/lib/clinical-actions';
 import { cn } from '@/lib/utils';
+import { SERVICE_AREA } from '@/lib/site';
 
 export interface IntakeRowView {
   id: string;
@@ -25,7 +26,7 @@ export interface IntakeRowView {
  * to make. These are the only reasons an admin can close on.
  */
 const CLOSE_REASONS = [
-  'Outside our service area — we serve NJ, NY, PA and MI only.',
+  `Outside our service area — we serve ${SERVICE_AREA} only.`,
   'Under 18 — we cannot treat anyone under 18.',
   'Duplicate of an existing visit.',
   'Test, spam, or an incomplete submission.',
@@ -33,10 +34,10 @@ const CLOSE_REASONS = [
 ];
 
 const STATUS_BADGE: Record<string, string> = {
-  submitted: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
-  approved: 'border-accent/40 bg-accent/10 text-accent',
-  in_review: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
-  needs_info: 'border-amber-700/30 bg-amber-500/10 text-amber-800',
+  submitted: 'border-amber-600/25 bg-amber-50 text-amber-800',
+  approved: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
+  in_review: 'border-sky-600/25 bg-sky-50 text-sky-800',
+  needs_info: 'border-amber-600/25 bg-amber-50 text-amber-800',
 };
 
 const FILTERS = [
@@ -67,11 +68,11 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-[4px] border border-line bg-surface p-10 text-center">
-        <h2 className="mb-2 text-lg font-semibold tracking-tight text-foreground">
+      <div className="rounded-shell bg-milk p-10 text-center">
+        <h2 className="mb-2 text-[20px] font-semibold tracking-[-0.03em] text-ink">
           Queue is clear
         </h2>
-        <p className="text-sm text-foreground/65">
+        <p className="text-sm text-ink/65">
           No intakes are waiting for triage.
         </p>
       </div>
@@ -87,7 +88,7 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm leading-relaxed text-foreground/55">
+      <p className="text-sm leading-relaxed text-ink/55">
         Nothing to action here. Everyone below can already shop; this is the
         record of who signed up and what they answered.
       </p>
@@ -99,10 +100,10 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
             type="button"
             onClick={() => setFilter(f.key)}
             className={cn(
-              'rounded-full border px-4 py-2 font-mono text-[12px] transition-colors',
+              'rounded-full border px-4 py-2 text-[13px] font-medium transition-colors',
               filter === f.key
-                ? 'border-foreground bg-foreground text-background'
-                : 'border-line bg-surface text-foreground/60 hover:border-foreground/30 hover:text-foreground',
+                ? 'border-ink bg-ink text-white'
+                : 'border-ink/10 bg-white text-ink/70 hover:border-ink/25 hover:text-ink',
             )}
           >
             {f.label}
@@ -114,12 +115,12 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search email or case"
           aria-label="Search applications"
-          className="ml-auto w-full rounded-[2px] border border-line bg-background px-4 py-2 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none sm:w-56"
+          className="ml-auto w-full rounded-inner bg-white px-4 py-2 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30 sm:w-56"
         />
       </div>
 
       {shown.length === 0 && (
-        <p className="rounded-[4px] border border-line bg-surface p-8 text-center text-sm text-foreground/55">
+        <p className="rounded-shell bg-milk p-8 text-center text-sm text-ink/55">
           Nothing matches that.
         </p>
       )}
@@ -165,26 +166,26 @@ function IntakeCard({
   }
 
   return (
-    <article className="rounded-[4px] border border-line bg-surface p-5 md:p-6">
+    <article className="rounded-shell bg-milk p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="mb-1 flex flex-wrap items-center gap-2 font-mono text-[12px] text-foreground/55">
-            <span className="text-foreground/80">
+          <div className="mb-1 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+            <span className="text-ink/80">
               {intake.caseId.toUpperCase()}
             </span>
             <span>·</span>
             <span>{intake.submittedAt}</span>
           </div>
-          <h2 className="text-base font-semibold tracking-tight text-foreground md:text-lg">
+          <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-ink md:text-[20px]">
             {intake.email}
           </h2>
           {/* Whether they picked a product first or came through Apply Now
               changes what the prescriber is being asked to decide. */}
-          <p className="mt-1 text-xs text-foreground/55">
+          <p className="mt-1 text-xs text-ink/55">
             {intake.source ? (
               <>
                 Started from{' '}
-                <span className="text-foreground/85">{intake.source}</span>
+                <span className="text-ink/85">{intake.source}</span>
               </>
             ) : (
               <>No product selected &mdash; came through Apply Now</>
@@ -193,7 +194,7 @@ function IntakeCard({
         </div>
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
             STATUS_BADGE[intake.status] ?? STATUS_BADGE.submitted,
           )}
         >
@@ -208,19 +209,19 @@ function IntakeCard({
           <button
             type="button"
             onClick={() => setShowAnswers((v) => !v)}
-            className="font-mono text-[12px] text-accent hover:text-accent-soft"
+            className="text-[12px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
           >
             {showAnswers ? 'Hide answers ↑' : 'View answers ↓'}
           </button>
           {showAnswers && (
-            <dl className="mt-3 space-y-2 rounded-[4px] border border-line bg-background p-4">
+            <dl className="mt-3 space-y-2 rounded-inner border border-ink/10 bg-white p-4">
               {intake.answers.map((a, i) => (
                 <div
                   key={i}
-                  className="flex items-start justify-between gap-4 border-b border-line pb-2 text-sm last:border-0 last:pb-0"
+                  className="flex items-start justify-between gap-4 border-b border-ink/10 pb-2 text-sm last:border-0 last:pb-0"
                 >
-                  <dt className="text-foreground/55">{a.label}</dt>
-                  <dd className="max-w-[60%] text-right text-foreground/90">
+                  <dt className="text-ink/55">{a.label}</dt>
+                  <dd className="max-w-[60%] text-right text-ink/90">
                     {a.value}
                   </dd>
                 </div>
@@ -232,13 +233,13 @@ function IntakeCard({
 
       {/* Actions */}
       {open === null && (
-        <div className="mt-5 border-t border-line pt-5">
+        <div className="mt-5 border-t border-ink/10 pt-5">
           <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={busy}
             onClick={() => setOpen('info')}
-            className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+            className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
           >
             Request info
           </button>
@@ -246,7 +247,7 @@ function IntakeCard({
             type="button"
             disabled={busy}
             onClick={() => setOpen('decline')}
-            className="ml-auto rounded-full border border-red-500/30 bg-red-500/5 px-4 py-2 font-mono text-[12px] text-red-300 transition-colors hover:bg-red-500/10"
+            className="ml-auto rounded-full border border-red-600/20 bg-red-50 px-4 py-2 text-[13px] font-semibold text-red-700 transition-colors hover:bg-red-100"
           >
             Close &mdash; not eligible
           </button>
@@ -257,16 +258,16 @@ function IntakeCard({
       {open && (
         <div
           className={cn(
-            'mt-5 rounded-[4px] border p-4 md:p-5',
+            'mt-5 rounded-inner border p-4 md:p-5',
             open === 'decline'
-              ? 'border-red-500/30 bg-red-500/5'
-              : 'border-accent/30 bg-accent/5',
+              ? 'border-red-600/20 bg-red-50'
+              : 'border-ink/10 bg-white',
           )}
         >
           <div
             className={cn(
-              'mb-3 font-mono text-[12px]',
-              open === 'decline' ? 'text-red-300' : 'text-accent',
+              'mb-3 text-[13px] font-medium',
+              open === 'decline' ? 'text-red-700' : 'text-ink',
             )}
           >
             {open === 'decline'
@@ -280,20 +281,20 @@ function IntakeCard({
                 {CLOSE_REASONS.map((r) => (
                   <label
                     key={r}
-                    className="flex cursor-pointer items-start gap-3 rounded-[4px] border border-line bg-background px-4 py-3 text-sm text-foreground/85 transition-colors hover:border-foreground/30"
+                    className="flex cursor-pointer items-start gap-3 rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/85 transition-colors hover:border-ink/25"
                   >
                     <input
                       type="radio"
                       name={`close-${intake.id}`}
                       checked={note === r}
                       onChange={() => setNote(r)}
-                      className="mt-1 h-3.5 w-3.5 flex-none accent-black"
+                      className="mt-1 h-3.5 w-3.5 flex-none accent-ink"
                     />
                     <span>{r}</span>
                   </label>
                 ))}
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-foreground/60">
+              <p className="mt-3 text-xs leading-relaxed text-ink/60">
                 Not a clinical decision. If the reason is medical, send it to the
                 prescriber instead — only he can decline on clinical grounds.
               </p>
@@ -304,7 +305,7 @@ function IntakeCard({
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="The patient will see this note…"
-              className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
+              className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
             />
           )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -319,10 +320,10 @@ function IntakeCard({
                 )
               }
               className={cn(
-                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors disabled:opacity-40',
+                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors disabled:opacity-40',
                 open === 'decline'
                   ? 'bg-red-700 text-white hover:bg-red-800'
-                  : 'bg-black text-white hover:bg-black/85',
+                  : 'bg-ink text-white hover:bg-ink/85',
               )}
             >
               {busy
@@ -337,7 +338,7 @@ function IntakeCard({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
             >
               Cancel
             </button>
@@ -349,7 +350,7 @@ function IntakeCard({
         <p
           className={cn(
             'mt-3 text-sm',
-            result.ok ? 'text-accent' : 'text-red-300',
+            result.ok ? 'text-emerald-700' : 'text-red-700',
           )}
         >
           {result.message}

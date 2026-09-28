@@ -44,14 +44,14 @@ export function PasswordField({
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        className={cn(authInputClass, 'pr-12', className)}
+        className={cn(authInputClass, 'pr-14', className)}
       />
       <button
         type="button"
         onClick={() => setShown((v) => !v)}
         aria-label={shown ? 'Hide password' : 'Show password'}
         aria-pressed={shown}
-        className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-[2px] text-black/60 transition-colors hover:bg-black/[0.06] hover:text-black"
+        className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-ink/50 transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
       >
         {shown ? (
           <svg

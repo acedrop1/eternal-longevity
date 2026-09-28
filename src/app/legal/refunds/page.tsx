@@ -17,48 +17,48 @@ export default function RefundsPage() {
   return (
     <LegalLayout
       title="Refund Policy"
-      effective="May 2026"
+      effective="September 2026"
       lead="We want you to feel good about every order. This policy explains when refunds are issued, when they are not, and how to request one. We try to be fair and transparent. And we say no when the rules require us to."
       sections={[
         {
           heading: 'Before the Pharmacy Ships',
           paragraphs: [
-            'Your card is not charged until a licensed prescriber approves your order. If you cancel before approval, or if your order is declined or we are unable to fulfill it, nothing is charged. After approval, you can still cancel for a full refund at any point before the pharmacy begins compounding.',
-            'Once the pharmacy has begun compounding, you are not eligible for a full refund. The compounded protocol has been prepared for you specifically.',
+            'Your card is saved at checkout but not charged until a licensed prescriber approves your order. If you cancel before approval, or if your order is declined or we are unable to fulfill it, nothing is charged. After approval, you can still cancel for a full refund at any point before the pharmacy begins compounding.',
+            'Once the pharmacy has begun compounding, you are not eligible for a full refund. The medication has been prepared for you specifically.',
           ],
         },
         {
           heading: 'Compounded Medications',
           paragraphs: [
-            'Under federal and state pharmacy law, compounded protocols cannot be re-dispensed once they leave the pharmacy. This means we are unable to refund an order that has already shipped, even if the package is unopened.',
+            'Under federal and state pharmacy law, compounded medications cannot be re-dispensed once they leave the pharmacy. This means we are unable to refund an order that has already shipped, even if the package is unopened.',
             'This is a regulatory restriction, not a discretionary policy. It applies to every compounding pharmacy in the United States, including ours.',
           ],
         },
         {
           heading: 'Damaged or Lost Shipments',
           paragraphs: [
-            `If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at ${SUPPORT_EMAIL} with photos. We will replace the affected vials at no cost.`,
+            `If your shipment arrives damaged, leaking, melted, or otherwise unusable, contact our support team within 7 days at ${SUPPORT_EMAIL} with photos. We will replace the affected medication at no cost.`,
             'If a shipment is lost in transit and the carrier confirms loss, we will resend the order at no cost.',
           ],
         },
         {
           heading: 'Adverse Reactions',
           paragraphs: [
-            'If you experience a significant adverse reaction, stop dosing and consult your own healthcare provider. We do not refund the remaining vials in an active cycle, but we may offer an adjusted protocol or an alternative for the following cycle at our discretion.',
+            'If you experience a significant adverse reaction, stop the medication and contact us, or your own healthcare provider. We do not refund medication already shipped, but the prescriber may adjust or stop your treatment.',
             'If you experience a reaction that meets the criteria of a medical emergency, call 911 or go to the nearest emergency room first.',
           ],
         },
         {
           heading: 'Subscriptions',
           paragraphs: [
-            'You may pause or cancel a subscription at any time between cycles. Any cycle that has already been billed and shipped is not refundable. If you cancel after a renewal is billed but before the pharmacy ships, you are eligible for a full refund of the renewal charge.',
+            'You may pause or cancel a plan at any time from Portal › Subscriptions. A renewal that has already been billed and shipped is not refundable. If you cancel after a renewal is billed but before the pharmacy ships, you are eligible for a full refund of the renewal charge.',
             'Pricing changes communicated by email at least 30 days in advance apply to renewals processed after the change date.',
           ],
         },
         {
           heading: 'Returns',
           paragraphs: [
-            'Do not mail unused compounded protocols back to us. Per pharmacy regulations, we cannot accept it, and it will not be refunded. Dispose of unused vials per the product instructions or through your local pharmaceutical-take-back program.',
+            'Do not mail unused compounded medication back to us. Per pharmacy regulations, we cannot accept it, and it will not be refunded. Dispose of unused medication per the label instructions or through your local pharmaceutical take-back program.',
           ],
         },
         {
@@ -90,7 +90,7 @@ export default function RefundsPage() {
       related={[
         { label: 'Terms of Service', href: '/legal/terms' },
         { label: 'Privacy Policy', href: '/legal/privacy' },
-        { label: 'Informed Consent & Product Acknowledgement', href: '/legal/consent' },
+        { label: 'Telehealth Informed Consent', href: '/legal/consent' },
         { label: 'Shipping & Delivery Policy', href: '/legal/shipping' },
       ]}
     />

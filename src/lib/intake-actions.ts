@@ -12,7 +12,8 @@
  */
 import type { Json } from '@/lib/database.types';
 import { getSession } from '@/lib/auth-server';
-import { passwordValid } from '@/lib/intakeSchema';
+import { passwordValid, SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { SERVICE_AREA_OR } from '@/lib/site';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -24,6 +25,8 @@ import {
   SUPPORT_EMAIL,
 } from '@/lib/email';
 import { LIMITS, allow } from './rate-limit';
+import { ageFromDob, consentsComplete, firstKnockout } from './intake-rules';
+import { intakeStateFor } from './intake-status';
 
 /**
  * Is there already an account on this address?
@@ -57,6 +60,8 @@ export interface IntakeSubmitResult {
   /** Server-issued opaque ID used for the welcome email + portal link. */
   caseId?: string;
   error?: string;
+  /** A knockout the server found when it re-checked the answers. */
+  knockout?: string;
 }
 
 export async function submitIntakeAction(
@@ -69,6 +74,35 @@ export async function submitIntakeAction(
   const email = answers.email;
   if (typeof email !== 'string' || !email.includes('@')) {
     return { ok: false, error: 'A valid email is required.' };
+  }
+  /*
+   * Unauthenticated, and each call creates an account and sends two emails.
+   * Limited per IP and per address, so neither a script nor one address
+   * hammered from many IPs gets far.
+   */
+  const throttled =
+    !(await allow('signup', LIMITS.signup)) ||
+    !(await allow('signup', LIMITS.signup, email.trim().toLowerCase()));
+  if (throttled) {
+    return { ok: false, error: 'Too many attempts. Please try again in a few minutes.' };
+  }
+  // The wizard stops out-of-state visitors on its first screen; this is the
+  // same geofence for anything that skips the wizard.
+  if (typeof answers.state !== 'string' || !SERVICEABLE_STATES.includes(answers.state)) {
+    return {
+      ok: false,
+      error: `We can only treat patients in ${SERVICE_AREA_OR} right now.`,
+    };
+  }
+  // The rest of what the wizard checks in the browser, checked again here.
+  const age = ageFromDob(answers.dob);
+  if (age === null || age > 120) {
+    return { ok: false, error: 'Enter a valid date of birth.' };
+  }
+  const knockout = firstKnockout(answers);
+  if (knockout) return { ok: false, knockout };
+  if (!consentsComplete(answers.consents)) {
+    return { ok: false, error: 'Please confirm the required acknowledgements.' };
   }
 
   const caseId = `case_${Math.random().toString(36).slice(2, 9)}`;
@@ -88,7 +122,9 @@ export async function submitIntakeAction(
     | { password?: string; mfa?: boolean }
     | undefined;
   delete answers.account;
-  if (account?.password && !passwordValid(account.password)) {
+  // An intake with no account behind it could be filed against anyone's
+  // address, so the password step is required here as it is in the wizard.
+  if (!account?.password || !passwordValid(account.password)) {
     return {
       ok: false,
       error:
@@ -253,6 +289,19 @@ export async function submitVisitAction(
   if (!user) return { ok: false, error: 'Please log in to complete your visit.' };
   if (!supabaseAdminConfigured()) return { ok: true, caseId: 'demo' };
 
+  /*
+   * A closed intake stays closed. Without this, a member knocked out by the
+   * safety screen — or declined by staff or the prescriber — could press Back
+   * and file a fresh visit with different answers. Staff reopening the intake
+   * moves it off 'declined', which lifts this.
+   */
+  if ((await intakeStateFor(user.id)) === 'declined') {
+    return {
+      ok: false,
+      error: 'Your last visit was closed. Message your care team if something has changed.',
+    };
+  }
+
   const db = createSupabaseAdminClient();
   let { data: intake } = await db
     .from('intake_submissions')
@@ -292,6 +341,16 @@ export async function submitVisitAction(
     ...visitAnswers,
     visitCompletedAt: new Date().toISOString(),
   };
+
+  // The wizard stops a knockout in the browser; this stops one sent without it.
+  const knockout = firstKnockout(merged);
+  if (knockout) {
+    await db
+      .from('intake_submissions')
+      .update({ status: 'declined', review_notes: `Safety screen: ${knockout}` })
+      .eq('id', intake.id);
+    return { ok: false, knockout };
+  }
   const { error } = await db
     .from('intake_submissions')
     .update({ answers: merged as unknown as Json, status: 'submitted' })

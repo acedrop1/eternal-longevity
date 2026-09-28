@@ -48,6 +48,26 @@ export default async function VisitPage() {
     );
   }
 
+  // submitVisitAction refuses a new visit after a decline; say so up front
+  // rather than after twenty questions.
+  if (state === 'declined') {
+    return (
+      <PortalShell user={user} nav={nav}>
+        <PageHeader title="Your last visit was closed." />
+        <EmptyState
+          action={
+            <Link href="/portal/messages" className={btnPrimary}>
+              Message your care team
+            </Link>
+          }
+        >
+          A new visit can&rsquo;t be started while your last one is closed. If
+          something has changed, message your care team and they can reopen it.
+        </EmptyState>
+      </PortalShell>
+    );
+  }
+
   return (
     <PortalShell user={user} nav={nav}>
       <div>
@@ -55,8 +75,8 @@ export default async function VisitPage() {
           title="Complete your visit"
           intro={visit?.productName ? `For your ${visit.productName} order.` : undefined}
         />
-        <p className="mt-3 inline-flex items-center gap-1.5 font-mono text-[13px] text-black/70">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-3 py-1.5 text-[13px] font-medium text-ink ring-1 ring-inset ring-butter-deep/60">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
           {visit ? 'Required before prescriber review' : 'Required before you can order'}
         </p>
       </div>

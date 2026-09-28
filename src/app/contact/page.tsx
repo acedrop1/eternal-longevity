@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
+import { pageMeta } from '@/lib/seo';
 import { Footer } from '@/components/sections/Footer';
 import { MessageForm } from '@/components/contact/MessageForm';
+import { Aura, GLASS } from '@/components/home/HomeSections';
+import { cn } from '@/lib/utils';
 import {
   BUSINESS_LEGAL_NAME,
   BUSINESS_ADDRESS,
@@ -14,12 +18,9 @@ import {
   STATEMENT_DESCRIPTOR,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with our team. We answer everything within one business day.',
-};
+export const metadata: Metadata = pageMeta('/contact', 'Contact', 'Get in touch with our team. We answer everything within one business day.');
 
-const linkClass = 'underline decoration-black/40 underline-offset-[3px] transition-colors hover:decoration-black';
+const linkClass = 'underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
 
 const CONTACT_ROWS: { label: string; title: ReactNode; body: ReactNode }[] = [
   {
@@ -29,7 +30,7 @@ const CONTACT_ROWS: { label: string; title: ReactNode; body: ReactNode }[] = [
         {SUPPORT_EMAIL}
       </a>
     ),
-    body: 'Orders, protocols, billing, press and partnerships. Replies within one business day.',
+    body: 'Orders, prescriptions, billing, press and partnerships. Replies within one business day.',
   },
   // Only rendered when a real number is configured — see SUPPORT_PHONE.
   ...(SUPPORT_PHONE
@@ -48,7 +49,7 @@ const CONTACT_ROWS: { label: string; title: ReactNode; body: ReactNode }[] = [
   {
     label: 'Hours',
     title: SUPPORT_HOURS,
-    body: "Support team responses happen during business hours. We'll triage urgent items first.",
+    body: 'We reply during business hours. This is not an emergency line: in an emergency, call 911.',
   },
   {
     label: 'Mailing address',
@@ -57,7 +58,7 @@ const CONTACT_ROWS: { label: string; title: ReactNode; body: ReactNode }[] = [
   },
   {
     label: 'On your statement',
-    title: <span className="font-mono text-[15px]">{STATEMENT_DESCRIPTOR}</span>,
+    title: STATEMENT_DESCRIPTOR,
     body: 'Charges from us appear under this name. No medication name ever appears on your statement.',
   },
 ];
@@ -66,51 +67,53 @@ export default function ContactPage() {
   return (
     <>
       <Header categoryStrip />
-      <main>
-        {/* Top padding clears the fixed header + product strip (126 / 134px). */}
-        <section className="bg-white px-5 pb-16 pt-[158px] text-black md:px-8 md:pb-24 md:pt-[182px]">
-          {/* Mobile order: heading, form, details. Desktop: heading + details left, form right. */}
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-12">
+      <main className="bg-white">
+        <section className="px-5 pb-12 pt-44 md:px-10 md:pb-16 md:pt-52">
+          <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-16">
             <div>
-              <h1
-                className="font-display font-normal [text-wrap:balance]"
-                style={{ fontSize: 'clamp(2.4rem, 3.4vw + 1rem, 4.5rem)', fontStretch: '75%', lineHeight: 1 }}
-              >
+              <h1 className="text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[80px]">
                 Talk to us.
               </h1>
-              <p className="mt-4 max-w-md text-[16px] leading-relaxed text-black/70">
+              <p className="mt-5 max-w-[480px] text-[16px] leading-relaxed text-ink-soft">
                 Most answers are already in our{' '}
-                <Link href="/faq" className={`text-black ${linkClass}`}>
+                <Link href="/faq" className={`text-ink ${linkClass}`}>
                   FAQ
                 </Link>
-                . For anything we missed, drop us a line here and a real human will reply within one business day.
+                . For anything we missed, drop us a line here and a real human will reply within one business day. In an
+                emergency, call 911.
               </p>
             </div>
-
-            <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-2">
-              <MessageForm />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-shell bg-milk">
+              <Image src="/brand/life-telehealth.jpg" alt="" fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" />
             </div>
+          </div>
+        </section>
 
-            <dl className="border-t border-black/15 lg:col-start-1">
-              {CONTACT_ROWS.map((row) => (
-                <div
-                  key={row.label}
-                  className="border-b border-black/15 py-5 sm:grid sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-6"
-                >
-                  <dt className="font-mono text-[13px] text-black/55 sm:pt-1">{row.label}</dt>
-                  <dd className="mt-1 sm:mt-0">
-                    <div className="text-[17px]">{row.title}</div>
-                    <div className="mt-1 max-w-md text-[15px] leading-relaxed text-black/70">{row.body}</div>
-                  </dd>
-                </div>
-              ))}
-            </dl>
+        {/* Mobile order: form, then details. Desktop: details left, form right. */}
+        <section className="px-3 pb-16 md:px-5 md:pb-24">
+          <div className="relative overflow-hidden rounded-shell bg-milk p-3 md:p-5">
+            <Aura mix="sunrise" className="opacity-70" />
+            <div className="relative grid gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-5">
+              <div className="rounded-inner bg-white p-6 md:p-10 lg:order-2">
+                <MessageForm />
+              </div>
+
+              <dl className="grid content-start gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-1">
+                {CONTACT_ROWS.map((row) => (
+                  <div key={row.label} className={cn('rounded-inner p-5 md:p-6', GLASS)}>
+                    <dt className="text-[13px] font-medium text-ink/55">{row.label}</dt>
+                    <dd className="mt-2">
+                      <div className="text-[17px] font-semibold tracking-[-0.015em] text-ink [overflow-wrap:anywhere]">{row.title}</div>
+                      <div className="mt-1 max-w-md text-[15px] leading-relaxed text-ink-soft">{row.body}</div>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
         </section>
       </main>
-      <div className="bg-white">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

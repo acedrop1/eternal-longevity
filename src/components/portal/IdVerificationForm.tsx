@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { supabaseConfigured } from '@/lib/env';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import { btnPrimary, btnSecondary, errorBox, panel } from '@/components/portal/ui';
+import { btnCta, btnPrimary, btnSecondary, errorBox, panel } from '@/components/portal/ui';
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const ACCEPT = 'image/*,application/pdf';
@@ -83,17 +83,14 @@ export function IdVerificationForm() {
   if (status === 'done') {
     return (
       <section role="status" className={cn(panel, 'p-6 text-center md:p-8')}>
-        <p className="mb-3 inline-flex items-center gap-1.5 font-mono text-[13px] text-black/70">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+        <p className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-ink/70 ring-1 ring-ink/5">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-butter-deep" />
           Submitted
         </p>
-        <h2
-          className="mb-2 font-display font-normal text-black"
-          style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
-        >
+        <h2 className="mb-2 text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]">
           Your ID is under review.
         </h2>
-        <p className="mx-auto mb-5 max-w-md text-[15px] leading-relaxed text-black/65">
+        <p className="mx-auto mb-5 max-w-md text-[15px] leading-relaxed text-ink-soft">
           {message} Verification usually completes within one business day.
           We&apos;ll email you the moment it clears.
         </p>
@@ -139,7 +136,7 @@ export function IdVerificationForm() {
           type="button"
           disabled={!ready}
           onClick={submit}
-          className={btnPrimary}
+          className={btnCta}
         >
           {status === 'uploading'
             ? 'Uploading…'
@@ -165,22 +162,22 @@ function FilePick({
 
   return (
     <div>
-      <h2 className="mb-1 text-[16px] font-medium text-black">{title}</h2>
-      <p className="mb-3 text-[14px] text-black/60">{hint}</p>
+      <h2 className="mb-1 text-[16px] font-medium text-ink">{title}</h2>
+      <p className="mb-3 text-[14px] text-ink/60">{hint}</p>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'flex w-full items-center gap-4 rounded-[4px] px-4 py-4 text-left transition-colors md:px-5 md:py-5',
+          'flex w-full items-center gap-4 rounded-shell px-4 py-4 text-left transition-colors md:px-5 md:py-5',
           file
-            ? 'border border-black/30 bg-[#F2F2F0]'
-            : 'border border-dashed border-black/25 bg-[#F2F2F0] hover:bg-[#EAEAE7]',
+            ? 'bg-milk ring-1 ring-ink/20'
+            : 'border border-dashed border-ink/20 bg-milk hover:bg-milk-deep',
         )}
       >
         <span
           className={cn(
-            'grid h-10 w-10 flex-shrink-0 place-items-center rounded-[2px]',
-            file ? 'bg-black text-white' : 'bg-white text-black/60 ring-1 ring-black/10',
+            'grid h-10 w-10 flex-shrink-0 place-items-center rounded-inner',
+            file ? 'bg-ink text-white' : 'bg-white text-ink/60 ring-1 ring-ink/5',
           )}
         >
           <svg
@@ -206,10 +203,10 @@ function FilePick({
           </svg>
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium text-black">
+          <span className="block truncate text-[15px] font-medium text-ink">
             {file ? file.name : `Upload the ${title.toLowerCase()}`}
           </span>
-          <span className="block font-mono text-[12px] text-black/55">
+          <span className="block text-[13px] text-ink/55">
             {file ? 'Tap to replace' : 'PDF or image, up to 10 MB'}
           </span>
         </span>

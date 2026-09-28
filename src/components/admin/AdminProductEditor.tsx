@@ -51,6 +51,8 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 
   const quarterlyPerMonth = Math.round(p.pricing.quarterly / 3);
   const quarterlySave = p.pricing.monthly ? Math.round((1 - p.pricing.quarterly / (p.pricing.monthly * 3)) * 100) : 0;
+  const sixMonth = p.pricing.sixMonth ?? 0;
+  const sixMonthSave = p.pricing.monthly ? Math.round((1 - sixMonth / (p.pricing.monthly * 6)) * 100) : 0;
   const goingLive = p.status === 'live' && initial.status !== 'live';
 
   const save = () =>
@@ -79,8 +81,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
       {/* ---------- Fields ---------- */}
       <div className="order-2 space-y-8 lg:order-1">
         <h1
-          className="font-display font-normal text-black [text-wrap:balance]"
-          style={{ fontSize: 'clamp(2rem, 2vw + 1rem, 3rem)', fontStretch: '75%', lineHeight: 1.05 }}
+          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
         >
           {p.isNew ? 'New product.' : p.name || 'Untitled'}
         </h1>
@@ -100,7 +101,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             </Field>
             <Field label="URL name" hint={p.isNew ? 'etlongevity.com/shop/…  Can’t be changed later.' : 'Fixed once created.'}>
               <input
-                className={cn(field, 'font-mono', !p.isNew && 'bg-black/[0.04] text-black/60')}
+                className={cn(field, !p.isNew && 'bg-milk text-ink/60')}
                 value={p.id}
                 readOnly={!p.isNew}
                 onChange={(e) => {
@@ -137,7 +138,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
         </Section>
 
         <Section title="Pricing" note="Whole dollars. The server charges these, not what a browser sends.">
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Monthly" hint={`One-time order: $${p.pricing.monthly + 20}`}>
               <Money value={p.pricing.monthly} onChange={(v) => setPrice('monthly', v)} />
             </Field>
@@ -147,7 +148,13 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             >
               <Money value={p.pricing.quarterly} onChange={(v) => setPrice('quarterly', v)} />
             </Field>
-            <Field label="Annual" hint="Stored; not offered at checkout yet.">
+            <Field
+              label="6-month (billed every 6 months)"
+              hint={sixMonth ? `$${Math.round(sixMonth / 6)}/mo${sixMonthSave > 0 ? ` · saves ${sixMonthSave}%` : ''}` : 'Leave empty for no 6-month plan.'}
+            >
+              <Money value={sixMonth} onChange={(v) => setPrice('sixMonth', v)} />
+            </Field>
+            <Field label="Annual" hint="Stored only; customers are offered 1, 3 and 6-month plans.">
               <Money value={p.pricing.annual} onChange={(v) => setPrice('annual', v)} />
             </Field>
           </div>
@@ -210,23 +217,23 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                     aria-checked={on}
                     onClick={() => set('status', s.key)}
                     className={cn(
-                      'flex w-full items-start gap-3 rounded-[2px] px-3 py-3 text-left transition-colors',
-                      on ? 'bg-white ring-2 ring-black' : 'bg-white/60 ring-1 ring-black/10 hover:ring-black/30',
+                      'flex w-full items-start gap-3 rounded-inner px-3 py-3 text-left transition-colors',
+                      on ? 'bg-white ring-2 ring-ink' : 'bg-white/60 ring-1 ring-ink/10 hover:ring-ink/30',
                     )}
                   >
-                    <span aria-hidden className={cn('mt-1 grid h-4 w-4 flex-none place-items-center rounded-full border-2', on ? 'border-black' : 'border-black/30')}>
-                      {on && <span className="h-2 w-2 rounded-full bg-black" />}
+                    <span aria-hidden className={cn('mt-1 grid h-4 w-4 flex-none place-items-center rounded-full border-2', on ? 'border-ink' : 'border-ink/30')}>
+                      {on && <span className="h-2 w-2 rounded-full bg-ink" />}
                     </span>
                     <span>
                       <span className="block text-[15px] font-medium">{s.label}</span>
-                      <span className="block text-[13px] leading-snug text-black/60">{s.body}</span>
+                      <span className="block text-[13px] leading-snug text-ink/60">{s.body}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
             {goingLive && (
-              <p className="mt-3 rounded-[2px] bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-600/25">
+              <p className="mt-3 rounded-inner bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-600/25">
                 Saving as Live lists this product on the public site and lets members order it. Make sure it is cleared for sale
                 (pharmacy, prescriber and LegitScript).
               </p>
@@ -235,11 +242,11 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 
           <div className={cn(panel, 'p-5')}>
             <p className={fieldLabel}>Photo</p>
-            <div className="relative aspect-[3/4] overflow-hidden rounded-[2px] bg-white ring-1 ring-black/10">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-inner bg-white ring-1 ring-ink/10">
               {p.image ? (
                 <Image src={p.image} alt="" fill sizes="300px" className="object-cover" />
               ) : (
-                <span className="grid h-full place-items-center font-mono text-[12px] text-black/45">No photo yet</span>
+                <span className="grid h-full place-items-center text-[12px] text-ink/45">No photo yet</span>
               )}
             </div>
             <input
@@ -261,14 +268,14 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             >
               {uploading ? 'Uploading…' : p.image ? 'Replace photo' : 'Upload photo'}
             </button>
-            <p className="mt-2 font-mono text-[12px] text-black/50">
+            <p className="mt-2 text-[12px] text-ink/50">
               {p.id ? 'JPG, PNG or WebP, 5 MB max. 3:4 portrait works best.' : 'Set the URL name first.'}
             </p>
           </div>
 
           <div className="space-y-3">
             {message && (
-              <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'rounded-[2px] bg-emerald-50 px-4 py-3 text-[14px] text-emerald-900 ring-1 ring-emerald-700/20' : errorBox}>
+              <p role={message.ok ? 'status' : 'alert'} className={message.ok ? 'rounded-inner bg-emerald-50 px-4 py-3 text-[14px] text-emerald-900 ring-1 ring-emerald-700/20' : errorBox}>
                 {message.text}
               </p>
             )}
@@ -280,7 +287,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 View on site
               </Link>
             )}
-            {!canSave && <p className="font-mono text-[12px] text-black/55">Connect Supabase to save changes.</p>}
+            {!canSave && <p className="text-[12px] text-ink/55">Connect Supabase to save changes.</p>}
           </div>
         </div>
       </aside>
@@ -290,10 +297,10 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 
 function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
-    <section className="border-t border-black/15 pt-6">
+    <section className="border-t border-ink/10 pt-6">
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
         <SectionTitle>{title}</SectionTitle>
-        {note && <p className="font-mono text-[12px] text-black/55">{note}</p>}
+        {note && <p className="text-[12px] text-ink/55">{note}</p>}
       </div>
       {children}
     </section>
@@ -305,7 +312,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <label className="block">
       <span className={fieldLabel}>{label}</span>
       {children}
-      {hint && <span className="mt-1.5 block font-mono text-[12px] text-black/50">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-[12px] text-ink/50">{hint}</span>}
     </label>
   );
 }
@@ -313,7 +320,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function Money({ value, onChange }: { value: number; onChange: (v: string) => void }) {
   return (
     <span className="relative block">
-      <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] text-black/50">
+      <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] text-ink/50">
         $
       </span>
       <input
@@ -341,10 +348,10 @@ function ListField({ label, value, onChange }: { label: string; value: string[];
 function Check({ checked, onChange, label, body }: { checked: boolean; onChange: (v: boolean) => void; label: string; body: string }) {
   return (
     <label className="flex cursor-pointer items-start gap-3">
-      <input type="checkbox" className="mt-1 h-4 w-4 accent-black" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" className="mt-1 h-4 w-4 accent-ink" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
         <span className="block text-[15px] font-medium">{label}</span>
-        <span className="block text-[13px] text-black/60">{body}</span>
+        <span className="block text-[13px] text-ink/60">{body}</span>
       </span>
     </label>
   );

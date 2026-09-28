@@ -103,7 +103,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <AuthLabel htmlFor="login-password">Password</AuthLabel>
             <Link
               href={supabaseConfigured ? '/forgot-password' : '/contact'}
-              className={`font-mono text-[13px] ${authLinkClass}`}
+              className={`text-[13px] ${authLinkClass}`}
             >
               Forgot?
             </Link>
@@ -135,7 +135,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <Link
           href="/start"
-          className="block w-full text-center font-mono text-[13px] text-black/60 transition-colors hover:text-black"
+          className="block w-full py-2 text-center text-[14px] font-medium text-ink/60 transition-colors hover:text-ink"
         >
           Start a new assessment →
         </Link>

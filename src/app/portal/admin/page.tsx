@@ -72,9 +72,11 @@ async function loadOverview(): Promise<Overview> {
       const label = (s.cadence_label ?? '').toLowerCase();
       const perMonth = label.includes('quarter')
         ? cents / 3
-        : label.includes('annual')
-          ? cents / 12
-          : cents;
+        : label.startsWith('6')
+          ? cents / 6
+          : label.includes('annual')
+            ? cents / 12
+            : cents;
       return sum + perMonth;
     }, 0);
 
@@ -133,7 +135,7 @@ export default async function AdminPortalPage() {
       nav={ADMIN_NAV}
     >
       <div>
-        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/55">
           Operations ·{' '}
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
@@ -142,12 +144,7 @@ export default async function AdminPortalPage() {
           })}
         </p>
         <h1
-          className="font-display font-normal text-foreground"
-          style={{
-            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
-            fontStretch: '75%',
-            lineHeight: 1.05,
-          }}
+          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
         >
           Good {new Date().getHours() < 12 ? 'morning' : 'afternoon'},{' '}
           {(user.name ?? '').split(' ')[0] || 'there'}.
@@ -157,11 +154,11 @@ export default async function AdminPortalPage() {
       {/* Metrics */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-[4px] border border-line bg-surface p-5">
-            <p className="mb-2 font-mono text-[12px] text-foreground/60">
+          <div key={m.label} className="rounded-shell bg-milk p-5">
+            <p className="mb-2 text-[13px] font-medium text-ink/55">
               {m.label}
             </p>
-            <p className="text-3xl font-medium tracking-tight text-foreground tabular-nums">
+            <p className="text-[32px] font-semibold tracking-[-0.04em] text-ink tabular-nums">
               {m.value}
             </p>
           </div>
@@ -169,27 +166,27 @@ export default async function AdminPortalPage() {
       </div>
 
       {/* Pipeline */}
-      <div className="mb-8 rounded-[4px] border border-line bg-surface p-6">
-        <p className="mb-1 font-mono text-[12px] text-foreground/60">Pipeline</p>
-        <h2 className="mb-5 text-xl font-semibold tracking-tight text-foreground">
+      <div className="mb-8 rounded-shell bg-milk p-6">
+        <p className="mb-1 text-[13px] font-medium text-ink/55">Pipeline</p>
+        <h2 className="mb-5 text-[22px] font-semibold tracking-[-0.03em] text-ink">
           Members in motion
         </h2>
         {o.pipeline.every((p) => p.count === 0) ? (
-          <p className="text-sm text-foreground/60">
+          <p className="text-sm text-ink/60">
             Nothing in flight right now. New intakes and orders appear here.
           </p>
         ) : (
           <div className="space-y-3">
             {o.pipeline.map((p) => (
               <div key={p.label} className="flex items-center gap-4">
-                <span className="w-40 flex-none text-sm text-foreground/70">{p.label}</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-foreground/10">
+                <span className="w-40 flex-none text-sm text-ink/70">{p.label}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10">
                   <div
-                    className="h-full rounded-full bg-accent"
+                    className="h-full rounded-full bg-ink"
                     style={{ width: `${(p.count / maxPipe) * 100}%` }}
                   />
                 </div>
-                <span className="w-8 flex-none text-right text-sm font-semibold text-foreground tabular-nums">
+                <span className="w-8 flex-none text-right text-sm font-semibold text-ink tabular-nums">
                   {p.count}
                 </span>
               </div>
@@ -199,29 +196,29 @@ export default async function AdminPortalPage() {
       </div>
 
       {/* Activity */}
-      <div className="rounded-[4px] border border-line bg-surface p-6">
-        <p className="mb-1 font-mono text-[12px] text-foreground/60">Recent activity</p>
-        <h2 className="mb-5 text-xl font-semibold tracking-tight text-foreground">
+      <div className="rounded-shell bg-milk p-6">
+        <p className="mb-1 text-[13px] font-medium text-ink/55">Recent activity</p>
+        <h2 className="mb-5 text-[22px] font-semibold tracking-[-0.03em] text-ink">
           What just happened
         </h2>
         {o.activity.length === 0 ? (
-          <p className="text-sm text-foreground/60">
+          <p className="text-sm text-ink/60">
             No activity yet. Order and clinical updates land here as they happen.
           </p>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-ink/10">
             {o.activity.map((a, i) => (
               <li key={i} className="flex items-baseline gap-4 py-3">
-                <span className="w-28 flex-none font-mono text-[12px] text-foreground/55 tabular-nums">
+                <span className="w-28 flex-none text-[12px] text-ink/55 tabular-nums">
                   {a.time}
                 </span>
-                <span className="text-sm text-foreground/85">{a.action}</span>
+                <span className="text-sm text-ink/85">{a.action}</span>
               </li>
             ))}
           </ul>
         )}
-        <div className="mt-5 border-t border-line pt-4">
-          <Link href="/portal/admin/queue" className="text-sm text-accent hover:underline">
+        <div className="mt-5 border-t border-ink/10 pt-4">
+          <Link href="/portal/admin/queue" className="text-sm font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
             See applications →
           </Link>
         </div>

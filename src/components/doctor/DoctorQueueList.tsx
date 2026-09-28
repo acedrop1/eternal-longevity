@@ -141,14 +141,14 @@ function SectionHeader({
   return (
     <div className="mb-4 flex items-end justify-between">
       <div>
-        <p className="font-mono text-[12px] text-foreground/55">
+        <p className="text-[13px] font-medium text-ink/55">
           {eyebrow}
         </p>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
           {title}
         </h2>
       </div>
-      <span className="font-mono text-[12px] text-foreground/55">
+      <span className="text-[13px] text-ink/55">
         {count} {count === 1 ? 'case' : 'cases'}
       </span>
     </div>
@@ -157,11 +157,11 @@ function SectionHeader({
 
 function EmptySection({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[4px] border border-line bg-surface p-8 text-center">
-      <h3 className="mb-1 text-sm font-semibold tracking-tight text-foreground">
+    <div className="rounded-shell bg-milk p-8 text-center">
+      <h3 className="mb-1 text-[17px] font-semibold tracking-[-0.02em] text-ink">
         {title}
       </h3>
-      <p className="text-xs text-foreground/55 leading-relaxed max-w-md mx-auto">
+      <p className="text-xs text-ink/55 leading-relaxed max-w-md mx-auto">
         {body}
       </p>
     </div>
@@ -188,12 +188,12 @@ function DoctorQueueRow({
   const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
 
   return (
-    <article className="rounded-[4px] border border-line bg-surface p-5 md:p-6">
+    <article className="rounded-shell bg-milk p-5 md:p-6">
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[4px] border border-line"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-thumb border border-ink/10"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -206,28 +206,28 @@ function DoctorQueueRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[12px] text-foreground/55">
-              <span className="text-foreground/80">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+              <span className="text-ink/80">
                 {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>{order.state}</span>
             </div>
-            <h2 className="text-base md:text-lg font-semibold tracking-tight text-foreground">
+            <h2 className="text-base md:text-[20px] font-semibold tracking-[-0.03em] text-ink">
               {order.memberName}
             </h2>
-            <p className="text-sm text-foreground/85 mt-0.5">
+            <p className="text-sm text-ink/85 mt-0.5">
               {order.lines
                 .map((l) => `${l.productName} (${l.cadenceLabel})`)
                 .join(' + ')}
             </p>
 
             {order.adminNote && (
-              <div className="mt-3 rounded-[4px] border border-foreground/15 bg-background p-3">
-                <div className="font-mono text-[12px] text-foreground/55 mb-1">
+              <div className="mt-3 rounded-inner border border-ink/10 bg-white p-3">
+                <div className="text-[12px] text-ink/55 mb-1">
                   Admin note
                 </div>
-                <p className="text-xs text-foreground/85 leading-relaxed">
+                <p className="text-xs text-ink/85 leading-relaxed">
                   {order.adminNote}
                 </p>
               </div>
@@ -236,7 +236,7 @@ function DoctorQueueRow({
         </div>
 
         <div className="md:text-right md:flex-shrink-0">
-          <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-sky-400/40 bg-sky-500/10 text-sky-300 px-2.5 py-1 font-mono text-[12px]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-600/25 bg-sky-50 text-sky-800 px-2.5 py-1 text-[12px]">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             Awaiting my review
           </span>
@@ -246,7 +246,7 @@ function DoctorQueueRow({
       {review && <ReviewPanel review={review} order={order} />}
 
       {open === null && (
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
           <button
             type="button"
             disabled={busy !== null}
@@ -255,7 +255,7 @@ function DoctorQueueRow({
               setPassword('');
               setOpen('sign');
             }}
-            className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-60 font-mono"
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-60"
           >
             Approve &amp; sign prescription
           </button>
@@ -263,7 +263,7 @@ function DoctorQueueRow({
             type="button"
             disabled={busy !== null}
             onClick={() => setOpen('ask')}
-            className="rounded-full border border-line bg-background px-5 py-2 font-mono text-[13px] text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+            className="rounded-full bg-white px-5 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
           >
             Ask for more information
           </button>
@@ -271,7 +271,7 @@ function DoctorQueueRow({
             type="button"
             disabled={busy !== null}
             onClick={() => setOpen('decline')}
-            className="rounded-full border border-red-500/30 bg-red-500/5 px-5 py-2 font-mono text-[13px] text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-60 sm:ml-auto"
+            className="rounded-full border border-red-600/20 bg-red-50 px-5 py-2 text-[13px] font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60 sm:ml-auto"
           >
             Decline
           </button>
@@ -279,25 +279,25 @@ function DoctorQueueRow({
       )}
 
       {open === 'sign' && (
-        <div className="mt-5 rounded-[4px] border border-accent/40 bg-accent/[0.06] p-4 md:p-5">
-          <div className="mb-3 font-mono text-[12px] text-accent">
+        <div className="mt-5 rounded-inner border border-butter-deep bg-butter-soft p-4 md:p-5">
+          <div className="mb-3 text-[13px] font-semibold text-ink">
             Sign the prescription
           </div>
-          <p className="mb-4 text-sm leading-relaxed text-foreground/75">
+          <p className="mb-4 text-sm leading-relaxed text-ink/75">
             Signing writes the prescription under your licence, charges{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-ink">
               ${order.total.toFixed(2)}
             </span>{' '}
             to the card on file and releases the order to the pharmacy.
           </p>
           {signWindowOpen ? (
-            <p className="text-xs leading-relaxed text-foreground/55">
+            <p className="text-xs leading-relaxed text-ink/55">
               Your password is still good for a few more minutes, so you are not
               asked again for this one.
             </p>
           ) : (
             <>
-              <p className="mb-4 text-xs leading-relaxed text-foreground/55">
+              <p className="mb-4 text-xs leading-relaxed text-ink/55">
                 Your password is required again here. A session left open is not
                 evidence that you are the one signing. It then holds for ten
                 minutes, so a morning&apos;s queue is one password.
@@ -305,7 +305,7 @@ function DoctorQueueRow({
 
               <label
                 htmlFor={`pw-${order.id}`}
-                className="mb-1.5 block font-mono text-[12px] text-foreground/60"
+                className="mb-1.5 block text-[13px] font-medium text-ink/70"
               >
                 Your password
               </label>
@@ -318,13 +318,13 @@ function DoctorQueueRow({
                   setPassword(e.target.value);
                   setSignError(null);
                 }}
-                className="w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15"
+                className="w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
               />
             </>
           )}
 
           {signError && (
-            <p className="mt-3 rounded-[4px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+            <p className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               {signError}
             </p>
           )}
@@ -353,7 +353,7 @@ function DoctorQueueRow({
                   setBusy(null);
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-40 font-mono"
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
             >
               {busy === 'sign' && <Spinner />}
               {busy === 'sign' ? 'Processing payment…' : 'Confirm and sign'}
@@ -366,7 +366,7 @@ function DoctorQueueRow({
                 setPassword('');
                 setSignError(null);
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-60"
+              className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
             >
               Cancel
             </button>
@@ -375,11 +375,11 @@ function DoctorQueueRow({
       )}
 
       {open === 'ask' && (
-        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
-          <div className="mb-2 font-mono text-[12px] text-foreground/60">
+        <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
+          <div className="mb-2 text-[13px] font-medium text-ink/55">
             What do you need from them?
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+          <p className="mb-3 text-xs leading-relaxed text-ink/55">
             Goes to their portal thread with you and emails them. The order
             stays here, nothing is charged, and their reply comes back to you.
           </p>
@@ -388,7 +388,7 @@ function DoctorQueueRow({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="What dose of tadalafil are you on, and how long have you been taking it?"
-            className="w-full resize-none rounded-[2px] border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/15"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -411,7 +411,7 @@ function DoctorQueueRow({
                   setBusy(null);
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[13px] text-white transition-colors hover:bg-black/85 disabled:opacity-40 font-mono"
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
             >
               {busy === 'ask' && <Spinner />}
               {busy === 'ask' ? 'Sending…' : 'Send question'}
@@ -422,7 +422,7 @@ function DoctorQueueRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface px-4 py-2 font-mono text-[12px] text-foreground/85 transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
             >
               Cancel
             </button>
@@ -431,11 +431,11 @@ function DoctorQueueRow({
       )}
 
       {open === 'decline' && (
-        <div className="mt-5 rounded-[4px] border border-red-500/30 bg-red-500/5 p-4 md:p-5">
-          <div className="mb-3 font-mono text-[12px] text-red-300">
+        <div className="mt-5 rounded-inner border border-red-600/20 bg-red-50 p-4 md:p-5">
+          <div className="mb-3 text-[13px] font-semibold text-red-700">
             Reason for clinical decline
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-foreground/55">
+          <p className="mb-3 text-xs leading-relaxed text-ink/55">
             Write this to the patient — they are emailed it word for word, and
             it goes on their chart. Anything charged is refunded in full.
           </p>
@@ -444,7 +444,7 @@ function DoctorQueueRow({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="Your blood pressure readings are too high for this treatment to be safe. Please see your primary physician, and we can revisit this once it is controlled."
-            className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-red-500/40"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -461,10 +461,10 @@ function DoctorQueueRow({
               }}
               disabled={!note.trim() || busy !== null}
               className={cn(
-                'inline-flex items-center gap-2 rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
+                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
                 note.trim() && !busy
                   ? 'bg-red-700 text-white hover:bg-red-800'
-                  : 'bg-foreground/10 text-foreground/55',
+                  : 'bg-ink/10 text-ink/55',
               )}
             >
               {busy === 'decline' && <Spinner />}
@@ -473,7 +473,7 @@ function DoctorQueueRow({
             <button
               type="button"
               onClick={() => setOpen(null)}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
             >
               Cancel
             </button>
@@ -494,16 +494,15 @@ function Metric({
   tone: 'blue' | 'accent' | 'neutral';
 }) {
   return (
-    <div className="rounded-[4px] border border-line bg-surface p-4">
-      <div className="font-mono text-[12px] text-foreground/55 mb-1.5">
+    <div className={cn('rounded-shell p-4', tone === 'accent' ? 'bg-butter-soft' : 'bg-milk')}>
+      <div className="mb-1.5 text-[13px] font-medium text-ink/55">
         {label}
       </div>
       <div
         className={cn(
-          'text-2xl font-medium tracking-tight tabular-nums',
-          tone === 'blue' && 'text-sky-300',
-          tone === 'accent' && 'text-accent',
-          tone === 'neutral' && 'text-foreground',
+          'text-[28px] font-semibold tracking-[-0.04em] tabular-nums',
+          tone === 'blue' && 'text-sky-800',
+          tone !== 'blue' && 'text-ink',
         )}
       >
         {value}
@@ -532,12 +531,12 @@ function ActiveCaseRow({
   const [note, setNote] = useState('');
 
   return (
-    <article className="rounded-[4px] border border-line bg-surface p-5 md:p-6">
+    <article className="rounded-shell bg-milk p-5 md:p-6">
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[4px] border border-line"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-thumb border border-ink/10"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -550,21 +549,21 @@ function ActiveCaseRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[12px] text-foreground/55">
-              <span className="text-foreground/80">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+              <span className="text-ink/80">
                 {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>{order.state}</span>
             </div>
-            <h2 className="text-base md:text-lg font-semibold tracking-tight text-foreground">
+            <h2 className="text-base md:text-[20px] font-semibold tracking-[-0.03em] text-ink">
               {order.memberName}
             </h2>
-            <p className="text-sm text-foreground/85 mt-0.5">
+            <p className="text-sm text-ink/85 mt-0.5">
               {order.lines.map((l) => l.productName).join(' + ')}
             </p>
             {order.tracking && (
-              <p className="mt-2 text-xs text-foreground/65 font-mono break-all">
+              <p className="mt-2 text-xs text-ink/65 break-all">
                 {order.carrier} · {order.tracking}
               </p>
             )}
@@ -572,7 +571,7 @@ function ActiveCaseRow({
         </div>
 
         <div className="md:text-right md:flex-shrink-0">
-          <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-accent/40 bg-accent/10 text-accent px-2.5 py-1 font-mono text-[12px]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600/20 bg-emerald-50 text-emerald-800 px-2.5 py-1 text-[12px]">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             {STATUS_LABEL[order.status]}
           </span>
@@ -581,12 +580,12 @@ function ActiveCaseRow({
 
       {/* Action buttons — visible status-progression */}
       {open === null && (
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-5">
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
           {order.status === 'signed' && (
             <button
               type="button"
               onClick={() => markCompounding(order.id, doctorName)}
-              className="rounded-full bg-black text-white px-5 py-2 text-[13px] hover:bg-black/85 transition-colors font-mono"
+              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
             >
               Mark compounding
             </button>
@@ -595,7 +594,7 @@ function ActiveCaseRow({
             <button
               type="button"
               onClick={() => setOpen('tracking')}
-              className="rounded-full bg-black text-white px-5 py-2 font-mono text-[13px] hover:bg-black/85 transition-colors"
+              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
             >
               Add tracking &amp; ship
             </button>
@@ -604,7 +603,7 @@ function ActiveCaseRow({
             <button
               type="button"
               onClick={() => markDelivered(order.id, doctorName)}
-              className="rounded-full bg-black text-white px-5 py-2 text-[13px] hover:bg-black/85 transition-colors font-mono"
+              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
             >
               Mark delivered
             </button>
@@ -612,14 +611,14 @@ function ActiveCaseRow({
           <button
             type="button"
             onClick={() => setOpen('note')}
-            className="rounded-full border border-line bg-background text-foreground/85 px-4 py-2 font-mono text-[12px] hover:border-foreground/30 transition-colors"
+            className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
           >
             Add update
           </button>
           <button
             type="button"
             onClick={() => setShowTimeline((v) => !v)}
-            className="ml-auto font-mono text-[12px] text-foreground/55 hover:text-foreground transition-colors"
+            className="ml-auto text-[12px] text-ink/55 hover:text-ink transition-colors"
           >
             {showTimeline ? 'Hide timeline ↑' : 'Timeline ↓'}
           </button>
@@ -628,19 +627,19 @@ function ActiveCaseRow({
 
       {/* Add tracking panel */}
       {open === 'tracking' && (
-        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
-          <div className="mb-3 font-mono text-[12px] text-foreground/60">
+        <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
+          <div className="mb-3 text-[13px] font-medium text-ink/55">
             Shipment details
           </div>
           <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
             <div>
-              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+              <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
                 Carrier
               </label>
               <select
                 value={carrier}
                 onChange={(e) => setCarrier(e.target.value)}
-                className="w-full appearance-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground"
+                className="w-full appearance-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 focus:outline-none focus:ring-ink/30"
               >
                 <option value="FedEx">FedEx</option>
                 <option value="UPS">UPS</option>
@@ -649,7 +648,7 @@ function ActiveCaseRow({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+              <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
                 Tracking number
               </label>
               <input
@@ -658,12 +657,12 @@ function ActiveCaseRow({
                 value={tracking}
                 onChange={(e) => setTracking(e.target.value)}
                 placeholder="1Z A99 7W2 03 8329 7104"
-                className="w-full rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
+                className="w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
               />
             </div>
           </div>
           <div className="mt-3">
-            <label className="mb-1.5 block font-mono text-[12px] text-foreground/60">
+            <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
               Message to member (optional)
             </label>
             <textarea
@@ -671,7 +670,7 @@ function ActiveCaseRow({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Anything the member should know about this shipment…"
-              className="w-full resize-none rounded-[2px] border border-line bg-background px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
+              className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
             />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -691,10 +690,10 @@ function ActiveCaseRow({
               }}
               disabled={!tracking.trim()}
               className={cn(
-                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
+                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
                 tracking.trim()
-                  ? 'bg-black text-white hover:bg-black/85'
-                  : 'bg-foreground/10 text-foreground/55',
+                  ? 'bg-ink text-white hover:bg-ink/85'
+                  : 'bg-ink/10 text-ink/55',
               )}
             >
               Save &amp; mark shipped
@@ -705,7 +704,7 @@ function ActiveCaseRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
             >
               Cancel
             </button>
@@ -715,8 +714,8 @@ function ActiveCaseRow({
 
       {/* Add free-form note panel */}
       {open === 'note' && (
-        <div className="mt-5 rounded-[4px] border border-line bg-background p-4 md:p-5">
-          <div className="mb-3 font-mono text-[12px] text-foreground/55">
+        <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
+          <div className="mb-3 text-[13px] font-medium text-ink/55">
             Update for member + care team
           </div>
           <textarea
@@ -724,7 +723,7 @@ function ActiveCaseRow({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Pharmacy delayed by a day — shipment moves to Friday."
-            className="w-full resize-none rounded-[2px] border border-line bg-surface px-4 py-3 text-sm text-foreground placeholder-foreground/30 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -737,10 +736,10 @@ function ActiveCaseRow({
               }}
               disabled={!note.trim()}
               className={cn(
-                'rounded-full px-5 py-2 font-mono text-[13px] transition-colors',
+                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
                 note.trim()
-                  ? 'bg-black text-white hover:bg-black/85'
-                  : 'bg-foreground/10 text-foreground/55',
+                  ? 'bg-ink text-white hover:bg-ink/85'
+                  : 'bg-ink/10 text-ink/55',
               )}
             >
               Post update
@@ -751,7 +750,7 @@ function ActiveCaseRow({
                 setOpen(null);
                 setNote('');
               }}
-              className="rounded-full border border-line bg-surface text-foreground/85 px-4 py-2 font-mono text-[12px] hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
             >
               Cancel
             </button>
@@ -761,8 +760,8 @@ function ActiveCaseRow({
 
       {/* Timeline (collapsible) */}
       {showTimeline && order.updates && order.updates.length > 0 && (
-        <div className="mt-5 border-t border-line pt-5">
-          <div className="mb-3 font-mono text-[12px] text-foreground/55">
+        <div className="mt-5 border-t border-ink/10 pt-5">
+          <div className="mb-3 text-[13px] font-medium text-ink/55">
             Case timeline
           </div>
           <Timeline updates={order.updates} />
@@ -774,24 +773,24 @@ function ActiveCaseRow({
 
 function RecentCaseRow({ order }: { order: Order }) {
   return (
-    <div className="flex items-center gap-4 rounded-[4px] border border-line bg-surface p-4">
+    <div className="flex items-center gap-4 rounded-shell bg-milk p-4">
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-foreground truncate">
+        <div className="text-sm font-semibold text-ink truncate">
           {order.memberName}{' '}
-          <span className="text-foreground/55 font-normal">
+          <span className="text-ink/55 font-normal">
             · {order.state}
           </span>
         </div>
-        <div className="text-xs text-foreground/55 mt-0.5">
+        <div className="text-xs text-ink/55 mt-0.5">
           {order.lines.map((l) => l.productName).join(' + ')}
         </div>
       </div>
       <span
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 font-mono text-[12px] flex-shrink-0',
+          'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px] flex-shrink-0',
           order.status === 'delivered'
-            ? 'bg-foreground/5 text-foreground/65 border-line'
-            : 'bg-red-500/10 text-red-300 border-red-500/40',
+            ? 'bg-ink/5 text-ink/65 border-ink/10'
+            : 'bg-red-50 text-red-700 border-red-600/25',
         )}
       >
         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -810,17 +809,17 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
       {ordered.map((u) => (
         <li
           key={u.id}
-          className="rounded-[4px] border border-line bg-background p-3"
+          className="rounded-inner border border-ink/10 bg-white p-3"
         >
-          <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[12px] text-foreground/55">
-            <span className="text-foreground/85">
+          <div className="mb-1 flex items-center justify-between gap-2 text-[12px] text-ink/55">
+            <span className="text-ink/85">
               {u.author} · {u.role}
             </span>
             <span>{relativeTime(u.at)}</span>
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed">{u.note}</p>
+          <p className="text-sm text-ink/85 leading-relaxed">{u.note}</p>
           {u.statusChange && (
-            <p className="mt-1.5 font-mono text-[12px] text-accent">
+            <p className="mt-1.5 text-[12px] font-medium text-ink/70">
               Status · {STATUS_LABEL[u.statusChange]}
             </p>
           )}
@@ -900,21 +899,21 @@ function ReviewPanel({
       : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
 
   return (
-    <section className="mt-5 overflow-hidden rounded-[4px] border border-line bg-surface">
+    <section className="mt-5 overflow-hidden rounded-shell bg-milk">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 bg-background px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.04]"
+        className="flex w-full items-center gap-3 bg-white px-4 py-2.5 text-left transition-colors hover:bg-ink/[0.04]"
       >
-        <span className="flex-none font-mono text-[12px] text-foreground/60">
+        <span className="flex-none text-[12px] text-ink/60">
           {open ? 'Hide record' : 'Patient record'}
         </span>
         {!open && (
           <span
             className={cn(
               'min-w-0 flex-1 truncate text-xs',
-              flags.length ? 'text-accent' : 'text-foreground/60',
+              flags.length ? 'text-amber-800' : 'text-ink/60',
             )}
           >
             {summary}
@@ -923,7 +922,7 @@ function ReviewPanel({
         <span
           aria-hidden
           className={cn(
-            'ml-auto flex-none rounded-full border border-line p-1 text-foreground/60 transition-transform',
+            'ml-auto flex-none rounded-full border border-ink/10 p-1 text-ink/60 transition-transform',
             open && 'rotate-180',
           )}
         >
@@ -985,7 +984,7 @@ function ReviewPanel({
 
             {/* The product price and the amount charged are different numbers.
                 Showing only the second one invites the question this answers. */}
-            <dl className="mt-3 rounded-[4px] border border-line bg-background px-3 py-2.5">
+            <dl className="mt-3 rounded-inner border border-ink/10 bg-white px-3 py-2.5">
               <Money label="Subtotal" value={order.subtotal} />
               {!!order.discount && (
                 <Money
@@ -1011,13 +1010,13 @@ function ReviewPanel({
 /** Short facts, read across in one line rather than stacked into rows. */
 function Strip({ items }: { items: [string, string][] }) {
   return (
-    <div className="flex flex-wrap gap-x-7 gap-y-2.5 border-t border-line px-4 py-3">
+    <div className="flex flex-wrap gap-x-7 gap-y-2.5 border-t border-ink/10 px-4 py-3">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="font-mono text-[12px] text-foreground/55">
+          <div className="text-[12px] text-ink/55">
             {label}
           </div>
-          <div className="mt-0.5 text-sm font-semibold text-foreground">
+          <div className="mt-0.5 text-sm font-semibold text-ink">
             {value}
           </div>
         </div>
@@ -1034,8 +1033,8 @@ function Group({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-line px-4 py-3">
-      <div className="mb-2 font-mono text-[12px] text-foreground/55">
+    <div className="border-t border-ink/10 px-4 py-3">
+      <div className="mb-2 text-[13px] font-medium text-ink/55">
         {title}
       </div>
       {children}
@@ -1065,14 +1064,14 @@ function Answers({
           <div
             key={l.label}
             className={cn(
-              'flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5 last:border-0',
+              'flex items-baseline justify-between gap-3 border-b border-ink/[0.06] py-1.5 last:border-0',
               long && 'md:col-span-2 md:flex-col md:items-start md:gap-0.5',
             )}
           >
             <span
               className={cn(
                 'text-[13px] leading-snug',
-                l.flag ? 'text-foreground/80' : 'text-foreground/70',
+                l.flag ? 'text-ink/80' : 'text-ink/70',
               )}
             >
               {l.label}
@@ -1081,13 +1080,13 @@ function Answers({
               className={cn(
                 'flex-none text-[13px] font-semibold leading-snug',
                 long && 'md:w-full',
-                l.flag ? 'text-accent' : 'text-foreground/90',
+                l.flag ? 'text-amber-800' : 'text-ink/90',
               )}
             >
               {l.flag && !long && (
                 <span
                   aria-hidden
-                  className="mr-1.5 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-accent align-middle"
+                  className="mr-1.5 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-amber-500 align-middle"
                 />
               )}
               {l.value}
@@ -1114,13 +1113,13 @@ function Money({
     <div
       className={cn(
         'flex items-baseline justify-between gap-4 py-1',
-        strong && 'mt-1 border-t border-line pt-2',
+        strong && 'mt-1 border-t border-ink/10 pt-2',
       )}
     >
       <dt
         className={cn(
           'text-[13px]',
-          strong ? 'font-semibold text-foreground' : 'text-foreground/60',
+          strong ? 'font-semibold text-ink' : 'text-ink/60',
         )}
       >
         {label}
@@ -1128,7 +1127,7 @@ function Money({
       <dd
         className={cn(
           'tabular-nums text-[13px]',
-          strong ? 'font-semibold text-foreground' : 'text-foreground/85',
+          strong ? 'font-semibold text-ink' : 'text-ink/85',
         )}
       >
         {value === 0 && zeroLabel
@@ -1141,11 +1140,11 @@ function Money({
 
 function Cell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[4px] border border-line bg-background px-3 py-2">
-      <div className="font-mono text-[12px] text-foreground/55">
+    <div className="rounded-inner border border-ink/10 bg-white px-3 py-2">
+      <div className="text-[12px] text-ink/55">
         {label}
       </div>
-      <div className="mt-0.5 text-[13px] font-semibold text-foreground/90">
+      <div className="mt-0.5 text-[13px] font-semibold text-ink/90">
         {value}
       </div>
     </div>

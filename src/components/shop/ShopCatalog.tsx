@@ -11,6 +11,8 @@ import {
   type ShopProduct,
 } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
+import { fromPrice } from '@/lib/lineup';
+import { CARD_GLASS } from '@/components/lineup/Lineup';
 
 type Filter = 'all' | ShopCategory;
 
@@ -71,7 +73,7 @@ export function ShopCatalog({
           top bar from md where a filter bar belongs. */}
       <div
         className={cn(
-          'z-30 rounded-[4px] bg-white/85 p-2.5 ring-1 ring-black/10 backdrop-blur-xl backdrop-saturate-150',
+          'z-30 rounded-shell bg-white/85 p-2.5 ring-1 ring-ink/10 backdrop-blur-xl backdrop-saturate-150',
           'fixed inset-x-3 bottom-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)]',
           'md:sticky md:inset-x-auto md:bottom-auto md:top-[4.5rem] md:mb-8 md:p-3 md:shadow-none',
         )}
@@ -88,7 +90,7 @@ export function ShopCatalog({
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-black/55"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/55"
           >
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
@@ -97,8 +99,8 @@ export function ShopCatalog({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search peptides. Name, category, benefit…"
-            className="w-full rounded-[2px] bg-white py-3 pl-11 pr-12 text-[16px] text-black ring-1 ring-black/15 placeholder:text-black/40 transition-shadow focus:outline-none focus:ring-2 focus:ring-black"
+            placeholder="Search treatments…"
+            className="w-full rounded-inner bg-milk py-3 pl-11 pr-12 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-shadow focus:bg-white focus:outline-none focus:ring-ink/20"
             aria-label="Search shop"
           />
           {query && (
@@ -106,7 +108,7 @@ export function ShopCatalog({
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-black/60 transition-colors hover:text-black"
+              className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-ink/60 transition-colors hover:text-ink"
             >
               <svg
                 width="12"
@@ -151,7 +153,7 @@ export function ShopCatalog({
               className="flex min-w-0 flex-1 flex-col"
             >
               <div
-                className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-neutral-200"
+                className="relative aspect-[4/5] overflow-hidden rounded-shell bg-milk"
                 style={p.shot ? undefined : { background: p.swatch }}
               >
                 <Image
@@ -162,15 +164,15 @@ export function ShopCatalog({
                   className={`object-cover ${p.shot ? '' : 'opacity-50'} transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]`}
                 />
                 <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5 md:left-3 md:top-3">
-                  <span className="flex items-baseline gap-1 rounded-[2px] bg-black/70 px-2 py-1.5 text-white ring-1 ring-white/10 backdrop-blur-xl md:px-3 md:py-2">
-                    <span className="text-[14px] font-medium tabular-nums md:text-[16px]">
-                      ${Math.round(p.pricing.quarterly / 3)}
+                  <span className={cn('flex items-baseline gap-1 rounded-full px-2.5 py-1 md:px-3.5 md:py-1.5', CARD_GLASS)}>
+                    <span className="text-[14px] font-semibold tabular-nums md:text-[16px]">
+                      ${fromPrice(p.pricing)}
                     </span>
-                    <span className="text-[11px] text-white/80 md:text-[13px]">/mo</span>
+                    <span className="text-[11px] text-ink-soft md:text-[13px]">/mo</span>
                   </span>
                   {p.popular && (
-                    <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-white/90 px-2 py-1 font-mono text-[11px] text-black md:text-[12px]">
-                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink md:text-[12px]">
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-butter-deep" />
                       Popular
                     </span>
                   )}
@@ -178,24 +180,19 @@ export function ShopCatalog({
               </div>
 
               <div className="mt-3 flex min-w-0 flex-1 flex-col px-0.5">
-                <p
-                  className="font-display font-normal text-black"
-                  style={{ fontSize: 'clamp(1.2rem, 0.8vw + 0.95rem, 1.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
-                >
-                  {p.name}
-                </p>
-                <p className="mt-1 text-[14px] text-black/70 md:text-[15px]">{p.tagline}</p>
-                <p className="mt-2 font-mono text-[12px] text-black/55">
+                <p className="text-[18px] font-semibold leading-tight tracking-[-0.03em] text-ink md:text-[22px]">{p.name}</p>
+                <p className="mt-1 text-[14px] text-ink-soft md:text-[15px]">{p.tagline}</p>
+                <p className="mt-2 text-[12px] font-medium text-ink/55">
                   {DELIVERY_LABEL[p.delivery]}
                   <span className="hidden sm:inline"> · {p.cycleLength}</span>
                 </p>
-                <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-black/60 sm:text-[14px]">
+                <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-ink-soft sm:text-[14px]">
                   {p.shortDescription}
                 </p>
-                <p className="mt-auto pt-3 font-mono text-[12px] text-black/55">
+                <p className="mt-auto pt-3 text-[12px] font-medium text-ink/55">
                   {startPath ? 'From' : 'Subscribe from'}{' '}
-                  <span className="text-[14px] text-black tabular-nums">
-                    ${Math.round(p.pricing.quarterly / 3)}/mo
+                  <span className="text-[14px] font-semibold text-ink tabular-nums">
+                    ${fromPrice(p.pricing)}/mo
                   </span>
                 </p>
               </div>
@@ -205,13 +202,13 @@ export function ShopCatalog({
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <Link
                   href={`${startPath}?product=${p.id}`}
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-black px-3 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 md:min-h-[40px]"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-butter px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-butter-deep md:min-h-[40px]"
                 >
                   Get started
                 </Link>
                 <Link
                   href={`${basePath}/${p.id}`}
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-white px-3 py-2.5 font-mono text-[13px] text-black ring-1 ring-black/15 transition-colors hover:bg-black/[0.04] md:min-h-[40px]"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-milk px-3 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep md:min-h-[40px]"
                 >
                   Learn more
                 </Link>
@@ -222,8 +219,8 @@ export function ShopCatalog({
       </div>
 
       {products.length === 0 && (
-        <div className="rounded-[4px] bg-[#F2F2F0] px-6 py-10 text-center">
-          <p className="text-[15px] text-black/70">
+        <div className="rounded-shell bg-milk px-6 py-10 text-center">
+          <p className="text-[15px] text-ink-soft">
             {query
               ? `No products match "${query}"${filter !== 'all' ? ' in this category' : ''}.`
               : 'No products in this category yet.'}
@@ -235,7 +232,7 @@ export function ShopCatalog({
                 setQuery('');
                 setFilter('all');
               }}
-              className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-full bg-black px-5 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 md:min-h-[40px]"
+              className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 md:min-h-[40px]"
             >
               Clear filters
             </button>
@@ -261,10 +258,10 @@ function Pill({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'min-h-[44px] flex-shrink-0 rounded-full px-4 font-mono text-[13px] transition-colors md:min-h-[36px]',
+        'min-h-[44px] flex-shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors md:min-h-[36px]',
         active
-          ? 'bg-black text-white'
-          : 'bg-white text-black/75 ring-1 ring-black/15 hover:text-black'
+          ? 'bg-ink text-white'
+          : 'bg-milk text-ink/75 hover:bg-milk-deep hover:text-ink'
       )}
     >
       {children}

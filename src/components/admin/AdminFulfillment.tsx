@@ -28,25 +28,25 @@ export function AdminFulfillment({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Demo data. Real prescriptions and orders flow through once Supabase is
           connected.
         </div>
       )}
 
       {/* Ready to submit */}
-      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
-        <div className="mb-1 font-mono text-[12px] text-foreground/60">
+      <section className="rounded-shell bg-milk p-6 md:p-7">
+        <div className="mb-1 text-[13px] font-medium text-ink/55">
           Ready to submit
         </div>
-        <h2 className="mb-1 text-lg font-semibold tracking-tight text-foreground">
+        <h2 className="mb-1 text-[20px] font-semibold tracking-[-0.03em] text-ink">
           Signed prescriptions
         </h2>
-        <p className="mb-5 text-sm text-foreground/55 leading-relaxed">
+        <p className="mb-5 text-sm text-ink/55 leading-relaxed">
           Signed prescriptions that never joined the board, for example from before it existed. Paid orders join the board by themselves; add one here only if it is missing.
         </p>
         {readyPrescriptions.length === 0 ? (
-          <p className="text-sm text-foreground/55">
+          <p className="text-sm text-ink/55">
             Nothing waiting. Newly signed prescriptions appear here.
           </p>
         ) : (
@@ -85,28 +85,28 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
   const done = result?.ok === true;
 
   return (
-    <div className="rounded-[4px] border border-line bg-background p-4">
+    <div className="rounded-inner border border-ink/10 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <p className="flex items-center gap-2 text-sm font-medium text-ink">
             {rx.patientName}
             {rx.kind === 'draft' && (
-              <span className="rounded-[2px] border border-accent/40 bg-accent/10 px-2 py-0.5 font-mono text-[12px] text-accent">
+              <span className="rounded-full border border-sky-600/25 bg-sky-50 px-2 py-0.5 text-[12px] font-medium text-sky-800">
                 Refill
               </span>
             )}
           </p>
-          <p className="text-xs text-foreground/55">{rx.protocolName}</p>
+          <p className="text-xs text-ink/55">{rx.protocolName}</p>
         </div>
         <button
           type="button"
           disabled={busy || done}
           onClick={submit}
           className={cn(
-            'flex-shrink-0 rounded-full px-4 py-2 font-mono text-[12px] transition-colors',
+            'flex-shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
             done
-              ? 'border border-line bg-surface text-foreground/60'
-              : 'bg-black text-white hover:bg-black/85 disabled:opacity-50',
+              ? 'bg-milk text-ink/60'
+              : 'bg-ink text-white hover:bg-ink/85 disabled:opacity-50',
           )}
         >
           {done ? 'Added' : busy ? 'Adding…' : 'Add to board'}
@@ -116,7 +116,7 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
         <p
           className={cn(
             'mt-3 text-xs',
-            result.ok ? 'text-accent' : 'text-red-300',
+            result.ok ? 'text-emerald-700' : 'text-red-700',
           )}
         >
           {result.message}

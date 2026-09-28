@@ -3,10 +3,10 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
-import { cadenceTiersForProduct, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
+import { cadenceTiersForProduct, defaultTier, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, useCtaOffscreen } from './BuyBar';
-import { Disclosure, PlanSegments, ProductDetails, ProductImage } from './pdpParts';
+import { billedEvery, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage } from './pdpParts';
 
 interface ProductPDPMobileProps {
   product: ShopProduct;
@@ -27,9 +27,9 @@ interface ProductPDPMobileProps {
 export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
   const { addItem } = useCart();
   const tiers = cadenceTiersForProduct(product);
-  const defaultTier = tiers.find((t) => t.key === 'quarterly') ?? tiers[0];
-  const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(defaultTier.key);
-  const active = tiers.find((t) => t.key === selectedTier) ?? defaultTier;
+  const initialTier = defaultTier(tiers);
+  const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(initialTier.key);
+  const active = tiers.find((t) => t.key === selectedTier) ?? initialTier;
 
   // Fixed buy bar whenever the inline CTA is off screen (above or below).
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -46,13 +46,13 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
   const handleAddToCart = () => addItem(product.id, selectedTier);
 
   return (
-    <div className="text-black md:hidden">
+    <div className="text-ink md:hidden">
       {/* First screen: photo, name + price, plan picker and CTA, so nobody
           has to scroll to buy (System Labs pattern). Details follow below. */}
       <ProductImage
         product={product}
         sizes="100vw"
-        className="h-[44svh] min-h-[260px] w-full rounded-[4px]"
+        className="h-[44svh] min-h-[260px] w-full"
         // The box is wider than the 3:4 photo, so anchor the crop near the
         // top: the whole vial stays in and only its reflection is trimmed.
         position="50% 18%"
@@ -60,21 +60,16 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
 
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1
-            className="font-display font-normal"
-            style={{ fontSize: 'clamp(2rem, 7vw, 2.6rem)', fontStretch: '75%', lineHeight: 1 }}
-          >
-            {product.name}
-          </h1>
-          <p className="mt-1.5 text-[14px] text-black/70">{product.tagline}</p>
+          <h1 className="text-[36px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance]">{product.name}</h1>
+          <p className="mt-1.5 text-[14px] text-ink-soft">{product.tagline}</p>
         </div>
-        <p className="flex shrink-0 items-baseline gap-1.5 tabular-nums">
-          {active.key === 'quarterly' && active.perMonth < product.pricing.monthly && (
-            <s className="text-[15px] text-black/40">${product.pricing.monthly}</s>
-          )}
-          <span className="text-[1.9rem] font-medium leading-none tracking-tight">${active.perMonth}</span>
-          {active.key !== 'once' && <span className="text-[14px] text-black/60">/mo</span>}
-        </p>
+        <div className="shrink-0 text-right tabular-nums">
+          <p className="flex items-baseline justify-end gap-1.5">
+            <span className="text-[30px] font-semibold leading-none tracking-[-0.04em]">${active.perMonth}</span>
+            {active.key !== 'once' && <span className="text-[14px] text-ink-soft">/mo</span>}
+          </p>
+          <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
+        </div>
       </div>
 
       <div ref={planRef} className="mt-5 scroll-mt-40">
@@ -85,7 +80,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         {ctaHref ? (
           <Link
             href={ctaHref}
-            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+            className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
             Start assessment
           </Link>
@@ -93,25 +88,25 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+            className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
             Add to Cart. ${active.total}
           </button>
         )}
-        <p className="mt-2.5 text-center font-mono text-[12px] text-black/55 tabular-nums">
+        <p className="mt-2.5 text-center text-[12px] text-ink/55 tabular-nums">
           {active.key === 'once'
             ? `One-time · $${active.total} · no subscription`
-            : `Billed $${active.total} ${active.key === 'monthly' ? 'monthly' : 'every 3 months'} · free shipping · cancel anytime`}
+            : `Billed $${active.total} ${billedEvery(active)} · free shipping · cancel anytime`}
         </p>
       </div>
 
       {/* Below the fold: what the chosen plan includes, then the rest. */}
-      <div className="mt-10 border-t border-black/15 pt-5">
-        <p className="font-mono text-[13px] text-black/55">Batch tested · compounded in a 503A pharmacy</p>
-        <p className="mt-4 text-[15px] font-medium">{active.label} plan includes</p>
+      <div className="mt-10 rounded-shell bg-milk p-5">
+        <p className="text-[13px] font-medium text-ink/55">Compounded by a licensed 503A pharmacy</p>
+        <p className="mt-4 text-[15px] font-semibold tracking-[-0.01em]">{active.label} plan includes</p>
         <ul className="mt-3 space-y-2">
           {active.breakdown.map((line) => (
-            <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-black/70">
+            <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">
               <Check aria-hidden className="mt-[3px] h-4 w-4 shrink-0" strokeWidth={2} />
               {line}
             </li>
@@ -119,10 +114,10 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         </ul>
       </div>
 
-      <div className="mt-6 space-y-3 border-t border-black/15 pt-5">
-        <p className="text-[14px] leading-relaxed text-black/70">
-          <span className="text-black">Important. </span>
-          Eternal Longevity peptides are compounded by a licensed 503A pharmacy against a prescription. Not a substitute
+      <div className="mt-6 space-y-3 border-t border-ink/10 pt-5">
+        <p className="text-[14px] leading-relaxed text-ink-soft">
+          <span className="font-medium text-ink">Important. </span>
+          This medication is compounded by a licensed 503A pharmacy against a prescription. Not a substitute
           for medical care; do not use if pregnant, nursing, or under 18.
         </p>
         <Disclosure />

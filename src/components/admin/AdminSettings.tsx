@@ -23,7 +23,7 @@ export interface AdminSettingsProps {
 }
 
 const inputClass =
-  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
 export function AdminSettings({
   services,
@@ -39,10 +39,10 @@ export function AdminSettings({
       {/* Mode */}
       <div
         className={cn(
-          'rounded-[4px] border px-4 py-3 text-sm',
+          'rounded-inner border px-4 py-3 text-sm',
           live
-            ? 'border-accent/30 bg-accent/10 text-accent'
-            : 'border-amber-700/30 bg-amber-500/10 text-amber-800',
+            ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+            : 'border-amber-600/25 bg-amber-50 text-amber-800',
         )}
       >
         {live
@@ -56,29 +56,29 @@ export function AdminSettings({
           {services.map((s) => (
             <li
               key={s.name}
-              className="flex items-center justify-between gap-3 rounded-[4px] border border-line bg-background p-4"
+              className="flex items-center justify-between gap-3 rounded-inner border border-ink/10 bg-white p-4"
             >
               <div className="min-w-0">
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-sm font-medium text-ink">
                   {s.name}
                 </div>
-                <div className="mt-0.5 truncate text-xs text-foreground/55">
+                <div className="mt-0.5 truncate text-xs text-ink/55">
                   {s.detail}
                 </div>
               </div>
               <span
                 className={cn(
-                  'inline-flex flex-shrink-0 items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-mono text-[12px]',
+                  'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
                   s.connected
-                    ? 'border-accent/40 bg-accent/10 text-accent'
-                    : 'border-line bg-surface text-foreground/60',
+                    ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+                    : 'border-ink/10 bg-milk text-ink/60',
                 )}
               >
                 <span
                   aria-hidden
                   className={cn(
                     'h-1.5 w-1.5 rounded-full',
-                    s.connected ? 'bg-accent' : 'bg-foreground/30',
+                    s.connected ? 'bg-emerald-600' : 'bg-ink/30',
                   )}
                 />
                 {s.connected ? 'Connected' : 'Not set'}
@@ -126,11 +126,11 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+    <section className="rounded-shell bg-milk p-6 md:p-8">
+      <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
         {title}
       </h2>
-      <p className="mt-1 mb-5 text-sm leading-relaxed text-foreground/55">
+      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/55">
         {subtitle}
       </p>
       {children}
@@ -140,9 +140,9 @@ function Card({
 
 function ReadRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[4px] border border-line bg-background p-4">
-      <span className="text-sm text-foreground/65">{label}</span>
-      <span className="truncate text-sm text-foreground/90">{value}</span>
+    <div className="flex items-center justify-between gap-4 rounded-inner border border-ink/10 bg-white p-4">
+      <span className="text-sm text-ink/65">{label}</span>
+      <span className="truncate text-sm text-ink/90">{value}</span>
     </div>
   );
 }

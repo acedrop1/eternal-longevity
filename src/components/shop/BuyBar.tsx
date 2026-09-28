@@ -41,7 +41,7 @@ export function useCtaOffscreen(ref: RefObject<HTMLElement | null>) {
 }
 
 /**
- * Floating buy card: a frosted black container inset from the screen edges
+ * Floating buy card: a frosted white container inset from the screen edges
  * (centered and width-capped on desktop), not docked to the bottom. One row: product + selected plan and price (with a "Change" link back
  * to the plan picker) on the left, the CTA on the right.
  */
@@ -62,41 +62,36 @@ export function BuyBar({
   onChangePlan: () => void;
 }) {
   const ctaCls =
-    'shrink-0 rounded-full bg-white px-4 py-2.5 font-mono text-[13px] text-black transition-colors hover:bg-white/85 md:px-5 md:py-3 md:text-[14px]';
+    'shrink-0 rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-butter-deep md:px-5 md:py-3 md:text-[14px]';
 
   return (
     <div
       aria-hidden={!visible}
       inert={!visible}
       className={cn(
-        'fixed inset-x-3 z-40 mx-auto max-w-3xl rounded-[4px] bg-black/60 text-white shadow-[0_20px_50px_-15px_rgba(0,0,0,0.55)] ring-1 ring-white/15 backdrop-blur-2xl backdrop-saturate-150 transition-[transform,opacity] duration-500 ease-out-expo motion-reduce:transition-none md:inset-x-8',
+        'fixed inset-x-3 z-40 mx-auto max-w-3xl rounded-shell bg-white/85 text-ink shadow-[0_20px_50px_-15px_rgba(17,17,17,0.3)] ring-1 ring-ink/5 backdrop-blur-2xl backdrop-saturate-150 transition-[transform,opacity] duration-500 ease-out-expo motion-reduce:transition-none md:inset-x-8',
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0'
       )}
       // Floats clear of the edge, and of the home indicator on iPhones.
       style={{ bottom: 'max(16px, calc(env(safe-area-inset-bottom) + 8px))' }}
     >
       <div className="flex items-center gap-3 py-2.5 pl-4 pr-2.5 md:gap-4 md:py-3 md:pl-3 md:pr-3">
-        <span className="relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-[4px] bg-neutral-800 sm:block">
+        <span className="relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-thumb bg-milk sm:block">
           <Image src={product.image} alt="" fill sizes="44px" className="object-cover" />
         </span>
 
         <div className="min-w-0 flex-1">
-          <p
-            className="truncate font-display font-normal leading-none"
-            style={{ fontSize: 'clamp(1.1rem, 0.6vw + 0.95rem, 1.5rem)', fontStretch: '75%' }}
-          >
-            {product.name}
-          </p>
-          <p className="mt-1 flex items-center gap-2 truncate font-mono text-[12px] text-white/70">
+          <p className="truncate text-[17px] font-semibold leading-none tracking-[-0.03em] md:text-[20px]">{product.name}</p>
+          <p className="mt-1 flex items-center gap-2 truncate text-[12px] text-ink-soft">
             {/* Plan name drops on phones so the price always fits. */}
             <span className="truncate">
               <span className="hidden sm:inline">{active.label} · </span>
-              <span className="tabular-nums text-white">${active.perMonth}/mo</span>
+              <span className="tabular-nums font-medium text-ink">${active.perMonth}/mo</span>
             </span>
             <button
               type="button"
               onClick={onChangePlan}
-              className="shrink-0 underline underline-offset-2 transition-colors hover:text-white"
+              className="shrink-0 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
             >
               Change
             </button>

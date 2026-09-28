@@ -758,6 +758,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      // Migration 0016.
+      waitlist: {
+        Row: { id: string; email: string; source: string; created_at: string };
+        Insert: { id?: string; email: string; source?: string; created_at?: string };
+        Update: { email?: string; source?: string };
+        Relationships: [];
+      };
+      checkins: {
+        Row: {
+          id: string;
+          user_id: string;
+          order_id: string;
+          product_id: string;
+          product_name: string;
+          kind: 'first' | 'refill';
+          token: string;
+          sent_at: string | null;
+          rating: number | null;
+          comment: string | null;
+          responded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          order_id: string;
+          product_id: string;
+          product_name: string;
+          kind: 'first' | 'refill';
+          token: string;
+          sent_at?: string | null;
+          rating?: number | null;
+          comment?: string | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          sent_at?: string | null;
+          rating?: number | null;
+          comment?: string | null;
+          responded_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

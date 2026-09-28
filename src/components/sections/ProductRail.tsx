@@ -47,18 +47,18 @@ export function ProductRail() {
   };
 
   return (
-    <section className="bg-white py-14 text-black md:py-16">
+    <section className="bg-white py-14 text-ink md:py-16">
       <div className="mb-6 flex items-center justify-between gap-4 px-5 md:mb-7 md:px-4">
         <h2
           className="font-display font-normal"
-          style={{ fontSize: 'clamp(1.6rem, 1.9vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1 }}
+          style={{ fontSize: 'clamp(1.6rem, 1.9vw + 1rem, 2.6rem)', lineHeight: 1 }}
         >
           Shop our best sellers.
         </h2>
         <div className="flex shrink-0 items-center gap-5">
           <Link
             href="/shop"
-            className="font-mono text-[13px] underline underline-offset-[3px] decoration-black/50 transition-colors hover:decoration-black"
+            className="text-[13px] underline underline-offset-[3px] decoration-ink/50 transition-colors hover:decoration-ink"
           >
             Shop all
           </Link>
@@ -87,10 +87,10 @@ export function ProductRail() {
       </div>
 
       {/* Mobile scroll-position bar */}
-      <div className="mx-auto mt-8 h-[3px] w-[62%] bg-black/15 md:hidden">
+      <div className="mx-auto mt-8 h-[3px] w-[62%] bg-ink/15 md:hidden">
         <div className="relative h-full">
           <span
-            className="absolute inset-y-0 bg-black"
+            className="absolute inset-y-0 bg-ink"
             style={{ left: `${bar.left * 100}%`, width: `${bar.width * 100}%` }}
           />
         </div>
@@ -121,8 +121,8 @@ export function ProductCard({
   // 4px card, 2px overlay corners, same as every card on the site.
   const v = grid
     ? {
-        card: 'rounded-[4px]',
-        overlay: 'rounded-[2px]',
+        card: 'rounded-inner',
+        overlay: 'rounded-thumb',
         top: 'left-2 top-2 md:left-3 md:top-3',
         panel: 'inset-x-2 bottom-2 p-2 md:inset-x-3 md:bottom-3 md:px-4 md:py-3.5',
         name: 'clamp(1.05rem, 0.9vw + 0.8rem, 1.75rem)',
@@ -132,8 +132,8 @@ export function ProductCard({
         sizes: '(max-width: 1024px) 50vw, 33vw',
       }
     : {
-        card: 'rounded-[4px]',
-        overlay: 'rounded-[2px]',
+        card: 'rounded-inner',
+        overlay: 'rounded-thumb',
         top: 'left-4 top-4',
         panel: 'inset-x-4 bottom-4 px-4 py-3.5',
         name: 'clamp(1.4rem, 0.6vw + 1.2rem, 1.75rem)',
@@ -151,14 +151,14 @@ export function ProductCard({
         className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]"
       />
 
-      {/* Price (monthly struck through beside the quarterly plan's per-month
+      {/* Price (monthly struck through beside the cheapest plan's per-month
           price, the comparison the product page already makes) and, in local
           dev, the preview tag. Stacked so they never collide on a narrow card. */}
       <div className={cn('absolute flex flex-col items-start gap-1.5', v.top, !grid && 'right-4 flex-row justify-between')}>
         {item.price && (
           <div
             className={cn(
-              'flex items-baseline gap-1.5 bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-xl',
+              'flex items-baseline gap-1.5 bg-ink/70 text-white ring-1 ring-white/10 backdrop-blur-xl',
               v.overlay,
               grid ? 'px-2 py-1.5 md:gap-2 md:px-3 md:py-2' : 'gap-2 px-3 py-2'
             )}
@@ -166,12 +166,12 @@ export function ProductCard({
             <s className={cn('text-white/50', grid ? 'text-[12px] md:text-[15px]' : 'text-[15px]')}>${item.price.was}</s>
             <span className={cn('font-medium', grid ? 'text-[14px] md:text-[17px]' : 'text-[17px]')}>${item.price.now}</span>
             <span className={cn('text-white/80', grid ? 'text-[11px] md:text-[13px]' : 'text-[13px]')}>
-              /mo{grid ? <span className="hidden md:inline"> quarterly</span> : ' quarterly'}
+              /mo
             </span>
           </div>
         )}
         {item.preview && (
-          <span className={cn('bg-[#EFE7D6] px-2.5 py-1.5 text-[11px] text-black', v.overlay, !grid && 'ml-auto')}>
+          <span className={cn('bg-butter-soft px-2.5 py-1.5 text-[11px] text-ink', v.overlay, !grid && 'ml-auto')}>
             Local preview
           </span>
         )}
@@ -183,8 +183,8 @@ export function ProductCard({
       {/* Above the card link (z-2) but click-through, except the button:
           backdrop-blur makes the panel its own stacking context, so the
           button can only rise above the link if the panel does. */}
-      <div className={cn('pointer-events-none absolute z-[2] bg-black/70 text-white ring-1 ring-white/10 backdrop-blur-xl', v.overlay, v.panel)}>
-        <p className="font-display font-normal" style={{ fontSize: v.name, fontStretch: '75%', lineHeight: 1.05 }}>
+      <div className={cn('pointer-events-none absolute z-[2] bg-ink/70 text-white ring-1 ring-white/10 backdrop-blur-xl', v.overlay, v.panel)}>
+        <p className="font-display font-normal" style={{ fontSize: v.name, lineHeight: 1.05 }}>
           {item.name}
         </p>
         <div
@@ -199,10 +199,10 @@ export function ProductCard({
           <Link
             href={`/start?product=${item.id}`}
             className={cn(
-              'pointer-events-auto block shrink-0 bg-white text-center font-mono text-black transition-colors hover:bg-white/85',
+              'pointer-events-auto block shrink-0 bg-white text-center text-ink transition-colors hover:bg-white/85',
               grid
-                ? 'mt-1.5 rounded-[2px] px-2 py-1.5 text-[11px] md:mt-0 md:px-3 md:py-2 md:text-[13px]'
-                : 'rounded-[2px] px-3 py-2 text-[13px]'
+                ? 'mt-1.5 rounded-thumb px-2 py-1.5 text-[11px] md:mt-0 md:px-3 md:py-2 md:text-[13px]'
+                : 'rounded-thumb px-3 py-2 text-[13px]'
             )}
           >
             Start assessment
@@ -249,7 +249,7 @@ function RailButton({
       onClick={onClick}
       className={cn(
         'grid h-7 w-7 place-items-center rounded-full shadow-sm transition-colors',
-        disabled ? 'cursor-default bg-black/5 text-black/25' : 'bg-white text-black ring-1 ring-black/10 hover:bg-black/5'
+        disabled ? 'cursor-default bg-ink/5 text-ink/25' : 'bg-white text-ink ring-1 ring-ink/10 hover:bg-ink/5'
       )}
     >
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

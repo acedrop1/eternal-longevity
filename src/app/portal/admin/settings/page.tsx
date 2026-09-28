@@ -62,20 +62,15 @@ export default async function AdminSettingsPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/55">
           Settings
         </p>
         <h1
-          className="font-display font-normal text-foreground"
-          style={{
-            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
-            fontStretch: '75%',
-            lineHeight: 1.05,
-          }}
+          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
         >
           Operations settings.
         </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
+        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
           What&apos;s connected, where alerts are routed, and the prescriber on
           file. Service keys live in your environment; the prescriber is editable
           here.

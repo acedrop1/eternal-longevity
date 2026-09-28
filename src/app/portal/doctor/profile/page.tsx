@@ -30,20 +30,15 @@ export default async function DoctorProfilePage() {
       nav={DOCTOR_NAV}
     >
       <div>
-        <p className="mb-2 font-mono text-[12px] text-foreground/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/55">
           Physician profile
         </p>
         <h1
-          className="font-display font-normal text-foreground"
-          style={{
-            fontSize: 'clamp(1.8rem, 1.5vw + 1rem, 2.6rem)',
-            fontStretch: '75%',
-            lineHeight: 1.05,
-          }}
+          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
         >
           {record.display || user.name}
         </h1>
-        <p className="mt-3 max-w-2xl text-foreground/65 leading-relaxed">
+        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
           Your contact details and licensure, and how the system reaches you
           when an order needs signing. To change anything here, email support.
         </p>
@@ -52,11 +47,11 @@ export default async function DoctorProfilePage() {
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* === MAIN === */}
         <div className="space-y-6">
-          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
-            <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
+          <section className="rounded-shell bg-milk p-6 md:p-8">
+            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               Your details
             </h2>
-            <p className="mb-5 text-sm leading-relaxed text-foreground/55">
+            <p className="mb-5 text-sm leading-relaxed text-ink/55">
               Your name, credential, NPI and state licence. Correct anything
               that is wrong here — it prints on every prescription and on the
               published prescription policy.
@@ -64,22 +59,22 @@ export default async function DoctorProfilePage() {
             <PrescriberForm record={record} mode="doctor" />
           </section>
 
-          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
-            <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
+          <section className="rounded-shell bg-milk p-6 md:p-8">
+            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               Email
             </h2>
-            <p className="text-sm leading-relaxed text-foreground/55">
+            <p className="text-sm leading-relaxed text-ink/55">
               {user.email} — where a new order reaches you. Email support to
               change it, so your sign-in and your notification address never
               drift apart.
             </p>
           </section>
 
-          <section className="rounded-[4px] border border-line bg-surface p-6 md:p-8">
-            <h2 className="mb-1.5 text-lg font-semibold tracking-tight text-foreground">
+          <section className="rounded-shell bg-milk p-6 md:p-8">
+            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               How you're notified
             </h2>
-            <p className="mb-5 text-sm leading-relaxed text-foreground/55">
+            <p className="mb-5 text-sm leading-relaxed text-ink/55">
               Not settings — this is what the system does. Nothing here can be
               switched off, because nothing ships without your signature.
             </p>
@@ -102,16 +97,16 @@ export default async function DoctorProfilePage() {
 
         {/* === SIDEBAR === */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[4px] border border-line bg-surface p-5">
-            <div className="mb-2 font-mono text-[12px] text-foreground/55">
+          <div className="rounded-shell bg-milk p-5">
+            <div className="mb-2 text-[13px] font-medium text-ink/55">
               Support
             </div>
-            <p className="text-sm text-foreground/75 leading-relaxed">
+            <p className="text-sm text-ink/75 leading-relaxed">
               Something wrong with a case, or a member you need to reach?
               Email{' '}
               <a
                 href="mailto:support@etlongevity.com"
-                className="text-accent hover:text-accent-soft"
+                className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
               >
                 support@etlongevity.com
               </a>
@@ -127,14 +122,14 @@ export default async function DoctorProfilePage() {
 
 function Fact({ title, body }: { title: string; body: string }) {
   return (
-    <li className="flex gap-3 rounded-[4px] border border-line bg-background p-4">
+    <li className="flex gap-3 rounded-inner border border-ink/10 bg-white p-4">
       <span
         aria-hidden
-        className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-accent"
+        className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-butter-deep"
       />
       <div className="min-w-0">
-        <div className="text-sm font-medium text-foreground">{title}</div>
-        <p className="mt-0.5 text-xs leading-relaxed text-foreground/55">
+        <div className="text-sm font-medium text-ink">{title}</div>
+        <p className="mt-0.5 text-xs leading-relaxed text-ink/55">
           {body}
         </p>
       </div>

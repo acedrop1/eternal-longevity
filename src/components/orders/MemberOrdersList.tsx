@@ -79,7 +79,7 @@ function MemberOrderCard({ order }: { order: Order }) {
         <div className="flex gap-4 min-w-0 flex-1">
           {order.lines[0] && (
             <div
-              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[2px] bg-neutral-200"
+              className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-inner bg-milk"
               style={{ background: order.lines[0].swatch }}
             >
               <Image
@@ -92,19 +92,18 @@ function MemberOrderCard({ order }: { order: Order }) {
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-x-2 font-mono text-[13px] tabular-nums text-black/55">
-              <span className="text-black">{orderRef(order.id)}</span>
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 text-[13px] font-medium tabular-nums text-ink/55">
+              <span className="text-ink">{orderRef(order.id)}</span>
               <span aria-hidden>·</span>
               <span>Placed {placed}</span>
             </div>
             <h2
-              className="font-display font-normal text-black"
-              style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
+              className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
             >
               {order.lines.map((l) => l.productName).join(' + ')}
             </h2>
             {physician && (
-              <p className="mt-1 text-[14px] text-black/60">
+              <p className="mt-1 text-[14px] text-ink/60">
                 Quality review
               </p>
             )}
@@ -119,7 +118,7 @@ function MemberOrderCard({ order }: { order: Order }) {
           <StatusChip tone={STATUS_TONE[order.status]}>
             {sentenceCase(STATUS_LABEL[order.status])}
           </StatusChip>
-          <div className="text-[17px] font-medium text-black tabular-nums sm:mt-2">
+          <div className="text-[17px] font-medium text-ink tabular-nums sm:mt-2">
             ${order.total}
           </div>
         </div>
@@ -128,10 +127,10 @@ function MemberOrderCard({ order }: { order: Order }) {
       {order.tracking && (
         <div className={`${inset} mt-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="min-w-0">
-            <div className="font-mono text-[12px] text-black/55">
+            <div className="font-medium text-[12px] text-ink/55">
               {order.carrier} · Tracking
             </div>
-            <div className="mt-0.5 truncate font-mono text-[14px] text-black">
+            <div className="mt-0.5 truncate font-medium text-[14px] text-ink">
               {order.tracking}
             </div>
           </div>
@@ -150,8 +149,8 @@ function MemberOrderCard({ order }: { order: Order }) {
 
       {/* Recent updates (latest 2) */}
       {order.updates && order.updates.length > 0 && (
-        <div className="mt-5 border-t border-black/10 pt-5">
-          <h3 className="mb-3 font-mono text-[13px] text-black/60">
+        <div className="mt-5 border-t border-ink/10 pt-5">
+          <h3 className="mb-3 text-[13px] font-medium text-ink/60">
             Recent updates
           </h3>
           <ol className="space-y-2">
@@ -163,11 +162,11 @@ function MemberOrderCard({ order }: { order: Order }) {
                   key={u.id}
                   className={`${inset} p-3`}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-2 font-mono text-[12px] text-black/55">
-                    <span className="text-black/80">{u.author}</span>
+                  <div className="mb-1 flex items-center justify-between gap-2 font-medium text-[12px] text-ink/55">
+                    <span className="text-ink/80">{u.author}</span>
                     <span className="tabular-nums">{relativeTime(u.at)}</span>
                   </div>
-                  <p className="text-[15px] leading-relaxed text-black/85">
+                  <p className="text-[15px] leading-relaxed text-ink/85">
                     {u.note}
                   </p>
                 </li>
@@ -176,7 +175,7 @@ function MemberOrderCard({ order }: { order: Order }) {
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-black/10 pt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
         <Link
           href="/portal/shop"
           className={btnSecondary}

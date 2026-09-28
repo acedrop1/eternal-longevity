@@ -82,9 +82,9 @@ export function MessagesPanel({
   }
 
   return (
-    <div className="flex h-[calc(100dvh-18rem)] min-h-[28rem] flex-col overflow-hidden rounded-[4px] bg-[#F2F2F0] md:h-[calc(100vh-16rem)]">
+    <div className="flex h-[calc(100dvh-18rem)] min-h-[28rem] flex-col overflow-hidden rounded-shell bg-milk md:h-[calc(100vh-16rem)]">
       {/* channel toggle */}
-      <div role="tablist" aria-label="Conversation" className="grid grid-cols-2 gap-1.5 border-b border-black/10 p-2">
+      <div role="tablist" aria-label="Conversation" className="grid grid-cols-2 gap-1.5 border-b border-ink/10 p-2">
         {CHANNELS.map((c) => {
           const on = channel === c.key;
           return (
@@ -93,20 +93,20 @@ export function MessagesPanel({
               role="tab"
               aria-selected={on}
               onClick={() => setChannel(c.key)}
-              className={`relative min-h-[44px] rounded-[2px] px-3 py-2.5 text-left transition-colors ${
+              className={`relative min-h-[44px] rounded-inner px-3 py-2.5 text-left transition-colors ${
                 on
-                  ? 'bg-white text-black ring-1 ring-black/10'
-                  : 'text-black/60 hover:bg-black/[0.03] hover:text-black'
+                  ? 'bg-white text-ink shadow-sm ring-1 ring-ink/5'
+                  : 'text-ink/60 hover:bg-white/60 hover:text-ink'
               }`}
             >
               <span className="flex items-center gap-2 text-[15px] font-medium">
                 <span
                   aria-hidden
-                  className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-[#D5A850]' : 'bg-black/20'}`}
+                  className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-butter-deep' : 'bg-ink/20'}`}
                 />
                 {c.label}
               </span>
-              <span className="mt-0.5 block truncate font-mono text-[12px] text-black/50">{c.hint}</span>
+              <span className="mt-0.5 block truncate font-medium text-[12px] text-ink/50">{c.hint}</span>
             </button>
           );
         })}
@@ -115,7 +115,7 @@ export function MessagesPanel({
       {/* thread */}
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {all.length === 0 && (
-          <p className="mx-auto max-w-sm pt-10 text-center text-[15px] leading-relaxed text-black/55">
+          <p className="mx-auto max-w-sm pt-10 text-center text-[15px] leading-relaxed text-ink/55">
             {channel === 'doctor'
               ? 'Message your prescriber about your treatment. Replies usually come within one business day.'
               : 'Ask us anything about your order, billing or shipping.'}
@@ -126,20 +126,20 @@ export function MessagesPanel({
           return (
             <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[85%] rounded-[4px] px-4 py-2.5 text-[15px] leading-relaxed md:max-w-[75%] ${
+                className={`max-w-[85%] rounded-inner px-4 py-2.5 text-[15px] leading-relaxed md:max-w-[75%] ${
                   mine
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black ring-1 ring-black/10'
+                    ? 'bg-ink text-white'
+                    : 'bg-white text-ink ring-1 ring-ink/5'
                 }`}
               >
                 {!mine && (
-                  <span className="mb-0.5 block font-mono text-[12px] text-black/55">
+                  <span className="mb-0.5 block font-medium text-[12px] text-ink/55">
                     {channel === 'doctor' ? 'Doctor' : 'Support'}
                   </span>
                 )}
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
                 <span
-                  className={`mt-1 block font-mono text-[11px] tabular-nums ${mine ? 'text-white/60' : 'text-black/45'}`}
+                  className={`mt-1 block font-medium text-[11px] tabular-nums ${mine ? 'text-white/60' : 'text-ink/45'}`}
                 >
                   {fmtTime(m.createdAt)}
                 </span>
@@ -151,7 +151,7 @@ export function MessagesPanel({
       </div>
 
       {/* composer */}
-      <div className="border-t border-black/10 bg-[#F2F2F0] p-2 md:p-3">
+      <div className="border-t border-ink/10 bg-milk p-2 md:p-3">
         {error && (
           <p role="alert" className="mb-2 px-1 text-[14px] text-red-800">
             {error}
@@ -174,12 +174,12 @@ export function MessagesPanel({
             aria-label={
               channel === 'doctor' ? 'Message your doctor' : 'Message support'
             }
-            className="min-w-0 flex-1 resize-none rounded-[2px] bg-white px-4 py-3 text-[16px] text-black ring-1 ring-black/15 placeholder:text-black/35 focus:outline-none focus:ring-2 focus:ring-black"
+            className="min-w-0 flex-1 resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-ink/30"
           />
           <button
             onClick={send}
             disabled={isPending || !draft.trim()}
-            className="min-h-[44px] flex-none rounded-full bg-black px-5 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-[44px] flex-none rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send
           </button>

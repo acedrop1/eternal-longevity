@@ -7,8 +7,8 @@ import { useCart, type Cadence } from './CartProvider';
 import { cn } from '@/lib/utils';
 
 /**
- * Slide-in cart drawer: a white panel inset from the screen edges with
- * sharp corners, matching the mobile menu and product buy bar.
+ * Slide-in cart drawer: a white panel docked to the right edge, rounded on
+ * its inner edge, with each line item on a soft milk row.
  * - Scrim covers the page, drawer panel slides in from the right
  * - Esc key closes it
  * - "Continue to checkout" routes to /checkout
@@ -42,7 +42,7 @@ export function CartDrawer() {
         aria-hidden
         onClick={closeDrawer}
         className={cn(
-          'fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm transition-opacity duration-300',
           drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
       />
@@ -53,21 +53,16 @@ export function CartDrawer() {
         aria-label="Your cart"
         aria-modal="true"
         className={cn(
-          'fixed inset-y-3 right-3 z-[65] flex w-[calc(100%-24px)] max-w-md flex-col overflow-hidden rounded-[4px] bg-white text-black shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)] ring-1 ring-black/10',
+          'fixed inset-y-0 right-0 z-[65] flex w-[calc(100%-16px)] max-w-md flex-col overflow-hidden rounded-l-shell bg-white text-ink shadow-[0_24px_60px_-20px_rgba(17,17,17,0.45)]',
           'transition-transform duration-500 ease-out-expo will-change-transform motion-reduce:transition-none',
-          drawerOpen ? 'translate-x-0' : 'translate-x-[calc(100%+24px)]'
+          drawerOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-black/15 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4 md:px-6">
           <div>
-            <h2
-              className="font-display font-normal"
-              style={{ fontSize: '1.75rem', fontStretch: '75%', lineHeight: 1 }}
-            >
-              Your cart
-            </h2>
-            <p className="mt-1 font-mono text-[12px] text-black/55">
+            <h2 className="text-[26px] font-semibold leading-none tracking-[-0.04em] text-ink">Your cart</h2>
+            <p className="mt-1.5 text-[13px] font-medium text-ink/55">
               {itemCount === 0
                 ? 'Empty'
                 : `${itemCount} item${itemCount === 1 ? '' : 's'}`}
@@ -77,7 +72,7 @@ export function CartDrawer() {
             type="button"
             onClick={closeDrawer}
             aria-label="Close cart"
-            className="grid h-9 w-9 place-items-center rounded-[2px] text-black/70 transition-colors hover:bg-black/[0.05] hover:text-black"
+            className="grid h-11 w-11 place-items-center rounded-full bg-milk text-ink/70 transition-colors hover:bg-milk-deep hover:text-ink"
           >
             <svg
               width="18"
@@ -100,12 +95,12 @@ export function CartDrawer() {
           {resolvedItems.length === 0 ? (
             <EmptyState onClose={closeDrawer} />
           ) : (
-            <ul className="divide-y divide-black/15 px-5">
+            <ul className="space-y-2 px-3 py-3 md:px-4">
               {resolvedItems.map((it) => (
-                <li key={`${it.productId}-${it.cadence}`} className="py-5">
+                <li key={`${it.productId}-${it.cadence}`} className="rounded-inner bg-milk p-3">
                   <div className="flex gap-4">
                     <div
-                      className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-[2px] bg-neutral-200"
+                      className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-thumb bg-white"
                       style={it.product.shot ? undefined : { background: it.product.swatch }}
                     >
                       <Image
@@ -122,19 +117,19 @@ export function CartDrawer() {
                           <Link
                             href={`/portal/shop/${it.product.id}`}
                             onClick={closeDrawer}
-                            className="block truncate text-[15px] font-medium text-black underline-offset-[3px] hover:underline"
+                            className="block truncate text-[15px] font-semibold tracking-[-0.01em] text-ink decoration-ink/30 underline-offset-[3px] hover:underline"
                           >
                             {it.product.name}
                           </Link>
-                          <p className="mt-0.5 font-mono text-[12px] text-black/60">
+                          <p className="mt-0.5 text-[12px] font-medium text-ink/55">
                             {it.cadenceLabel} billing
                           </p>
-                          <p className="mt-1 text-[13px] tabular-nums text-black/55">
+                          <p className="mt-1 text-[13px] tabular-nums text-ink-soft">
                             ${it.perMonth}/mo · ${it.total}/cycle
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-[15px] font-medium text-black tabular-nums">
+                          <div className="text-[15px] font-semibold text-ink tabular-nums">
                             ${it.total * it.quantity}
                           </div>
                           <button
@@ -142,7 +137,7 @@ export function CartDrawer() {
                             onClick={() =>
                               removeItem(it.productId, it.cadence as Cadence)
                             }
-                            className="mt-1 font-mono text-[12px] text-black/55 underline decoration-black/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
+                            className="mt-1 text-[12px] font-medium text-ink/55 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
                           >
                             Remove
                           </button>
@@ -150,7 +145,7 @@ export function CartDrawer() {
                       </div>
 
                       {/* Qty stepper */}
-                      <div className="mt-3 inline-flex items-center self-start rounded-[2px] bg-white ring-1 ring-black/15">
+                      <div className="mt-3 inline-flex items-center self-start rounded-full bg-white ring-1 ring-ink/10">
                         <button
                           type="button"
                           aria-label="Decrease quantity"
@@ -161,11 +156,11 @@ export function CartDrawer() {
                               it.quantity - 1
                             )
                           }
-                          className="grid h-9 w-9 place-items-center text-base text-black/70 transition-colors hover:text-black"
+                          className="grid h-9 w-9 place-items-center rounded-full text-base text-ink/70 transition-colors hover:text-ink"
                         >
                           −
                         </button>
-                        <span className="min-w-7 text-center font-mono text-[14px] tabular-nums text-black">
+                        <span className="min-w-7 text-center text-[14px] font-semibold tabular-nums text-ink">
                           {it.quantity}
                         </span>
                         <button
@@ -178,7 +173,7 @@ export function CartDrawer() {
                               it.quantity + 1
                             )
                           }
-                          className="grid h-9 w-9 place-items-center text-base text-black/70 transition-colors hover:text-black"
+                          className="grid h-9 w-9 place-items-center rounded-full text-base text-ink/70 transition-colors hover:text-ink"
                         >
                           +
                         </button>
@@ -193,10 +188,10 @@ export function CartDrawer() {
 
         {/* Footer. Totals + CTAs */}
         {resolvedItems.length > 0 && (
-          <div className="space-y-4 border-t border-black/15 px-5 pb-5 pt-5">
+          <div className="space-y-4 border-t border-ink/10 px-5 pb-5 pt-5 md:px-6">
             {/* Trust chip */}
-            <div className="flex items-center gap-2 font-mono text-[12px] text-black/60">
-              <span className="grid h-5 w-5 place-items-center rounded-[2px] bg-black text-white">
+            <div className="flex items-center gap-2 text-[12px] font-medium text-ink/60">
+              <span className="grid h-5 w-5 place-items-center rounded-full bg-ink text-butter">
                 <svg
                   width="11"
                   height="11"
@@ -210,7 +205,7 @@ export function CartDrawer() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </span>
-              <span className="text-black">Prescription required</span>
+              <span className="text-ink">Prescription required</span>
               <span>· 503A compounded</span>
             </div>
 
@@ -222,14 +217,14 @@ export function CartDrawer() {
             <Link
               href="/checkout"
               onClick={closeDrawer}
-              className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+              className="block w-full rounded-full bg-butter px-5 py-3.5 text-center text-[15px] font-semibold text-ink transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-butter-deep"
             >
               Continue to checkout →
             </Link>
             <button
               type="button"
               onClick={closeDrawer}
-              className="block w-full rounded-full px-5 py-3.5 text-center font-mono text-[14px] text-black ring-1 ring-black/20 transition-colors hover:bg-black/[0.04]"
+              className="block w-full rounded-full bg-milk px-5 py-3.5 text-center text-[14px] font-semibold text-ink transition-colors hover:bg-milk-deep"
             >
               Keep shopping
             </button>
@@ -252,12 +247,12 @@ function Row({
   return (
     <div className="flex items-center justify-between">
       <span
-        className="text-black/65"
+        className="text-ink-soft"
         dangerouslySetInnerHTML={{ __html: label }}
       />
       <span
         className={cn(
-          muted ? 'text-black/55' : 'font-medium text-black',
+          muted ? 'text-ink/55' : 'font-semibold text-ink',
           'tabular-nums'
         )}
       >
@@ -270,7 +265,7 @@ function Row({
 function EmptyState({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="mb-5 grid h-14 w-14 place-items-center rounded-[4px] bg-[#F2F2F0] text-black/50">
+      <div className="mb-5 grid h-14 w-14 place-items-center rounded-inner bg-milk text-ink/50">
         <svg
           width="22"
           height="22"
@@ -286,19 +281,14 @@ function EmptyState({ onClose }: { onClose: () => void }) {
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
       </div>
-      <h3
-        className="mb-2 font-display font-normal"
-        style={{ fontSize: '1.6rem', fontStretch: '75%', lineHeight: 1.05 }}
-      >
-        Your cart is empty
-      </h3>
-      <p className="mb-6 max-w-xs text-[15px] leading-relaxed text-black/60">
-        Browse our peptide catalog and add anything that fits your protocol.
+      <h3 className="mb-2 text-[24px] font-semibold tracking-[-0.03em] text-ink">Your cart is empty</h3>
+      <p className="mb-6 max-w-xs text-[15px] leading-relaxed text-ink-soft">
+        Browse our treatments.
       </p>
       <Link
         href="/portal/shop"
         onClick={onClose}
-        className="rounded-full bg-black px-5 py-3 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+        className="rounded-full bg-ink px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85"
       >
         Browse the shop
       </Link>

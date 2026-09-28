@@ -30,8 +30,25 @@ export function mfaRequiredFor(role: Role): boolean {
   return role === 'admin' || role === 'doctor' || role === 'pharmacy';
 }
 
+let warned = false;
+
+/**
+ * MFA_SECRET, falling back to CRON_SECRET so existing deployments keep
+ * working. The fallback ties two unrelated secrets together — rotating the
+ * cron secret signs every staff member out — so it is loud about it.
+ */
 function secret(): string | null {
-  return process.env.MFA_SECRET || process.env.CRON_SECRET || null;
+  if (process.env.MFA_SECRET) return process.env.MFA_SECRET;
+  const fallback = process.env.CRON_SECRET || null;
+  if (!warned) {
+    warned = true;
+    console.warn(
+      fallback
+        ? '[mfa] MFA_SECRET is not set: signing staff MFA tickets with CRON_SECRET. Set a dedicated MFA_SECRET.'
+        : '[mfa] Neither MFA_SECRET nor CRON_SECRET is set: staff two-factor is OFF.',
+    );
+  }
+  return fallback;
 }
 
 /** Off when there is no secret to sign with, rather than silently insecure. */

@@ -282,7 +282,8 @@ async function notifyDoctorOfIntake(
       try {
         await sendSms(
           doc.phone,
-          `Eternal Longevity: assessment ready to sign — ${memberName}, case ${caseId}. ${SITE_URL}/portal/doctor`,
+          // No patient name: SMS is not covered by a BAA.
+          `Eternal Longevity: an assessment is ready to sign, case ${caseId}. ${SITE_URL}/portal/doctor`,
         );
       } catch {
         // Same.

@@ -4,7 +4,7 @@ import 'server-only';
  * The one path an order takes after it is paid: placed with the pharmacy,
  * shipped, delivered.
  *
- * The pharmacy works from its own platform (Formula Health's portal), so a
+ * The pharmacy works from its own platform (MedShiftRx's portal), so a
  * person places every order there, first cycles and monthly refills alike,
  * then keys the tracking back in here. Admin and the prescriber share that
  * job: both see the same board, and whoever marks a step first owns it. Each

@@ -7,7 +7,7 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-import { getPrescriber } from '@/lib/prescriber';
+import { getPrescriber, PRESCRIBER_FALLBACK } from '@/lib/prescriber';
 
 export const metadata: Metadata = {
   title: 'Prescription Policy',
@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 export default async function PrescriptionPolicyPage() {
   // Quoted from the prescriber row, so the page and the profile cannot drift.
   const prescriber = await getPrescriber();
+  const prescriberName = prescriber.name ? prescriber.display : PRESCRIBER_FALLBACK.display;
 
   return (
     <LegalLayout
@@ -28,7 +29,7 @@ export default async function PrescriptionPolicyPage() {
           heading: `Review Comes First`,
           paragraphs: [
             `A prescription is issued only after a licensed prescriber reviews your intake and concludes that the treatment is clinically appropriate for you. Completing an assessment, creating an account, and placing an order do not produce a prescription on their own.`,
-            `We charge nothing until that review is finished and the answer is yes. If your order is declined, no payment link is ever issued and no money moves.`,
+            `Your card is saved at checkout but nothing is charged until that review is finished and the answer is yes. If your order is declined, no money moves.`,
           ],
         },
         {
@@ -48,14 +49,15 @@ export default async function PrescriptionPolicyPage() {
         {
           heading: `Refills and Ongoing Treatment`,
           paragraphs: [
-            `An approved first order does not guarantee approval of the next one. Every refill is reviewed again, and a prescriber may modify or stop treatment based on your response, new information, or lab results.`,
+            `If you choose a recurring plan, refills ship on the same prescription until it expires or runs out of refills. Refills are not individually re-reviewed, but your prescriber can pause, change, or stop your plan at any time based on your response, new information, or lab results. When the prescription runs out, the plan pauses until the prescriber reviews it again, and a new product always needs a new review.`,
+            `Tell us promptly about any change in your health, medications, or pregnancy status, so the prescriber can decide whether your plan should continue.`,
             `A prescription is valid only for the patient it was written for. Do not share, resell, or transfer medication dispensed to you.`,
           ],
         },
         {
           heading: `Who Prescribes`,
           paragraphs: [
-            `Prescriptions are written by ${prescriber.display}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.npi ? ` (NPI ${prescriber.npi})` : ''}. Our full prescriber and pharmacy details are on our Compliance page.`,
+            `Prescriptions are written by ${prescriberName}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.npi ? ` (NPI ${prescriber.npi})` : ''}. They are dispensed by MedShiftRx, a state-licensed 503A compounding pharmacy. Our full prescriber and pharmacy details are on our Compliance page.`,
           ],
         },
         {

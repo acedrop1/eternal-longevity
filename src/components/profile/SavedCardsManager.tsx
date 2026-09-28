@@ -72,7 +72,7 @@ export function SavedCardsManager() {
   return (
     <div className="space-y-3">
       {profile.cards.length === 0 && !adding && (
-        <p className="text-[15px] text-black/60">
+        <p className="text-[15px] text-ink/60">
           No saved cards yet. Add one for faster checkout.
         </p>
       )}
@@ -83,23 +83,23 @@ export function SavedCardsManager() {
           className={cn(
             inset,
             'flex flex-wrap items-center gap-x-4 gap-y-3 p-4',
-            c.isPrimary && 'ring-black/30'
+            c.isPrimary && 'ring-ink/30'
           )}
         >
-          <div className="grid h-10 w-14 flex-none place-items-center rounded-[2px] bg-[#F2F2F0] font-mono text-[11px] text-black/75">
+          <div className="grid h-10 w-14 flex-none place-items-center rounded-thumb bg-milk text-[11px] font-semibold text-ink/75">
             {c.brand}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 text-[15px] font-medium tabular-nums text-black">
+            <div className="flex flex-wrap items-center gap-2 text-[15px] font-medium tabular-nums text-ink">
               •••• {c.last4}
               {c.isPrimary && (
-                <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] font-normal leading-none text-black">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-2.5 py-1 text-[12px] font-medium leading-none text-ink ring-1 ring-inset ring-butter-deep/60">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                   Primary
                 </span>
               )}
             </div>
-            <div className="mt-0.5 text-[14px] tabular-nums text-black/60">
+            <div className="mt-0.5 text-[14px] tabular-nums text-ink/60">
               Expires {c.expMonth}/{c.expYear} · {c.nameOnCard}
             </div>
           </div>
@@ -108,7 +108,7 @@ export function SavedCardsManager() {
               <button
                 type="button"
                 onClick={() => setPrimaryCard(c.id)}
-                className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
+                className={cn(btnSmall, 'bg-white text-ink ring-ink/10 hover:bg-milk')}
               >
                 Set primary
               </button>
@@ -126,7 +126,7 @@ export function SavedCardsManager() {
 
       {adding ? (
         <div className={cn(inset, 'p-4 md:p-5')}>
-          <p className="mb-4 text-[16px] font-medium text-black">New card</p>
+          <p className="mb-4 text-[16px] font-medium text-ink">New card</p>
           <div className="grid gap-4">
             <div>
               <label className={fieldLabel}>Card number</label>
@@ -193,14 +193,14 @@ export function SavedCardsManager() {
                 setDraft({ ...draft, isPrimary: !draft.isPrimary })
               }
               aria-pressed={draft.isPrimary}
-              className="flex min-h-[44px] items-center gap-3 rounded-[2px] bg-white px-4 py-3 text-left ring-1 ring-black/15 transition-colors hover:bg-black/[0.02]"
+              className="flex min-h-[44px] items-center gap-3 rounded-inner bg-white px-4 py-3 text-left ring-1 ring-ink/10 transition-colors hover:bg-milk"
             >
               <span
                 className={cn(
-                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] ring-1',
+                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full ring-1',
                   draft.isPrimary
-                    ? 'bg-black text-white ring-black'
-                    : 'bg-white ring-black/30'
+                    ? 'bg-ink text-white ring-ink'
+                    : 'bg-white ring-ink/30'
                 )}
               >
                 {draft.isPrimary && (
@@ -218,7 +218,7 @@ export function SavedCardsManager() {
                   </svg>
                 )}
               </span>
-              <span className="text-[15px] text-black/80">
+              <span className="text-[15px] text-ink/80">
                 Make this my primary payment method
               </span>
             </button>

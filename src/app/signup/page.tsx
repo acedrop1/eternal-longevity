@@ -28,20 +28,20 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   if (!supabaseConfigured) {
     return (
       <AuthShell eyebrow="Get started" title="Create your account.">
-        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
-          <p className="text-[15px] leading-relaxed text-black/70">
+        <div className="space-y-4 rounded-shell bg-milk p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-ink-soft">
             Account sign-up turns on once the backend is connected. For now you
             can explore the portal with a demo login.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+            className="block w-full rounded-full bg-ink px-5 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-ink/85"
           >
             Go to login →
           </Link>
           <Link
             href="/start"
-            className="block w-full text-center font-mono text-[13px] text-black/60 transition-colors hover:text-black"
+            className="block w-full py-2 text-center text-[14px] font-medium text-ink/60 transition-colors hover:text-ink"
           >
             Start a new assessment →
           </Link>
@@ -124,7 +124,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           Create account →
         </SubmitButton>
 
-        <p className="text-[13px] leading-relaxed text-black/55">
+        <p className="text-[13px] leading-relaxed text-ink/55">
           Creating an account doesn&apos;t place an order. Every protocol is
           compounded by a licensed 503A pharmacy against a prescription written
           for you.

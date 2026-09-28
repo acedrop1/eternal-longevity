@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Mono, Instrument_Sans, Mulish } from 'next/font/google';
+import { DM_Mono, Geist, Instrument_Sans, Mulish } from 'next/font/google';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import './globals.css';
@@ -27,6 +27,14 @@ const display = Instrument_Sans({
   display: 'swap',
 });
 
+// Redesign: Geist carries the whole brand (UI and headlines), Apple-clean and
+// tight at display sizes.
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  display: 'swap',
+});
+
 const mono = DM_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
@@ -49,10 +57,13 @@ export const metadata: Metadata = {
     'longevity',
     '503A pharmacy',
   ],
+  // SVG for browsers that take it, PNGs (app/icon.png, app/apple-icon.png) for the rest and iOS.
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: { url: '/apple-icon.png', sizes: '180x180' },
   },
   openGraph: {
     type: 'website',
@@ -79,7 +90,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
 };
@@ -93,7 +104,7 @@ export default async function RootLayout({
   const products = (await getLiveProducts()).map(toShopProduct);
 
   return (
-    <html lang="en" className={`${mulish.variable} ${display.variable} ${mono.variable}`}>
+    <html lang="en" className={`${geist.variable} ${mulish.variable} ${display.variable} ${mono.variable}`}>
       {/* suppressHydrationWarning silences the harmless mismatch caused by
           browser extensions (ColorZilla, Grammarly, etc.) that inject
           attributes into <body> before React hydrates. */}

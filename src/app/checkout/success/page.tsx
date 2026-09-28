@@ -18,8 +18,9 @@ export default async function CheckoutSuccessPage() {
 
   return (
     <PortalShell user={user}>
-      <div className="mx-auto max-w-xl pt-8 text-black md:pt-16">
-        <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black text-white">
+      <div className="mx-auto max-w-xl pt-8 text-ink md:pt-16">
+        <div className="rounded-shell bg-milk p-6 md:p-10">
+        <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-butter text-ink">
           <svg
             width="22"
             height="22"
@@ -35,20 +36,19 @@ export default async function CheckoutSuccessPage() {
           </svg>
         </div>
 
-        <p className="mb-3 font-mono text-[13px] text-black/55">Order received</p>
+        <p className="mb-3 text-[13px] font-medium text-ink/55">Order received</p>
         <h1
-          className="mb-4 font-display font-normal [text-wrap:balance]"
-          style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
+          className="mb-4 text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]"
         >
           Your order is in.
         </h1>
-        <p className="mb-10 text-[16px] leading-relaxed text-black/70">
+        <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
           We&apos;ve emailed a confirmation to {user.email}. Your card is only
           charged if your prescriber approves your treatment — if it&apos;s
           declined, you pay nothing.
         </p>
 
-        <ol className="mb-10 border-t border-black/15">
+        <ol className="mb-8 grid gap-2">
           {[
             { n: '01', text: 'Complete your clinical visit so your prescriber can review.' },
             { n: '02', text: 'If approved, your prescription goes to the pharmacy and your card is charged.' },
@@ -56,12 +56,12 @@ export default async function CheckoutSuccessPage() {
           ].map((s) => (
             <li
               key={s.n}
-              className="flex items-start gap-4 border-b border-black/15 py-4"
+              className="flex items-start gap-4 rounded-inner bg-white p-4"
             >
-              <span className="pt-0.5 font-mono text-[13px] tabular-nums text-black/55">
+              <span className="pt-0.5 text-[13px] font-medium tabular-nums text-ink/45">
                 {s.n}
               </span>
-              <span className="text-[15px] leading-relaxed text-black/80">
+              <span className="text-[15px] leading-relaxed text-ink">
                 {s.text}
               </span>
             </li>
@@ -70,11 +70,12 @@ export default async function CheckoutSuccessPage() {
 
         <Link
           href={pendingVisit ? '/portal/visit' : '/portal'}
-          className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+          className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
         >
           {pendingVisit ? 'Complete your visit' : 'Back to portal'}
           <span aria-hidden>→</span>
         </Link>
+        </div>
       </div>
     </PortalShell>
   );

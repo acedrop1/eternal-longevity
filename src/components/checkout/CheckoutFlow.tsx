@@ -14,13 +14,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
-import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
-import { SERVICE_AREA_OR } from '@/lib/site';
-import { PUBLIC_PRODUCTS } from '@/lib/shopProducts';
-import { useCatalog } from '@/components/catalog/CatalogProvider';
+import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
+import { SERVICE_AREA_OR, SITE_NAME } from '@/lib/site';
+import { monthsPerCycle } from '@/lib/order-rules';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -29,9 +27,6 @@ import {
 import { cn } from '@/lib/utils';
 import { checkPromoAction, type PromoCheck } from '@/lib/promo-db';
 import { CheckoutCardStep } from '@/components/checkout/CheckoutCardStep';
-
-/** Full names for the shipping-state dropdown. */
-const STATE_NAMES: Record<string, string> = { NJ: 'New Jersey', NY: 'New York', PA: 'Pennsylvania', MI: 'Michigan' };
 
 type SectionKey = 'email' | 'shipping' | 'method' | 'payment';
 
@@ -70,6 +65,8 @@ interface CheckoutFlowProps {
   /** Already given during the intake — never ask for it twice. */
   defaultPhone?: string;
   defaultZip?: string;
+  /** The state they picked on the first intake question. */
+  defaultState?: string;
   /** Absent in every environment without a Places key; the field degrades. */
   googlePlacesKey?: string;
   /** Empty when Stripe is unconfigured; the card step hides and the order
@@ -158,11 +155,25 @@ function isCvcValid(cvc: string) {
 // Main flow
 // ============================================================================
 
+/** What the member sees when the server turns an order down. */
+const ORDER_ERROR: Record<string, string> = {
+  state_not_serviced: `We can only ship to ${SERVICE_AREA_OR} right now.`,
+  intake_incomplete: 'Please finish your assessment before placing an order.',
+  product_unavailable: 'One of these treatments is not available right now. Please review your cart.',
+  empty_cart: 'Your cart is empty.',
+  invalid_quantity: 'You can order up to 3 of each treatment and 5 treatments at a time.',
+  invalid_address: 'Please check your shipping address.',
+  promo_unavailable: 'That code is no longer available. Remove it to continue.',
+  not_authorized: 'Please sign in to place your order.',
+  default: 'We could not place your order. Please try again.',
+};
+
 export function CheckoutFlow({
   defaultEmail,
   defaultName,
   defaultPhone = '',
   defaultZip = '',
+  defaultState = '',
   googlePlacesKey,
   stripePublishableKey,
 }: CheckoutFlowProps) {
@@ -218,9 +229,9 @@ export function CheckoutFlow({
     fullName: defaultName,
     address1: '',
     address2: '',
-    // We serve one state, and the ZIP they gave at intake names the city.
+    // State comes from the first intake question; the intake ZIP names the city.
     city: cityForZip(defaultZip) ?? '',
-    state: SERVICEABLE_STATES[0] ?? '',
+    state: SERVICEABLE_STATES.includes(defaultState) ? defaultState : (SERVICEABLE_STATES[0] ?? ''),
     zip: defaultZip,
     phone: formatPhone(defaultPhone),
   });
@@ -270,11 +281,12 @@ export function CheckoutFlow({
   const [promoBusy, setPromoBusy] = useState(false);
   // The card is captured (not charged) before the order can be placed.
   const [cardSaved, setCardSaved] = useState(false);
-  // The authorisation holding the funds; the order is tied to it so the
-  // prescriber's signature captures this exact hold.
-  const [authIntentId, setAuthIntentId] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  // Separate, explicit consent to the charges themselves, recurring ones
+  // included — the card is billed later with nobody at the keyboard.
+  const [chargesAccepted, setChargesAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
   // Mobile-only: collapsible order summary at top. Always expanded on lg+.
   const [summaryExpanded, setSummaryExpanded] = useState(false);
 
@@ -333,34 +345,22 @@ export function CheckoutFlow({
   const hasCart = resolvedItems.length > 0;
 
   /*
-   * Shown when someone reaches checkout with an empty cart. It was hard-coded
-   * to GHK-Cu, which is now withheld — an empty cart could have placed a real
-   * order for a product we cannot sell. Taken from the live catalogue instead,
-   * so it can never name something that is not on it.
+   * Nothing to check out: back to the shop. There used to be a stand-in line
+   * for a default product here, which meant an empty cart could place a real
+   * order for something nobody chose. The timer lets a cart still hydrating
+   * from storage land first, and `placed` stops the cart clearing after a
+   * successful order from racing the redirect to the success page.
    */
-  // Live catalogue first; the seed list only if the catalogue is empty. The
-  // server re-checks that the product is live before any order is placed.
-  const liveProducts = useCatalog().products;
-  const fallbackProduct = liveProducts[0] ?? PUBLIC_PRODUCTS[0];
-  const fallbackLine = useMemo(
-    () => ({
-      key: `fallback-${fallbackProduct.id}`,
-      name: fallbackProduct.name,
-      cadence: 'Quarterly billing',
-      qty: 1,
-      perMonth: Math.round(fallbackProduct.pricing.quarterly / 3),
-      total: fallbackProduct.pricing.quarterly,
-      sub: fallbackProduct.cycleLength,
-      image: fallbackProduct.image,
-      swatch: fallbackProduct.swatch,
-      shot: fallbackProduct.shot,
-    }),
-    [fallbackProduct]
-  );
+  const placed = useRef(false);
+  useEffect(() => {
+    if (hasCart || placed.current) return;
+    const t = window.setTimeout(() => router.replace('/shop'), 0);
+    return () => window.clearTimeout(t);
+  }, [hasCart, router]);
 
-  const lines = useMemo(() => {
-    if (hasCart) {
-      return resolvedItems.map((it) => ({
+  const lines = useMemo(
+    () =>
+      resolvedItems.map((it) => ({
         key: `${it.productId}-${it.cadence}`,
         productId: it.productId,
         cadence: it.cadence,
@@ -373,27 +373,11 @@ export function CheckoutFlow({
         image: it.product.image,
         swatch: it.product.swatch,
         shot: it.product.shot,
-      }));
-    }
-    return [
-      {
-        key: fallbackLine.key,
-        productId: undefined as string | undefined,
-        cadence: undefined as string | undefined,
-        name: fallbackLine.name,
-        cadenceLabel: fallbackLine.cadence,
-        qty: fallbackLine.qty,
-        perMonth: fallbackLine.perMonth,
-        total: fallbackLine.total,
-        sub: fallbackLine.sub,
-        image: fallbackLine.image,
-        swatch: fallbackLine.swatch,
-        shot: fallbackLine.shot,
-      },
-    ];
-  }, [hasCart, resolvedItems, fallbackLine]);
+      })),
+    [resolvedItems],
+  );
 
-  const subtotal = hasCart ? cartSubtotal : fallbackLine.total;
+  const subtotal = cartSubtotal;
   const shippingCost = SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.price ?? 0;
   // Prescription drugs carry no sales tax in NJ, NY, PA or MI; the server sets it too.
   const tax = 0;
@@ -464,7 +448,8 @@ export function CheckoutFlow({
   }
 
   async function handlePay() {
-    if (!termsAccepted) return;
+    if (!termsAccepted || !chargesAccepted || !hasCart) return;
+    setPayError(null);
     if (stripePublishableKey && !cardSaved) return;
     if (!emailValid || !shippingValid || !methodValid) return;
     setIsPaying(true);
@@ -513,51 +498,23 @@ export function CheckoutFlow({
       }
     }
 
-    // Build order lines from the current cart (or fallback to demo line)
-    const orderLines = hasCart
-      ? resolvedItems.map((it) => ({
-          productId: it.productId,
-          productName: it.product.name,
-          cadence: it.cadence,
-          cadenceLabel: it.cadenceLabel,
-          quantity: it.quantity,
-          perCycle: it.total,
-          image: it.product.image,
-          swatch: it.product.swatch,
-        }))
-      : [
-          {
-            productId: fallbackProduct.id,
-            productName: fallbackProduct.name,
-            cadence: 'quarterly' as const,
-            cadenceLabel: 'Quarterly',
-            quantity: 1,
-            perCycle: fallbackLine.total,
-            image: fallbackLine.image,
-            swatch: fallbackLine.swatch,
-          },
-        ];
+    const orderLines = resolvedItems.map((it) => ({
+      productId: it.productId,
+      productName: it.product.name,
+      cadence: it.cadence,
+      cadenceLabel: it.cadenceLabel,
+      quantity: it.quantity,
+      perCycle: it.total,
+      image: it.product.image,
+      swatch: it.product.swatch,
+    }));
 
-    // If a real payment backend is connected, hand off to Stripe Checkout.
-    // The card is entered on Stripe's hosted page — never in this form.
-    try {
-      const checkout = await createCheckoutSessionAction({
-        lines: orderLines.map((l) => ({
-          productId: l.productId,
-          productName: l.productName,
-          quantity: l.quantity,
-          amountCents: Math.round(l.perCycle * 100),
-        })),
-      });
-      if (checkout.url) {
-        window.location.href = checkout.url;
-        return;
-      }
-    } catch {
-      // Fall through to the demo success flow below.
-    }
-
-    placeOrder({
+    /*
+     * Every order goes through the server: it prices each line from the
+     * catalogue, checks the state and the intake, and saves the card for a
+     * charge only once the prescriber approves. Nothing is charged here.
+     */
+    const res = await placeOrder({
       memberName: shippingAddressForOrder.fullName,
       memberEmail: email,
       state: shippingAddressForOrder.state,
@@ -576,13 +533,18 @@ export function CheckoutFlow({
       },
       cardLast4,
       promoCode: promo?.ok ? promo.code : undefined,
-      authIntentId: authIntentId || undefined,
     });
+    if (!res.ok) {
+      setIsPaying(false);
+      setPayError(ORDER_ERROR[res.error ?? ''] ?? ORDER_ERROR.default);
+      return;
+    }
+    placed.current = true;
 
     // Clear the cart and route to success
     startTransition(() => {
       clearCart();
-      router.push('/checkout/success?demo=1');
+      router.push('/checkout/success');
     });
   }
 
@@ -657,20 +619,20 @@ export function CheckoutFlow({
   const cardBrand = detectCardBrand(card.number);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 md:px-8 py-8 md:py-12">
+    <div className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-12">
       {/* ============ TOP NAV ============ */}
       <div className="mb-8 flex items-center justify-between">
         <Link
           href="/portal"
-          className="flex items-center gap-3 text-black"
+          className="flex items-center gap-3 text-ink"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="Eternal Longevity" className="h-6 w-auto" />
-          <span className="hidden font-mono text-[13px] text-black/55 sm:inline">
+          <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">
             Checkout
           </span>
         </Link>
-        <span className="inline-flex items-center gap-1.5 font-mono text-[12px] text-black/60">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-milk px-3 py-1.5 text-[13px] font-medium text-ink/70">
           <svg
             width="12"
             height="12"
@@ -695,7 +657,7 @@ export function CheckoutFlow({
             but lg:order-2 puts it in the right column on desktop. */}
         <aside className="lg:order-2">
           <div className="lg:sticky lg:top-8">
-            <div className="overflow-hidden rounded-[4px] bg-[#F2F2F0]">
+            <div className="overflow-hidden rounded-shell bg-milk">
               {/* Compact mobile header. Tap to expand. Hidden on lg+ where the
                   full summary is always visible in the sidebar. */}
               <button
@@ -705,7 +667,7 @@ export function CheckoutFlow({
                 className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
               >
                 <span className="flex items-center gap-3 min-w-0">
-                  <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-[2px] bg-black/[0.06] text-black/70">
+                  <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-white text-ink/70">
                     <svg
                       width="14"
                       height="14"
@@ -722,17 +684,17 @@ export function CheckoutFlow({
                     </svg>
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[15px] font-medium text-black">
+                    <span className="block text-[15px] font-semibold text-ink">
                       Order summary
                     </span>
-                    <span className="block font-mono text-[12px] text-black/55">
+                    <span className="block text-[13px] text-ink/55">
                       {lines.length} item{lines.length === 1 ? '' : 's'} ·{' '}
                       {summaryExpanded ? 'Tap to collapse' : 'Tap to expand'}
                     </span>
                   </span>
                 </span>
                 <span className="flex flex-shrink-0 items-center gap-2">
-                  <span className="text-[16px] font-medium text-black tabular-nums">
+                  <span className="text-[16px] font-semibold text-ink tabular-nums">
                     ${total}
                   </span>
                   <svg
@@ -745,7 +707,7 @@ export function CheckoutFlow({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className={cn(
-                      'text-black/55 transition-transform duration-300',
+                      'text-ink/55 transition-transform duration-300',
                       summaryExpanded ? 'rotate-180' : ''
                     )}
                   >
@@ -759,24 +721,24 @@ export function CheckoutFlow({
                 className={cn(
                   'lg:block lg:p-7 px-5 pb-5 pt-1',
                   summaryExpanded
-                    ? 'block border-t border-black/15 lg:border-t-0'
+                    ? 'block border-t border-ink/10 lg:border-t-0'
                     : 'hidden'
                 )}
               >
                 <div className="mb-5 hidden lg:flex items-center justify-between">
-                  <h2 className="font-mono text-[13px] text-black/70">
+                  <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-ink">
                     Order details
                   </h2>
-                  <span className="font-mono text-[13px] text-black/55">
+                  <span className="text-[13px] font-medium text-ink/55">
                     {lines.length} item{lines.length === 1 ? '' : 's'}
                   </span>
                 </div>
 
-                <ul className="mb-5 border-t border-black/15">
+                <ul className="mb-5 border-t border-ink/10">
                   {lines.map((l) => (
-                    <li key={l.key} className="flex gap-3 border-b border-black/15 py-4">
+                    <li key={l.key} className="flex gap-3 border-b border-ink/10 py-4">
                       <div
-                        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[2px] bg-neutral-200"
+                        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-thumb bg-milk-deep"
                         style={l.shot ? undefined : { background: l.swatch }}
                       >
                         <Image
@@ -789,13 +751,13 @@ export function CheckoutFlow({
                       </div>
                       <div className="flex flex-1 min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate text-[15px] font-medium text-black">
+                          <div className="truncate text-[15px] font-semibold text-ink">
                             {l.name}
                           </div>
-                          <div className="mt-0.5 font-mono text-[12px] text-black/60">
+                          <div className="mt-0.5 text-[13px] font-medium text-ink/60">
                             {l.cadenceLabel}
                           </div>
-                          <div className="mt-0.5 text-[13px] text-black/55">
+                          <div className="mt-0.5 text-[13px] text-ink/55">
                             {l.sub} · Qty {l.qty}
                           </div>
                           {l.productId && l.cadence && (
@@ -807,13 +769,13 @@ export function CheckoutFlow({
                                   l.cadence as Cadence
                                 )
                               }
-                              className="mt-1.5 font-mono text-[12px] text-black/55 underline decoration-black/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
+                              className="mt-1.5 text-[13px] text-ink/55 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
                             >
                               Remove
                             </button>
                           )}
                         </div>
-                        <div className="text-[15px] font-medium text-black tabular-nums">
+                        <div className="text-[15px] font-semibold text-ink tabular-nums">
                           ${l.total}
                         </div>
                       </div>
@@ -821,8 +783,8 @@ export function CheckoutFlow({
                   ))}
                 </ul>
 
-                <div className="mb-5 flex items-center gap-2 font-mono text-[12px] text-black/60">
-                  <span className="grid h-5 w-5 place-items-center rounded-[2px] bg-black text-white">
+                <div className="mb-5 flex items-center gap-2 text-[13px] text-ink/60">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-butter text-ink">
                     <svg
                       width="11"
                       height="11"
@@ -836,11 +798,11 @@ export function CheckoutFlow({
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </span>
-                  <span className="text-black">Prescription required</span>
+                  <span className="font-medium text-ink">Prescription required</span>
                   <span>· 503A compounded</span>
                 </div>
 
-                <div className="space-y-2 border-t border-black/15 pt-4 text-[15px]">
+                <div className="space-y-2 border-t border-ink/10 pt-4 text-[15px]">
                   <SummaryRow label="Subtotal" value={`$${subtotal}`} />
                   <SummaryRow
                     label="Shipping"
@@ -868,13 +830,13 @@ export function CheckoutFlow({
                         }
                       }}
                       placeholder="Promo code"
-                      className="min-w-0 flex-1 rounded-[2px] bg-white px-4 py-2.5 text-[16px] uppercase text-black ring-1 ring-black/10 placeholder:normal-case placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black"
+                      className="min-w-0 flex-1 rounded-inner bg-white px-4 py-3 text-[16px] uppercase text-ink ring-1 ring-ink/10 placeholder:normal-case placeholder:text-ink/40 transition-shadow focus:outline-none focus:ring-2 focus:ring-ink/20"
                     />
                     <button
                       type="button"
                       onClick={applyPromo}
                       disabled={!promoInput.trim() || promoBusy}
-                      className="flex-none rounded-full px-4 py-2.5 font-mono text-[13px] text-black ring-1 ring-black/20 transition-colors hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-none rounded-full bg-white px-5 py-3 text-[14px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:bg-milk-deep disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {promoBusy ? '…' : 'Apply'}
                     </button>
@@ -883,15 +845,15 @@ export function CheckoutFlow({
                     <p
                       role={promo.ok ? 'status' : 'alert'}
                       className={cn(
-                        'mt-1.5 font-mono text-[12px]',
-                        promo.ok ? 'text-black' : 'text-red-700',
+                        'mt-1.5 text-[13px]',
+                        promo.ok ? 'text-ink' : 'text-red-600',
                       )}
                     >
                       {promo.ok ? `${promo.label} applied.` : promo.error}
                     </p>
                   )}
 
-                  <div className="my-2 h-px bg-black/15" />
+                  <div className="my-2 h-px bg-ink/10" />
                   <SummaryRow
                     label="Total if approved"
                     value={`$${total}`}
@@ -899,8 +861,8 @@ export function CheckoutFlow({
                   />
                 </div>
 
-                <div className="mt-5 rounded-[2px] bg-white px-4 py-3 text-[13px] leading-relaxed text-black/70">
-                  <span className="font-medium text-black">
+                <div className="mt-5 rounded-inner bg-butter-soft px-4 py-3 text-[13px] leading-relaxed text-ink/70 ring-1 ring-butter-deep/40">
+                  <span className="font-semibold text-ink">
                     Nothing is charged today.
                   </span>{' '}
                   You only pay if your prescriber approves your treatment.
@@ -914,8 +876,7 @@ export function CheckoutFlow({
         {/* ============ LEFT. FORM SECTIONS ============ */}
         <div className="lg:order-1 space-y-3">
           <h1
-            className="mb-6 font-display font-normal [text-wrap:balance]"
-            style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
+            className="mb-6 text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]"
           >
             Start your cycle.
           </h1>
@@ -946,7 +907,7 @@ export function CheckoutFlow({
               placeholder="you@example.com"
               className={inputClass}
             />
-            <p className="mt-2 font-mono text-[12px] text-black/55">
+            <p className="mt-2 text-[13px] text-ink/55">
               We&apos;ll send your receipt and shipping updates here.
             </p>
             <ContinueButton disabled={!emailValid} onClick={continueEmail}>
@@ -975,7 +936,7 @@ export function CheckoutFlow({
             {/* Saved-address picker. Shows when the member has saved addresses */}
             {profile.addresses.length > 0 && (
               <div className="mb-5 space-y-2">
-                <div className="mb-2 font-mono text-[13px] text-black/70">
+                <div className="mb-2 text-[13px] font-medium text-ink/70">
                   Ship to
                 </div>
                 {profile.addresses.map((a) => {
@@ -986,37 +947,37 @@ export function CheckoutFlow({
                       type="button"
                       onClick={() => setSelectedAddressId(a.id)}
                       className={cn(
-                        'flex w-full items-start gap-4 rounded-[2px] px-5 py-4 text-left transition-[box-shadow,background-color]',
+                        'flex w-full items-start gap-4 rounded-inner px-5 py-4 text-left transition-[box-shadow,background-color]',
                         isActive
-                          ? 'bg-white ring-2 ring-black'
-                          : 'bg-black/[0.04] ring-1 ring-black/10 hover:ring-black/30'
+                          ? 'bg-white ring-2 ring-ink'
+                          : 'bg-milk ring-1 ring-transparent hover:bg-milk-deep'
                       )}
                     >
                       <span
                         className={cn(
                           'mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                          isActive ? 'border-black' : 'border-black/30'
+                          isActive ? 'border-ink' : 'border-ink/30'
                         )}
                       >
                         {isActive && (
-                          <span className="h-2.5 w-2.5 rounded-full bg-black" />
+                          <span className="h-2.5 w-2.5 rounded-full bg-ink" />
                         )}
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-[15px] font-medium text-black">
+                          <span className="text-[15px] font-semibold text-ink">
                             {a.label}
                           </span>
                           {a.isPrimary && (
-                            <span className="rounded-[2px] bg-black/[0.08] px-1.5 py-0.5 font-mono text-[12px] text-black/70">
+                            <span className="rounded-full bg-butter px-2 py-0.5 text-[12px] font-medium text-ink">
                               Primary
                             </span>
                           )}
                         </span>
-                        <span className="mt-0.5 block text-[15px] text-black/85">
+                        <span className="mt-0.5 block text-[15px] text-ink">
                           {a.fullName}
                         </span>
-                        <span className="mt-0.5 block text-[13px] text-black/55">
+                        <span className="mt-0.5 block text-[13px] text-ink/55">
                           {formatAddressOneLine(a)}
                         </span>
                       </span>
@@ -1027,16 +988,16 @@ export function CheckoutFlow({
                   type="button"
                   onClick={() => setSelectedAddressId('new')}
                   className={cn(
-                    'flex w-full items-center gap-4 rounded-[2px] border border-dashed px-5 py-4 text-left transition-colors',
+                    'flex w-full items-center gap-4 rounded-inner border border-dashed px-5 py-4 text-left transition-colors',
                     selectedAddressId === 'new'
-                      ? 'border-black bg-white'
-                      : 'border-black/30 bg-white hover:border-black/60'
+                      ? 'border-ink bg-white'
+                      : 'border-ink/25 bg-white hover:border-ink/50'
                   )}
                 >
-                  <span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-black/10 text-[13px] text-black/70">
+                  <span className="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-milk text-[13px] text-ink/70">
                     +
                   </span>
-                  <span className="text-[15px] font-medium text-black/85">
+                  <span className="text-[15px] font-medium text-ink">
                     Use a new address
                   </span>
                 </button>
@@ -1124,7 +1085,7 @@ export function CheckoutFlow({
                     <ul
                       id="ship-addr-suggestions"
                       role="listbox"
-                      className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-[2px] bg-white shadow-[0_16px_40px_-12px_rgba(0,0,0,0.3)] ring-1 ring-black/10"
+                      className="absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-shell bg-white shadow-[0_24px_60px_-24px_rgba(17,17,17,0.35)] ring-1 ring-ink/10"
                     >
                       {places.suggestions.map((sg, i) => (
                         <li key={sg.id}>
@@ -1142,8 +1103,8 @@ export function CheckoutFlow({
                             className={cn(
                               'block w-full px-4 py-3 text-left text-[15px] transition-colors',
                               i === highlight
-                                ? 'bg-black/[0.06] text-black'
-                                : 'text-black/75 hover:bg-black/[0.04]',
+                                ? 'bg-milk text-ink'
+                                : 'text-ink/75 hover:bg-milk',
                             )}
                           >
                             {sg.text}
@@ -1256,7 +1217,7 @@ export function CheckoutFlow({
                   placeholder="(555) 555-5555"
                   className={inputClass}
                 />
-                <p className="mt-2 font-mono text-[12px] text-black/55">
+                <p className="mt-2 text-[13px] text-ink/55">
                   Used only for delivery updates and emergencies.
                 </p>
               </div>
@@ -1301,31 +1262,31 @@ export function CheckoutFlow({
                     type="button"
                     onClick={() => setShippingMethod(opt.id)}
                     className={cn(
-                      'flex w-full items-center gap-4 rounded-[2px] px-5 py-4 text-left transition-[box-shadow,background-color]',
+                      'flex w-full items-center gap-4 rounded-inner px-5 py-4 text-left transition-[box-shadow,background-color]',
                       isActive
-                        ? 'bg-white ring-2 ring-black'
-                        : 'bg-black/[0.04] ring-1 ring-black/10 hover:ring-black/30'
+                        ? 'bg-white ring-2 ring-ink'
+                        : 'bg-milk ring-1 ring-transparent hover:bg-milk-deep'
                     )}
                   >
                     <span
                       className={cn(
                         'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full border-2 transition-all',
-                        isActive ? 'border-black' : 'border-black/30'
+                        isActive ? 'border-ink' : 'border-ink/30'
                       )}
                     >
                       {isActive && (
-                        <span className="h-2.5 w-2.5 rounded-full bg-black" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-ink" />
                       )}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[15px] font-medium text-black">
+                      <span className="block text-[15px] font-semibold text-ink">
                         {opt.label}
                       </span>
-                      <span className="mt-0.5 block text-[13px] text-black/55">
+                      <span className="mt-0.5 block text-[13px] text-ink/55">
                         {opt.eta}
                       </span>
                     </span>
-                    <span className="flex-shrink-0 text-[15px] font-medium text-black tabular-nums">
+                    <span className="flex-shrink-0 text-[15px] font-semibold text-ink tabular-nums">
                       {opt.price === 0 ? 'Included' : `+$${opt.price}`}
                     </span>
                   </button>
@@ -1348,11 +1309,11 @@ export function CheckoutFlow({
             onEdit={() => setOpen('payment')}
             sectionRef={sectionRefs.payment}
           >
-            <div className="rounded-[2px] bg-[#F2F2F0] px-4 py-4">
-              <p className="mb-1 font-mono text-[13px] text-black">
+            <div className="rounded-inner bg-milk px-5 py-5">
+              <p className="mb-1 text-[14px] font-semibold text-ink">
                 Not charged until approved
               </p>
-              <p className="text-[15px] leading-relaxed text-black/80">
+              <p className="text-[15px] leading-relaxed text-ink-soft">
                 Your card is saved now but not charged. Your prescriber reviews
                 your visit first — if they approve, this card is charged and
                 your prescription goes straight to the pharmacy. If they decide
@@ -1362,7 +1323,7 @@ export function CheckoutFlow({
                   clinical decision; a different product is. Saying so stops a
                   returning member expecting a review that will not happen, and
                   a plan member fearing one that will. */}
-              <p className="mt-2 text-[15px] leading-relaxed text-black/60">
+              <p className="mt-2 text-[15px] leading-relaxed text-ink/55">
                 A plan keeps shipping on this prescription until it expires. A
                 different product is a new prescription, so it is reviewed
                 again.
@@ -1371,7 +1332,7 @@ export function CheckoutFlow({
 
             {stripePublishableKey && (
               <div className="mt-4">
-                <p className="mb-2.5 font-mono text-[13px] text-black/70">
+                <p className="mb-2.5 text-[13px] font-medium text-ink/70">
                   Payment method
                 </p>
                 <CheckoutCardStep
@@ -1380,42 +1341,41 @@ export function CheckoutFlow({
                   amountCents={Math.round(total * 100)}
                   saved={cardSaved}
                   onSaved={() => setCardSaved(true)}
-                  onAuthorized={setAuthIntentId}
                 />
               </div>
             )}
 
-            <div className="mt-4 flex items-baseline justify-between border-t border-black/15 pt-4">
-              <span className="text-[15px] text-black/60">Total if approved</span>
-              <span className="text-xl font-medium tabular-nums text-black">
+            <div className="mt-4 flex items-baseline justify-between border-t border-ink/10 pt-4">
+              <span className="text-[15px] text-ink/60">Total if approved</span>
+              <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
                 ${total}
               </span>
             </div>
 
-            <label className="mt-5 flex cursor-pointer gap-3 rounded-[2px] bg-black/[0.04] px-4 py-3.5 text-[14px] leading-relaxed text-black/85 ring-1 ring-black/10">
+            <label className="mt-5 flex cursor-pointer gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] leading-relaxed text-ink-soft">
               <input
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-1 h-4 w-4 flex-none accent-black"
+                className="mt-1 h-4 w-4 flex-none accent-ink"
               />
               <span>
                 I am 18 or older and a resident of {SERVICE_AREA_OR}, the health
                 information I provided is accurate and complete, and I agree to
                 the{' '}
-                <Link href="/legal/terms" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
+                <Link href="/legal/terms" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
                   Terms of Service
                 </Link>
                 ,{' '}
-                <Link href="/legal/consent" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
+                <Link href="/legal/consent" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
                   Informed Consent
                 </Link>
                 ,{' '}
-                <Link href="/legal/refunds" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
+                <Link href="/legal/refunds" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
                   Refund Policy
                 </Link>{' '}
                 and{' '}
-                <Link href="/legal/privacy" className="text-black underline decoration-black/50 underline-offset-[3px] hover:decoration-black" target="_blank">
+                <Link href="/legal/privacy" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
                   Privacy Policy
                 </Link>
                 . I understand this order is a request for a prescriber to
@@ -1424,21 +1384,60 @@ export function CheckoutFlow({
               </span>
             </label>
 
+            {/* Recurring-charge authorization, built from the cart itself so
+                every amount and interval shown is the one that will bill. */}
+            <label className="mt-3 flex cursor-pointer gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] leading-relaxed text-ink-soft">
+              <input
+                type="checkbox"
+                checked={chargesAccepted}
+                onChange={(e) => setChargesAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 flex-none accent-ink"
+              />
+              <span>
+                If my prescriber approves, I authorize {SITE_NAME} to charge the
+                card I saved ${total} for this order. After that:
+                {lines.map((l) => {
+                  const n = monthsPerCycle(l.cadence);
+                  return (
+                    <span key={l.key} className="mt-1 block pl-3">
+                      · {l.name}
+                      {l.qty > 1 ? ` ×${l.qty}` : ''}:{' '}
+                      {l.cadence === 'once'
+                        ? 'a single charge, included above. It does not renew.'
+                        : `$${l.total} every ${n === 1 ? 'month' : `${n} months`}, automatically, until I cancel.`}
+                    </span>
+                  );
+                })}
+                <span className="mt-1.5 block">
+                  I can cancel a plan anytime in{' '}
+                  <Link href="/portal/subscriptions" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
+                    Portal › Subscriptions
+                  </Link>
+                  ; cancelling stops the next charge.
+                </span>
+              </span>
+            </label>
+
             <button
               type="button"
               onClick={handlePay}
-              disabled={isPaying || !termsAccepted || (!!stripePublishableKey && !cardSaved)}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
+              disabled={isPaying || !termsAccepted || !chargesAccepted || !hasCart || (!!stripePublishableKey && !cardSaved)}
+              className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-butter px-6 py-3.5 text-[16px] font-semibold text-ink transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-butter"
             >
               {isPaying && (
                 <span
                   aria-hidden
-                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/20 border-t-ink"
                 />
               )}
               {isPaying ? 'Placing order…' : 'Place order'}
             </button>
-            <p className="mt-3 text-center font-mono text-[12px] leading-relaxed text-black/55">
+            {payError && (
+              <p role="alert" className="mt-3 text-center text-[14px] text-red-600">
+                {payError}
+              </p>
+            )}
+            <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/55">
               Placing an order costs nothing. You can pause or cancel between
               cycles at any time.
             </p>
@@ -1454,7 +1453,7 @@ export function CheckoutFlow({
 // ============================================================================
 
 const inputClass =
-  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
 
 function FieldLabel({
   htmlFor,
@@ -1466,7 +1465,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-2 block font-mono text-[13px] text-black/70"
+      className="mb-2 block text-[13px] font-medium text-ink/70"
     >
       {children}
     </label>
@@ -1487,7 +1486,7 @@ function ContinueButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="mt-6 w-full rounded-full bg-black px-5 py-3.5 font-mono text-[14px] text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black sm:w-auto"
+      className="mt-6 w-full rounded-full bg-ink px-5 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink sm:w-auto"
     >
       {children} →
     </button>
@@ -1521,22 +1520,24 @@ function Section({
       // Pad top so the header doesn't sit flush against the sticky bar when
       // scrolled into view on mobile.
       className={cn(
-        'scroll-mt-4 rounded-[4px] bg-white ring-1 transition-[box-shadow,opacity]',
+        'scroll-mt-4 rounded-shell bg-white ring-1 transition-[box-shadow,opacity]',
         isOpen
-          ? 'ring-black/40'
+          ? 'ring-ink/15 shadow-[0_24px_60px_-34px_rgba(17,17,17,0.35)]'
           : disabled
-            ? 'opacity-60 ring-black/10'
-            : 'ring-black/15'
+            ? 'opacity-60 ring-ink/10'
+            : 'ring-ink/10'
       )}
     >
       <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-7">
         <div className="flex items-center gap-3 min-w-0">
           <span
             className={cn(
-              'grid h-7 w-7 flex-shrink-0 place-items-center rounded-full font-mono text-[12px] tabular-nums',
-              isComplete || isOpen
-                ? 'bg-black text-white'
-                : 'bg-black/10 text-black/55'
+              'grid h-7 w-7 flex-shrink-0 place-items-center rounded-full text-[13px] font-semibold tabular-nums',
+              isComplete
+                ? 'bg-butter text-ink'
+                : isOpen
+                  ? 'bg-ink text-white'
+                  : 'bg-milk text-ink/55'
             )}
           >
             {isComplete ? (
@@ -1557,11 +1558,11 @@ function Section({
             )}
           </span>
           <div className="min-w-0">
-            <h3 className="text-[16px] font-medium text-black">
+            <h3 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
               {title}
             </h3>
             {!isOpen && summary && (
-              <p className="mt-0.5 truncate text-[13px] text-black/55">
+              <p className="mt-0.5 truncate text-[13px] text-ink/55">
                 {summary}
               </p>
             )}
@@ -1571,7 +1572,7 @@ function Section({
           <button
             type="button"
             onClick={onEdit}
-            className="flex-shrink-0 font-mono text-[13px] text-black underline decoration-black/50 underline-offset-[3px] transition-colors hover:decoration-black"
+            className="flex-shrink-0 rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
           >
             Edit
           </button>
@@ -1597,7 +1598,7 @@ function SummaryRow({
     <div
       className={cn(
         'flex items-center justify-between',
-        emphasis ? 'text-[16px] font-medium text-black' : 'text-black/70'
+        emphasis ? 'text-[17px] font-semibold text-ink' : 'text-ink/70'
       )}
     >
       <span>{label}</span>
@@ -1620,12 +1621,12 @@ function SaveToggle({
       type="button"
       onClick={() => onChange(!checked)}
       aria-pressed={checked}
-      className="flex items-center gap-3 rounded-[2px] bg-black/[0.04] px-4 py-3 text-left ring-1 ring-black/10 transition-shadow hover:ring-black/30"
+      className="flex min-h-[44px] items-center gap-3 rounded-inner bg-milk px-4 py-3 text-left transition-colors hover:bg-milk-deep"
     >
       <span
         className={cn(
-          'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] border-2 transition-colors',
-          checked ? 'border-black bg-black text-white' : 'border-black/30 bg-white'
+          'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md border-2 transition-colors',
+          checked ? 'border-ink bg-ink text-white' : 'border-ink/25 bg-white'
         )}
       >
         {checked && (
@@ -1643,7 +1644,7 @@ function SaveToggle({
           </svg>
         )}
       </span>
-      <span className="text-[15px] text-black/85">{label}</span>
+      <span className="text-[15px] text-ink">{label}</span>
     </button>
   );
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Instagram } from 'lucide-react';
 import { LegitScriptSeal } from '@/components/ui/LegitScriptSeal';
+import { Wordmark } from '@/components/nav/Wordmark';
 import {
   BUSINESS_LEGAL_NAME,
   BUSINESS_ADDRESS,
@@ -12,6 +13,7 @@ import {
   SUPPORT_PHONE,
   SUPPORT_PHONE_HREF,
   SUPPORT_HOURS,
+  SERVICE_AREA,
 } from '@/lib/site';
 
 interface FooterLink {
@@ -68,79 +70,76 @@ export const footerLinks: FooterSection[] = [
 
 export function Footer() {
   return (
-    <footer className="relative w-full overflow-hidden rounded-t-[4px] border-t border-white/10 bg-black bg-[radial-gradient(35%_128px_at_50%_0%,rgba(255,255,255,0.08),transparent)] px-6 py-12 text-white lg:py-16">
-      <div className="absolute left-1/2 top-0 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 blur" />
-
-      <div className="mx-auto max-w-6xl">
-        <div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
+    <footer className="bg-white px-5 pb-8 pt-6 text-ink md:px-10">
+      <div
+        className="mx-auto rounded-shell bg-milk px-6 py-12 md:px-12 md:py-16"
+        style={{
+          backgroundImage:
+            'radial-gradient(35% 60% at 8% 10%, rgba(255,236,159,0.35), transparent 70%), radial-gradient(30% 55% at 95% 90%, rgba(207,196,246,0.4), transparent 70%)',
+        }}
+      >
+        <div className="grid w-full gap-10 xl:grid-cols-3 xl:gap-8">
           <AnimatedContainer className="space-y-5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="Eternal Longevity" className="h-9 w-auto" draggable={false} />
-
+            <Wordmark className="text-[44px]" />
             {/* Legal name, postal address and a way to reach a human: the
                 merchant details a cardholder (and an underwriter) looks for. */}
-            <address className="space-y-1 text-sm not-italic leading-relaxed text-white/60">
-              <p className="text-white/80">{BUSINESS_LEGAL_NAME}</p>
+            <address className="space-y-1 text-[14px] not-italic leading-relaxed text-ink-soft">
+              <p className="font-medium text-ink">{BUSINESS_LEGAL_NAME}</p>
               <p>{BUSINESS_ADDRESS}</p>
               <p>
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="transition-colors hover:text-white">
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="transition-colors hover:text-ink">
                   {SUPPORT_EMAIL}
                 </a>
               </p>
               {SUPPORT_PHONE && (
                 <p>
-                  <a href={SUPPORT_PHONE_HREF} className="transition-colors hover:text-white">
+                  <a href={SUPPORT_PHONE_HREF} className="transition-colors hover:text-ink">
                     {SUPPORT_PHONE}
                   </a>{' '}
                   · {SUPPORT_HOURS}
                 </p>
               )}
             </address>
-
             <a
               href="https://instagram.com/etlongevity"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white"
+              className="inline-flex items-center gap-1.5 text-[14px] text-ink-soft transition-colors hover:text-ink"
             >
               <Instagram className="size-4" />
               Instagram
             </a>
-
             {/* LegitScript certification, verifiable on legitscript.com. */}
             <LegitScriptSeal className="block w-fit" />
           </AnimatedContainer>
 
-          <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-3 xl:col-span-2 xl:mt-0">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-3 xl:col-span-2">
             {footerLinks.map((section, index) => (
               <AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
-                <div className="mb-10 md:mb-0">
-                  <h3 className="font-mono text-xs text-white/80">{section.label}</h3>
-                  <ul className="mt-4 space-y-2 text-sm text-white/60">
-                    {section.links.map((link) => (
-                      <li key={link.title}>
-                        <Link href={link.href} className="inline-flex items-center transition-colors duration-300 hover:text-white">
-                          {link.title}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <h3 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-ink">{section.label}</h3>
+                <ul className="mt-4 space-y-2.5 text-[14px] text-ink-soft">
+                  {section.links.map((link) => (
+                    <li key={link.title}>
+                      <Link href={link.href} className="inline-flex items-center transition-colors duration-300 hover:text-ink">
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </AnimatedContainer>
             ))}
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 md:flex-row md:items-start md:justify-between">
-          <p className="shrink-0 text-xs text-white/50">
+        <div className="mt-12 flex flex-col gap-4 border-t border-black/10 pt-6 md:flex-row md:items-start md:justify-between">
+          <p className="shrink-0 text-[12px] text-ink-soft">
             © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>
-          <p className="max-w-2xl text-[11px] leading-relaxed text-white/45 md:text-right">
+          <p className="max-w-2xl text-[11.5px] leading-relaxed text-ink-soft md:text-right">
             Prescriptions are written by a licensed physician following clinical review, and dispensed
-            by an independently licensed 503A compounding pharmacy. Eternal Longevity is not a pharmacy. Compounded
-            medications are not FDA-approved. These statements have not been evaluated by the Food and Drug
-            Administration; these products are not intended to diagnose, treat, cure, or prevent any disease. Not a
-            substitute for primary care. Available to residents of New Jersey, New York, Pennsylvania and Michigan only. 18+.
+            by an independently licensed 503A compounding pharmacy. Eternal Longevity is not a pharmacy. Rx
+            only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or
+            quality. Not a substitute for primary care. Available to residents of {SERVICE_AREA} only. 18+.
           </p>
         </div>
       </div>

@@ -15,13 +15,14 @@
  * Status is the compliance gate. Only `live` products are listed, linked,
  * indexed or orderable; the seed marks everything on the old WITHHELD list as
  * `withheld`, so nothing changes until an admin deliberately flips a status.
+ * NEVER_LIVE ids are forced to `withheld` on read, so no stored row can list them.
  */
 import 'server-only';
 import { cache } from 'react';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { SHOP_PRODUCTS, isSellable, type ShopProduct } from './shopProducts';
+import { DRAFT, NEVER_LIVE, SHOP_PRODUCTS, isSellable, type ShopProduct } from './shopProducts';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
 
 export type ProductStatus = 'draft' | 'live' | 'withheld';
@@ -95,7 +96,7 @@ export async function writeRow(row: ProductRow): Promise<void> {
   throw new Error('Connect Supabase to save products.');
 }
 
-const seedStatus = (id: string): ProductStatus => (isSellable(id) ? 'live' : 'withheld');
+const seedStatus = (id: string): ProductStatus => (DRAFT.has(id) ? 'draft' : isSellable(id) ? 'live' : 'withheld');
 
 /** Every product, any status, seed order first then new products by name. */
 export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
@@ -127,12 +128,13 @@ export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  return [...fromSeed, ...added];
+  // The hard gate: a stored `live` row never overrides NEVER_LIVE.
+  return [...fromSeed, ...added].map((p) => (NEVER_LIVE.has(p.id) ? { ...p, status: 'withheld' as const } : p));
 });
 
 /** Products that may be listed, linked, indexed or ordered. */
 export async function getLiveProducts(): Promise<CatalogProduct[]> {
-  return (await getCatalog()).filter((p) => p.status === 'live');
+  return (await getCatalog()).filter((p) => p.status === 'live' && !NEVER_LIVE.has(p.id));
 }
 
 /** A live product, or null (withheld and draft products don't exist publicly). */

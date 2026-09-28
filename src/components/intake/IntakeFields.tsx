@@ -12,22 +12,23 @@ interface FieldRendererProps {
 
 // Same field treatment as the contact form. 16px text keeps iOS from zooming.
 const inputBase =
-  'w-full min-w-0 rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
+  'w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
 
-// Choice rows. Radios invert to black; checkboxes take a heavy ring and a
-// filled box, so the selected state never rests on colour alone.
+// Choice cards. Selected takes a heavy ink ring on white plus a filled
+// indicator, so the selected state never rests on colour alone.
 const tileBase =
-  'flex min-h-[48px] w-full items-center gap-3 rounded-[4px] px-4 py-3 text-left transition-[box-shadow,background-color,color] duration-200';
-const tileIdle = 'bg-black/[0.04] text-black ring-1 ring-black/10 hover:ring-black/30';
-const labelSmall = 'mb-2 block font-mono text-[13px] text-black/70';
+  'flex min-h-[56px] w-full items-center gap-3 rounded-inner px-5 py-4 text-left transition-[box-shadow,background-color,color] duration-200';
+const tileIdle = 'bg-milk text-ink ring-1 ring-transparent hover:bg-milk-deep';
+const tileOn = 'bg-white text-ink ring-2 ring-ink';
+const labelSmall = 'mb-2 block text-[13px] font-medium text-ink/70';
 
 function CheckBox({ on, className }: { on: boolean; className?: string }) {
   return (
     <span
       aria-hidden
       className={cn(
-        'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] transition-colors',
-        on ? 'bg-black text-white' : 'bg-white ring-1 ring-black/25',
+        'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md transition-colors',
+        on ? 'bg-ink text-white' : 'bg-white ring-1 ring-ink/25',
         className
       )}
     >
@@ -61,7 +62,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                   if (selected) onChange(arr.filter((v) => v !== opt.value));
                   else onChange([...arr, opt.value]);
                 }}
-                className={cn(tileBase, selected ? 'bg-white text-black ring-2 ring-black' : tileIdle)}
+                className={cn(tileBase, selected ? tileOn : tileIdle)}
               >
                 <CheckBox on={selected} />
                 <span className="text-[15px] leading-snug md:text-[16px]">{opt.label}</span>
@@ -83,13 +84,13 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 role="radio"
                 aria-checked={selected}
                 onClick={() => onChange(opt.value)}
-                className={cn(tileBase, selected ? 'bg-black text-white ring-2 ring-black' : tileIdle)}
+                className={cn(tileBase, selected ? tileOn : tileIdle)}
               >
                 <span
                   aria-hidden
                   className={cn(
                     'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full transition-colors',
-                    selected ? 'ring-2 ring-white' : 'bg-white ring-1 ring-black/25'
+                    selected ? 'bg-ink' : 'bg-white ring-1 ring-ink/25'
                   )}
                 >
                   {selected && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
@@ -124,8 +125,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 aria-checked={selected}
                 onClick={() => onChange(opt.value)}
                 className={cn(
-                  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-[4px] px-2 py-3 text-[15px] font-medium transition-[box-shadow,background-color,color] duration-200',
-                  selected ? 'bg-black text-white ring-2 ring-black' : tileIdle
+                  'inline-flex min-h-[56px] items-center justify-center gap-1.5 rounded-inner px-2 py-3 text-[15px] font-medium transition-[box-shadow,background-color,color] duration-200',
+                  selected ? tileOn : tileIdle
                 )}
               >
                 {selected && <Check aria-hidden className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={3} />}
@@ -176,6 +177,26 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
         />
       );
     }
+
+    case 'select':
+      return (
+        <select
+          id={`fld-${field.id}`}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={field.id === 'state' ? 'address-level1' : undefined}
+          className={cn(inputBase, 'min-h-[52px] cursor-pointer', !value && 'text-ink/40')}
+        >
+          <option value="" disabled>
+            {field.placeholder ?? 'Choose one'}
+          </option>
+          {field.options?.map((opt) => (
+            <option key={opt.value} value={opt.value} className="text-ink">
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      );
 
     case 'text-long':
       return (
@@ -262,11 +283,11 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
             max={field.max}
             value={num}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="w-full accent-black"
+            className="w-full accent-ink"
           />
-          <div className="mt-2 flex items-center justify-between font-mono text-[12px] text-black/55">
+          <div className="mt-2 flex items-center justify-between text-[13px] font-medium text-ink/55">
             <span>Poor</span>
-            <span className="text-[16px] font-medium tabular-nums text-black">{num}</span>
+            <span className="text-[16px] font-semibold tabular-nums text-ink">{num}</span>
             <span>Excellent</span>
           </div>
         </div>
@@ -284,24 +305,23 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
       const pct = ((inches - min) / (max - min)) * 100;
       const step = (d: number) => onChange(clamp(inches + d));
       return (
-        <div className="rounded-[4px] bg-[#F2F2F0] px-4 pb-5 pt-4 md:px-5">
+        <div className="rounded-inner bg-milk px-4 pb-5 pt-4 md:px-5">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               aria-label="One inch shorter"
               onClick={() => step(set ? -1 : 0)}
-              className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[20px] leading-none ring-1 ring-black/15 transition-colors hover:bg-black/[0.04]"
+              className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[20px] leading-none ring-1 ring-ink/10 transition-colors hover:bg-milk-deep"
             >
               −
             </button>
             <p className="text-center" aria-live="polite">
               <span
-                className={cn('block font-display font-normal tabular-nums', set ? 'text-black' : 'text-black/35')}
-                style={{ fontSize: 'clamp(2.4rem, 3vw + 1.2rem, 3.25rem)', fontStretch: '75%', lineHeight: 1 }}
+                className={cn('block text-[40px] font-semibold leading-none tracking-[-0.04em] tabular-nums md:text-[52px]', set ? 'text-ink' : 'text-ink/35')}
               >
                 {set ? `${Math.floor(inches / 12)}′ ${inches % 12}″` : '—'}
               </span>
-              <span className="mt-1 block font-mono text-[12px] text-black/55">
+              <span className="mt-1 block text-[13px] font-medium text-ink/55">
                 {set ? `${Math.round(inches * 2.54)} cm` : 'Slide to set'}
               </span>
             </p>
@@ -309,7 +329,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
               type="button"
               aria-label="One inch taller"
               onClick={() => step(set ? 1 : 0)}
-              className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[20px] leading-none ring-1 ring-black/15 transition-colors hover:bg-black/[0.04]"
+              className="grid h-11 w-11 flex-none place-items-center rounded-full bg-white text-[20px] leading-none ring-1 ring-ink/10 transition-colors hover:bg-milk-deep"
             >
               +
             </button>
@@ -327,7 +347,7 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
             className="el-range mt-5 w-full"
             style={{ ['--pct' as string]: `${set ? pct : 0}%` }}
           />
-          <div className="mt-2 flex justify-between font-mono text-[12px] text-black/50">
+          <div className="mt-2 flex justify-between text-[13px] font-medium text-ink/50">
             <span>{`${Math.floor(min / 12)}′ ${min % 12}″`}</span>
             <span>{`${Math.floor(max / 12)}′ ${max % 12}″`}</span>
           </div>
@@ -363,19 +383,21 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
 
     case 'consent-stack': {
       const consents = (value as Record<string, boolean>) ?? {};
-      const allChecked = CONSENT_ITEMS.every((c) => consents[c.id]);
+      /*
+       * The shortcut covers the required acknowledgements only. Optional ones —
+       * marketing SMS above all — must be ticked on their own: consent bundled
+       * into an "accept all" is not consent under the TCPA.
+       */
+      const required = CONSENT_ITEMS.filter((c) => c.required);
+      const allChecked = required.every((c) => consents[c.id]);
 
-      const acceptAll = () => {
-        const next: Record<string, boolean> = {};
-        for (const c of CONSENT_ITEMS) next[c.id] = true;
+      const setRequired = (on: boolean) => {
+        const next: Record<string, boolean> = { ...consents };
+        for (const c of required) next[c.id] = on;
         onChange(next);
       };
-
-      const clearAll = () => {
-        const next: Record<string, boolean> = {};
-        for (const c of CONSENT_ITEMS) next[c.id] = false;
-        onChange(next);
-      };
+      const acceptAll = () => setRequired(true);
+      const clearAll = () => setRequired(false);
 
       return (
         <div className="space-y-3">
@@ -385,26 +407,26 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
             onClick={allChecked ? clearAll : acceptAll}
             aria-pressed={allChecked}
             className={cn(
-              'flex min-h-[56px] w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-[4px] px-4 py-3.5 text-left transition-colors',
-              allChecked ? 'bg-black text-white hover:bg-black/85' : 'bg-white text-black ring-2 ring-black hover:bg-black/[0.04]'
+              'flex min-h-[56px] w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-inner px-5 py-4 text-left transition-colors',
+              allChecked ? 'bg-butter text-ink ring-2 ring-ink hover:bg-butter-deep' : 'bg-white text-ink ring-2 ring-ink hover:bg-milk'
             )}
           >
             <span className="flex items-center gap-3">
               <span
                 aria-hidden
                 className={cn(
-                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px]',
-                  allChecked ? 'bg-white text-black' : 'ring-2 ring-black'
+                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-md',
+                  allChecked ? 'bg-ink text-white' : 'ring-2 ring-ink'
                 )}
               >
                 {allChecked && <Check className="h-3.5 w-3.5" strokeWidth={3.5} />}
               </span>
               <span className="text-[15px] font-medium md:text-[16px]">
-                {allChecked ? 'All accepted' : 'Accept all'}
+                {allChecked ? 'Required items accepted' : 'Accept all required'}
               </span>
             </span>
-            <span className={cn('font-mono text-[12px]', allChecked ? 'text-white/70' : 'text-black/55')}>
-              {allChecked ? 'Tap to clear' : 'Agree to everything below'}
+            <span className={cn('text-[13px] font-medium', allChecked ? 'text-ink/70' : 'text-ink/55')}>
+              {allChecked ? 'Tap to clear' : 'Optional items stay your choice'}
             </span>
           </button>
 
@@ -421,14 +443,14 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 className={cn(
                   tileBase,
                   'items-start py-4',
-                  checked ? 'bg-white text-black ring-2 ring-black' : tileIdle
+                  checked ? tileOn : tileIdle
                 )}
               >
                 <CheckBox on={checked} className="mt-0.5" />
-                <span className="text-[14px] leading-relaxed text-black/85 md:text-[15px]">
+                <span className="text-[14px] leading-relaxed text-ink md:text-[15px]">
                   {c.label}
                   {c.required && (
-                    <span className="ml-1.5 font-mono text-[12px] text-black/50">
+                    <span className="ml-1.5 text-[12px] text-ink/50">
                       * <span className="sr-only">required</span>
                     </span>
                   )}
@@ -479,15 +501,15 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 <li
                   key={r.id}
                   className={cn(
-                    'flex items-center gap-2 font-mono text-[13px] transition-colors',
-                    idle ? 'text-black/50' : met ? 'text-emerald-700' : 'text-red-700'
+                    'flex items-center gap-2 text-[13px] transition-colors',
+                    idle ? 'text-ink/50' : met ? 'text-emerald-700' : 'text-red-700'
                   )}
                 >
                   <span
                     aria-hidden
                     className={cn(
-                      'grid h-4 w-4 flex-none place-items-center rounded-[2px] ring-1',
-                      idle ? 'ring-black/25' : met ? 'bg-emerald-700/10 ring-emerald-700/50' : 'bg-red-700/10 ring-red-700/50'
+                      'grid h-4 w-4 flex-none place-items-center rounded-full ring-1',
+                      idle ? 'ring-ink/25' : met ? 'bg-emerald-700/10 ring-emerald-700/50' : 'bg-red-700/10 ring-red-700/50'
                     )}
                   >
                     {!idle && (met ? <Check className="h-3 w-3" strokeWidth={3} /> : <X className="h-3 w-3" strokeWidth={3} />)}
@@ -497,8 +519,8 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
               );
             })}
             {(acc.confirm ?? '') !== '' && acc.confirm !== acc.password && (
-              <li role="alert" className="flex items-center gap-2 font-mono text-[13px] text-red-700">
-                <span aria-hidden className="grid h-4 w-4 flex-none place-items-center rounded-[2px] bg-red-700/10 ring-1 ring-red-700/50">
+              <li role="alert" className="flex items-center gap-2 text-[13px] text-red-700">
+                <span aria-hidden className="grid h-4 w-4 flex-none place-items-center rounded-full bg-red-700/10 ring-1 ring-red-700/50">
                   <X className="h-3 w-3" strokeWidth={3} />
                 </span>
                 Passwords match
@@ -533,8 +555,8 @@ function UploadField({
   return (
     <label
       className={cn(
-        'flex w-full cursor-pointer flex-col items-center justify-center rounded-[4px] border px-6 py-10 text-center transition-colors focus-within:ring-2 focus-within:ring-black',
-        hasFile ? 'border-2 border-black bg-white' : 'border-dashed border-black/25 bg-black/[0.04] hover:border-black/50'
+        'flex w-full cursor-pointer flex-col items-center justify-center rounded-inner border px-6 py-10 text-center transition-colors focus-within:ring-2 focus-within:ring-ink/30',
+        hasFile ? 'border-2 border-ink bg-white' : 'border-dashed border-ink/20 bg-milk hover:border-ink/40 hover:bg-milk-deep'
       )}
     >
       <input
@@ -546,20 +568,20 @@ function UploadField({
           if (f) onChange(f);
         }}
       />
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3 text-black/70">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3 text-ink/70">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="17 8 12 3 7 8" />
         <line x1="12" y1="3" x2="12" y2="15" />
       </svg>
       {hasFile ? (
         <>
-          <div className="mb-1 max-w-full truncate text-[15px] font-medium text-black">{fileName}</div>
-          <div className="font-mono text-[12px] text-black/55">Tap to replace</div>
+          <div className="mb-1 max-w-full truncate text-[15px] font-semibold text-ink">{fileName}</div>
+          <div className="text-[13px] text-ink/55">Tap to replace</div>
         </>
       ) : (
         <>
-          <div className="mb-1 text-[15px] font-medium text-black">Tap to upload</div>
-          <div className="font-mono text-[12px] text-black/55">PDF or image · up to 10MB</div>
+          <div className="mb-1 text-[15px] font-semibold text-ink">Tap to upload</div>
+          <div className="text-[13px] text-ink/55">PDF or image · up to 10MB</div>
         </>
       )}
     </label>

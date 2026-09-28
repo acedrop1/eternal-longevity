@@ -18,7 +18,7 @@ export default function StateAvailabilityPage() {
     <LegalLayout
       title="State Availability"
       effective="September 2026"
-      lead={`Two independent licences gate every order: a prescriber licensed in your state, and a pharmacy registered to dispense into it. Both must be true. Today both are true in exactly one state.`}
+      lead={`Two independent licences gate every order: a prescriber licensed in your state, and a pharmacy registered to dispense into it. Both must be true. Today both are true in ${SERVICE_AREA}.`}
       sections={[
         {
           heading: `Where We Operate`,
@@ -28,10 +28,10 @@ export default function StateAvailabilityPage() {
           ],
         },
         {
-          heading: `Why Only One State`,
+          heading: `Why Only These States`,
           paragraphs: [
             `Telehealth prescribing is regulated state by state. A physician may only prescribe to a patient located in a state where that physician holds a licence, and an out-of-state pharmacy may only ship into a state where it holds a non-resident pharmacy registration.`,
-            `Neither of those is a formality that can be worked around, and we would rather serve one state properly than claim a national footprint we cannot lawfully supply.`,
+            `Neither of those is a formality that can be worked around, and we would rather serve a few states properly than claim a national footprint we cannot lawfully supply.`,
           ],
         },
         {

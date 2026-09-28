@@ -8,6 +8,7 @@ import {
   adminRefundOrder,
   adminSendCardLink,
   type AdminBillingResult,
+  type AdminCadence,
 } from '@/lib/admin-billing-actions';
 import {
   createPromoAction,
@@ -32,9 +33,9 @@ export interface BillingSummary {
 }
 
 const inputClass =
-  'w-full rounded-[2px] border border-line bg-background px-4 py-3 text-base text-foreground placeholder-foreground/30 transition-all duration-200 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/15';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
-const labelClass = 'mb-1.5 block font-mono text-[12px] text-foreground/60';
+const labelClass = 'mb-1.5 block text-[13px] font-medium text-ink/70';
 
 function money(cents: number): string {
   return (cents / 100).toLocaleString('en-US', {
@@ -74,7 +75,7 @@ export function AdminBilling({
   return (
     <div className="space-y-6">
       {!live && (
-        <div className="rounded-[4px] border border-amber-700/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Demo figures. Real revenue and billing actions go live once Stripe and
           Supabase are connected.
         </div>
@@ -101,21 +102,21 @@ export function AdminBilling({
 
       {/* Recent activity */}
       {summary.recent.length > 0 && (
-        <section className="rounded-[4px] border border-line bg-surface p-6">
-          <div className="mb-4 font-mono text-[12px] text-foreground/60">
+        <section className="rounded-shell bg-milk p-6">
+          <div className="mb-4 text-[13px] font-medium text-ink/55">
             Recent activity
           </div>
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-ink/10">
             {summary.recent.map((r, i) => (
               <li
                 key={i}
                 className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
               >
-                <span className="font-mono text-[12px] text-foreground/80">
+                <span className="text-[12px] text-ink/80">
                   {r.label}
                 </span>
-                <span className="font-mono text-[12px] tabular-nums text-foreground/60">{r.when}</span>
-                <span className="text-sm font-medium text-foreground tabular-nums">
+                <span className="text-[12px] tabular-nums text-ink/60">{r.when}</span>
+                <span className="text-sm font-medium text-ink tabular-nums">
                   {money(r.amountCents)}
                 </span>
               </li>
@@ -125,11 +126,11 @@ export function AdminBilling({
       )}
 
       {/* Bill a customer — search */}
-      <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
-        <div className="mb-1 font-mono text-[12px] text-foreground/60">
+      <section className="rounded-shell bg-milk p-6 md:p-7">
+        <div className="mb-1 text-[13px] font-medium text-ink/55">
           Bill a customer
         </div>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
+        <h2 className="mb-4 text-[20px] font-semibold tracking-[-0.03em] text-ink">
           {selected ? selected.name : 'Search for a customer'}
         </h2>
 
@@ -140,7 +141,7 @@ export function AdminBilling({
               setSelectedId(null);
               setQuery('');
             }}
-            className="font-mono text-[12px] text-accent hover:text-accent-soft"
+            className="text-[12px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
           >
             ← Choose a different customer
           </button>
@@ -155,9 +156,9 @@ export function AdminBilling({
               className={inputClass}
             />
             {query.trim() && (
-              <ul className="mt-2 overflow-hidden rounded-[4px] border border-line">
+              <ul className="mt-2 overflow-hidden rounded-inner bg-white ring-1 ring-ink/10">
                 {matches.length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-foreground/60">
+                  <li className="px-4 py-3 text-sm text-ink/60">
                     No customers match.
                   </li>
                 ) : (
@@ -166,12 +167,12 @@ export function AdminBilling({
                       <button
                         type="button"
                         onClick={() => setSelectedId(c.id)}
-                        className="flex w-full items-center justify-between gap-3 border-b border-line px-4 py-3 text-left transition-colors last:border-0 hover:bg-background"
+                        className="flex w-full items-center justify-between gap-3 border-b border-ink/10 px-4 py-3 text-left transition-colors last:border-0 hover:bg-milk"
                       >
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-sm font-medium text-ink">
                           {c.name}
                         </span>
-                        <span className="truncate text-xs text-foreground/55">
+                        <span className="truncate text-xs text-ink/55">
                           {c.email}
                         </span>
                       </button>
@@ -332,17 +333,17 @@ function PromoPanel() {
             return (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-[4px] border border-line bg-background px-4 py-3"
+                className="flex items-center gap-3 rounded-inner border border-ink/10 bg-white px-4 py-3"
               >
-                <span className="font-mono text-[13px] text-foreground">
+                <span className="text-[13px] text-ink">
                   {c.code}
                 </span>
-                <span className="text-xs text-foreground/65">
+                <span className="text-xs text-ink/65">
                   {c.kind === 'percent'
                     ? `${c.value}% off`
                     : `${money(c.value)} off`}
                 </span>
-                <span className="font-mono text-[12px] tabular-nums text-foreground/60">
+                <span className="text-[12px] tabular-nums text-ink/60">
                   {c.redeemedCount}
                   {c.maxRedemptions !== null ? ` / ${c.maxRedemptions}` : ''} used
                   {expired ? ' · expired' : ''}
@@ -352,10 +353,10 @@ function PromoPanel() {
                   type="button"
                   onClick={() => toggle(c.id, !c.active)}
                   className={cn(
-                    'ml-auto flex-none rounded-full border px-3 py-1 font-mono text-[12px] transition-colors',
+                    'ml-auto flex-none rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
                     c.active
-                      ? 'border-accent/40 text-accent hover:bg-accent/10'
-                      : 'border-line text-foreground/60 hover:text-foreground',
+                      ? 'border-emerald-600/25 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                      : 'border-ink/10 text-ink/60 hover:text-ink',
                   )}
                 >
                   {c.active ? 'Active' : 'Off'}
@@ -379,15 +380,12 @@ function Metric({
   tone?: 'neutral' | 'accent';
 }) {
   return (
-    <div className="rounded-[4px] border border-line bg-surface p-5">
-      <div className="mb-2 font-mono text-[12px] text-foreground/55">
+    <div className={cn('rounded-shell p-5', tone === 'accent' ? 'bg-butter-soft' : 'bg-milk')}>
+      <div className="mb-2 text-[13px] font-medium text-ink/55">
         {label}
       </div>
       <div
-        className={cn(
-          'text-2xl font-medium tracking-tight tabular-nums',
-          tone === 'accent' ? 'text-accent' : 'text-foreground',
-        )}
+        className="text-[28px] font-semibold tracking-[-0.04em] text-ink tabular-nums"
       >
         {value}
       </div>
@@ -411,14 +409,14 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[4px] border border-line bg-surface p-6 md:p-7">
-      <div className="mb-1 font-mono text-[12px] text-foreground/60">
+    <section className="rounded-shell bg-milk p-6 md:p-7">
+      <div className="mb-1 text-[13px] font-medium text-ink/55">
         {eyebrow}
       </div>
-      <h3 className="text-lg font-semibold tracking-tight text-foreground">
+      <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
         {title}
       </h3>
-      <p className="mt-1 mb-5 text-sm leading-relaxed text-foreground/55">
+      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/55">
         {description}
       </p>
       {children}
@@ -440,10 +438,10 @@ function SubmitButton({
       type="submit"
       disabled={busy}
       className={cn(
-        'inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-mono text-[13px] transition-all duration-200 active:scale-[0.98] disabled:opacity-50',
+        'inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[13px] font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50',
         tone === 'danger'
           ? 'bg-red-700 text-white hover:bg-red-800'
-          : 'bg-black text-white hover:bg-black/85',
+          : 'bg-ink text-white hover:bg-ink/85',
       )}
     >
       {busy && (
@@ -481,15 +479,15 @@ function ResultBanner({ result }: { result: AdminBillingResult | null }) {
   return (
     <div
       className={cn(
-        'mt-3 rounded-[4px] border px-4 py-3 text-sm',
+        'mt-3 rounded-inner border px-4 py-3 text-sm',
         result.ok
-          ? 'border-accent/30 bg-accent/10 text-accent'
-          : 'border-red-500/30 bg-red-500/10 text-red-700',
+          ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
+          : 'border-red-600/20 bg-red-50 text-red-700',
       )}
     >
       <p>{result.message}</p>
       {result.url && (
-        <p className="mt-2 break-all text-xs text-foreground/70">
+        <p className="mt-2 break-all text-xs text-ink/70">
           Link: {result.url}
         </p>
       )}
@@ -535,9 +533,7 @@ function CardLinkPanel({ userId }: { userId: string }) {
 function SubscriptionPanel({ userId }: { userId: string }) {
   const [productName, setProductName] = useState('');
   const [amount, setAmount] = useState('');
-  const [cadence, setCadence] = useState<'monthly' | 'quarterly' | 'annual'>(
-    'monthly',
-  );
+  const [cadence, setCadence] = useState<AdminCadence>('monthly');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AdminBillingResult | null>(null);
 
@@ -597,14 +593,13 @@ function SubscriptionPanel({ userId }: { userId: string }) {
             <select
               value={cadence}
               onChange={(e) =>
-                setCadence(
-                  e.target.value as 'monthly' | 'quarterly' | 'annual',
-                )
+                setCadence(e.target.value as AdminCadence)
               }
               className={cn(inputClass, 'appearance-none')}
             >
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
+              <option value="sixMonth">Every 6 months</option>
               <option value="annual">Annual</option>
             </select>
           </div>
@@ -744,7 +739,7 @@ function RefundPanel() {
             className={inputClass}
           />
           {isStripeId && (
-            <p className="mt-1.5 text-xs text-foreground/55">
+            <p className="mt-1.5 text-xs text-ink/55">
               Refunding a raw Stripe payment — this will not appear on the
               member&apos;s order timeline.
             </p>

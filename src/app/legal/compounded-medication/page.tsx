@@ -17,40 +17,40 @@ export default function CompoundedMedicationPage() {
     <LegalLayout
       title="Compounded Medication Disclosure"
       effective="September 2026"
-      lead={`Everything we dispense is compounded: prepared by a licensed pharmacist for one named patient, against a prescription written for that patient. Compounded preparations are regulated differently from the drugs you buy at a retail pharmacy, and the differences are real. This page states them plainly rather than burying them.`}
+      lead={`Every medication we offer is compounded: prepared by a licensed pharmacist for one named patient, against a prescription written for that patient. Compounded preparations are regulated differently from the drugs you buy at a retail pharmacy, and the differences are real. This page states them plainly rather than burying them.`}
       sections={[
         {
           heading: `What Compounding Is`,
           paragraphs: [
             `Compounding is the preparation of a medication by a licensed pharmacist to meet the needs of an individual patient, pursuant to a valid prescription written for that patient by a licensed prescriber. Nothing is made in advance and nothing is pulled off a shelf.`,
-            `Our preparations are made under section 503A of the Federal Food, Drug and Cosmetic Act by an FDA-registered 503A pharmacy that is licensed and inspected by its state board of pharmacy.`,
+            `Our preparations are made under section 503A of the Federal Food, Drug and Cosmetic Act by MedShiftRx, a 503A pharmacy that is licensed and inspected by its state board of pharmacy.`,
           ],
         },
         {
           heading: `Not FDA-Approved`,
           paragraphs: [
-            `Compounded medications are not FDA-approved. The FDA does not review compounded preparations for safety, efficacy, or quality before they are dispensed. This is true of every compounding pharmacy in the United States, not only ours.`,
-            `These statements have not been evaluated by the Food and Drug Administration. These products are not intended to diagnose, treat, cure, or prevent any disease.`,
+            `Rx only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or quality. This is true of every compounding pharmacy in the United States, not only ours.`,
+            `Some compounded preparations contain ingredients that are also found in FDA-approved drugs. That does not make the compounded preparation itself FDA-approved.`,
           ],
         },
         {
           heading: `Quality and Testing`,
           paragraphs: [
             `Compounded preparations do not go through the same manufacturing controls, stability testing, or quality assurance as a commercially manufactured FDA-approved drug. Product characteristics and individual outcomes can vary between lots and between people.`,
-            `Our partner pharmacy tests for sterility, potency, purity and endotoxins before releasing a batch, and a certificate of analysis for the lot your order came from is available on request.`,
+            `Each batch is tested by the pharmacy as required for its preparation type, and a certificate of analysis for the lot your order came from is available on request.`,
           ],
         },
         {
           heading: `Off-Label Use`,
           paragraphs: [
-            `Several of the peptides we offer are prescribed off-label — for a use, dose, or population the FDA has not specifically approved. Off-label prescribing is legal and routine in United States medical practice when it is supported by a prescriber’s clinical judgement.`,
+            `Several of the medications we offer are prescribed off-label — for a use, dose, or population the FDA has not specifically approved. Off-label prescribing is legal and routine in United States medical practice when it is supported by a prescriber’s clinical judgement.`,
             `It also means the evidence base for a given use may be thinner than for an approved indication. Ask your prescriber what is known and what is not before you start.`,
           ],
         },
         {
           heading: `Beyond-Use Date`,
           paragraphs: [
-            `A compounded preparation carries a beyond-use date rather than a manufacturer expiry. Ours is typically 90 days from the date of compounding and is printed on the vial. Do not use a vial past that date.`,
+            `A compounded preparation carries a beyond-use date rather than a manufacturer expiry. The pharmacy dates each supply and prints the date on the label; it varies by preparation. Do not use a medication past that date.`,
           ],
         },
         {

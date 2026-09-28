@@ -111,25 +111,6 @@ export async function checkPromoAction(
   };
 }
 
-/**
- * Redeem a code. Called once, from placeOrderAction, inside the same request
- * that writes the order.
- */
-export async function redeemPromo(code: string): Promise<void> {
-  if (!supabaseAdminConfigured() || !code) return;
-  const db = createSupabaseAdminClient();
-  const { data: promo } = await db
-    .from('promo_codes')
-    .select('id, redeemed_count')
-    .eq('code', code.toUpperCase())
-    .maybeSingle();
-  if (!promo) return;
-  await db
-    .from('promo_codes')
-    .update({ redeemed_count: promo.redeemed_count + 1 })
-    .eq('id', promo.id);
-}
-
 /* -------------------------------- admin ---------------------------------- */
 
 export async function listPromosAction(): Promise<PromoCode[]> {

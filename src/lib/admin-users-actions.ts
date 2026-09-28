@@ -77,12 +77,12 @@ function errorMessage(err: unknown): string {
 
 /**
  * Create an account for a new user and email them a branded welcome message
- * with a temporary password. Works for every role: member, doctor, pharmacy,
- * admin. The account is created already email-confirmed, so the person can
- * sign in immediately and change the password from Account settings.
+ * with a one-time link to set their own password. Works for every role:
+ * member, doctor, pharmacy, admin. The account is created already
+ * email-confirmed; the random password it is created with is never emailed.
  *
- * If email delivery is not configured yet, the account is still created and
- * the temporary password is returned so the admin can relay it by hand.
+ * If the email cannot go out, the account is still created and that random
+ * password is returned so the admin can relay it by hand, as before.
  */
 export async function adminCreateUser(input: {
   email: string;
@@ -131,24 +131,28 @@ export async function adminCreateUser(input: {
       };
     }
 
-    // Branded welcome email carrying the temporary password.
-    const tpl = welcomeEmail({
-      fullName,
-      email,
-      tempPassword: password,
-      role: input.role,
-      loginUrl: `${SITE_URL}/login`,
-    });
-    const mail = await sendEmail({
-      to: email,
-      subject: tpl.subject,
-      html: tpl.html,
-    });
+    // Branded welcome email with a set-your-password link — the same recovery
+    // link adminSendPasswordEmail sends, through our own /auth/confirm route.
+    const { data: link } = await db.auth.admin.generateLink({ type: 'recovery', email });
+    const tokenHash = link?.properties?.hashed_token;
+    const mail = tokenHash
+      ? await sendEmail({
+          to: email,
+          ...welcomeEmail({
+            fullName,
+            email,
+            role: input.role,
+            setPasswordUrl: `${SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(
+              tokenHash,
+            )}&type=recovery&next=/auth/reset`,
+          }),
+        })
+      : { ok: false };
 
     if (mail.ok) {
       return {
         ok: true,
-        message: `${ROLE_LABEL[input.role]} account created. A welcome email with sign-in details was sent to ${email}.`,
+        message: `${ROLE_LABEL[input.role]} account created. A welcome email with a link to set their password was sent to ${email}.`,
         userId,
       };
     }

@@ -118,7 +118,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   try {
     await sendEmail({
       to: SUPPORT_EMAIL,
-      subject: `New order for review — ${memberName} · ${orderRef(order.order_number)}`,
+      subject: `New order for review — ${orderRef(order.order_number)}`,
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order`,
@@ -170,7 +170,8 @@ async function notifyDoctor(
       try {
         await sendSms(
           doc.phone,
-          `Eternal Longevity: a visit is ready for review — ${memberName}, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
+          // No patient name: SMS is not covered by a BAA.
+          `Eternal Longevity: a visit is ready for review, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
         );
       } catch {
         // Same: best effort.

@@ -28,14 +28,14 @@ export default async function ForgotPasswordPage({
   if (!supabaseConfigured) {
     return (
       <AuthShell eyebrow="Account" title="Reset your password.">
-        <div className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
-          <p className="text-[15px] leading-relaxed text-black/70">
+        <div className="space-y-4 rounded-shell bg-milk p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-ink-soft">
             Password reset turns on once the backend is connected. Until then,
             the portal uses demo logins — no password needed.
           </p>
           <Link
             href="/login"
-            className="block w-full rounded-full bg-black px-5 py-3.5 text-center font-mono text-[14px] text-white transition-colors hover:bg-black/85"
+            className="block w-full rounded-full bg-ink px-5 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-ink/85"
           >
             Back to login →
           </Link>
@@ -65,21 +65,21 @@ export default async function ForgotPasswordPage({
         </div>
       )}
       {sent === '1' ? (
-        <div role="status" className="space-y-4 rounded-[4px] bg-[#F2F2F0] p-6 md:p-8">
-          <p className="text-[15px] leading-relaxed text-black">
+        <div role="status" className="space-y-4 rounded-shell bg-milk p-6 md:p-8">
+          <p className="text-[15px] leading-relaxed text-ink">
             If an account exists for that email, a password-reset link is on its
             way. Check your inbox.
           </p>
           <Link
             href="/login"
-            className={`inline-block font-mono text-[13px] ${authLinkClass}`}
+            className={`inline-block text-[14px] ${authLinkClass}`}
           >
             Back to login →
           </Link>
         </div>
       ) : (
         <form action={requestPasswordResetAction} className="space-y-6">
-          <p className="text-[15px] leading-relaxed text-black/70">
+          <p className="text-[15px] leading-relaxed text-ink-soft">
             Enter your account email and we&apos;ll send a link to set a new
             password.
           </p>

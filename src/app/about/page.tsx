@@ -3,22 +3,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
-import { Physician } from '@/components/sections/Physician';
+import { ArrowDot, Aura, GLASS, GLASS_DARK, PhysicianCard } from '@/components/home/HomeSections';
+import { pageMeta } from '@/lib/seo';
 import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SERVICE_AREA, SERVICE_AREA_SHORT } from '@/lib/site';
+import { cn } from '@/lib/utils';
+import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 
-export const metadata: Metadata = {
-  title: 'About',
-  description:
-    'Why Eternal Longevity exists, who built it, and the principles behind every protocol we ship.',
-};
-
-const H1 = { fontSize: 'clamp(2.4rem, 3.4vw + 1rem, 4.5rem)', fontStretch: '75%', lineHeight: 1 } as const;
-const H2 = { fontSize: 'clamp(2rem, 3vw + 1rem, 3.75rem)', fontStretch: '75%', lineHeight: 1 } as const;
-const H3 = { fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 } as const;
+export const metadata: Metadata = pageMeta(
+  '/about',
+  'About',
+  'Why Eternal Longevity exists, who built it, and the principles behind every treatment we prescribe.',
+);
 
 const NUMBERS = [
-  { stat: '1', label: 'Prescriber, who signs every order' },
-  { stat: '4', label: 'States we serve: NJ, NY, PA and MI' },
+  { stat: '1', label: 'Prescriber, who makes every prescription decision' },
+  { stat: String(SERVICEABLE_STATES.length), label: `States we serve: ${SERVICE_AREA_SHORT}` },
   { stat: '503A', label: 'Licensed compounding pharmacy' },
   { stat: '18+', label: 'Minimum age to order' },
 ];
@@ -34,7 +33,7 @@ const VALUES = [
   },
   {
     title: 'Formulation is the product',
-    body: "Every preparation is compounded by a licensed 503A pharmacy against a prescription written for one person, and released against a certificate of analysis for purity and potency. That testing is the pharmacy's own; we share your lot's certificate on request.",
+    body: "Every preparation is compounded by a licensed 503A pharmacy against a prescription written for one person. Each batch is tested by the pharmacy as required for its preparation type; we share your lot's certificate of analysis on request.",
   },
   {
     title: 'Long horizon, slow medicine',
@@ -45,72 +44,73 @@ const VALUES = [
 const RECORD = [
   { k: 'Business', v: `${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}` },
   { k: 'Prescriber of record', v: `Dr. Bader Elder, DO · licensed in ${SERVICE_AREA_SHORT}` },
-  { k: 'Pharmacy', v: 'A U.S.-licensed 503A compounding pharmacy, under state board oversight' },
+  { k: 'Pharmacy', v: 'MedShiftRx, a state-licensed 503A compounding pharmacy' },
   { k: 'Who we serve', v: `${SERVICE_AREA} residents, 18 and older` },
   { k: 'Prescription', v: 'Required. You are charged only if the physician approves.' },
 ];
 
-const link =
-  'font-mono text-[13px] underline underline-offset-[3px] decoration-black/50 transition-colors hover:decoration-black';
+const H2 = 'text-[36px] font-semibold leading-[1] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]';
+const link = 'text-[14px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
 
 export default function AboutPage() {
   return (
     <>
       <Header categoryStrip />
-      <main>
-        {/* Hero. Top padding clears the fixed header + product strip (126 / 134px). */}
-        <section className="bg-white px-5 pb-16 pt-[158px] text-black md:px-8 md:pb-24 md:pt-[182px]">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16">
-              <div>
-                <h1 className="font-display font-normal [text-wrap:balance]" style={H1}>
-                  Peptides deserved a better front door.
-                </h1>
-                <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-black/70">
-                  Not gray-market vials shipped from somewhere unmarked. Not a wellness brand with a checkout button. A
-                  physician who reads every intake, and a licensed 503A pharmacy behind every order.
-                </p>
-                <Link
-                  href="/start"
-                  className="mt-8 inline-block rounded-full bg-black px-4 py-2.5 font-mono text-[13px] text-white transition-colors hover:bg-black/85"
-                >
-                  Start your assessment
-                </Link>
-              </div>
-
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[4px] bg-neutral-200 lg:aspect-[3/4]">
-                <Image
-                  src="/images/10.jpg"
-                  alt="Peptide vial detail"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 90vw, 40vw"
-                  className="object-cover"
-                />
-              </div>
+      <main className="bg-white">
+        {/* Hero */}
+        <section className="px-5 pb-12 pt-44 md:px-10 md:pb-16 md:pt-52">
+          <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)] lg:gap-16">
+            <div className="lg:pb-6">
+              <h1 className="text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[80px]">
+                Peptides deserved a better front door.
+              </h1>
+              <p className="mt-6 max-w-[560px] text-[16px] leading-relaxed text-ink-soft md:text-[18px]">
+                Not gray-market vials shipped from somewhere unmarked. Not a wellness brand with a checkout button. Every
+                prescription decision is made by Dr. Elder, and a licensed 503A pharmacy is behind every order.
+              </p>
+              <Link
+                href="/start"
+                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
+              >
+                Start your assessment
+                <ArrowDot className="bg-ink text-white ring-0" />
+              </Link>
             </div>
 
-            <ul className="mt-14 grid grid-cols-2 gap-x-6 md:mt-20 md:grid-cols-4">
-              {NUMBERS.map((n) => (
-                <li key={n.label} className="border-t border-black/15 pb-6 pt-5">
-                  <p className="font-display" style={{ ...H2, fontSize: 'clamp(2rem, 2vw + 1rem, 3rem)' }}>
-                    {n.stat}
-                  </p>
-                  <p className="mt-2 text-[15px] leading-snug text-black/70">{n.label}</p>
-                </li>
-              ))}
-            </ul>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-shell bg-milk lg:aspect-[5/6]">
+              <Image
+                src="/brand/hero-home.jpg"
+                alt="Eternal Longevity vials on a kitchen counter, for illustration"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-[35%_center]"
+              />
+              <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[11px] font-medium text-ink/70 backdrop-blur-md">
+                Image for illustration
+              </span>
+            </div>
           </div>
         </section>
 
+        {/* Numbers */}
+        <section className="px-5 pb-16 md:px-10 md:pb-24">
+          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+            {NUMBERS.map((n) => (
+              <li key={n.label} className="flex min-h-[170px] flex-col justify-between gap-6 rounded-shell bg-milk p-6 md:min-h-[210px] md:p-8">
+                <p className="text-[44px] font-semibold leading-none tracking-[-0.05em] text-ink md:text-[64px]">{n.stat}</p>
+                <p className="text-[14px] leading-snug text-ink-soft md:text-[15px]">{n.label}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* Thesis */}
-        <section className="bg-black px-5 py-16 text-white md:px-8 md:py-24">
-          <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
-            <div>
-              <h2 className="font-display font-normal [text-wrap:balance]" style={H2}>
-                The middle was missing.
-              </h2>
-              <div className="mt-6 max-w-xl space-y-4 text-[16px] leading-relaxed text-white/70">
+        <section className="px-3 md:px-5">
+          <div className="grid items-center gap-8 rounded-shell bg-milk p-3 md:p-4 lg:grid-cols-2 lg:gap-12">
+            <div className="px-3 pb-2 pt-8 md:px-8 md:py-12">
+              <h2 className={H2}>The middle was missing.</h2>
+              <div className="mt-6 max-w-[560px] space-y-4 text-[16px] leading-relaxed text-ink-soft">
                 <p>
                   Look at the peptide landscape and you find two extremes. On one side, clinics priced for people with a
                   private banker.
@@ -126,9 +126,9 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[4px] bg-neutral-800 lg:aspect-[5/6]">
-              <Image src="/images/13.jpg" alt="Compound in solution" fill sizes="(max-width: 1024px) 90vw, 45vw" className="object-cover" />
-              <p className="absolute inset-x-4 bottom-4 rounded-[2px] bg-black/70 px-4 py-3.5 text-[15px] leading-relaxed text-white ring-1 ring-white/10 backdrop-blur-xl md:inset-x-5 md:bottom-5">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-shell bg-milk-deep lg:aspect-[5/6]">
+              <Image src="/brand/life-telehealth.jpg" alt="" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              <p className={cn('absolute inset-x-4 bottom-4 rounded-inner px-5 py-4 text-[15px] leading-relaxed md:inset-x-5 md:bottom-5', GLASS_DARK)}>
                 A licensed pharmacy and a physician who puts his name on every prescription. That&rsquo;s the whole point.
               </p>
             </div>
@@ -136,46 +136,44 @@ export default function AboutPage() {
         </section>
 
         {/* Principles */}
-        <section className="bg-[#F2F2F0] px-5 py-16 text-black md:px-8 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <h2 className="mb-10 font-display font-normal [text-wrap:balance] md:mb-14" style={H2}>
-              What we will and won&rsquo;t do.
-            </h2>
-            <div className="grid gap-x-12 md:grid-cols-2">
+        <section className="relative overflow-hidden px-5 py-16 md:px-10 md:py-24">
+          <Aura mix="dusk" className="opacity-70" />
+          <div className="relative">
+            <h2 className={cn(H2, 'mb-10 md:mb-14')}>What we will and won&rsquo;t do.</h2>
+            <div className="grid gap-3 md:grid-cols-2 md:gap-5">
               {VALUES.map((v) => (
-                <div key={v.title} className="border-t border-black/15 pb-10 pt-5">
-                  <h3 className="font-display font-normal [text-wrap:balance]" style={H3}>
-                    {v.title}
-                  </h3>
-                  <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-black/70">{v.body}</p>
+                <div key={v.title} className={cn('rounded-shell p-6 md:p-8', GLASS)}>
+                  <h3 className="text-[22px] font-semibold tracking-[-0.03em] text-ink [text-wrap:balance] md:text-[26px]">{v.title}</h3>
+                  <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-ink-soft">{v.body}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <Physician />
+        <PhysicianCard />
 
         {/* Time horizon */}
-        <section className="bg-black px-5 py-16 text-white md:px-8 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <p
-              className="max-w-5xl font-display [text-wrap:balance]"
-              style={{ fontSize: 'clamp(1.6rem, 2vw + 1rem, 3rem)', fontStretch: '75%', lineHeight: 1.1 }}
-            >
-              We build for the next twenty years, not the next twenty weeks. That shift in time horizon changes every
-              decision: how we dose, how we measure, how we say no.
-            </p>
+        <section className="px-3 md:px-5">
+          <div className="relative overflow-hidden rounded-shell bg-butter-soft px-6 py-14 md:px-12 md:py-24">
+            <Aura mix="bloom" className="opacity-70" />
+            <blockquote className="relative max-w-[1100px]">
+              <span aria-hidden className="block text-[80px] font-semibold leading-[0.6] tracking-[-0.05em] text-ink/15 md:text-[120px]">
+                &ldquo;
+              </span>
+              <p className="mt-2 text-[28px] font-semibold leading-[1.1] tracking-[-0.04em] text-ink [text-wrap:balance] md:text-[48px]">
+                We build for the next twenty years, not the next twenty weeks. That shift in time horizon changes every
+                decision: how we dose, how we measure, how we say no.
+              </p>
+            </blockquote>
           </div>
         </section>
 
         {/* For the record */}
-        <section className="bg-[#F2F2F0] px-5 py-16 text-black md:px-8 md:py-24">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
+        <section className="px-3 py-16 md:px-5 md:py-24">
+          <div className="grid gap-10 rounded-shell bg-milk px-5 py-10 md:px-10 md:py-16 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div>
-              <h2 className="font-display font-normal [text-wrap:balance]" style={H2}>
-                For the record.
-              </h2>
+              <h2 className={H2}>For the record.</h2>
               <div className="mt-6 flex flex-col items-start gap-3">
                 <Link href="/compliance" className={link}>
                   How we operate
@@ -185,11 +183,11 @@ export default function AboutPage() {
                 </Link>
               </div>
             </div>
-            <dl className="border-t border-black/15">
+            <dl className="border-t border-ink/10">
               {RECORD.map((r) => (
-                <div key={r.k} className="grid gap-1 border-b border-black/15 py-5 md:grid-cols-[minmax(0,2fr)_minmax(0,5fr)] md:gap-6">
-                  <dt className="font-mono text-[13px] text-black/55">{r.k}</dt>
-                  <dd className="text-[16px] leading-relaxed">{r.v}</dd>
+                <div key={r.k} className="grid gap-1 border-b border-ink/10 py-5 md:grid-cols-[minmax(0,2fr)_minmax(0,5fr)] md:gap-6">
+                  <dt className="text-[13px] font-medium text-ink/55 md:pt-0.5">{r.k}</dt>
+                  <dd className="text-[16px] leading-relaxed text-ink">{r.v}</dd>
                 </div>
               ))}
             </dl>
@@ -197,29 +195,29 @@ export default function AboutPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-white px-5 py-16 text-black md:px-8 md:py-24">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 rounded-[4px] bg-black px-6 py-10 text-white md:flex-row md:items-end md:justify-between md:px-10 md:py-14">
-            <div>
-              <h2 className="max-w-2xl font-display font-normal [text-wrap:balance]" style={H2}>
-                If our standards match yours, start your assessment.
-              </h2>
-              <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-white/70">
-                About three minutes. Answer a few questions, and a physician decides whether to prescribe. If he
-                doesn&rsquo;t, you aren&rsquo;t charged. Prescription required. {SERVICE_AREA} residents, 18+.
-              </p>
+        <section className="px-3 pb-3 md:px-5 md:pb-5">
+          <div className="relative overflow-hidden rounded-shell bg-milk px-5 py-10 md:px-12 md:py-16">
+            <Aura mix="sunrise" />
+            <div className={cn('relative flex flex-col gap-6 rounded-shell p-6 md:flex-row md:items-end md:justify-between md:p-10', GLASS)}>
+              <div>
+                <h2 className={cn(H2, 'max-w-[760px]')}>If our standards match yours, start your assessment.</h2>
+                <p className="mt-4 max-w-[560px] text-[15px] leading-relaxed text-ink-soft">
+                  About three minutes. Answer a few questions, and a physician decides whether to prescribe. If he
+                  doesn&rsquo;t, you aren&rsquo;t charged. Prescription required. {SERVICE_AREA} residents, 18+.
+                </p>
+              </div>
+              <Link
+                href="/start"
+                className="group flex w-fit shrink-0 items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
+              >
+                Start your assessment
+                <ArrowDot className="bg-ink text-white ring-0" />
+              </Link>
             </div>
-            <Link
-              href="/start"
-              className="shrink-0 self-start rounded-full bg-white px-4 py-2.5 font-mono text-[13px] text-black transition-colors hover:bg-white/85 md:self-auto"
-            >
-              Start your assessment
-            </Link>
           </div>
         </section>
       </main>
-      <div className="bg-white">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

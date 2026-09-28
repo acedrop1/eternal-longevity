@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { LegalNav } from '@/components/legal/LegalNav';
+import { ArrowDot } from '@/components/home/HomeSections';
 
 export interface LegalSection {
   /** Section heading; also slugified into the section's anchor id */
@@ -23,7 +24,7 @@ export interface LegalLayoutProps {
   related?: { label: string; href: string }[];
 }
 
-const link = 'underline decoration-black/40 underline-offset-[3px] transition-colors hover:decoration-black';
+const link = 'underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
 
 /**
  * Shared wrapper for /legal/* pages: white editorial article at a reading
@@ -41,43 +42,41 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
   return (
     <>
       <Header categoryStrip />
-      <main>
-        {/* Top padding clears the fixed header + product strip (126 / 134px). */}
-        <section className="bg-white px-5 pb-16 pt-[158px] text-black md:px-8 md:pb-24 md:pt-[182px]">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-16">
+      <main className="bg-white">
+        {/* Top padding clears the fixed header + product strip. */}
+        <section className="px-5 pb-16 pt-44 text-ink md:px-10 md:pb-24 md:pt-52">
+          <div className="grid gap-10 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-16 xl:gap-24">
             <aside className="hidden lg:block lg:sticky lg:top-[166px] lg:self-start">
               <LegalNav />
             </aside>
 
             <article className="min-w-0 break-words">
-              <header className="max-w-[68ch] border-b border-black/15 pb-10 md:pb-12">
-                <h1
-                  className="font-display font-normal [text-wrap:balance]"
-                  style={{ fontSize: 'clamp(2.4rem, 3.4vw + 1rem, 4.5rem)', fontStretch: '75%', lineHeight: 1 }}
-                >
+              <header className="max-w-[68ch] pb-10 md:pb-12">
+                <h1 className="text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[80px]">
                   {title}
                 </h1>
-                <p className="mt-5 font-mono text-[13px] text-black/55">Effective {effective}</p>
-                <p className="mt-6 text-[18px] leading-[1.6] text-black/70">{lead}</p>
+                <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-milk px-3.5 py-1.5 text-[13px] font-medium text-ink/70">
+                  <span aria-hidden className="h-2 w-2 rounded-full bg-butter-deep" />
+                  Effective {effective}
+                </p>
+                <p className="mt-6 text-[18px] leading-[1.6] text-ink-soft md:text-[20px]">{lead}</p>
               </header>
 
-              <div className="max-w-[68ch]">
+              <div className="max-w-[68ch] border-t border-ink/10">
                 {sections.map((s) => (
-                  <section key={s.heading} id={slug(s.heading)} className="scroll-mt-[170px] pt-10 md:pt-12">
-                    <h2
-                      className="font-display font-normal [text-wrap:balance]"
-                      style={{ fontSize: '1.9rem', fontStretch: '75%', lineHeight: 1.05 }}
-                    >
+                  <section key={s.heading} id={slug(s.heading)} className="scroll-mt-[170px] pt-10 md:pt-14">
+                    <h2 className="text-[26px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink [text-wrap:balance] md:text-[30px]">
                       {s.heading}
                     </h2>
-                    <div className="mt-4 space-y-4 text-[16px] leading-[1.7] text-black/80">
+                    <div className="mt-4 space-y-4 text-[16px] leading-[1.75] text-ink/80">
                       {s.paragraphs.map((p, j) => (
                         <p key={j}>{p}</p>
                       ))}
                       {s.bullets && s.bullets.length > 0 && (
-                        <ul className="list-disc space-y-2 pl-5 marker:text-black/35">
+                        <ul className="space-y-2.5">
                           {s.bullets.map((b, j) => (
-                            <li key={j} className="pl-1">
+                            <li key={j} className="relative pl-6">
+                              <span aria-hidden className="absolute left-1 top-[0.72em] h-2 w-2 rounded-full bg-butter-deep" />
                               {b}
                             </li>
                           ))}
@@ -89,19 +88,17 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
               </div>
 
               {related.length > 0 && (
-                <div className="mt-14 max-w-[68ch] rounded-[4px] bg-[#F2F2F0] p-5 md:p-6">
-                  <h2 className="font-mono text-[13px] text-black/55">Related documents</h2>
-                  <ul className="mt-3 border-t border-black/15">
+                <div className="mt-16 max-w-[68ch] rounded-shell bg-milk p-3 md:p-4">
+                  <h2 className="px-3 pb-2 pt-2 text-[13px] font-medium text-ink/55">Related documents</h2>
+                  <ul className="space-y-1">
                     {related.map((r) => (
-                      <li key={r.href} className="border-b border-black/15">
+                      <li key={r.href}>
                         <Link
                           href={r.href}
-                          className="group flex items-center justify-between gap-4 py-3.5 text-[15px] text-black/80 transition-colors hover:text-black"
+                          className="group flex min-h-[44px] items-center justify-between gap-4 rounded-inner px-3 py-3 text-[15px] font-semibold text-ink transition-colors hover:bg-white"
                         >
                           <span>{r.label}</span>
-                          <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
-                            →
-                          </span>
+                          <ArrowDot className="h-7 w-7 bg-white ring-0 group-hover:bg-butter" />
                         </Link>
                       </li>
                     ))}
@@ -109,9 +106,9 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
                 </div>
               )}
 
-              <p className="mt-10 max-w-[68ch] text-[13px] leading-relaxed text-black/55">
+              <p className="mt-10 max-w-[68ch] text-[13px] leading-relaxed text-ink/55">
                 Questions about this document? Email{' '}
-                <a href="mailto:support@etlongevity.com" className={`text-black ${link}`}>
+                <a href="mailto:support@etlongevity.com" className={`text-ink ${link}`}>
                   support@etlongevity.com
                 </a>
                 . This page is for informational purposes and does not constitute legal advice.
@@ -120,9 +117,7 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
           </div>
         </section>
       </main>
-      <div className="bg-white">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

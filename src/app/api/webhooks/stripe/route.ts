@@ -20,10 +20,15 @@ import {
 import type { Json, SubscriptionStatus } from '@/lib/database.types';
 import {
   emailConfigured,
+  noticeEmail,
   orderConfirmationEmail,
   sendEmail,
+  SUPPORT_EMAIL,
 } from '@/lib/email';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
+import { AWAITING_PAYMENT, TERMINAL_ORDER } from '@/lib/order-rules';
+import { orderRef } from '@/lib/format';
+import { SITE_URL } from '@/lib/site';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -84,42 +89,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
 
   switch (event.type) {
     case 'payment_intent.succeeded': {
-      const pi = event.data.object;
-      await linkIntentToOrder(db, pi);
-      // Burn the pay-link token alongside marking the order paid, so the
-      // emailed link cannot be reused or forwarded after it has been used.
-      await db
-        .from('orders')
-        .update({
-          status: 'paid',
-          paid_confirmed_at: new Date().toISOString(),
-          pay_token: null,
-          pay_token_expires: null,
-        })
-        .eq('stripe_payment_intent_id', pi.id);
-      await addOrderUpdate(
-        db,
-        pi.id,
-        'Payment received',
-        `$${(pi.amount / 100).toFixed(2)} charged to the card on file. Your order is confirmed.`,
-      );
-      await sendOrderConfirmation(db, pi.id);
-
-      /*
-       * Covers the order that was signed while unpaid and settled later
-       * through the emailed link. autoSubmitToPharmacy is idempotent, so the
-       * normal path — where signing already submitted it — does nothing here.
-       */
-      {
-        const { data: o } = await db
-          .from('orders')
-          .select('order_number, status')
-          .eq('stripe_payment_intent_id', pi.id)
-          .maybeSingle();
-        if (o?.order_number && o.status !== 'pending-admin') {
-          await autoSubmitToPharmacy(o.order_number);
-        }
-      }
+      await recordPayment(db, event.data.object);
       break;
     }
 
@@ -132,20 +102,6 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         'Payment failed',
         'We could not charge your card. Please update your payment method.',
       );
-      break;
-    }
-
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      // The order row is created by the checkout server action; here we just
-      // confirm payment if the session carried our order_number in metadata.
-      const orderNumber = session.metadata?.order_number;
-      if (orderNumber) {
-        await db
-          .from('orders')
-          .update({ status: 'paid' })
-          .eq('order_number', orderNumber);
-      }
       break;
     }
 
@@ -191,6 +147,137 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
+type Db = ReturnType<typeof createSupabaseAdminClient>;
+
+/**
+ * A payment landed. Record it once, move the order forward only, and send it
+ * to the pharmacy — or, if the order was cancelled or already paid by another
+ * intent, give the money straight back.
+ *
+ * Stripe delivers at least once and not in order. Every write below is
+ * conditional on the state it expects, so a redelivered or late event finds
+ * nothing to change and does nothing: no event-id table is needed.
+ */
+async function recordPayment(db: Db, pi: Stripe.PaymentIntent): Promise<void> {
+  const orderId = pi.metadata?.order_id;
+  const orderNumber = pi.metadata?.order_number;
+  if (!orderId && !orderNumber) return; // not an order charge (admin one-off)
+
+  const cols = 'id, order_number, status, paid_confirmed_at, stripe_payment_intent_id';
+  const find = () =>
+    orderId
+      ? db.from('orders').select(cols).eq('id', orderId).maybeSingle()
+      : db.from('orders').select(cols).eq('order_number', orderNumber!).maybeSingle();
+  const { data: order } = await find();
+  if (!order) return;
+
+  const stray =
+    TERMINAL_ORDER.includes(order.status) ||
+    (order.paid_confirmed_at !== null && order.stripe_payment_intent_id !== pi.id);
+  if (stray) return refundStray(db, pi, order);
+
+  /*
+   * Claim the payment. Conditional on not yet being paid and not cancelled in
+   * the meantime; a retry, or a second delivery racing this one, matches no
+   * row and stops here. Burns the pay link too, so it cannot be reused.
+   */
+  const { data: claimed } = await db
+    .from('orders')
+    .update({
+      stripe_payment_intent_id: pi.id,
+      paid_confirmed_at: new Date().toISOString(),
+      pay_token: null,
+      pay_token_expires: null,
+    })
+    .eq('id', order.id)
+    .is('paid_confirmed_at', null)
+    .not('status', 'in', `(${TERMINAL_ORDER.join(',')})`)
+    .select('id');
+  if (!claimed?.length) {
+    // Cancelled between the read and the claim: that money goes back too.
+    const { data: now } = await find();
+    if (now && TERMINAL_ORDER.includes(now.status)) await refundStray(db, pi, now);
+    return;
+  }
+
+  // Forward only: signed → paid. An order already compounding or shipped
+  // keeps its status; this event is just late.
+  if (AWAITING_PAYMENT.includes(order.status)) {
+    await db
+      .from('orders')
+      .update({ status: 'paid' })
+      .eq('id', order.id)
+      .in('status', AWAITING_PAYMENT);
+  }
+
+  await addOrderUpdate(
+    db,
+    pi.id,
+    'Payment received',
+    `$${(pi.amount / 100).toFixed(2)} charged to the card on file. Your order is confirmed.`,
+  );
+  await sendOrderConfirmation(db, pi.id);
+
+  /*
+   * Covers the order that was signed while unpaid and settled later through
+   * the emailed link. autoSubmitToPharmacy is idempotent, so the normal path —
+   * where signing already submitted it — does nothing here. Only a signed
+   * order goes: payment is not a prescription.
+   */
+  if (AWAITING_PAYMENT.includes(order.status) || order.status === 'paid') {
+    await autoSubmitToPharmacy(order.order_number);
+  }
+}
+
+/**
+ * Money on an order that must not take it: cancelled or declined before the
+ * charge settled (an old pay link, a form left open), or a second payment on
+ * an order already paid. Refund in full and tell the team — nothing ships.
+ */
+async function refundStray(
+  db: Db,
+  pi: Stripe.PaymentIntent,
+  order: { id: string; order_number: string; status: string },
+): Promise<void> {
+  const stripe = getStripe();
+  // Already returned (the cancel path, or an earlier delivery): nothing to do.
+  const prior = await stripe.refunds.list({ payment_intent: pi.id, limit: 1 });
+  if (prior.data.length) return;
+  await stripe.refunds.create(
+    { payment_intent: pi.id },
+    { idempotencyKey: `stray-${pi.id}` },
+  );
+
+  const amount = `$${(pi.amount / 100).toFixed(2)}`;
+  await db.from('order_updates').insert({
+    order_id: order.id,
+    label: 'Payment refunded',
+    body: `A payment of ${amount} arrived after this order was closed and was refunded in full. Nothing will ship.`,
+    author: 'System',
+    author_role: 'system',
+  });
+  try {
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `Payment on a closed order was refunded · ${orderRef(order.order_number)}`,
+      html: noticeEmail({
+        eyebrow: 'Refunded',
+        heading: 'A payment landed on a closed order',
+        body: 'It was refunded in full automatically and nothing was sent to the pharmacy. Check the member was told.',
+        rows: [
+          ['Order', orderRef(order.order_number)],
+          ['Status', order.status],
+          ['Amount', amount],
+          ['Payment', pi.id],
+        ],
+        cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin` },
+      }),
+    });
+  } catch {
+    // The refund and the timeline entry stand either way.
+  }
+}
+
 /**
  * A paid refill cycle -> a draft fulfillment order in the admin queue. The
  * admin reviews it, then submits it to the pharmacy.
@@ -207,10 +294,13 @@ async function linkIntentToOrder(
 ): Promise<void> {
   const orderNumber = pi.metadata?.order_number;
   if (!orderNumber) return;
+  // Never over a paid order: a stray failed attempt must not replace the
+  // intent that actually settled it.
   await db
     .from('orders')
     .update({ stripe_payment_intent_id: pi.id })
-    .eq('order_number', orderNumber);
+    .eq('order_number', orderNumber)
+    .is('paid_confirmed_at', null);
 }
 
 async function createRefillDraft(
@@ -306,8 +396,8 @@ async function sendOrderConfirmation(
     await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
 
     /*
-     * Admin and the prescriber hear about it once, as the "place this in
-     * Formula" to-do that autoSubmitToPharmacy sends when the order joins the
+     * Admin and the prescriber hear about it once, as the
+     * "Ready to place" to-do that autoSubmitToPharmacy sends when the order joins the
      * board. A separate "payment cleared" note on top of that was noise.
      */
   } catch (err) {

@@ -33,7 +33,7 @@ const BLANK: ProductInput = {
   whatsIncluded: [],
   sideEffects: [],
   contraindications: [],
-  pricing: { monthly: 199, quarterly: 540, annual: 1910 },
+  pricing: { monthly: 199, quarterly: 540, sixMonth: 1020, annual: 2040 },
   image: '',
   popular: false,
   fdaApproved: false,
@@ -74,12 +74,12 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 font-mono text-[13px] text-black/55">
-        <Link href="/portal/admin/products" className="transition-colors hover:text-black">
+      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-[13px] text-ink/55">
+        <Link href="/portal/admin/products" className="transition-colors hover:text-ink">
           Products
         </Link>
         <span aria-hidden>/</span>
-        <span className="text-black/85">{initial.isNew ? 'New product' : initial.name}</span>
+        <span className="text-ink/85">{initial.isNew ? 'New product' : initial.name}</span>
       </nav>
       <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} />
     </PortalShell>

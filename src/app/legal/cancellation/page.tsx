@@ -22,14 +22,14 @@ export default function CancellationPage() {
         {
           heading: `How to Cancel a Subscription`,
           paragraphs: [
-            `Open the Subscriptions page in your member portal and cancel there. It takes effect immediately and stops all future charges. You can also email ${SUPPORT_EMAIL} from the address on your account and we will cancel it for you within one business day.`,
+            `Open Portal › Subscriptions and cancel there. It takes effect immediately and stops all future charges. You can also pause or change your plan there. You can also email ${SUPPORT_EMAIL} from the address on your account and we will cancel it for you within one business day.`,
             `We do not require a phone call, a reason, or notice. There is no cancellation fee and no minimum commitment.`,
           ],
         },
         {
           heading: `When It Takes Effect`,
           paragraphs: [
-            `Cancelling stops future cycles. It does not reverse a cycle that has already been billed and shipped, because a compounded preparation cannot be re-dispensed once it leaves the pharmacy.`,
+            `Cancelling stops future renewals. It does not reverse a cycle that has already been billed and shipped, because a compounded preparation cannot be re-dispensed once it leaves the pharmacy.`,
             `If you cancel after a renewal has been billed but before the pharmacy has shipped it, you get a full refund of that renewal.`,
           ],
         },
@@ -37,7 +37,7 @@ export default function CancellationPage() {
           heading: `Cancelling an Order Before Approval`,
           paragraphs: [
             `An order awaiting prescriber review can be cancelled at any time from your order page, at no cost — nothing has been charged yet.`,
-            `An order your prescriber has approved but that you have not paid for can simply be left unpaid. The payment link expires after seven days and nothing is charged.`,
+            `Your saved card is charged when the prescriber approves. If that charge fails and we email you a payment link instead, you can leave it unpaid: the link expires after seven days and nothing is charged.`,
           ],
         },
         {

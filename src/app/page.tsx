@@ -1,39 +1,42 @@
+import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
+import { SITE_DESCRIPTION } from '@/lib/site';
 import { Header } from '@/components/nav/Header';
-import { Hero } from '@/components/sections/Hero';
-import { IntroPanel } from '@/components/sections/IntroPanel';
-import { ProductRail } from '@/components/sections/ProductRail';
-import { Process } from '@/components/sections/Process';
-import { Physician } from '@/components/sections/Physician';
-import { PriceChart } from '@/components/sections/PriceChart';
-import { Reviews } from '@/components/sections/Reviews';
-import { HomeFAQ } from '@/components/sections/HomeFAQ';
 import { Footer } from '@/components/sections/Footer';
+import {
+  Beliefs,
+  BestSellers,
+  Campaign,
+  ClosingBand,
+  HomeFAQ,
+  HomeHero,
+  HowItWorks,
+  PhysicianCard,
+  ShopByGoal,
+  Ticker,
+  TrustRow,
+} from '@/components/home/HomeSections';
+
+export const metadata: Metadata = pageMeta('/', null, SITE_DESCRIPTION);
 
 export default function Home() {
   return (
     <>
-      <Header categoryStrip />
-      <main>
-        {/* Sticky-Hero scope: the video stays pinned while the rounded
-            IntroPanel card and then the best sellers slide up over it. The
-            card alone is shorter than a screen, so the rail sits in the same
-            scope to finish covering the video before the Hero releases. */}
-        <div className="relative">
-          <Hero />
-          <IntroPanel />
-          <div className="relative z-10">
-            <ProductRail />
-          </div>
-        </div>
-        <Process />
-        <Physician />
-        <PriceChart />
-        <Reviews />           {/* local preview only: renders nothing in production */}
+      <Header overlay categoryStrip />
+      <main className="bg-white">
+        <HomeHero />
+        <TrustRow />
+        <Ticker />
+        <BestSellers />
+        <ShopByGoal />
+        <Beliefs />
+        <Campaign />
+        <HowItWorks />
+        <PhysicianCard />
         <HomeFAQ />
+        <ClosingBand />
       </main>
-      <div className="bg-white">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

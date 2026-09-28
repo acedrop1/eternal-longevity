@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { OnboardingStep } from '@/lib/onboarding';
-import { btnPrimary } from '@/components/portal/ui';
+import { btnCta } from '@/components/portal/ui';
 
 /**
  * What a member still owes before a prescriber can review them.
@@ -17,22 +17,19 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
   const currentKey = steps.find((s) => !s.done)?.key;
 
   return (
-    <section className="overflow-hidden rounded-[4px] bg-[#F2F2F0]">
+    <section className="overflow-hidden rounded-shell bg-milk">
       <div className="flex items-center justify-between gap-4 px-5 pb-4 pt-5 md:px-6">
-        <h2
-          className="font-display font-normal text-black"
-          style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
-        >
+        <h2 className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]">
           Before a prescriber can review you
         </h2>
-        <p className="flex-none font-mono text-[13px] text-black/55 tabular-nums">
+        <p className="flex-none text-[13px] font-medium text-ink/55 tabular-nums">
           {done} / {steps.length}
         </p>
       </div>
 
       {/* Progress. One bar reads faster than counting ticks. */}
       <div
-        className="mx-5 mb-2 h-[3px] bg-black/10 md:mx-6"
+        className="mx-5 mb-2 h-1.5 overflow-hidden rounded-full bg-ink/10 md:mx-6"
         role="progressbar"
         aria-label="Steps complete"
         aria-valuemin={0}
@@ -40,7 +37,7 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
         aria-valuenow={done}
       >
         <div
-          className="h-full bg-[#D5A850]"
+          className="h-full rounded-full bg-butter-deep"
           style={{ width: `${(done / steps.length) * 100}%` }}
         />
       </div>
@@ -54,22 +51,22 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
               aria-current={current ? 'step' : undefined}
               className={
                 current
-                  ? 'm-1 rounded-[2px] bg-white px-4 py-4 ring-1 ring-black/10'
+                  ? 'm-1 rounded-inner bg-white px-4 py-4 ring-1 ring-ink/5'
                   : 'mx-1 flex items-center gap-3 px-4 py-2.5'
               }
             >
               {current ? (
                 <>
-                  <p className="text-[16px] font-medium text-black">
+                  <p className="text-[16px] font-medium text-ink">
                     {step.title}
                   </p>
                   <ul className="mt-2 space-y-1">
                     {step.collects.map((c) => (
                       <li
                         key={c}
-                        className="flex gap-2 text-[14px] leading-relaxed text-black/65"
+                        className="flex gap-2 text-[14px] leading-relaxed text-ink/65"
                       >
-                        <span aria-hidden className="flex-none text-black/30">
+                        <span aria-hidden className="flex-none text-ink/30">
                           ·
                         </span>
                         {c}
@@ -77,7 +74,7 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
                     ))}
                   </ul>
                   {step.href && (
-                    <Link href={step.href} className={`${btnPrimary} mt-4`}>
+                    <Link href={step.href} className={`${btnCta} mt-4`}>
                       {step.action ?? 'Continue'} →
                     </Link>
                   )}
@@ -96,19 +93,19 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
                       strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="flex-none text-[#A8843A]"
+                      className="flex-none text-emerald-600"
                     >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ) : (
                     <span
                       aria-hidden
-                      className="mx-[3px] h-1.5 w-1.5 flex-none rounded-full bg-black/25"
+                      className="mx-[3px] h-1.5 w-1.5 flex-none rounded-full bg-ink/25"
                     />
                   )}
                   <span
                     className={`min-w-0 truncate text-[15px] ${
-                      step.done ? 'text-black/45 line-through' : 'text-black/65'
+                      step.done ? 'text-ink/45 line-through' : 'text-ink/65'
                     }`}
                   >
                     {step.title}

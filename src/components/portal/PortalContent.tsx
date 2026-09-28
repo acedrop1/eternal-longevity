@@ -16,7 +16,7 @@ export function PortalContent({ children }: { children: React.ReactNode }) {
   return (
     <div
       key={pathname}
-      className="anim-route portal-stack px-4 py-8 md:px-6 md:py-10 lg:px-8"
+      className="anim-route portal-stack px-2 py-8 md:px-2 md:py-6 lg:px-4"
     >
       {children}
     </div>

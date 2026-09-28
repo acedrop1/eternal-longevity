@@ -36,7 +36,8 @@ interface OrdersAPI {
   /** Finished cases (delivered / declined-clinical). */
   recentClinicalCases: (limit?: number) => Order[];
   pendingAdminOrders: () => Order[];
-  placeOrder: (order: Omit<Order, 'id' | 'placedAt' | 'status'>) => Order;
+  /** Live: resolves once the server has accepted (priced, geofenced, intake-checked) the order. */
+  placeOrder: (order: Omit<Order, 'id' | 'placedAt' | 'status'>) => Promise<{ ok: boolean; error?: string }>;
   /** Admin approves an order, releasing it to the physician for sign-off. */
   approve: (id: string, note?: string) => void;
   denyAdmin: (
@@ -195,28 +196,33 @@ export function OrdersProvider({
   );
 
   const placeOrder = useCallback<OrdersAPI['placeOrder']>(
-    (draft) => {
+    async (draft) => {
       const order: Order = {
         ...draft,
         id: `ord-${Math.random().toString(36).slice(2, 8)}`,
         placedAt: Date.now(),
         status: 'pending-admin' as OrderStatus,
       };
-      setOrders((curr) => [order, ...curr]);
-      sync(() =>
-        placeOrderAction({
+      if (!live) {
+        setOrders((curr) => [order, ...curr]);
+        return { ok: true };
+      }
+      try {
+        const res = await placeOrderAction({
           lines: draft.lines,
           subtotal: draft.subtotal,
           total: draft.total,
           shippingAddress: draft.shippingAddress,
-          cardLast4: draft.cardLast4,
           promoCode: draft.promoCode,
-          authIntentId: draft.authIntentId,
-        }),
-      );
-      return order;
+        });
+        if (res.ok) router.refresh();
+        return res;
+      } catch (err) {
+        console.error('[orders] placeOrder threw:', err);
+        return { ok: false, error: 'network' };
+      }
     },
-    [sync],
+    [live, router],
   );
 
   const approve = useCallback<OrdersAPI['approve']>(

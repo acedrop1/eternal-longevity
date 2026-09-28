@@ -3,8 +3,8 @@
  * subscriptions, separate from the 4 signature protocols. This is what
  * /portal/shop displays.
  *
- * Sold as a subscription (monthly/quarterly/annual) or a one-time purchase:
- *   monthly, quarterly (3 cycles), annual (~4 cycles).
+ * Sold as a subscription (1, 3 or 6-month plans, per the Product & Pricing
+ * Plan) or a one-time purchase.
  */
 
 export type ShopCategory =
@@ -33,7 +33,7 @@ export type DeliveryForm = 'sq' | 'im' | 'oral' | 'nasal' | 'topical';
 export const DELIVERY_LABEL: Record<DeliveryForm, string> = {
   sq: 'Subcutaneous',
   im: 'Intramuscular',
-  oral: 'Oral capsule',
+  oral: 'Oral',
   nasal: 'Nasal spray',
   topical: 'Topical',
 };
@@ -55,13 +55,24 @@ export interface ShopProduct {
   /** What's actually in the box */
   whatsIncluded: string[];
   delivery: DeliveryForm;
+  /**
+   * How it's kept: 'refrigerated' ships cold-chain, 'room' doesn't. Unset
+   * (new admin products, or unsure) reads "Store as directed on the label".
+   */
+  storage?: 'refrigerated' | 'room';
   /** Human-readable cycle, e.g. "12-week cycle" */
   cycleLength: string;
-  /** Per-cycle monthly retail (for the monthly cadence). Quarterly/annual derive lower per-month prices. */
+  /** Whole-dollar totals per billing cycle. Per-month prices derive from these. */
   pricing: {
     monthly: number; // billed monthly
-    quarterly: number; // billed every 3 months (lower per-cycle total)
-    annual: number; // billed once per year (lowest per-cycle)
+    quarterly: number; // billed every 3 months: 3 × the plan's 3-month rate
+    /**
+     * Billed every 6 months: 6 × the plan's 6-month rate. Optional because
+     * admin rows saved before it existed carry no value; without it the
+     * product simply has no 6-month plan.
+     */
+    sixMonth?: number;
+    annual: number; // stored only, never offered to customers (12 × the 6-month rate)
   };
   /** Background swatch gradient for the card hero */
   swatch: string;
@@ -167,7 +178,6 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/9.jpg',
     gallery: ['/images/9.jpg', '/images/11.jpg', '/images/13.jpg', '/images/14.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site redness or swelling',
       'Water retention or mild joint puffiness',
@@ -207,7 +217,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'sq',
     cycleLength: '12-week cycle',
-    pricing: { monthly: 199, quarterly: 540, annual: 1910 },
+    pricing: { monthly: 149, quarterly: 387, sixMonth: 690, annual: 1380 },
     swatch: 'linear-gradient(180deg, #2e5048 0%, #000000 100%)',
     image: '/images/7.jpg',
     gallery: ['/images/7.jpg', '/images/8.jpg', '/images/9.jpg', '/images/13.jpg'],
@@ -367,9 +377,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Libido & Arousal',
     category: 'sexual',
     shortDescription:
-      'A melanocortin-receptor agonist acting centrally rather than vascularly. Used as needed.',
+      'Bremelanotide, a peptide that acts on melanocortin receptors in the brain rather than on blood flow. Used as needed.',
     longDescription:
-      'PT-141 (bremelanotide) works through the central melanocortin system rather than the vascular pathway PDE-5 inhibitors target. Bremelanotide is FDA-approved under the brand name Vyleesi for one specific indication in premenopausal women; what we dispense is a compounded preparation, which is not FDA-approved, and use in men is off-label. Whether it is appropriate for you is a question for your prescriber.',
+      'PT-141 (bremelanotide) is a synthetic peptide that works through the central melanocortin system rather than the vascular pathway PDE-5 inhibitors target. Bremelanotide is FDA-approved for one specific indication in premenopausal women; what we dispense is a compounded preparation, which is not FDA-approved, and use in men is off-label. Whether it is appropriate for you is a question for your prescriber.',
     bestFor: 'Members raising libido concerns with a prescriber.',
     benefits: [
       'Acts on desire pathways, not vascular ones',
@@ -378,14 +388,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Used as-needed, not daily',
     ],
     whatsIncluded: [
-      'A 12-week supply of compounded PT-141 (as-needed dosing)',
+      'Compounded PT-141 for as-needed use, enough to last until your next shipment',
       'Insulin syringes (30G)',
       'Alcohol prep pads',
-      'Protocol check-in at week 6',
+      'Ongoing messaging with your prescriber',
     ],
     delivery: 'sq',
-    cycleLength: 'As-needed dosing · 12-week supply',
-    pricing: { monthly: 199, quarterly: 540, annual: 1910 },
+    cycleLength: 'As-needed dosing',
+    pricing: { monthly: 219, quarterly: 615, sixMonth: 1170, annual: 2340 },
     swatch: 'linear-gradient(180deg, #4a5042 0%, #000000 100%)',
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/9.jpg'],
@@ -481,7 +491,6 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/12.jpg', '/images/10.jpg', '/images/5.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site redness or soreness',
       'Mild nausea in the first week',
@@ -564,7 +573,6 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/10.jpg',
     gallery: ['/images/10.jpg', '/images/8.jpg', '/images/12.jpg', '/images/11.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site redness or soreness',
       'Mild nausea in the first week',
@@ -586,27 +594,26 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'The coenzyme central to mitochondrial energy metabolism. Levels fall with age.',
     longDescription:
       'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and DNA-repair signalling. Tissue levels decline with age, and supplementation is an active research area — although how much subcutaneous dosing raises intracellular NAD+ in humans is still debated. Offered for energy and longevity support in healthy adults.',
-    bestFor: 'Members 40+ building a longevity protocol around energy and recovery.',
+    bestFor: 'Adults discussing energy and healthy ageing with a prescriber.',
     benefits: [
       'Central to mitochondrial energy metabolism',
       'Studied for DNA-repair signalling pathways',
       'Subcutaneous dosing, no infusion appointment',
-      'Commonly run alongside a GH-axis protocol',
+      'Can be prescribed alongside glutathione',
     ],
     whatsIncluded: [
-      '12 weeks of compounded NAD+ (200 mg/mL, 5 mL vial)',
+      'Compounded NAD+ (200 mg/mL, 5 mL vials), enough to last until your next shipment',
       'Reconstitution kit',
       'Insulin syringes + alcohol prep pads',
-      'Protocol check-in at week 6',
+      'Ongoing messaging with your prescriber',
     ],
     delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 249, quarterly: 680, annual: 2390 },
+    cycleLength: 'Schedule set by your prescriber',
+    pricing: { monthly: 149, quarterly: 417, sixMonth: 810, annual: 1620 },
     swatch: 'linear-gradient(180deg, #3d4560 0%, #000000 100%)',
     image: '/images/5.jpg',
     gallery: ['/images/5.jpg', '/images/9.jpg', '/images/14.jpg', '/images/7.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site stinging — common, and dose-rate dependent',
       'Flushing or warmth shortly after dosing',
@@ -664,33 +671,32 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'glutathione',
     name: 'Glutathione',
-    tagline: 'Master Antioxidant',
+    tagline: 'Antioxidant Tripeptide',
     category: 'longevity',
     shortDescription:
       'The tripeptide your cells use to neutralise oxidative stress. Produced naturally, and depleted by age and load.',
     longDescription:
       'Glutathione is a tripeptide of glutamate, cysteine and glycine that every cell produces and uses in redox reactions and phase-II liver conjugation. Levels fall with age, illness, and sustained physical stress. How much injected glutathione raises intracellular levels in humans is still debated, and we make no skin-lightening claim of any kind — that use has drawn FDA warning letters and we do not offer it.',
-    bestFor: 'Members building a longevity protocol around oxidative load and liver support.',
+    bestFor: 'Adults discussing oxidative stress and healthy ageing with a prescriber.',
     benefits: [
-      'Central to the body’s redox and detoxification pathways',
+      'A tripeptide the body uses in its own antioxidant (redox) chemistry',
       'Studied for oxidative-stress markers',
       'Subcutaneous dosing, no infusion appointment',
       'Commonly run alongside NAD+',
     ],
     whatsIncluded: [
-      '12 weeks of compounded Glutathione (200 mg/mL, 5 mL vial)',
+      'Compounded Glutathione (200 mg/mL, 5 mL vials), enough to last until your next shipment',
       'Reconstitution kit',
       'Insulin syringes + alcohol prep pads',
-      'Protocol check-in at week 6',
+      'Ongoing messaging with your prescriber',
     ],
     delivery: 'sq',
-    cycleLength: '12-week cycle',
-    pricing: { monthly: 199, quarterly: 540, annual: 1910 },
+    cycleLength: 'Schedule set by your prescriber',
+    pricing: { monthly: 149, quarterly: 387, sixMonth: 654, annual: 1308 },
     swatch: 'linear-gradient(180deg, #35555c 0%, #000000 100%)',
     image: '/images/9.jpg',
     gallery: ['/images/9.jpg', '/images/5.jpg', '/images/14.jpg', '/images/12.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site stinging or redness',
       'Transient headache',
@@ -898,7 +904,6 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/11.jpg',
     gallery: ['/images/11.jpg', '/images/10.jpg', '/images/8.jpg', '/images/14.jpg'],
     requiresReview: true,
-    popular: true,
     sideEffects: [
       'Injection-site redness, soreness, or a blue-green tint from the copper',
       'Mild nausea in the first week',
@@ -912,6 +917,993 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Known hypersensitivity to any of the four peptides',
     ],
   },
+
+  // Drafts: copy written for Dr. Elder's review; flip to live in Admin → Products after sign-off.
+  // ============ LONGEVITY (drafts) ============
+  {
+    id: 'nad-nasal',
+    name: 'NAD+ Nasal Spray',
+    tagline: 'NAD+ Without the Needle',
+    category: 'longevity',
+    shortDescription:
+      'The same coenzyme as our NAD+ injection, in a nasal spray. No needles and nothing to reconstitute.',
+    longDescription:
+      'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and DNA-repair signalling. Tissue levels decline with age. This compounded nasal spray is an alternative to subcutaneous dosing for members who would rather not inject; how much intranasal NAD+ raises levels in the body is not well established, and human data on this route is limited. NAD+ is not an FDA-approved drug, and compounded preparations are not FDA-approved. Offered for energy and longevity support in healthy adults, not to treat any condition.',
+    bestFor: 'Members who want NAD+ support without injections.',
+    benefits: [
+      'Central to mitochondrial energy metabolism',
+      'Studied for DNA-repair signalling pathways',
+      'Needle-free dosing',
+      'Nothing to reconstitute',
+    ],
+    whatsIncluded: [
+      'One 10 mL bottle of compounded NAD+ Nasal Spray 3000 mg (300 mg/mL)',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'nasal',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 119, quarterly: 315, sixMonth: 534, annual: 1068 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/nad-nasal.jpg',
+    shot: true,
+    gallery: ['/brand/products/nad-nasal.jpg'],
+    requiresReview: true,
+    fdaApproved: false,
+    sideEffects: [
+      'Nasal irritation, stinging or congestion',
+      'Runny nose or sneezing',
+      'Headache',
+      'Flushing or warmth after dosing',
+      'Mild nausea',
+    ],
+    contraindications: [
+      'Pregnancy or breastfeeding',
+      'Active malignancy',
+      'Chronic nasal conditions or recent nasal surgery',
+      'Known hypersensitivity to the preparation',
+    ],
+  },
+  {
+    id: 'mic-b12',
+    name: 'MIC + B12',
+    tagline: 'Vitamin B12 + Lipotropics',
+    category: 'longevity',
+    shortDescription:
+      'Methionine, inositol and choline with vitamin B12, in a single intramuscular injection.',
+    longDescription:
+      'MIC + B12 combines three lipotropic nutrients (methionine, inositol and choline) with cyanocobalamin, a form of vitamin B12. Vitamin B12 is essential for red-blood-cell formation and nerve function, and an injection bypasses absorption in the gut. The combination is a compounded preparation, which is not FDA-approved, and the evidence for the lipotropic components is limited. Offered for energy support in healthy adults, not to treat any deficiency or condition.',
+    bestFor: 'Members looking for energy support who are comfortable with a small injection.',
+    benefits: [
+      'Vitamin B12 is essential for red-blood-cell formation and nerve function',
+      'Injection bypasses absorption in the gut',
+      'Three lipotropic nutrients in the same vial',
+      'Short, simple injection',
+    ],
+    whatsIncluded: [
+      'One 10 mL vial of compounded MIC + B12 injection',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'im',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 89, quarterly: 225, sixMonth: 354, annual: 708 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/mic-b12.jpg',
+    shot: true,
+    gallery: ['/brand/products/mic-b12.jpg'],
+    requiresReview: true,
+    fdaApproved: false,
+    sideEffects: [
+      'Injection-site pain, redness or swelling',
+      'Mild, temporary diarrhea',
+      'Itching or rash',
+      'Headache',
+    ],
+    contraindications: [
+      'Known hypersensitivity to cobalt or vitamin B12',
+      "Leber's disease (hereditary optic nerve atrophy)",
+      'Pregnancy or breastfeeding',
+      'Kidney or liver disease, without prescriber clearance',
+    ],
+  },
+  {
+    id: 'methylene-blue',
+    name: 'Methylene Blue',
+    tagline: 'Focus & Cognitive Support',
+    category: 'cognitive',
+    shortDescription:
+      'Low-dose methylene blue in a daily capsule. Studied for its role in mitochondrial energy production.',
+    longDescription:
+      'Methylene blue has been used in medicine for more than a century. It is FDA-approved as an intravenous injection for one specific indication; what we dispense is a compounded low-dose oral capsule, which is not FDA-approved, and use for focus or cognition is off-label. Laboratory and early human research has studied its role as an electron carrier in mitochondrial energy production. It interacts dangerously with many antidepressants, so tell your prescriber about every medication you take. Offered for cognitive support in healthy adults, not to treat any condition.',
+    bestFor: 'Members exploring focus and cognitive support who are not taking serotonergic medicines.',
+    benefits: [
+      'Studied for mitochondrial electron transport',
+      'Studied for attention and memory measures',
+      'Low-dose daily capsule',
+      'More than a century of medical use',
+    ],
+    whatsIncluded: [
+      '30 capsules of compounded Methylene Blue 25 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 79, quarterly: 216, sixMonth: 414, annual: 828 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/methylene-blue.jpg',
+    shot: true,
+    gallery: ['/brand/products/methylene-blue.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Blue-green urine, and sometimes blue-tinged stool or tongue (expected and temporary)',
+      'Nausea or stomach upset',
+      'Headache',
+      'Dizziness',
+      'Stinging on urination',
+    ],
+    contraindications: [
+      'Taking SSRIs, SNRIs, MAOIs or other serotonergic medicines (risk of serotonin syndrome)',
+      'G6PD deficiency',
+      'Pregnancy or breastfeeding',
+      'Severe kidney impairment',
+      'Known hypersensitivity to methylene blue',
+    ],
+  },
+
+  // ============ SEXUAL HEALTH (drafts) ============
+  {
+    id: 'ed-dual',
+    name: 'Sildenafil + Tadalafil',
+    tagline: 'Two PDE-5 Inhibitors, One Troche',
+    category: 'sexual',
+    shortDescription:
+      'Sildenafil and tadalafil combined in a troche that dissolves under the tongue. Taken as needed.',
+    longDescription:
+      'Sildenafil and tadalafil are PDE-5 inhibitors and the active ingredients in FDA-approved medicines for erectile dysfunction. Sildenafil is shorter-acting; tadalafil lasts longer. This compounded sublingual troche combines the two. Its 120 mg of sildenafil is above the 100 mg maximum labelled single dose of FDA-approved sildenafil, and is used only if your prescriber decides it is appropriate for you. The combination is not FDA-approved, is prescribed off-label, and has far less published research than either medicine alone. Both work with sexual stimulation, not on their own. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
+    bestFor: 'Men discussing erectile dysfunction with a prescriber who want a single as-needed option.',
+    benefits: [
+      'Two PDE-5 inhibitors in a single dose',
+      'Pairs a shorter-acting and a longer-acting medicine',
+      'Dissolves under the tongue, no water needed',
+      'Taken as needed, not daily',
+    ],
+    whatsIncluded: [
+      '30 sublingual troches of compounded Sildenafil + Tadalafil 120 mg / 22 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: 'As-needed dosing · 30 troches',
+    pricing: { monthly: 49, quarterly: 135, sixMonth: 252, annual: 504 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/ed-dual.jpg',
+    shot: true,
+    gallery: ['/brand/products/ed-dual.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Headache',
+      'Flushing',
+      'Nasal congestion',
+      'Indigestion or heartburn',
+      'Back or muscle aches',
+      'Dizziness or fainting from low blood pressure',
+      'Rarely: an erection lasting more than 4 hours, or sudden vision or hearing loss (seek urgent care)',
+    ],
+    contraindications: [
+      'Taking any nitrate medicine, or recreational "poppers"',
+      'Taking riociguat',
+      'Taking an alpha-blocker (for example, for prostate or blood pressure), or prone to low blood pressure: the combination can drop blood pressure sharply',
+      'Heart disease where sexual activity is not advised',
+      'Recent heart attack or stroke, or uncontrolled blood pressure',
+      'Severe liver or kidney impairment',
+      'Known hypersensitivity to sildenafil or tadalafil',
+    ],
+  },
+  {
+    id: 'sildenafil',
+    name: 'Sildenafil',
+    tagline: 'Erectile Health, As Needed',
+    category: 'sexual',
+    shortDescription:
+      'Sildenafil 100 mg capsules, taken as needed about an hour before sexual activity.',
+    longDescription:
+      'Sildenafil is a PDE-5 inhibitor and the active ingredient in FDA-approved medicines for erectile dysfunction. It increases blood flow in response to sexual stimulation; it does not create arousal on its own. What we dispense is a compounded capsule, which is not FDA-approved. It is taken as needed, typically about an hour before sexual activity and no more than once a day. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
+    bestFor: 'Men discussing erectile dysfunction with a prescriber who want a well-studied, as-needed option.',
+    benefits: [
+      'Studied in large clinical trials for erectile function',
+      'Taken as needed, not daily',
+      'Works with sexual stimulation, not on its own',
+      'More than two decades of clinical use',
+    ],
+    whatsIncluded: [
+      '8 capsules of compounded Sildenafil 100 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: 'As-needed dosing · 8 doses a month',
+    pricing: { monthly: 32, quarterly: 90, sixMonth: 180, annual: 360 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/sildenafil.jpg',
+    shot: true,
+    gallery: ['/brand/products/sildenafil.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Headache',
+      'Flushing',
+      'Indigestion',
+      'Nasal congestion',
+      'Dizziness or fainting from low blood pressure',
+      'Blue-tinged or blurred vision, uncommonly',
+      'Rarely: an erection lasting more than 4 hours, or sudden vision or hearing loss (seek urgent care)',
+    ],
+    contraindications: [
+      'Taking any nitrate medicine, or recreational "poppers"',
+      'Taking riociguat',
+      'Taking an alpha-blocker (for example, for prostate or blood pressure), or prone to low blood pressure: the combination can drop blood pressure sharply',
+      'Heart disease where sexual activity is not advised',
+      'Recent heart attack or stroke, or uncontrolled blood pressure',
+      'Retinitis pigmentosa',
+      'Known hypersensitivity to sildenafil',
+    ],
+  },
+  {
+    id: 'oxytocin',
+    name: 'Oxytocin',
+    tagline: 'Intimacy & Connection',
+    category: 'sexual',
+    shortDescription:
+      'Oxytocin, a peptide hormone, in a rapid-dissolve tablet. Studied for its role in bonding, trust and social connection.',
+    longDescription:
+      'Oxytocin is a peptide hormone made in the hypothalamus and released during touch, intimacy and childbirth. It is FDA-approved as an injection for use in labor and delivery; what we dispense is a compounded rapid-dissolve tablet, which is not FDA-approved, and use for intimacy or connection is off-label. Research on oxytocin and social bonding is active but mixed, and results from small studies are not a promise of what you will experience. Offered for intimacy support in healthy adults, not to treat any condition.',
+    bestFor: 'Adults exploring intimacy and connection support with a prescriber.',
+    benefits: [
+      'Studied for social bonding and trust',
+      'Studied alongside intimacy and arousal',
+      'Dissolves in the mouth, no injection',
+      'Used as directed by your prescriber',
+    ],
+    whatsIncluded: [
+      '30 rapid-dissolve tablets of compounded Oxytocin 50 IU',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 89, quarterly: 237, sixMonth: 414, annual: 828 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/oxytocin.jpg',
+    shot: true,
+    gallery: ['/brand/products/oxytocin.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Headache',
+      'Nausea',
+      'Mild dizziness',
+      'Mouth irritation where the tablet dissolves',
+      'Changes in mood, uncommonly',
+    ],
+    contraindications: [
+      'Pregnancy, or possible pregnancy (oxytocin can cause uterine contractions)',
+      'Breastfeeding',
+      'Heart disease or a history of abnormal heart rhythm',
+      'Low blood sodium, or conditions that cause fluid retention',
+      'Known hypersensitivity to oxytocin',
+    ],
+  },
+
+  // ============ HORMONES (drafts) ============
+  {
+    id: 'enclomiphene',
+    name: 'Enclomiphene',
+    tagline: 'Testosterone Support for Men',
+    category: 'longevity',
+    shortDescription:
+      'A daily capsule studied for raising the body’s own testosterone production, rather than replacing it.',
+    longDescription:
+      'Enclomiphene is one of the two isomers that make up clomiphene citrate. It acts on the pituitary to increase LH and FSH, the signals that tell the testes to make testosterone, and in clinical studies it raised testosterone while preserving sperm production, which testosterone replacement can suppress. It is not an FDA-approved drug; what we dispense is a compounded preparation. Offered to men with testosterone concerns under prescriber supervision, not to treat hypogonadism or infertility. Your prescriber decides whether it is appropriate for you, checks labs (testosterone, estradiol and others) before and during treatment, and long-term safety data are limited.',
+    bestFor: 'Men with testosterone concerns who want to support their own production rather than replace it.',
+    benefits: [
+      'Studied for raising LH, FSH and testosterone',
+      'Studied for preserving sperm production, unlike testosterone replacement',
+      'Daily oral capsule, no injections',
+      'Works with your own hormone axis',
+    ],
+    whatsIncluded: [
+      '30 capsules of compounded Enclomiphene 12.5 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 149, quarterly: 357, sixMonth: 594, annual: 1188 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/enclomiphene.jpg',
+    shot: true,
+    gallery: ['/brand/products/enclomiphene.jpg'],
+    requiresReview: true,
+    fdaApproved: false,
+    sideEffects: [
+      'Headache',
+      'Hot flushes',
+      'Nausea',
+      'Mood changes or irritability',
+      'Blurred vision or visual spots (stop and contact your prescriber)',
+    ],
+    contraindications: [
+      'Liver disease',
+      'Uncontrolled thyroid or adrenal disorders',
+      'A pituitary tumor or other intracranial lesion',
+      'Known hypersensitivity to clomiphene or enclomiphene',
+    ],
+  },
+  {
+    id: 'hrt-cream',
+    name: 'Estradiol + Progesterone Cream',
+    tagline: 'Menopause Support',
+    category: 'longevity',
+    shortDescription:
+      'Estradiol and progesterone in a single cream, applied to the skin. Prescribed for menopause support.',
+    longDescription:
+      'Estradiol and progesterone are the active ingredients in FDA-approved hormone therapies for menopause; FDA-approved estradiol is labelled for moderate to severe hot flushes. What we dispense is a compounded cream combining the two, which is not FDA-approved, and compounded hormone products have not been reviewed by the FDA for safety, effectiveness or consistent dosing. Hormone therapy carries risks that depend on your age, time since menopause and health history, and FDA-approved estrogen products carry boxed warnings about stroke, blood clots, breast cancer and probable dementia. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Women in perimenopause or menopause discussing hormone therapy with a prescriber.',
+    benefits: [
+      'Estradiol is studied for hot flushes and night sweats',
+      'Progesterone alongside estradiol, as is standard for women with a uterus',
+      'Applied to the skin, no pills',
+      'Dose set by your prescriber',
+    ],
+    whatsIncluded: [
+      'One 30 mL tube of compounded Estradiol + Progesterone cream (1 mg / 100 mg per mL)',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 89, quarterly: 237, sixMonth: 432, annual: 864 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/hrt-cream.jpg',
+    shot: true,
+    gallery: ['/brand/products/hrt-cream.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Breast tenderness',
+      'Spotting or irregular bleeding',
+      'Headache',
+      'Bloating or fluid retention',
+      'Mood changes',
+      'Drowsiness (progesterone)',
+      'Skin irritation where applied',
+    ],
+    contraindications: [
+      'Breast cancer, or a history of it',
+      'Other estrogen-dependent cancer',
+      'Unexplained vaginal bleeding',
+      'History of blood clots, stroke or heart attack',
+      'A known clotting disorder',
+      'Liver disease',
+      'Pregnancy',
+    ],
+  },
+
+  // ============ HAIR (drafts) ============
+  {
+    id: 'fin-min-capsule',
+    name: 'Finasteride + Minoxidil',
+    tagline: "Men's Hair Loss: Two Medicines, One Capsule",
+    category: 'skin-hair',
+    shortDescription:
+      'Oral finasteride and low-dose minoxidil combined in a single daily capsule for male-pattern hair loss.',
+    longDescription:
+      'Finasteride lowers DHT, the hormone that gradually shrinks hair follicles in male-pattern hair loss, and is the active ingredient in an FDA-approved hair-loss tablet for men. Minoxidil is FDA-approved as a topical for hair loss and as a tablet for blood pressure; low-dose oral use for hair is off-label. This compounded capsule combines both and is not FDA-approved. Results take three to six months to show, stop if treatment stops, and vary between people. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men with male-pattern hair loss who want one daily capsule instead of a pill and a topical.',
+    benefits: [
+      'Finasteride studied for slowing male-pattern hair loss',
+      'Low-dose oral minoxidil studied for hair density',
+      'One capsule a day',
+      'Nothing to apply to the scalp',
+    ],
+    whatsIncluded: [
+      '30 capsules of compounded Finasteride + Minoxidil 1 mg / 2.5 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 79, quarterly: 225, sixMonth: 432, annual: 864 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/fin-min-capsule.jpg',
+    shot: true,
+    gallery: ['/brand/products/fin-min-capsule.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Lower libido, or erectile or ejaculation changes, uncommonly',
+      'Temporary shedding in the first weeks',
+      'Unwanted facial or body hair growth',
+      'Ankle swelling or fluid retention',
+      'Fast heartbeat or lightheadedness',
+      'Sexual side effects that, in some men, have continued after stopping',
+      'Depression, and rarely suicidal thoughts (tell your prescriber at once)',
+      'Male breast cancer, reported rarely: report any breast lump, pain or nipple discharge',
+    ],
+    contraindications: [
+      'Not for use by women; anyone pregnant or who may become pregnant must not handle broken capsules',
+      'Low blood pressure, heart failure or significant heart disease',
+      'Pheochromocytoma',
+      'Liver disease',
+      'Known hypersensitivity to finasteride or minoxidil',
+    ],
+  },
+  {
+    id: 'fin-min-foam',
+    name: 'Finasteride + Minoxidil Foam',
+    tagline: "Men's Hair-Loss Foam, No Daily Pill",
+    category: 'skin-hair',
+    shortDescription:
+      'Topical finasteride and minoxidil in a foam applied to the scalp, for men who would rather not take a pill.',
+    longDescription:
+      'Minoxidil is the active ingredient in FDA-approved topical hair-loss products, and finasteride in an FDA-approved hair-loss tablet for men. Applying finasteride to the scalp is studied as a way to act on the follicle with less of the drug reaching the bloodstream, although some is still absorbed. This compounded foam combines the two and is not FDA-approved. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men with male-pattern hair loss who prefer a topical to a daily pill.',
+    benefits: [
+      'Minoxidil studied for regrowth on the top of the scalp',
+      'Topical finasteride studied for lower blood levels than the tablet',
+      'Both medicines in one foam',
+      'No daily pill',
+    ],
+    whatsIncluded: [
+      '30 mL of compounded Finasteride + Minoxidil topical foam (0.25 mg / 5 mg)',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 89, quarterly: 255, sixMonth: 480, annual: 960 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/fin-min-foam.jpg',
+    shot: true,
+    gallery: ['/brand/products/fin-min-foam.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Scalp itching, dryness or flaking',
+      'Temporary shedding in the first weeks',
+      'Unwanted hair growth where the foam touches the face',
+      'Lower libido or erectile changes, uncommonly',
+      'Dizziness or fast heartbeat, rarely',
+      'Sexual side effects that, in some men, have continued after stopping',
+      'Depression, and rarely suicidal thoughts (tell your prescriber at once)',
+      'Male breast cancer, reported rarely: report any breast lump, pain or nipple discharge',
+    ],
+    contraindications: [
+      'Not for use by women; anyone pregnant or who may become pregnant must not handle it',
+      'Broken, irritated or sunburned scalp',
+      'Heart disease or low blood pressure',
+      'Known hypersensitivity to finasteride, minoxidil or any foam ingredient',
+    ],
+  },
+  {
+    id: 'min-12-fin',
+    name: 'Minoxidil 12% + Finasteride',
+    tagline: "Men's Higher-Strength Topical",
+    category: 'skin-hair',
+    shortDescription:
+      'Minoxidil at 12%, more than twice the strength sold over the counter, with topical finasteride in one foam.',
+    longDescription:
+      'Minoxidil is the active ingredient in FDA-approved topical hair-loss products, sold over the counter at up to 5%. This compounded foam uses 12% minoxidil with topical finasteride, a strength that is not FDA-approved and has much less published research than 5%; it is usually considered when a standard strength has not been enough. A higher strength also means more scalp irritation and more chance of the drug reaching the bloodstream. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men with male-pattern hair loss who have already tried standard-strength minoxidil.',
+    benefits: [
+      '12% minoxidil, above the 5% sold over the counter',
+      'Topical finasteride in the same foam',
+      'Both medicines in one product',
+      'No daily pill',
+    ],
+    whatsIncluded: [
+      '30 mL of compounded Finasteride + Minoxidil topical foam (0.25 mg / 12%)',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 99, quarterly: 276, sixMonth: 510, annual: 1020 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/min-12-fin.jpg',
+    shot: true,
+    gallery: ['/brand/products/min-12-fin.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Scalp itching, redness or flaking, more likely than at lower strengths',
+      'Temporary shedding in the first weeks',
+      'Unwanted hair growth where the foam touches the face',
+      'Lower libido or erectile changes, uncommonly',
+      'Dizziness, fast heartbeat or ankle swelling, rarely',
+      'Sexual side effects that, in some men, have continued after stopping',
+      'Depression, and rarely suicidal thoughts (tell your prescriber at once)',
+      'Male breast cancer, reported rarely: report any breast lump, pain or nipple discharge',
+    ],
+    contraindications: [
+      'Not for use by women; anyone pregnant or who may become pregnant must not handle it',
+      'Broken, irritated or sunburned scalp',
+      'Heart disease or low blood pressure',
+      'Known hypersensitivity to finasteride, minoxidil or any foam ingredient',
+    ],
+  },
+  {
+    id: 'fin-min-tret',
+    name: 'Finasteride + Minoxidil + Tretinoin Foam',
+    tagline: "Men's Three-Ingredient Topical",
+    category: 'skin-hair',
+    shortDescription:
+      'Topical finasteride and minoxidil with a low dose of tretinoin, studied for helping the scalp respond to minoxidil.',
+    longDescription:
+      'Tretinoin is a retinoid and the active ingredient in FDA-approved acne and skin creams. Small studies have looked at combining it with minoxidil on the scalp, where it may increase minoxidil absorption and response; the evidence is early. This compounded foam combines finasteride, minoxidil and tretinoin and is not FDA-approved. Tretinoin makes skin more sensitive to the sun. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men with male-pattern hair loss discussing a combined topical with a prescriber.',
+    benefits: [
+      'Finasteride and minoxidil in one foam',
+      'Low-dose tretinoin studied alongside minoxidil',
+      'One product instead of three',
+      'No daily pill',
+    ],
+    whatsIncluded: [
+      '30 mL of compounded Finasteride + Minoxidil + Tretinoin topical foam (0.25 mg / 5 mg / 0.03%)',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 99, quarterly: 267, sixMonth: 480, annual: 960 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/fin-min-tret.jpg',
+    shot: true,
+    gallery: ['/brand/products/fin-min-tret.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Scalp redness, dryness, peeling or itching',
+      'Sun sensitivity on the scalp',
+      'Temporary shedding in the first weeks',
+      'Unwanted hair growth where the foam touches the face',
+      'Lower libido or erectile changes, uncommonly',
+      'Sexual side effects that, in some men, have continued after stopping',
+      'Depression, and rarely suicidal thoughts (tell your prescriber at once)',
+      'Male breast cancer, reported rarely: report any breast lump, pain or nipple discharge',
+    ],
+    contraindications: [
+      'Not for use by women; anyone pregnant or who may become pregnant must not handle it',
+      'Broken, irritated or sunburned scalp, or scalp eczema',
+      'Heart disease or low blood pressure',
+      'Known hypersensitivity to finasteride, minoxidil, tretinoin or any foam ingredient',
+    ],
+  },
+  {
+    id: 'finasteride',
+    name: 'Finasteride',
+    tagline: "Men's Daily DHT Blocker",
+    category: 'skin-hair',
+    shortDescription:
+      'A once-daily tablet that lowers DHT, the hormone behind male-pattern hair loss.',
+    longDescription:
+      'Finasteride blocks the enzyme that turns testosterone into DHT, the hormone that gradually shrinks hair follicles in male-pattern hair loss. Finasteride 1 mg is the active ingredient in an FDA-approved hair-loss tablet for men, studied for slowing hair loss and for regrowth at the crown and mid-scalp. What we dispense is compounded, and compounded preparations are not FDA-approved. Results take three to six months to show and stop if treatment stops. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men with early to moderate male-pattern hair loss.',
+    benefits: [
+      'Studied for slowing male-pattern hair loss',
+      'Studied for regrowth at the crown and mid-scalp',
+      'One small tablet a day',
+      'Decades of clinical use',
+    ],
+    whatsIncluded: [
+      '30 tablets of compounded Finasteride 1 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 85, quarterly: 255, sixMonth: 510, annual: 1020 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/finasteride.jpg',
+    shot: true,
+    gallery: ['/brand/products/finasteride.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Lower libido, uncommonly',
+      'Erectile or ejaculation changes, uncommonly',
+      'Breast tenderness or enlargement, rarely',
+      'Sexual side effects that, in some men, have continued after stopping',
+      'Depression, and rarely suicidal thoughts (tell your prescriber at once)',
+      'Male breast cancer, reported rarely: report any breast lump, pain or nipple discharge',
+      'Temporary shedding in the first weeks',
+    ],
+    contraindications: [
+      'Not for use by women; anyone pregnant or who may become pregnant must not handle broken tablets',
+      'Liver disease, without prescriber clearance',
+      'A history of depression, without discussing it with your prescriber',
+      'Known hypersensitivity to finasteride',
+    ],
+  },
+  {
+    id: 'oral-minoxidil',
+    name: 'Oral Minoxidil',
+    tagline: 'Low-Dose Daily Tablet',
+    category: 'skin-hair',
+    shortDescription:
+      'Low-dose minoxidil in a once-daily tablet, prescribed off-label for thinning hair in men and women.',
+    longDescription:
+      'Minoxidil is FDA-approved as a tablet for high blood pressure, at much higher doses, and as a topical for hair loss. Low-dose oral minoxidil for hair is off-label; published studies, mostly small and observational, have looked at hair density in men and women with thinning hair. What we dispense is compounded, and compounded preparations are not FDA-approved. Even at 2.5 mg a day it can lower blood pressure and cause fluid retention, so your prescriber needs to know about your heart health and any blood-pressure medicines. Results take three to six months to show and stop if treatment stops.',
+    bestFor: 'Men and women with thinning hair who prefer a tablet to a topical.',
+    benefits: [
+      'Studied for hair density at low doses',
+      'One small tablet a day',
+      'Nothing to apply to the scalp',
+      'Used by both men and women',
+    ],
+    whatsIncluded: [
+      '30 tablets of compounded Minoxidil 2.5 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 85, quarterly: 255, sixMonth: 510, annual: 1020 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/oral-minoxidil.jpg',
+    shot: true,
+    gallery: ['/brand/products/oral-minoxidil.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Unwanted facial or body hair growth',
+      'Temporary shedding in the first weeks',
+      'Ankle or facial swelling (fluid retention)',
+      'Fast heartbeat or lightheadedness',
+      'Headache',
+    ],
+    contraindications: [
+      'Pheochromocytoma',
+      'Heart failure, recent heart attack, or fluid around the heart',
+      'Low blood pressure, or other blood-pressure medicines without prescriber review',
+      'Pregnancy or breastfeeding',
+      'Known hypersensitivity to minoxidil',
+    ],
+  },
+  {
+    id: 'spironolactone',
+    name: 'Spironolactone',
+    tagline: "Women's Hair & Hormonal Skin",
+    category: 'skin-hair',
+    shortDescription:
+      'A sustained-release capsule prescribed off-label for female-pattern hair thinning and hormonal acne.',
+    longDescription:
+      'Spironolactone blocks androgen receptors and lowers androgen activity. It is FDA-approved as a tablet for heart failure, high blood pressure and fluid retention; use for female-pattern hair thinning or hormonal acne is off-label, supported by clinical experience and smaller studies. What we dispense is a compounded sustained-release capsule, which is not FDA-approved. It can raise potassium, so your prescriber may ask for blood work, and it must not be taken during pregnancy. Results take three to six months to show.',
+    bestFor: 'Women with thinning hair or hormonal acne discussing anti-androgen therapy with a prescriber.',
+    benefits: [
+      'Studied for female-pattern hair thinning',
+      'Studied for hormonal acne along the jaw and chin',
+      'Sustained-release, once a day',
+      'A long record of clinical use',
+    ],
+    whatsIncluded: [
+      '30 capsules of compounded Spironolactone SR 55 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 69, quarterly: 186, sixMonth: 330, annual: 660 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/spironolactone.jpg',
+    shot: true,
+    gallery: ['/brand/products/spironolactone.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Irregular periods or spotting',
+      'Breast tenderness',
+      'Dizziness or lightheadedness',
+      'More frequent urination',
+      'Raised potassium levels, uncommonly',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      'Kidney disease or high potassium',
+      "Addison's disease",
+      'Taking eplerenone, potassium supplements or other potassium-sparing medicines',
+      'Known hypersensitivity to spironolactone',
+    ],
+  },
+
+  // ============ SKIN (drafts) ============
+  {
+    id: 'tretinoin',
+    name: 'Tretinoin Cream',
+    tagline: 'Fine Lines & Texture',
+    category: 'skin-hair',
+    shortDescription:
+      'A prescription retinoid cream studied for fine lines, rough texture and uneven tone.',
+    longDescription:
+      'Tretinoin is a retinoid, a form of vitamin A, that speeds skin-cell turnover. It is the active ingredient in FDA-approved creams for acne and, at 0.02%, for fine wrinkles, mottled pigmentation and rough skin as part of a skin-care and sun-protection routine. What we dispense is a compounded cream, which is not FDA-approved. Expect dryness and peeling in the first weeks; results build over several months, and daily sunscreen is essential.',
+    bestFor: 'Adults starting a prescription retinoid for fine lines and texture.',
+    benefits: [
+      'Studied for fine lines and wrinkles',
+      'Studied for rough texture and uneven tone',
+      'A gentle starting strength',
+      'Applied once a day, at night',
+    ],
+    whatsIncluded: [
+      '30 mL of compounded Tretinoin 0.02% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/tretinoin.jpg',
+    shot: true,
+    gallery: ['/brand/products/tretinoin.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Dryness, peeling and flaking, especially in the first weeks',
+      'Redness, stinging or warmth',
+      'Increased sensitivity to the sun',
+      'Temporary breakouts when starting',
+      'Lightening or darkening of the skin, uncommonly',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      'Eczema, sunburn or broken skin on the treatment area',
+      'Using other retinoids or strong exfoliants, without prescriber review',
+      'Known hypersensitivity to tretinoin or any ingredient',
+    ],
+  },
+  {
+    id: 'glow-cream',
+    name: 'Glow Cream',
+    tagline: 'Retinoid + Hyaluronic Acid + Vitamin C',
+    category: 'skin-hair',
+    shortDescription:
+      'Tretinoin with hyaluronic acid and vitamin C in one cream, for texture, tone and hydration.',
+    longDescription:
+      'Tretinoin is a retinoid and the active ingredient in FDA-approved creams for acne and fine wrinkles. This compounded cream pairs tretinoin 0.05% with hyaluronic acid, a humectant that helps skin hold water, and vitamin C, an antioxidant studied for brightness. The combination is not FDA-approved. Tretinoin 0.05% is a mid-range strength, so expect some dryness and peeling in the first weeks; results build over several months, and daily sunscreen is essential.',
+    bestFor: 'Adults who want a retinoid routine with added hydration.',
+    benefits: [
+      'Tretinoin studied for fine lines and texture',
+      'Hyaluronic acid helps skin hold moisture',
+      'Vitamin C studied for brightness and uneven tone',
+      'Three ingredients, one step',
+    ],
+    whatsIncluded: [
+      'One 30 g jar of compounded Tretinoin 0.05% + Hyaluronic Acid 0.1% + Vitamin C 2% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/glow-cream.jpg',
+    shot: true,
+    gallery: ['/brand/products/glow-cream.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Dryness, peeling and flaking, especially in the first weeks',
+      'Redness, stinging or warmth',
+      'Increased sensitivity to the sun',
+      'Temporary breakouts when starting',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      'Eczema, sunburn or broken skin on the treatment area',
+      'Using other retinoids or strong exfoliants, without prescriber review',
+      'Known hypersensitivity to tretinoin or any ingredient',
+    ],
+  },
+  {
+    id: 'acne-cream',
+    name: 'Acne Cream',
+    tagline: 'Tretinoin 0.1% + Clindamycin',
+    category: 'skin-hair',
+    shortDescription:
+      'Tretinoin and the antibiotic clindamycin in one cream, aimed at clogged pores and acne-causing bacteria.',
+    longDescription:
+      'Tretinoin is a retinoid that helps keep pores from clogging; clindamycin is a topical antibiotic that acts on acne-causing bacteria. Both are active ingredients in FDA-approved acne treatments, and the two are approved together at lower strengths. This compounded cream uses tretinoin 0.1%, the highest common strength, with clindamycin 2%, and is not FDA-approved. Expect dryness and peeling in the first weeks, and possibly a flare before improvement; results build over 8–12 weeks.',
+    bestFor: 'Adults with persistent acne that has not responded to over-the-counter products.',
+    benefits: [
+      'Tretinoin studied for clearing and preventing clogged pores',
+      'Clindamycin acts on acne-causing bacteria',
+      'Two prescription ingredients in one step',
+      'Applied once a day, at night',
+    ],
+    whatsIncluded: [
+      'One 30 g jar of compounded Tretinoin 0.1% + Clindamycin 2% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/acne-cream.jpg',
+    shot: true,
+    gallery: ['/brand/products/acne-cream.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Dryness, peeling and redness',
+      'Stinging or burning on application',
+      'Increased sensitivity to the sun',
+      'Temporary flare of breakouts when starting',
+      'Diarrhea, rarely (stop and contact your prescriber if it is severe or bloody)',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      "Ulcerative colitis, Crohn's disease, or a history of antibiotic-associated colitis",
+      'Eczema, sunburn or broken skin on the treatment area',
+      'Known hypersensitivity to tretinoin, clindamycin or lincomycin',
+    ],
+  },
+  {
+    id: 'brightening',
+    name: 'Brightening Cream',
+    tagline: 'Hydroquinone 4% + Vitamin C',
+    category: 'skin-hair',
+    shortDescription:
+      'Prescription hydroquinone 4% with vitamin C, for dark spots and uneven skin tone.',
+    longDescription:
+      'Hydroquinone lightens areas of darkened skin by slowing the production of melanin, and is an active ingredient in FDA-approved prescription products for dark patches of skin. Since 2020 it has been available in the US only on prescription. This compounded cream pairs hydroquinone 4% with vitamin C, an antioxidant studied for brightness, and is not FDA-approved. It is usually used in courses of a few months with breaks, and daily sunscreen is essential; results build over 8–12 weeks.',
+    bestFor: 'Adults with dark spots, sun spots or post-acne marks.',
+    benefits: [
+      'Hydroquinone studied for dark spots and uneven tone',
+      'Vitamin C studied for brightness',
+      'Prescription-only strength',
+      'Used in short courses, with breaks',
+    ],
+    whatsIncluded: [
+      'One 30 g jar of compounded Hydroquinone 4% + Vitamin C 2% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/brightening.jpg',
+    shot: true,
+    gallery: ['/brand/products/brightening.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Mild redness, stinging or dryness',
+      'Increased sensitivity to the sun',
+      'Uneven lightening, or a pale halo around treated spots',
+      'Bluish-grey darkening of the skin (ochronosis) with long-term use, rarely',
+    ],
+    contraindications: [
+      'Pregnancy or breastfeeding',
+      'Sunburned, broken or irritated skin on the treatment area',
+      'Using benzoyl peroxide or other peroxide products at the same time (can stain the skin)',
+      'Known hypersensitivity to hydroquinone or any ingredient',
+    ],
+  },
+  {
+    id: 'melasma',
+    name: 'Melasma Cream',
+    tagline: 'Maximum-Strength Hydroquinone 8%',
+    category: 'skin-hair',
+    shortDescription:
+      'Hydroquinone 8% with tretinoin and hydrocortisone, a triple combination prescribed for stubborn melasma.',
+    longDescription:
+      'Melasma is a pattern of dark patches, often on the cheeks and forehead. The best-studied prescription approach combines hydroquinone, a retinoid and a mild steroid, and an FDA-approved triple-combination cream uses hydroquinone at 4%. This compounded cream uses hydroquinone 8%, twice that strength, with tretinoin 0.05% and hydrocortisone 2.5%, and is not FDA-approved. A higher strength means more irritation, so courses are kept short with breaks. Daily sunscreen is essential; melasma often returns with sun exposure.',
+    bestFor: 'Adults with melasma that has not responded to standard-strength products.',
+    benefits: [
+      'Hydroquinone studied for melasma and dark patches',
+      'Tretinoin studied alongside hydroquinone for melasma',
+      'Hydrocortisone to temper irritation',
+      'Three prescription ingredients in one step',
+    ],
+    whatsIncluded: [
+      'One 20 g tube of compounded Hydroquinone 8% + Tretinoin 0.05% + Hydrocortisone 2.5% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/melasma.jpg',
+    shot: true,
+    gallery: ['/brand/products/melasma.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Redness, peeling, dryness or stinging',
+      'Increased sensitivity to the sun',
+      'Skin thinning or small visible blood vessels with prolonged steroid use',
+      'Uneven lightening, or a pale halo around treated areas',
+      'Bluish-grey darkening of the skin (ochronosis) with long-term use, rarely',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      'Eczema, rosacea, sunburn or broken skin on the treatment area',
+      'Using benzoyl peroxide or other peroxide products at the same time (can stain the skin)',
+      'Known hypersensitivity to hydroquinone, tretinoin, hydrocortisone or any ingredient',
+    ],
+  },
+  {
+    id: 'hq-free',
+    name: 'Hydroquinone-Free Brightening',
+    tagline: 'Kojic Acid + Vitamin C + Hyaluronic Acid',
+    category: 'skin-hair',
+    shortDescription:
+      'Kojic acid, vitamin C and hyaluronic acid in one cream, for dark spots without hydroquinone.',
+    longDescription:
+      'Kojic acid comes from fungi used in food fermentation and, like hydroquinone, slows the enzyme skin uses to make melanin. It is not an active ingredient in any FDA-approved drug, and its evidence base is smaller than hydroquinone’s, but it can be an option for people who cannot use hydroquinone. This compounded cream pairs kojic acid 5% with vitamin C and hyaluronic acid and is not FDA-approved. Results build over 8–12 weeks, and daily sunscreen is essential.',
+    bestFor: 'Adults with dark spots who cannot use, or want a break from, hydroquinone.',
+    benefits: [
+      'Kojic acid studied for dark spots and uneven tone',
+      'Vitamin C studied for brightness',
+      'Hyaluronic acid helps skin hold moisture',
+      'No hydroquinone',
+    ],
+    whatsIncluded: [
+      'One 30 g jar of compounded Kojic Acid 5% + Vitamin C 2% + Hyaluronic Acid 0.5% cream',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'topical',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/hq-free.jpg',
+    shot: true,
+    gallery: ['/brand/products/hq-free.jpg'],
+    requiresReview: true,
+    fdaApproved: false,
+    sideEffects: [
+      'Mild redness, stinging or itching',
+      'Dryness',
+      'Increased sensitivity to the sun',
+      'Contact dermatitis, uncommonly',
+    ],
+    contraindications: [
+      'Broken, irritated or sunburned skin on the treatment area',
+      'Pregnancy or breastfeeding, without prescriber review',
+      'Known allergy to kojic acid or any ingredient',
+    ],
+  },
+  {
+    id: 'rosacea',
+    name: 'Rosacea & Acne Capsules',
+    tagline: 'Doxycycline 50 mg',
+    category: 'skin-hair',
+    shortDescription:
+      'Doxycycline 50 mg, an antibiotic prescribed off-label at a low dose for the bumps and spots of rosacea and for inflammatory acne.',
+    longDescription:
+      'Doxycycline is a tetracycline antibiotic. At low doses it acts mainly on inflammation. The FDA-approved low-dose product for rosacea is a different, 40 mg modified-release capsule; standard doxycycline is also approved as an add-on for severe acne. What we dispense is a compounded doxycycline 50 mg capsule, which is not FDA-approved and is prescribed off-label at a low dose. It does not address the persistent redness or visible blood vessels of rosacea. Take it with a full glass of water and stay upright afterwards.',
+    bestFor: 'Adults with rosacea bumps or inflammatory acne discussing an oral option with a prescriber.',
+    benefits: [
+      'Studied for inflammatory rosacea bumps and spots',
+      'Studied for inflammatory acne',
+      'A low dose, aimed at inflammation',
+      'One capsule a day',
+    ],
+    whatsIncluded: [
+      '30 capsules of compounded Doxycycline 50 mg',
+      'Ongoing messaging with your prescriber',
+    ],
+    delivery: 'oral',
+    cycleLength: '30-day supply',
+    pricing: { monthly: 49, quarterly: 138, sixMonth: 270, annual: 540 },
+    swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
+    image: '/brand/products/rosacea.jpg',
+    shot: true,
+    gallery: ['/brand/products/rosacea.jpg'],
+    requiresReview: true,
+    fdaApproved: true,
+    sideEffects: [
+      'Nausea or stomach upset',
+      'Increased sensitivity to the sun',
+      'Heartburn or throat irritation if taken lying down',
+      'Diarrhea',
+      'Vaginal yeast infection',
+      'Rarely: severe headache with vision changes (stop and seek care)',
+    ],
+    contraindications: [
+      'Pregnancy, planning a pregnancy, or breastfeeding',
+      'Known hypersensitivity to doxycycline or any tetracycline',
+      'Taking isotretinoin',
+      'Taking blood thinners, or antacids or iron within a few hours of a dose, without prescriber review',
+    ],
+  },
 ];
 
 // Branded vial renders (public/images/products) replace the stock photos.
@@ -920,12 +1912,30 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
 // a line in the disclosure (components/shop/pdpParts). Keep both while there
 // is no white-label packaging.
 {
+  // Redesign packaging (clear vial, white label, butter cap).
+  const BRAND: Record<string, string> = {
+    'nad-plus': '/brand/vial-nad.jpg',
+    glutathione: '/brand/vial-glutathione.jpg',
+    'pt-141': '/brand/vial-pt141.jpg',
+    sermorelin: '/brand/vial-sermorelin.jpg',
+  };
   const RENDERED = new Set(['nad-plus', 'glutathione', 'pt-141', 'sermorelin']);
   for (const p of SHOP_PRODUCTS) {
     if (!RENDERED.has(p.id)) continue;
-    p.image = `/images/products/${p.id}.jpg`;
+    p.image = BRAND[p.id] ?? `/images/products/${p.id}.jpg`;
     p.shot = true;
     p.gallery = [p.image, ...p.gallery.slice(1)];
+  }
+}
+
+// Storage: injectables and the nasal spray are refrigerated; tablets,
+// capsules, creams and foams are room temperature. The troches (ED Dual,
+// oxytocin) stay unset until the pharmacy confirms: "as directed on the label".
+{
+  const LABEL = new Set(['ed-dual', 'oxytocin']);
+  for (const p of SHOP_PRODUCTS) {
+    if (LABEL.has(p.id)) continue;
+    p.storage = p.delivery === 'oral' || p.delivery === 'topical' ? 'room' : 'refrigerated';
   }
 }
 
@@ -949,7 +1959,7 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
 
 /** Cadence helper. Return per-month price and discount label. */
 export interface CadenceTier {
-  key: 'monthly' | 'quarterly' | 'once';
+  key: 'monthly' | 'quarterly' | 'sixMonth' | 'once';
   label: string;
   description: string;
   total: number;
@@ -964,6 +1974,9 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
   const q = p.pricing.quarterly;
   const qPerMonth = Math.round(q / 3);
   const qSave = Math.round((1 - q / (m * 3)) * 100);
+  const s = p.pricing.sixMonth;
+  const sSave = s ? Math.round((1 - s / (m * 6)) * 100) : 0;
+  // Monthly stays first: callers fall back to tiers[0] for an unknown cadence.
   return [
     {
       key: 'monthly',
@@ -994,6 +2007,25 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
         'Ongoing prescriber messaging throughout',
       ],
     },
+    ...(s
+      ? [
+          {
+            key: 'sixMonth' as const,
+            label: '6-month',
+            description: 'Billed every 6 months · Ships every 6 months',
+            total: s,
+            perMonth: Math.round(s / 6),
+            saveLabel: sSave > 0 ? `Save ${sSave}%` : undefined,
+            breakdown: [
+              'Billed every 6 months, shipped every 6 months',
+              'Ships on the same prescription until it expires',
+              'Adjust your refill date whenever you like',
+              'Pause or cancel before the next billing date',
+              'Ongoing prescriber messaging throughout',
+            ],
+          },
+        ]
+      : []),
     {
       key: 'once',
       label: 'One-time',
@@ -1009,6 +2041,14 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       ],
     },
   ];
+}
+
+/**
+ * The plan a product page opens on: the lowest per-month price, the shorter
+ * plan on a tie (a 6-month plan that saves nothing is not the default).
+ */
+export function defaultTier(tiers: CadenceTier[]): CadenceTier {
+  return tiers.filter((t) => t.key !== 'once').reduce((a, b) => (b.perMonth < a.perMonth ? b : a));
 }
 
 /**
@@ -1054,9 +2094,29 @@ const WITHHELD = new Set([
   'klow',
 ]);
 
+/**
+ * Never public, whatever the catalogue says: the withheld list plus the
+ * compounded GLP-1s, which the site does not sell. lib/catalog forces these
+ * to withheld and Admin → Products refuses to set them live, so a stray
+ * `live` row (or an edit here to DRAFT) cannot list them.
+ */
+export const NEVER_LIVE: ReadonlySet<string> = new Set([...WITHHELD, 'semaglutide', 'tirzepatide']);
+
+/**
+ * Seeded as drafts: in the catalogue for review, not listed or orderable until
+ * an admin flips them to live in Admin → Products.
+ */
+export const DRAFT = new Set([
+  'nad-nasal', 'mic-b12', 'methylene-blue',
+  'ed-dual', 'sildenafil', 'oxytocin',
+  'enclomiphene', 'hrt-cream',
+  'fin-min-capsule', 'fin-min-foam', 'min-12-fin', 'fin-min-tret', 'finasteride', 'oral-minoxidil', 'spironolactone',
+  'tretinoin', 'glow-cream', 'acne-cream', 'brightening', 'melasma', 'hq-free', 'rosacea',
+]);
+
 /** True when a product may be listed, linked, indexed or ordered. */
 export function isSellable(id: string): boolean {
-  return !WITHHELD.has(id);
+  return !NEVER_LIVE.has(id) && !DRAFT.has(id);
 }
 
 /**

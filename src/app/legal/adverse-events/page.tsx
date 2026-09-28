@@ -17,7 +17,7 @@ export default function AdverseEventsPage() {
     <LegalLayout
       title="Adverse Event Reporting"
       effective="September 2026"
-      lead={`If something goes wrong, tell us. Reports are how problems with a lot, a preparation, or a protocol get found — yours protects the next person as much as it protects you.`}
+      lead={`If something goes wrong, tell us. Reports are how problems with a lot, a preparation, or a treatment get found — yours protects the next person as much as it protects you.`}
       sections={[
         {
           heading: `If It Is an Emergency`,
@@ -28,14 +28,14 @@ export default function AdverseEventsPage() {
         {
           heading: `Reporting a Non-Emergency Reaction`,
           paragraphs: [
-            `Stop dosing, then email ${SUPPORT_EMAIL} with:`,
+            `Stop the medication, then email ${SUPPORT_EMAIL} with:`,
           ],
           bullets: [
             `Your name and the email on your account.`,
             `Your order number and the preparation involved.`,
             `What you experienced, when it started, and how long it lasted.`,
             `Whether you have stopped or continued.`,
-            `The lot number printed on the vial, if you still have it.`,
+            `The lot number printed on the label, if you still have it.`,
           ],
         },
         {
@@ -55,7 +55,7 @@ export default function AdverseEventsPage() {
         {
           heading: `Refunds After a Reaction`,
           paragraphs: [
-            `A compounded preparation cannot be re-dispensed once it has left the pharmacy, so we cannot refund vials already shipped. We can adjust or stop your protocol, and our Refund Policy sets out what we can do.`,
+            `A compounded preparation cannot be re-dispensed once it has left the pharmacy, so we cannot refund medication already shipped. The prescriber can adjust or stop your treatment, and our Refund Policy sets out what we can do.`,
           ],
         },
         {

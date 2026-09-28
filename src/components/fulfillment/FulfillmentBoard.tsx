@@ -32,15 +32,15 @@ const GROUPS: {
   {
     key: 'place',
     statuses: ['draft', 'submitted'],
-    title: 'To place in Formula',
-    note: 'Paid and approved. Place each one in the Formula Health portal, then mark it placed.',
+    title: 'To place',
+    note: 'Paid and approved. Place each one in the MedShiftRx portal, then mark it placed.',
     lateAfter: 1,
   },
   {
     key: 'track',
     statuses: ['accepted'],
     title: 'Placed · waiting for tracking',
-    note: 'Add the tracking number when Formula ships it. The patient is emailed automatically.',
+    note: 'Add the tracking number when the pharmacy ships it. The patient is emailed automatically.',
     lateAfter: 3,
   },
   {
@@ -69,12 +69,12 @@ export function FulfillmentBoard({ rows }: { rows: BoardRow[] }) {
           <section key={g.key}>
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
               <SectionTitle>
-                {g.title} <span className="font-mono text-[13px] text-black/50">{list.length}</span>
+                {g.title} <span className="text-[13px] text-ink/50">{list.length}</span>
               </SectionTitle>
-              {g.note && <p className="text-[14px] text-black/60">{g.note}</p>}
+              {g.note && <p className="text-[14px] text-ink/60">{g.note}</p>}
             </div>
             {list.length === 0 ? (
-              <p className={cn(panel, 'px-5 py-6 text-[14px] text-black/60')}>Nothing here.</p>
+              <p className={cn(panel, 'px-5 py-6 text-[14px] text-ink/60')}>Nothing here.</p>
             ) : (
               <ul className="space-y-3">
                 {list.map((r) => (
@@ -116,31 +116,31 @@ function BoardCard({ row, late }: { row: BoardRow; late: boolean }) {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[16px] font-medium text-black">{row.patientName}</span>
+            <span className="text-[16px] font-medium text-ink">{row.patientName}</span>
             <StatusChip tone={tone}>{label}</StatusChip>
             <StatusChip tone={refill ? 'gold' : 'neutral'}>{refill ? 'Refill' : 'New order'}</StatusChip>
             {late && <StatusChip tone="error">Waiting {row.ageDays} days</StatusChip>}
           </div>
-          <p className="mt-1.5 text-[15px] text-black/80">{row.items.join(' · ') || 'Care program'}</p>
-          <p className="mt-1 font-mono text-[12px] text-black/55">
+          <p className="mt-1.5 text-[15px] text-ink/80">{row.items.join(' · ') || 'Care program'}</p>
+          <p className="mt-1 text-[12px] text-ink/55">
             {row.orderRef} · {row.address.split(' · ').slice(-2).join(' · ')}
           </p>
-          {row.notes && <p className="mt-1 font-mono text-[12px] text-black/55">{row.notes}</p>}
+          {row.notes && <p className="mt-1 text-[12px] text-ink/55">{row.notes}</p>}
           {row.trackingNumber && (
-            <p className="mt-1 font-mono text-[12px] text-black/70">
+            <p className="mt-1 text-[12px] text-ink/70">
               {row.trackingCarrier} {row.trackingNumber}
             </p>
           )}
 
           <details className="mt-3 group">
-            <summary className="cursor-pointer select-none font-mono text-[13px] text-black/70 hover:text-black">
-              Details for Formula
+            <summary className="cursor-pointer select-none text-[13px] text-ink/70 hover:text-ink">
+              Details for the pharmacy
             </summary>
-            <dl className={cn(inset, 'mt-2 divide-y divide-black/10 text-[14px]')}>
+            <dl className={cn(inset, 'mt-2 divide-y divide-ink/10 text-[14px]')}>
               {details.map(([k, v]) => (
                 <div key={k} className="flex gap-4 px-3 py-2">
-                  <dt className="w-28 flex-none font-mono text-[12px] text-black/55">{k}</dt>
-                  <dd className="min-w-0 break-words text-black">{v}</dd>
+                  <dt className="w-28 flex-none text-[12px] text-ink/55">{k}</dt>
+                  <dd className="min-w-0 break-words text-ink">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -167,7 +167,7 @@ function CopyButton({ text }: { text: string }) {
           setTimeout(() => setDone(false), 1500);
         })
       }
-      className="mt-2 font-mono text-[12px] text-black/60 underline underline-offset-2 hover:text-black"
+      className="mt-2 text-[13px] text-ink/70 underline decoration-ink/30 underline-offset-[3px] hover:text-ink hover:decoration-ink"
     >
       {done ? 'Copied' : 'Copy all details'}
     </button>
@@ -196,14 +196,14 @@ function Actions({ row }: { row: BoardRow }) {
     });
 
   const input =
-    'w-full rounded-[2px] bg-white px-3 py-2.5 text-[15px] text-black ring-1 ring-black/15 placeholder:text-black/35 focus:outline-none focus:ring-2 focus:ring-black';
+    'w-full rounded-inner bg-white px-3 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
   return (
     <div className="space-y-2">
       {(row.status === 'submitted' || row.status === 'draft') && (
         <>
-          <label className="block font-mono text-[12px] text-black/60" htmlFor={`ref-${row.id}`}>
-            Formula order number (optional)
+          <label className="block text-[13px] font-medium text-ink/70" htmlFor={`ref-${row.id}`}>
+            Pharmacy order number (optional)
           </label>
           <input
             id={`ref-${row.id}`}
@@ -218,7 +218,7 @@ function Actions({ row }: { row: BoardRow }) {
             onClick={() => run(() => pharmacyAcceptOrder(row.id, ref))}
             className={cn(btnPrimary, 'w-full')}
           >
-            {pending ? 'Saving…' : 'Mark placed in Formula'}
+            {pending ? 'Saving…' : 'Mark placed'}
           </button>
         </>
       )}

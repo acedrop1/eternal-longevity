@@ -21,7 +21,7 @@ export default async function DoctorFulfillmentPage() {
     <PortalShell user={user} nav={DOCTOR_NAV}>
       <PageHeader
         title="Orders to place."
-        intro="Every paid order, new or refill. Place it in the Formula Health portal and mark it placed here. Admin sees the same list, so whoever places it first marks it."
+        intro="Every paid order, new or refill. Place it in the pharmacy portal and mark it placed here. Admin sees the same list, so whoever places it first marks it."
       />
       <div className="mt-10">
         <FulfillmentBoard rows={rows} />

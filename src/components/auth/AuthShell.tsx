@@ -1,12 +1,19 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
+import { SERVICE_AREA_SHORT } from '@/lib/site';
+
+// Same value as GLASS_DARK in HomeSections. Inlined because PasswordField (a client
+// component) imports this module, and HomeSections pulls in server-only catalogue code.
+const GLASS_DARK = 'bg-white/15 text-white ring-1 ring-white/30 backdrop-blur-xl backdrop-saturate-150';
 
 /**
  * Shared chrome for the auth screens (/login, /signup, /forgot-password,
- * /auth/reset, /login/verify): white ground, the form column on the left and,
- * on desktop, a black brand panel on the right.
+ * /auth/reset, /login/verify): a split layout. Desktop gets a large rounded
+ * brand photo with a frosted caption on one side and the form on white on the
+ * other; phones get the form alone under the header wordmark.
  */
 export function AuthShell({
   eyebrow,
@@ -24,76 +31,75 @@ export function AuthShell({
   return (
     <>
       <Header />
-      <main className="bg-white text-black">
-        {/* Top padding clears the fixed header (80 / 88px). */}
-        <section className="px-5 pb-16 pt-[112px] md:px-8 md:pb-24 md:pt-[136px]">
-          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2 lg:gap-16">
-            <div className="mx-auto w-full max-w-md lg:mx-0 lg:py-8">
-              <FadeIn>
-                <p className="mb-3 font-mono text-[13px] text-black/55">{eyebrow}</p>
-                <h1
-                  className="font-display font-normal [text-wrap:balance]"
-                  style={{ fontSize: 'clamp(2.2rem, 3vw + 1rem, 3.5rem)', fontStretch: '75%', lineHeight: 1 }}
-                >
-                  {title}
-                </h1>
-              </FadeIn>
-
-              <FadeIn delay={120} className="mt-8">
-                {children}
-              </FadeIn>
-
-              {footer && (
-                <FadeIn delay={240}>
-                  <div className="mt-8 font-mono text-[13px] leading-relaxed text-black/60">{footer}</div>
+      <main className="bg-white text-ink">
+        {/* Top padding clears the fixed header. */}
+        <section className="px-3 pb-10 pt-24 md:px-5 md:pb-16 md:pt-28">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="flex items-center justify-center px-2 py-8 md:px-5 lg:py-16">
+              <div className="w-full max-w-[440px]">
+                <FadeIn>
+                  <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-milk px-3.5 py-1.5 text-[13px] font-medium text-ink/70">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-butter-deep" />
+                    {eyebrow}
+                  </span>
+                  <h1 className="text-[44px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]">
+                    {title}
+                  </h1>
                 </FadeIn>
-              )}
+
+                <FadeIn delay={120} className="mt-8">
+                  {children}
+                </FadeIn>
+
+                {footer && (
+                  <FadeIn delay={240}>
+                    <div className="mt-8 text-[14px] leading-relaxed text-ink-soft">{footer}</div>
+                  </FadeIn>
+                )}
+              </div>
             </div>
 
-            <aside className="hidden min-h-[560px] flex-col justify-between rounded-[4px] bg-black p-10 text-white lg:flex">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Eternal Longevity" className="h-9 w-auto self-start" />
-              <div>
-                <p
-                  className="max-w-sm font-display font-normal [text-wrap:balance]"
-                  style={{ fontSize: 'clamp(1.8rem, 1.4vw + 1rem, 2.6rem)', fontStretch: '75%', lineHeight: 1.05 }}
-                >
+            <aside className="relative hidden overflow-hidden rounded-shell bg-milk lg:sticky lg:top-24 lg:order-first lg:block lg:h-[calc(100svh-7.5rem)] lg:min-h-[600px] lg:self-start">
+              {/* SoHo loft, morning: our vials on the island. */}
+              <Image src="/brand/hero-home.jpg" alt="" fill priority sizes="50vw" className="object-cover object-[66%_center]" />
+              <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
+              <div className={`absolute inset-x-6 bottom-6 rounded-inner p-7 xl:inset-x-8 xl:bottom-8 xl:p-8 ${GLASS_DARK}`}>
+                <p className="max-w-md text-[24px] font-semibold leading-[1.1] tracking-[-0.03em] [text-wrap:balance] xl:text-[28px]">
                   Every protocol is compounded by a licensed 503A pharmacy against a prescription written for you.
                 </p>
-                <p className="mt-6 font-mono text-[12px] text-white/55">
-                  NJ, NY, PA &amp; MI only · Prescription required · 18+
+                <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-[13px] font-medium text-white/90 ring-1 ring-white/25">
+                  <span aria-hidden className="h-2 w-2 rounded-full bg-butter" />
+                  {SERVICE_AREA_SHORT} only · Prescription required · 18+
                 </p>
               </div>
             </aside>
           </div>
         </section>
       </main>
-      <div className="bg-white">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }
 
 /** Shared input styling for auth forms. */
 export const authInputClass =
-  'w-full rounded-[2px] bg-black/[0.04] px-4 py-3 text-[16px] text-black ring-1 ring-black/10 placeholder:text-black/35 transition-shadow focus:outline-none focus:ring-2 focus:ring-black';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[background-color,box-shadow] focus:bg-white focus:outline-none focus:ring-ink/20';
 
 /** Error message box (server-returned auth errors). */
 export const authErrorClass =
-  'rounded-[2px] bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20';
+  'rounded-inner bg-red-50 px-4 py-3 text-[14px] leading-relaxed text-red-700 ring-1 ring-red-600/15';
 
 /** Neutral notice box (info, confirmations). */
 export const authNoticeClass =
-  'rounded-[2px] bg-[#F2F2F0] px-4 py-3 text-[15px] leading-relaxed text-black/80';
+  'rounded-inner bg-butter-soft px-4 py-3 text-[14px] leading-relaxed text-ink/80';
 
 /** Inline text link. */
 export const authLinkClass =
-  'text-black underline decoration-black/50 underline-offset-[3px] transition-colors hover:decoration-black';
+  'font-medium text-ink underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
 
-/** Secondary (outline) pill, full width. */
+/** Secondary pill, full width. */
 export const authSecondaryClass =
-  'block w-full rounded-full px-5 py-3.5 text-center font-mono text-[14px] text-black ring-1 ring-black/20 transition-colors hover:bg-black/[0.04]';
+  'block w-full rounded-full bg-milk px-5 py-3.5 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-milk-deep';
 
 /** Shared field label. */
 export function AuthLabel({
@@ -104,7 +110,7 @@ export function AuthLabel({
   children: ReactNode;
 }) {
   return (
-    <label htmlFor={htmlFor} className="mb-2 block font-mono text-[13px] text-black/70">
+    <label htmlFor={htmlFor} className="mb-2 block text-[13px] font-medium text-ink/70">
       {children}
     </label>
   );

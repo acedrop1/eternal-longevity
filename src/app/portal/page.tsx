@@ -7,6 +7,7 @@ import { getPendingVisit } from '@/lib/intake-actions';
 import { getOnboardingSteps } from '@/lib/onboarding';
 import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
 import { listOrders } from '@/lib/orders-db';
+import { listOpenCheckinsForUser } from '@/lib/checkins-db';
 import { STATUS_LABEL } from '@/lib/orders';
 import { MEMBER_NAV, PageHeader, StatusChip, panel, sentenceCase } from '@/components/portal/ui';
 
@@ -24,10 +25,12 @@ export default async function MemberPortalPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, orders] = await Promise.all([
+  const [pendingVisit, orders, checkins] = await Promise.all([
     getPendingVisit(),
     listOrders().catch(() => []),
+    listOpenCheckinsForUser(user.id).catch(() => []),
   ]);
+  const checkin = checkins[0] ?? null;
   const onboarding = await getOnboardingSteps(orders);
   const latest = orders[0] ?? null;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
@@ -74,11 +77,11 @@ export default async function MemberPortalPage() {
       {latest && (
         <Link
           href="/portal/orders"
-          className={`${panel} flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-[#EAEAE7] md:px-6 md:py-5`}
+          className={`${panel} flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-milk-deep md:px-6 md:py-5`}
         >
           <div className="min-w-0">
-            <p className="mb-1 font-mono text-[13px] text-black/55">Latest order</p>
-            <p className="truncate text-[15px] text-black">
+            <p className="mb-1 text-[13px] font-medium text-ink/55">Latest order</p>
+            <p className="truncate text-[15px] text-ink">
               {latest.lines.map((l) => l.productName).join(', ')}
             </p>
           </div>
@@ -90,24 +93,43 @@ export default async function MemberPortalPage() {
         </Link>
       )}
 
+      {/* 30-day check-in, only while one is open. Same flow as the email. */}
+      {checkin && (
+        <div className={`${panel} px-5 py-4 md:px-6 md:py-5`}>
+          <p className="mb-1 text-[13px] font-medium text-ink/55">Check-in</p>
+          <p className="text-[15px] text-ink">
+            How’s it going with your treatment? 1 = not well, 5 = very well.
+          </p>
+          <div className="mt-3 flex gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Link
+                key={n}
+                href={`/checkin/${checkin.token}?r=${n}`}
+                aria-label={`Rate ${n} out of 5`}
+                className="grid h-11 w-11 place-items-center rounded-full bg-white text-[15px] font-semibold tabular-nums text-ink ring-1 ring-ink/10 transition-colors hover:bg-butter"
+              >
+                {n}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Three tiles. That's the whole dashboard. */}
       <div className="grid gap-3 sm:grid-cols-3">
         {tiles.map((t) => (
           <Link
             key={t.href}
             href={t.href}
-            className="group flex flex-col rounded-[4px] bg-white p-5 ring-1 ring-black/10 transition-colors hover:bg-[#F2F2F0] md:p-6"
+            className="group flex flex-col rounded-shell bg-white p-5 ring-1 ring-ink/5 transition-colors hover:bg-milk md:p-6"
           >
-            <p
-              className="font-display font-normal text-black"
-              style={{ fontSize: '1.5rem', fontStretch: '75%', lineHeight: 1.1 }}
-            >
+            <p className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]">
               {t.title}
             </p>
-            <p className="mt-1.5 text-[15px] text-black/60">{t.body}</p>
+            <p className="mt-1.5 text-[15px] text-ink-soft">{t.body}</p>
             <span
               aria-hidden
-              className="mt-6 font-mono text-[13px] text-black/45 transition-transform group-hover:translate-x-1 group-hover:text-black"
+              className="mt-6 grid h-8 w-8 place-items-center rounded-full bg-milk text-[14px] font-semibold text-ink/60 transition-transform group-hover:translate-x-1 group-hover:bg-butter group-hover:text-ink"
             >
               →
             </span>
@@ -115,11 +137,11 @@ export default async function MemberPortalPage() {
         ))}
       </div>
 
-      <p className="text-[14px] text-black/55">
+      <p className="text-[14px] text-ink/55">
         Need anything?{' '}
         <Link
           href="/portal/messages"
-          className="text-black underline decoration-black/40 underline-offset-[3px] hover:decoration-black"
+          className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
         >
           Message us
         </Link>{' '}

@@ -7,6 +7,18 @@ import type { PrescriberRecord } from '@/lib/prescriberTypes';
 export { CREDENTIALS } from '@/lib/prescriberTypes';
 export type { PrescriberRecord } from '@/lib/prescriberTypes';
 
+/**
+ * The prescriber of record as published on the site. Public pages fall back to
+ * this when the profile row is missing or incomplete, so they never print a
+ * blank name. Admin forms keep reading the raw row (EMPTY) so they show what is
+ * actually stored.
+ */
+export const PRESCRIBER_FALLBACK = {
+  name: 'Bader Elder',
+  credential: 'DO',
+  display: 'Bader Elder, DO',
+} as const;
+
 const EMPTY: PrescriberRecord = {
   id: null,
   name: '',
@@ -51,13 +63,15 @@ export async function getPrescriber(
 
     /*
      * Historically the credential was typed into the name ("Bader Elder, MD").
-     * Strip it so the two never render twice, and fall back to it while the
-     * credential column is still empty.
+     * Strip it so the two never render twice. The legacy suffix was wrong (he
+     * is a DO), so it is never trusted: an empty credential column with a
+     * legacy suffix falls back to the published credential instead.
      */
     const raw = (data.full_name ?? '').trim();
     const suffixed = raw.match(/^(.*?),\s*([A-Za-z.]{2,7})$/);
     const name = suffixed ? suffixed[1].trim() : raw;
-    const credential = (data.credential ?? suffixed?.[2] ?? '').trim();
+    const credential =
+      (data.credential ?? '').trim() || (suffixed ? PRESCRIBER_FALLBACK.credential : '');
 
     return {
       id: data.id,

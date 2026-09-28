@@ -4,8 +4,8 @@ import path from 'path';
 import { SITE_NAME, SITE_TAGLINE } from '@/lib/site';
 
 /**
- * Open Graph / social-share image: a still from the hero film (the drop
- * landing under the vial) darkened, with the gold wordmark centred on it.
+ * Open Graph / social-share image: the SoHo loft hero (our vials on the
+ * counter) with a soft dark fade on the left and the butter wordmark on it.
  * Static, so it renders once at build time. Next.js wires it into
  * <meta property="og:image"> and <meta name="twitter:image"> automatically.
  */
@@ -18,8 +18,8 @@ const dataUrl = async (file: string, type: string) =>
 
 export default async function OpengraphImage() {
   const [frame, logo] = await Promise.all([
-    dataUrl('src/app/og/frame.jpg', 'image/jpeg'),
-    dataUrl('public/logo.svg', 'image/svg+xml'),
+    dataUrl('public/brand/og-frame.jpg', 'image/jpeg'),
+    dataUrl('public/brand/logo.svg', 'image/svg+xml'),
   ]);
 
   return new ImageResponse(
@@ -36,14 +36,15 @@ export default async function OpengraphImage() {
             height: 630,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            background: 'rgba(0,0,0,0.62)',
+            paddingLeft: 80,
+            background: 'linear-gradient(90deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0) 100%)',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img src={logo} width={680} height={135} />
-          <div style={{ marginTop: 40, fontSize: 30, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}>
+          <img src={logo} width={520} height={172} />
+          <div style={{ marginTop: 36, fontSize: 30, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.01em' }}>
             {SITE_TAGLINE}
           </div>
         </div>

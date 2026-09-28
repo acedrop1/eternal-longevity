@@ -35,7 +35,7 @@ export function LegitScriptSeal({ className }: { className?: string }) {
       className={className}
     >
       {failed ? (
-        <span className="inline-flex items-center gap-2 rounded-[2px] bg-white px-3 py-2 font-mono text-[12px] leading-none text-black ring-1 ring-black/15">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium leading-none text-ink ring-1 ring-ink/15">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
           LegitScript certified · Verify
         </span>

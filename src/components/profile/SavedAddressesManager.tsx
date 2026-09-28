@@ -65,7 +65,7 @@ export function SavedAddressesManager() {
   return (
     <div className="space-y-3">
       {profile.addresses.length === 0 && !adding && (
-        <p className="text-[15px] text-black/60">
+        <p className="text-[15px] text-ink/60">
           No saved addresses yet. Add one to skip re-entering at checkout.
         </p>
       )}
@@ -73,27 +73,27 @@ export function SavedAddressesManager() {
       {profile.addresses.map((a) => (
         <div
           key={a.id}
-          className={cn(inset, 'p-4', a.isPrimary && 'ring-black/30')}
+          className={cn(inset, 'p-4', a.isPrimary && 'ring-ink/30')}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="mb-1 flex flex-wrap items-center gap-2">
-                <span className="text-[15px] font-medium text-black">
+                <span className="text-[15px] font-medium text-ink">
                   {a.label}
                 </span>
                 {a.isPrimary && (
-                  <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-black/[0.05] px-2 py-1 font-mono text-[12px] leading-none text-black">
-                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#D5A850]" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-2.5 py-1 text-[12px] font-medium leading-none text-ink ring-1 ring-inset ring-butter-deep/60">
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                     Primary
                   </span>
                 )}
               </div>
-              <p className="text-[15px] text-black/80">{a.fullName}</p>
-              <p className="mt-0.5 text-[14px] text-black/60">
+              <p className="text-[15px] text-ink/80">{a.fullName}</p>
+              <p className="mt-0.5 text-[14px] text-ink/60">
                 {formatAddressOneLine(a)}
               </p>
               {a.phone && (
-                <p className="mt-0.5 text-[14px] tabular-nums text-black/60">{formatPhone(a.phone)}</p>
+                <p className="mt-0.5 text-[14px] tabular-nums text-ink/60">{formatPhone(a.phone)}</p>
               )}
             </div>
             <div className="flex flex-shrink-0 gap-2">
@@ -101,7 +101,7 @@ export function SavedAddressesManager() {
                 <button
                   type="button"
                   onClick={() => setPrimaryAddress(a.id)}
-                  className={cn(btnSmall, 'bg-white text-black ring-black/15 hover:bg-black/[0.04]')}
+                  className={cn(btnSmall, 'bg-white text-ink ring-ink/10 hover:bg-milk')}
                 >
                   Set primary
                 </button>
@@ -120,7 +120,7 @@ export function SavedAddressesManager() {
 
       {adding ? (
         <div className={cn(inset, 'p-4 md:p-5')}>
-          <p className="mb-4 text-[16px] font-medium text-black">New address</p>
+          <p className="mb-4 text-[16px] font-medium text-ink">New address</p>
           <div className="grid gap-4">
             <Field
               label="Label"
@@ -188,14 +188,14 @@ export function SavedAddressesManager() {
                 setDraft({ ...draft, isPrimary: !draft.isPrimary })
               }
               aria-pressed={draft.isPrimary}
-              className="flex min-h-[44px] items-center gap-3 rounded-[2px] bg-white px-4 py-3 text-left ring-1 ring-black/15 transition-colors hover:bg-black/[0.02]"
+              className="flex min-h-[44px] items-center gap-3 rounded-inner bg-white px-4 py-3 text-left ring-1 ring-ink/10 transition-colors hover:bg-milk"
             >
               <span
                 className={cn(
-                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-[2px] ring-1',
+                  'grid h-5 w-5 flex-shrink-0 place-items-center rounded-full ring-1',
                   draft.isPrimary
-                    ? 'bg-black text-white ring-black'
-                    : 'bg-white ring-black/30'
+                    ? 'bg-ink text-white ring-ink'
+                    : 'bg-white ring-ink/30'
                 )}
               >
                 {draft.isPrimary && (
@@ -213,7 +213,7 @@ export function SavedAddressesManager() {
                   </svg>
                 )}
               </span>
-              <span className="text-[15px] text-black/80">
+              <span className="text-[15px] text-ink/80">
                 Make this my primary shipping address
               </span>
             </button>

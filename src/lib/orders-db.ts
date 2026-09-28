@@ -37,7 +37,15 @@ import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } fro
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getLiveProducts } from '@/lib/catalog';
-import { checkPromoAction, redeemPromo } from '@/lib/promo-db';
+import { checkPromoAction } from '@/lib/promo-db';
+import { redeemPromo } from '@/lib/promo-redeem';
+import {
+  MAX_LINE_QUANTITY,
+  MAX_ORDER_LINES,
+  ORDER_FROM,
+  shippingAddressError,
+} from '@/lib/order-rules';
+import type { Database } from '@/lib/database.types';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder } from '@/lib/intake-status';
 import { SITE_URL } from '@/lib/site';
@@ -200,6 +208,43 @@ async function appendUpdate(
   });
 }
 
+/**
+ * Move an order only if it is still in one of `from`. False when it has moved
+ * on — a second click, a stale screen, or a request against a finished order.
+ */
+async function moveOrder(
+  id: string,
+  from: (typeof ORDER_FROM)[keyof typeof ORDER_FROM],
+  patch: Database['public']['Tables']['orders']['Update'],
+): Promise<boolean> {
+  const { data } = await createSupabaseAdminClient()
+    .from('orders')
+    .update(patch)
+    .eq('id', id)
+    .in('status', from)
+    .select('id');
+  return Boolean(data?.length);
+}
+
+/**
+ * A cancelled order must not keep its plan. Signing wrote a prescription and
+ * started a subscription; left alone, the renewals cron would bill a cancelled
+ * order every cycle, and admin's "ready to submit" list would still offer it.
+ */
+async function voidPlanForOrder(orderId: string): Promise<void> {
+  const db = createSupabaseAdminClient();
+  const { data: rx } = await db
+    .from('prescriptions')
+    .select('id')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  if (!rx) return;
+  await Promise.all([
+    db.from('prescriptions').update({ status: 'declined', refills_remaining: 0 }).eq('id', rx.id),
+    db.from('subscriptions').update({ status: 'canceled' }).eq('prescription_id', rx.id),
+  ]);
+}
+
 /** Resolve an order_number to its uuid. */
 async function orderIdFor(orderNumber: string): Promise<string | null> {
   const db = createSupabaseAdminClient();
@@ -241,21 +286,30 @@ export async function placeOrderAction(input: {
   subtotal: number;
   total: number;
   shippingAddress: Order['shippingAddress'];
-  cardLast4?: string;
   /** Promotion code the member entered, if any. */
   promoCode?: string;
-  /** The saved card this order will be charged against on approval. */
-  authIntentId?: string;
 }): Promise<ActionResult & { orderNumber?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  // The form checks these too; this is the check a crafted request meets.
+  const addressError = shippingAddressError(input.shippingAddress);
+  if (addressError) return { ok: false, error: addressError };
+  const shippingAddress: Order['shippingAddress'] = {
+    fullName: input.shippingAddress.fullName.trim(),
+    line1: input.shippingAddress.line1.trim(),
+    line2: input.shippingAddress.line2?.trim() || undefined,
+    city: input.shippingAddress.city.trim(),
+    state: input.shippingAddress.state.toUpperCase(),
+    zip: input.shippingAddress.zip.trim(),
+  };
 
   /*
    * Geofence, enforced server-side. The shipping dropdown only offers
    * serviceable states, but a dropdown is not a control — this is the check
    * that actually holds, and it is the one the processor is relying on.
    */
-  const shipState = (input.shippingAddress.state || '').toUpperCase();
+  const shipState = shippingAddress.state;
   if (!SERVICEABLE_STATES.includes(shipState)) {
     return { ok: false, error: 'state_not_serviced' };
   }
@@ -270,7 +324,20 @@ export async function placeOrderAction(input: {
     return { ok: false, error: 'intake_incomplete' };
   }
 
-  if (!input.lines.length) return { ok: false, error: 'empty_cart' };
+  if (!Array.isArray(input.lines) || !input.lines.length) {
+    return { ok: false, error: 'empty_cart' };
+  }
+  if (
+    input.lines.length > MAX_ORDER_LINES ||
+    input.lines.some(
+      (l) =>
+        !Number.isInteger(l.quantity) ||
+        l.quantity < 1 ||
+        l.quantity > MAX_LINE_QUANTITY,
+    )
+  ) {
+    return { ok: false, error: 'invalid_quantity' };
+  }
 
   /*
    * Catalogue gate, enforced server-side for the same reason as the geofence.
@@ -298,7 +365,7 @@ export async function placeOrderAction(input: {
       cadence: tier.key,
       cadenceLabel: tier.label,
       perCycle: tier.total,
-      quantity: Math.max(1, Math.floor(l.quantity ?? 1)),
+      quantity: l.quantity,
       image: product.image,
       swatch: product.swatch,
     };
@@ -324,6 +391,16 @@ export async function placeOrderAction(input: {
       cartDiscountCents = check.discountCents;
       appliedCode = check.code ?? null;
     }
+  }
+
+  /*
+   * Claimed before any order is written: the check above only reads the count,
+   * so two checkouts racing for a code's last redemption would both pass it.
+   * The claim is atomic; the loser is told, rather than charged full price
+   * without warning.
+   */
+  if (appliedCode && !(await redeemPromo(appliedCode))) {
+    return { ok: false, error: 'promo_unavailable' };
   }
 
   /*
@@ -378,16 +455,14 @@ export async function placeOrderAction(input: {
         status: 'pending-admin',
         member_name: user.name,
         member_email: user.email,
-        ship_state: input.shippingAddress.state,
+        ship_state: shipState,
         subtotal_cents: subtotalCents,
         shipping_cents: shippingCents,
         tax_cents: taxCents,
         discount_cents: discountCents,
         promo_code: appliedCode,
         total_cents: totalCents,
-        shipping_address: input.shippingAddress,
-        card_last4: input.cardLast4 ?? null,
-        stripe_payment_intent_id: input.authIntentId || null,
+        shipping_address: shippingAddress,
       })
       .select('id')
       .single();
@@ -424,9 +499,9 @@ export async function placeOrderAction(input: {
     bookedTotalCents += totalCents;
   }
 
+  // ponytail: a code claimed for a basket that then failed to insert stays
+  // spent; hand it back here if that ever happens outside a database outage.
   if (!created.length) return { ok: false, error: 'insert_failed' };
-
-  if (appliedCode) await redeemPromo(appliedCode);
 
   // One email for the basket, however many orders it became.
   if (user.email) {
@@ -464,15 +539,12 @@ export async function approveOrderAction(
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
 
-  const db = createSupabaseAdminClient();
-  await db
-    .from('orders')
-    .update({
-      status: 'assigned',
-      assigned_physician_id: physicianId ?? null,
-      admin_note: note ?? null,
-    })
-    .eq('id', id);
+  const moved = await moveOrder(id, ORDER_FROM.approve, {
+    status: 'assigned',
+    assigned_physician_id: physicianId ?? null,
+    admin_note: note ?? null,
+  });
+  if (!moved) return { ok: false, error: 'order_moved_on' };
 
   await appendUpdate(id, user.name, 'admin', 'Confirmed', note ?? 'Released for compounding.', 'assigned');
   revalidatePortal();
@@ -499,8 +571,16 @@ export async function denyOrderAction(
     .eq('id', id)
     .maybeSingle();
 
-  await db.from('orders').update({ status: 'denied-admin', admin_note: reason }).eq('id', id);
+  // The pay link dies with the order, so it cannot be paid after the fact.
+  const moved = await moveOrder(id, ORDER_FROM.deny, {
+    status: 'denied-admin',
+    admin_note: reason,
+    pay_token: null,
+    pay_token_expires: null,
+  });
+  if (!moved) return { ok: false, error: 'order_moved_on' };
   await appendUpdate(id, user.name, 'admin', 'Cancelled', reason, 'denied-admin');
+  await voidPlanForOrder(id);
 
   // Whatever was charged goes back, described the way it actually happened.
   const refund = await refundDeclinedOrder(
@@ -619,16 +699,27 @@ export async function signRxAction(
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
 
+  /*
+   * A product withheld or pulled back to draft after the order was placed is
+   * not something he can prescribe from here, whatever the queue still shows.
+   */
   const db = createSupabaseAdminClient();
-  await db
-    .from('orders')
-    .update({
-      status: 'signed',
-      physician_note: note ?? null,
-      paid_at: new Date().toISOString(),
-      first_charge_cents: Math.round(firstChargeAmount * 100),
-    })
-    .eq('id', id);
+  const [{ data: items }, live] = await Promise.all([
+    db.from('order_items').select('product_id').eq('order_id', id),
+    getLiveProducts(),
+  ]);
+  const liveIds = new Set(live.map((p) => p.id));
+  if (!items?.length || items.some((i) => !liveIds.has(String(i.product_id)))) {
+    return { ok: false, error: 'product_unavailable' };
+  }
+
+  const moved = await moveOrder(id, ORDER_FROM.sign, {
+    status: 'signed',
+    physician_note: note ?? null,
+    paid_at: new Date().toISOString(),
+    first_charge_cents: Math.round(firstChargeAmount * 100),
+  });
+  if (!moved) return { ok: false, error: 'order_moved_on' };
 
   await appendUpdate(
     id,
@@ -690,8 +781,15 @@ export async function declineClinicalAction(
     .eq('id', id)
     .maybeSingle();
 
-  await db.from('orders').update({ status: 'declined-clinical', physician_note: note }).eq('id', id);
+  const moved = await moveOrder(id, ORDER_FROM.declineClinical, {
+    status: 'declined-clinical',
+    physician_note: note,
+    pay_token: null,
+    pay_token_expires: null,
+  });
+  if (!moved) return { ok: false, error: 'order_moved_on' };
   await appendUpdate(id, user.name, 'physician', 'Declined', note, 'declined-clinical');
+  await voidPlanForOrder(id);
 
   // Refund in full, immediately. The checkout copy promises exactly this, and
   // a promise that waits on someone remembering to click refund is not one.

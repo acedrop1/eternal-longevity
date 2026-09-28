@@ -65,11 +65,12 @@ async function raiseRequest(
   const sent = await sendEmail({
     to: SUPPORT_EMAIL,
     replyTo: user.email,
-    subject: `${subject} — ${user.name || user.email}`,
+    // The member's name stays in the body; subjects show in notification previews.
+    subject,
     html: noticeEmail({
       eyebrow: 'Member request',
       heading: subject,
-      rows: [['Member', `${user.name || 'Member'} &lt;${user.email}&gt;`]],
+      rows: [['Member', `${user.name || 'Member'} <${user.email}>`]],
       body: detail,
     }),
   });

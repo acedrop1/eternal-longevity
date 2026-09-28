@@ -23,14 +23,6 @@ export function billingConfigured(): boolean {
   return stripeConfigured() && supabaseAdminConfigured();
 }
 
-export interface CheckoutLine {
-  productId: string;
-  productName: string;
-  quantity: number;
-  /** Price for one unit, in cents. */
-  amountCents: number;
-}
-
 export interface SavedCard {
   id: string;
   brand: string;
@@ -75,74 +67,6 @@ export async function getOrCreateStripeCustomer(params: {
     .eq('id', params.userId);
 
   return customer.id;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Checkout (one-time payment for a cart)                                    */
-/* -------------------------------------------------------------------------- */
-
-export async function createCheckoutSession(params: {
-  userId: string;
-  email: string;
-  name?: string;
-  lines: CheckoutLine[];
-}): Promise<{ url: string; orderNumber: string }> {
-  const stripe = getStripe();
-  const db = createSupabaseAdminClient();
-  const customerId = await getOrCreateStripeCustomer(params);
-
-  const orderNumber = await nextOrderNumber();
-  const subtotal = params.lines.reduce(
-    (sum, l) => sum + l.amountCents * l.quantity,
-    0,
-  );
-
-  // Pending order row — the Stripe webhook flips it to 'paid'.
-  const { data: order } = await db
-    .from('orders')
-    .insert({
-      order_number: orderNumber,
-      user_id: params.userId,
-      status: 'pending',
-      subtotal_cents: subtotal,
-      total_cents: subtotal,
-    })
-    .select('id')
-    .single();
-
-  if (order) {
-    await db.from('order_items').insert(
-      params.lines.map((l) => ({
-        order_id: order.id,
-        product_id: l.productId,
-        product_name: l.productName,
-        quantity: l.quantity,
-        unit_price_cents: l.amountCents,
-      })),
-    );
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer: customerId,
-    line_items: params.lines.map((l) => ({
-      quantity: l.quantity,
-      price_data: {
-        currency: 'usd',
-        unit_amount: l.amountCents,
-        product_data: { name: l.productName },
-      },
-    })),
-    success_url: `${SITE_URL}/checkout/success?order=${orderNumber}`,
-    cancel_url: `${SITE_URL}/checkout`,
-    metadata: { order_number: orderNumber, user_id: params.userId },
-    payment_intent_data: { metadata: { order_number: orderNumber } },
-  });
-
-  if (!session.url) {
-    throw new Error('Stripe did not return a checkout URL.');
-  }
-  return { url: session.url, orderNumber };
 }
 
 /* -------------------------------------------------------------------------- */
