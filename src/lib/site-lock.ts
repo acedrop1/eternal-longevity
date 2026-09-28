@@ -7,7 +7,7 @@
  * open (FORCE_SITE_LOCK=1 turns it on locally). Set SITE_PASSWORD for both.
  * To launch: set PRE_LAUNCH to false and deploy.
  */
-const PRE_LAUNCH = true;
+const PRE_LAUNCH = false;
 export const SITE_LOCKED = PRE_LAUNCH && (!!process.env.VERCEL_ENV || process.env.FORCE_SITE_LOCK === '1');
 
 export const LOCK_COOKIE = 'el_preview';
