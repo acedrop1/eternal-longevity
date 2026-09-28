@@ -17,7 +17,7 @@ import { SERVICEABLE_STATES, serviceAreaProse } from '@/lib/intakeSchema';
 function resolveSiteUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
   // Production is always the real domain, never the *.vercel.app alias.
-  if (process.env.VERCEL_ENV === 'production') return 'https://etlongevity.com';
+  if (process.env.VERCEL_ENV === 'production') return 'https://www.etlongevity.com';
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   return 'https://eternal-longevity-seven.vercel.app';
