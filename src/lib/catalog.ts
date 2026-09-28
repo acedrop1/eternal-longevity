@@ -96,7 +96,7 @@ export async function writeRow(row: ProductRow): Promise<void> {
   throw new Error('Connect Supabase to save products.');
 }
 
-const seedStatus = (id: string): ProductStatus => (DRAFT.has(id) ? 'draft' : isSellable(id) ? 'live' : 'withheld');
+const seedStatus = (id: string): ProductStatus => (isSellable(id) ? 'live' : DRAFT.has(id) ? 'draft' : 'withheld');
 
 /** Every product, any status, seed order first then new products by name. */
 export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {

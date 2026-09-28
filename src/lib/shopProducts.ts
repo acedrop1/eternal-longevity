@@ -2115,8 +2115,14 @@ export const DRAFT = new Set([
 ]);
 
 /** True when a product may be listed, linked, indexed or ordered. */
+/**
+ * Local dev previews drafts as live, so localhost shows the whole lineup the
+ * way it will look once each product is cleared. Never on a Vercel build.
+ */
+export const PREVIEW_DRAFTS = process.env.NODE_ENV === 'development' && !process.env.VERCEL_ENV;
+
 export function isSellable(id: string): boolean {
-  return !NEVER_LIVE.has(id) && !DRAFT.has(id);
+  return !NEVER_LIVE.has(id) && (PREVIEW_DRAFTS || !DRAFT.has(id));
 }
 
 /**
