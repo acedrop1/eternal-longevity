@@ -2104,15 +2104,10 @@ export const NEVER_LIVE: ReadonlySet<string> = new Set([...WITHHELD, 'semaglutid
 
 /**
  * Seeded as drafts: in the catalogue for review, not listed or orderable until
- * an admin flips them to live in Admin → Products.
+ * an admin flips them to live in Admin → Products. Empty since 2026-09-28: the
+ * whole lineup was published. Add an id here to hold a new product back.
  */
-export const DRAFT = new Set([
-  'nad-nasal', 'mic-b12', 'methylene-blue',
-  'ed-dual', 'sildenafil', 'oxytocin',
-  'enclomiphene', 'hrt-cream',
-  'fin-min-capsule', 'fin-min-foam', 'min-12-fin', 'fin-min-tret', 'finasteride', 'oral-minoxidil', 'spironolactone',
-  'tretinoin', 'glow-cream', 'acne-cream', 'brightening', 'melasma', 'hq-free', 'rosacea',
-]);
+export const DRAFT = new Set<string>([]);
 
 /** True when a product may be listed, linked, indexed or ordered. */
 /**
