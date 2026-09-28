@@ -51,8 +51,15 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
 
   return (
     <div className="space-y-16 text-ink md:space-y-24">
-      <section className="grid items-start gap-8 md:grid-cols-2 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
-        <ProductImage product={product} sizes="(max-width: 1024px) 50vw, 760px" className="aspect-[4/5] w-full" />
+      {/* The photo never runs past the window: its width is capped at 4/5 of the height left below where it
+          starts (--pdp-fit: header + breadcrumb + a bottom margin), so it keeps its shape at any screen size
+          and sits beside the buy column as one centred pair. */}
+      <section className="grid items-start gap-8 md:grid-cols-2 lg:grid-cols-[auto_minmax(0,600px)] lg:justify-center lg:gap-16">
+        <ProductImage
+          product={product}
+          sizes="(max-width: 1024px) 50vw, 760px"
+          className="aspect-[4/5] w-full md:sticky md:top-[var(--pdp-sticky-top,5rem)] md:w-[min(100%,calc((100svh-var(--pdp-fit,12rem))*0.8))] lg:w-[min(760px,calc((100svh-var(--pdp-fit,12rem))*0.8))]"
+        />
 
         <div className="md:sticky md:top-[var(--pdp-sticky-top,5rem)]">
           <p className="flex items-center gap-2 text-[13px] font-medium text-ink/55">
