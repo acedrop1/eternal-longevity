@@ -12,7 +12,7 @@ const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
 
 /** Words people search by that aren't in the name or description. */
 const KEYWORDS: Record<string, string> = {
-  'ed-dual': 'erectile dysfunction tadalafil',
+  'sildenafil-tadalafil': 'erectile dysfunction tadalafil',
   sildenafil: 'erectile dysfunction',
   'pt-141': 'bremelanotide desire',
   'hrt-cream': 'estrogen estradiol progesterone hormone replacement',
@@ -21,7 +21,7 @@ const KEYWORDS: Record<string, string> = {
   'fin-min-tret': 'finasteride minoxidil hair loss',
   tretinoin: 'retinoid wrinkles',
   'glow-cream': 'tretinoin wrinkles',
-  melasma: 'dark spots hyperpigmentation',
+  'even-tone-cream': 'dark spots hyperpigmentation',
   brightening: 'hyperpigmentation',
   'hq-free': 'dark spots hyperpigmentation',
   spironolactone: 'hair loss',

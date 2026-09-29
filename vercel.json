@@ -23,6 +23,26 @@
       "source": "/legal/telehealth",
       "destination": "/legal/consent",
       "permanent": true
+    },
+    {
+      "source": "/shop/ed-dual",
+      "destination": "/shop/sildenafil-tadalafil",
+      "permanent": true
+    },
+    {
+      "source": "/shop/acne-cream",
+      "destination": "/shop/clear-skin-cream",
+      "permanent": true
+    },
+    {
+      "source": "/shop/melasma",
+      "destination": "/shop/even-tone-cream",
+      "permanent": true
+    },
+    {
+      "source": "/shop/rosacea",
+      "destination": "/shop/clear-skin-capsules",
+      "permanent": true
     }
   ]
 }

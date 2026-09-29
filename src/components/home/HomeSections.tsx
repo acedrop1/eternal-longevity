@@ -351,8 +351,8 @@ export async function ShopByGoal() {
 }
 
 const CAMPAIGN = [
-  { src: '/brand/life-cyclist.jpg', tag: 'Still climbing at 60' },
-  { src: '/brand/life-yoga.jpg', tag: 'Menopause, on your terms' },
+  { src: '/brand/life-cyclist.jpg', tag: 'Built around an active life' },
+  { src: '/brand/life-yoga.jpg', tag: 'Hormone care, on your terms' },
   { src: '/brand/life-coffee.jpg', tag: 'Care around your routine' },
   { src: '/brand/life-telehealth.jpg', tag: 'Your physician, from the sofa' },
 ];

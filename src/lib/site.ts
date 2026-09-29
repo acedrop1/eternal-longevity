@@ -31,6 +31,14 @@ export const SITE_NAME = 'Eternal Longevity';
 
 export const SITE_TAGLINE = 'Physician-prescribed longevity and wellness care.';
 
+/**
+ * The standard structure/function disclaimer the payment processor requires
+ * wherever the site describes what a product supports. Verbatim: don't reword.
+ * Shown in the footer and beside the Rx-only line on every product page.
+ */
+export const FDA_DISCLAIMER =
+  'These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.';
+
 export const SITE_DESCRIPTION = `Online care for longevity, sexual health, hormones, hair and skin. Prescribed by a licensed physician for adults in ${serviceAreaProse('and')}, and shipped free from a licensed pharmacy.`;
 
 /* ------------------------- merchant identity ------------------------------ */

@@ -1,5 +1,6 @@
 'use client';
 
+import { EXPLAINER } from '@/lib/explainers';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
@@ -72,6 +73,8 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
             {product.name}
           </h1>
           <p className="mt-3 text-[16px] leading-relaxed text-ink-soft">{product.tagline}</p>
+          {/* Plain-language "how it helps", so the page explains itself before the plans. */}
+          <p className="mt-4 max-w-[540px] text-[15px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
           <div className="mt-6">
             <PriceBlock product={product} active={active} />

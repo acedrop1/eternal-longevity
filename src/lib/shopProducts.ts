@@ -374,13 +374,13 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'pt-141',
     name: 'PT-141',
-    tagline: 'Libido & Arousal',
+    tagline: 'Supports Healthy Desire',
     category: 'sexual',
     shortDescription:
       'Bremelanotide, a peptide that acts on melanocortin receptors in the brain rather than on blood flow. Used as needed.',
     longDescription:
-      'PT-141 (bremelanotide) is a synthetic peptide that works through the central melanocortin system rather than the vascular pathway PDE-5 inhibitors target. Bremelanotide is FDA-approved for one specific indication in premenopausal women; what we dispense is a compounded preparation, which is not FDA-approved, and use in men is off-label. Whether it is appropriate for you is a question for your prescriber.',
-    bestFor: 'Members raising libido concerns with a prescriber.',
+      'PT-141 (bremelanotide) is a synthetic peptide that works through the central melanocortin system rather than the vascular pathway PDE-5 inhibitors target. Bremelanotide is FDA-approved for one specific indication in a defined group of women; what we dispense is a compounded preparation, which is not FDA-approved, and use in men is off-label. Whether it is appropriate for you is a question for your prescriber.',
+    bestFor: 'Adults exploring sexual wellness with a prescriber.',
     benefits: [
       'Acts on desire pathways, not vascular ones',
       'Works centrally via melanocortin receptors',
@@ -588,16 +588,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'nad-plus',
     name: 'NAD+',
-    tagline: 'Cellular Energy',
+    tagline: 'Supports Cellular Energy',
     category: 'longevity',
     shortDescription:
       'The coenzyme central to mitochondrial energy metabolism. Levels fall with age.',
     longDescription:
-      'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and DNA-repair signalling. Tissue levels decline with age, and supplementation is an active research area — although how much subcutaneous dosing raises intracellular NAD+ in humans is still debated. Offered for energy and longevity support in healthy adults.',
+      'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and normal DNA-maintenance signalling. Tissue levels decline with age, and supplementation is an active research area — although how much subcutaneous dosing raises intracellular NAD+ in humans is still debated. Offered for energy and longevity support in healthy adults.',
     bestFor: 'Adults discussing energy and healthy ageing with a prescriber.',
     benefits: [
       'Central to mitochondrial energy metabolism',
-      'Studied for DNA-repair signalling pathways',
+      'Studied for normal DNA-maintenance signalling',
       'Subcutaneous dosing, no infusion appointment',
       'Can be prescribed alongside glutathione',
     ],
@@ -674,13 +674,13 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Antioxidant Tripeptide',
     category: 'longevity',
     shortDescription:
-      'The tripeptide your cells use to neutralise oxidative stress. Produced naturally, and depleted by age and load.',
+      'The tripeptide your cells use in their normal antioxidant defences. Produced naturally, and levels fall with age.',
     longDescription:
-      'Glutathione is a tripeptide of glutamate, cysteine and glycine that every cell produces and uses in redox reactions and phase-II liver conjugation. Levels fall with age, illness, and sustained physical stress. How much injected glutathione raises intracellular levels in humans is still debated, and we make no skin-lightening claim of any kind — that use has drawn FDA warning letters and we do not offer it.',
+      'Glutathione is a tripeptide of glutamate, cysteine and glycine that every cell produces and uses in redox reactions and phase-II liver conjugation. Levels fall with age and sustained physical stress. How much injected glutathione raises intracellular levels in humans is still debated, and we make no skin-lightening claim of any kind — that use has drawn FDA warning letters and we do not offer it.',
     bestFor: 'Adults discussing oxidative stress and healthy ageing with a prescriber.',
     benefits: [
       'A tripeptide the body uses in its own antioxidant (redox) chemistry',
-      'Studied for oxidative-stress markers',
+      'Supports the body’s normal antioxidant defences',
       'Subcutaneous dosing, no infusion appointment',
       'Commonly run alongside NAD+',
     ],
@@ -928,11 +928,11 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'The same coenzyme as our NAD+ injection, in a nasal spray. No needles and nothing to reconstitute.',
     longDescription:
-      'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and DNA-repair signalling. Tissue levels decline with age. This compounded nasal spray is an alternative to subcutaneous dosing for members who would rather not inject; how much intranasal NAD+ raises levels in the body is not well established, and human data on this route is limited. NAD+ is not an FDA-approved drug, and compounded preparations are not FDA-approved. Offered for energy and longevity support in healthy adults, not to treat any condition.',
+      'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and normal DNA-maintenance signalling. Tissue levels decline with age. This compounded nasal spray is an alternative to subcutaneous dosing for members who would rather not inject; how much intranasal NAD+ raises levels in the body is not well established, and human data on this route is limited. NAD+ is not an FDA-approved drug, and compounded preparations are not FDA-approved. Offered for energy and longevity support in healthy adults, not to treat any condition.',
     bestFor: 'Members who want NAD+ support without injections.',
     benefits: [
       'Central to mitochondrial energy metabolism',
-      'Studied for DNA-repair signalling pathways',
+      'Studied for normal DNA-maintenance signalling',
       'Needle-free dosing',
       'Nothing to reconstitute',
     ],
@@ -1052,15 +1052,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
 
   // ============ SEXUAL HEALTH (drafts) ============
   {
-    id: 'ed-dual',
+    id: 'sildenafil-tadalafil',
     name: 'Sildenafil + Tadalafil',
     tagline: 'Two PDE-5 Inhibitors, One Troche',
     category: 'sexual',
     shortDescription:
       'Sildenafil and tadalafil combined in a troche that dissolves under the tongue. Taken as needed.',
     longDescription:
-      'Sildenafil and tadalafil are PDE-5 inhibitors and the active ingredients in FDA-approved medicines for erectile dysfunction. Sildenafil is shorter-acting; tadalafil lasts longer. This compounded sublingual troche combines the two. Its 120 mg of sildenafil is above the 100 mg maximum labelled single dose of FDA-approved sildenafil, and is used only if your prescriber decides it is appropriate for you. The combination is not FDA-approved, is prescribed off-label, and has far less published research than either medicine alone. Both work with sexual stimulation, not on their own. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
-    bestFor: 'Men discussing erectile dysfunction with a prescriber who want a single as-needed option.',
+      'Sildenafil and tadalafil are PDE-5 inhibitors and the active ingredients in FDA-approved prescription medicines for men’s sexual health. Sildenafil is shorter-acting; tadalafil lasts longer. This compounded sublingual troche combines the two. Its 120 mg of sildenafil is above the 100 mg maximum labelled single dose of FDA-approved sildenafil, and is used only if your prescriber decides it is appropriate for you. The combination is not FDA-approved, is prescribed off-label, and has far less published research than either medicine alone. Both work with sexual stimulation, not on their own. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
+    bestFor: 'Men who want a single as-needed option to support sexual performance.',
     benefits: [
       'Two PDE-5 inhibitors in a single dose',
       'Pairs a shorter-acting and a longer-acting medicine',
@@ -1075,9 +1075,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     cycleLength: 'As-needed dosing · 30 troches',
     pricing: { monthly: 49, quarterly: 135, sixMonth: 252, annual: 504 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
-    image: '/brand/products/ed-dual.jpg',
+    image: '/brand/products/sildenafil-tadalafil.jpg',
     shot: true,
-    gallery: ['/brand/products/ed-dual.jpg'],
+    gallery: ['/brand/products/sildenafil-tadalafil.jpg'],
     requiresReview: true,
     fdaApproved: true,
     sideEffects: [
@@ -1102,15 +1102,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'sildenafil',
     name: 'Sildenafil',
-    tagline: 'Erectile Health, As Needed',
+    tagline: 'Supports Sexual Performance, As Needed',
     category: 'sexual',
     shortDescription:
       'Sildenafil 100 mg capsules, taken as needed about an hour before sexual activity.',
     longDescription:
-      'Sildenafil is a PDE-5 inhibitor and the active ingredient in FDA-approved medicines for erectile dysfunction. It increases blood flow in response to sexual stimulation; it does not create arousal on its own. What we dispense is a compounded capsule, which is not FDA-approved. It is taken as needed, typically about an hour before sexual activity and no more than once a day. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
-    bestFor: 'Men discussing erectile dysfunction with a prescriber who want a well-studied, as-needed option.',
+      'Sildenafil is a PDE-5 inhibitor and the active ingredient in FDA-approved prescription medicines for men’s sexual health. It supports blood flow in response to sexual stimulation; it does not create arousal on its own. What we dispense is a compounded capsule, which is not FDA-approved. It is taken as needed, typically about an hour before sexual activity and no more than once a day. Whether it is appropriate for you, and at what dose, is a question for your prescriber.',
+    bestFor: 'Men who want a well-studied, as-needed option to support sexual performance.',
     benefits: [
-      'Studied in large clinical trials for erectile function',
+      'Studied in large clinical trials of sexual function in men',
       'Taken as needed, not daily',
       'Works with sexual stimulation, not on its own',
       'More than two decades of clinical use',
@@ -1196,15 +1196,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'enclomiphene',
     name: 'Enclomiphene',
-    tagline: 'Testosterone Support for Men',
+    tagline: 'Supports Healthy Testosterone in Men',
     category: 'longevity',
     shortDescription:
-      'A daily capsule studied for raising the body’s own testosterone production, rather than replacing it.',
+      'A daily capsule that supports the body’s own testosterone production, rather than replacing it.',
     longDescription:
-      'Enclomiphene is one of the two isomers that make up clomiphene citrate. It acts on the pituitary to increase LH and FSH, the signals that tell the testes to make testosterone, and in clinical studies it raised testosterone while preserving sperm production, which testosterone replacement can suppress. It is not an FDA-approved drug; what we dispense is a compounded preparation. Offered to men with testosterone concerns under prescriber supervision, not to treat hypogonadism or infertility. Your prescriber decides whether it is appropriate for you, checks labs (testosterone, estradiol and others) before and during treatment, and long-term safety data are limited.',
-    bestFor: 'Men with testosterone concerns who want to support their own production rather than replace it.',
+      'Enclomiphene is one of the two isomers that make up clomiphene citrate. It acts on the pituitary to increase LH and FSH, the signals that tell the testes to make testosterone, and in clinical studies it raised testosterone while preserving sperm production, which testosterone replacement can suppress. It is not an FDA-approved drug; what we dispense is a compounded preparation. Offered to support healthy testosterone levels in men under prescriber supervision, not to diagnose, treat, cure or prevent any disease. Your prescriber decides whether it is appropriate for you, checks labs (testosterone, estradiol and others) before and during treatment, and long-term safety data are limited.',
+    bestFor: 'Men who want to support their own testosterone production rather than replace it.',
     benefits: [
-      'Studied for raising LH, FSH and testosterone',
+      'Supports the body’s own LH, FSH and testosterone signals',
       'Studied for preserving sperm production, unlike testosterone replacement',
       'Daily oral capsule, no injections',
       'Works with your own hormone axis',
@@ -1239,15 +1239,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'hrt-cream',
     name: 'Estradiol + Progesterone Cream',
-    tagline: 'Menopause Support',
+    tagline: 'Supports Hormonal Balance in Midlife',
     category: 'longevity',
     shortDescription:
-      'Estradiol and progesterone in a single cream, applied to the skin. Prescribed for menopause support.',
+      'Estradiol and progesterone in a single cream, applied to the skin. Prescribed to support hormonal balance during midlife.',
     longDescription:
-      'Estradiol and progesterone are the active ingredients in FDA-approved hormone therapies for menopause; FDA-approved estradiol is labelled for moderate to severe hot flushes. What we dispense is a compounded cream combining the two, which is not FDA-approved, and compounded hormone products have not been reviewed by the FDA for safety, effectiveness or consistent dosing. Hormone therapy carries risks that depend on your age, time since menopause and health history, and FDA-approved estrogen products carry boxed warnings about stroke, blood clots, breast cancer and probable dementia. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Women in perimenopause or menopause discussing hormone therapy with a prescriber.',
+      'Estradiol and progesterone are the active ingredients in FDA-approved hormone therapies. What we dispense is a compounded cream combining the two, which is not FDA-approved, and compounded hormone products have not been reviewed by the FDA for safety, effectiveness or consistent dosing. Hormone therapy carries risks that depend on your age, time since menopause and health history, and FDA-approved estrogen products carry boxed warnings about stroke, blood clots, breast cancer and probable dementia. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Women in midlife discussing hormone therapy with a prescriber.',
     benefits: [
-      'Estradiol is studied for hot flushes and night sweats',
+      'Estradiol supports hormonal balance during midlife',
       'Progesterone alongside estradiol, as is standard for women with a uterus',
       'Applied to the skin, no pills',
       'Dose set by your prescriber',
@@ -1289,15 +1289,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'fin-min-capsule',
     name: 'Finasteride + Minoxidil',
-    tagline: "Men's Hair Loss: Two Medicines, One Capsule",
+    tagline: 'For Men: Two Ingredients, One Capsule',
     category: 'skin-hair',
     shortDescription:
-      'Oral finasteride and low-dose minoxidil combined in a single daily capsule for male-pattern hair loss.',
+      'Oral finasteride and low-dose minoxidil combined in a single daily capsule, to support fuller-looking hair in men.',
     longDescription:
-      'Finasteride lowers DHT, the hormone that gradually shrinks hair follicles in male-pattern hair loss, and is the active ingredient in an FDA-approved hair-loss tablet for men. Minoxidil is FDA-approved as a topical for hair loss and as a tablet for blood pressure; low-dose oral use for hair is off-label. This compounded capsule combines both and is not FDA-approved. Results take three to six months to show, stop if treatment stops, and vary between people. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Men with male-pattern hair loss who want one daily capsule instead of a pill and a topical.',
+      'Finasteride lowers DHT, a hormone that affects hair follicles over time, and is the active ingredient in an FDA-approved prescription tablet for men. Minoxidil is FDA-approved as a topical for the scalp and as a tablet for blood pressure; low-dose oral use for hair is off-label. This compounded capsule combines both and is not FDA-approved. Consistent daily use is part of the plan; any effect depends on continuing it and varies between people. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men who want one daily capsule instead of a pill and a topical.',
     benefits: [
-      'Finasteride studied for slowing male-pattern hair loss',
+      'Finasteride supports fuller-looking hair by lowering DHT',
       'Low-dose oral minoxidil studied for hair density',
       'One capsule a day',
       'Nothing to apply to the scalp',
@@ -1336,15 +1336,15 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'fin-min-foam',
     name: 'Finasteride + Minoxidil Foam',
-    tagline: "Men's Hair-Loss Foam, No Daily Pill",
+    tagline: 'For Men: Scalp Foam, No Daily Pill',
     category: 'skin-hair',
     shortDescription:
       'Topical finasteride and minoxidil in a foam applied to the scalp, for men who would rather not take a pill.',
     longDescription:
-      'Minoxidil is the active ingredient in FDA-approved topical hair-loss products, and finasteride in an FDA-approved hair-loss tablet for men. Applying finasteride to the scalp is studied as a way to act on the follicle with less of the drug reaching the bloodstream, although some is still absorbed. This compounded foam combines the two and is not FDA-approved. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Men with male-pattern hair loss who prefer a topical to a daily pill.',
+      'Minoxidil is the active ingredient in FDA-approved topical scalp products, and finasteride in an FDA-approved prescription tablet for men. Applying finasteride to the scalp is studied as a way to act on the follicle with less of the drug reaching the bloodstream, although some is still absorbed. This compounded foam combines the two and is not FDA-approved. Consistent daily use is part of the plan; any effect depends on continuing it and varies between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men who prefer a topical to a daily pill.',
     benefits: [
-      'Minoxidil studied for regrowth on the top of the scalp',
+      'Minoxidil supports fuller-looking hair on the top of the scalp',
       'Topical finasteride studied for lower blood levels than the tablet',
       'Both medicines in one foam',
       'No daily pill',
@@ -1387,8 +1387,8 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'Minoxidil at 12%, more than twice the strength sold over the counter, with topical finasteride in one foam.',
     longDescription:
-      'Minoxidil is the active ingredient in FDA-approved topical hair-loss products, sold over the counter at up to 5%. This compounded foam uses 12% minoxidil with topical finasteride, a strength that is not FDA-approved and has much less published research than 5%; it is usually considered when a standard strength has not been enough. A higher strength also means more scalp irritation and more chance of the drug reaching the bloodstream. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Men with male-pattern hair loss who have already tried standard-strength minoxidil.',
+      'Minoxidil is the active ingredient in FDA-approved topical scalp products, sold over the counter at up to 5%. This compounded foam uses 12% minoxidil with topical finasteride, a strength that is not FDA-approved and has much less published research than 5%; it is usually considered when a standard strength has not been enough. A higher strength also means more scalp irritation and more chance of the drug reaching the bloodstream. Consistent daily use is part of the plan; any effect depends on continuing it and varies between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men who have already tried standard-strength minoxidil.',
     benefits: [
       '12% minoxidil, above the 5% sold over the counter',
       'Topical finasteride in the same foam',
@@ -1433,8 +1433,8 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'Topical finasteride and minoxidil with a low dose of tretinoin, studied for helping the scalp respond to minoxidil.',
     longDescription:
-      'Tretinoin is a retinoid and the active ingredient in FDA-approved acne and skin creams. Small studies have looked at combining it with minoxidil on the scalp, where it may increase minoxidil absorption and response; the evidence is early. This compounded foam combines finasteride, minoxidil and tretinoin and is not FDA-approved. Tretinoin makes skin more sensitive to the sun. Results take three to six months to show, stop if treatment stops, and vary between people. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Men with male-pattern hair loss discussing a combined topical with a prescriber.',
+      'Tretinoin is a retinoid and the active ingredient in FDA-approved prescription skin creams. Small studies have looked at combining it with minoxidil on the scalp, where it may increase minoxidil absorption and response; the evidence is early. This compounded foam combines finasteride, minoxidil and tretinoin and is not FDA-approved. Tretinoin makes skin more sensitive to the sun. Consistent daily use is part of the plan; any effect depends on continuing it and varies between people. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men discussing a combined scalp topical with a prescriber.',
     benefits: [
       'Finasteride and minoxidil in one foam',
       'Low-dose tretinoin studied alongside minoxidil',
@@ -1477,13 +1477,13 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: "Men's Daily DHT Blocker",
     category: 'skin-hair',
     shortDescription:
-      'A once-daily tablet that lowers DHT, the hormone behind male-pattern hair loss.',
+      'A once-daily tablet that lowers DHT, a hormone that affects hair follicles, to support fuller-looking hair in men.',
     longDescription:
-      'Finasteride blocks the enzyme that turns testosterone into DHT, the hormone that gradually shrinks hair follicles in male-pattern hair loss. Finasteride 1 mg is the active ingredient in an FDA-approved hair-loss tablet for men, studied for slowing hair loss and for regrowth at the crown and mid-scalp. What we dispense is compounded, and compounded preparations are not FDA-approved. Results take three to six months to show and stop if treatment stops. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
-    bestFor: 'Men with early to moderate male-pattern hair loss.',
+      'Finasteride blocks the enzyme that turns testosterone into DHT, a hormone that affects hair follicles over time. Finasteride 1 mg is the active ingredient in an FDA-approved prescription tablet for men, studied at the crown and mid-scalp. What we dispense is compounded, and compounded preparations are not FDA-approved. Consistent daily use is part of the plan, and any effect depends on continuing it. Finasteride lowers PSA test results, so tell any doctor screening you for prostate cancer. Your prescriber decides whether it is appropriate for you.',
+    bestFor: 'Men who want a simple daily tablet to support their hair.',
     benefits: [
-      'Studied for slowing male-pattern hair loss',
-      'Studied for regrowth at the crown and mid-scalp',
+      'Supports fuller-looking hair by lowering DHT',
+      'Studied at the crown and mid-scalp',
       'One small tablet a day',
       'Decades of clinical use',
     ],
@@ -1522,10 +1522,10 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Low-Dose Daily Tablet',
     category: 'skin-hair',
     shortDescription:
-      'Low-dose minoxidil in a once-daily tablet, prescribed off-label for thinning hair in men and women.',
+      'Low-dose minoxidil in a once-daily tablet, prescribed off-label to support hair density in men and women.',
     longDescription:
-      'Minoxidil is FDA-approved as a tablet for high blood pressure, at much higher doses, and as a topical for hair loss. Low-dose oral minoxidil for hair is off-label; published studies, mostly small and observational, have looked at hair density in men and women with thinning hair. What we dispense is compounded, and compounded preparations are not FDA-approved. Even at 2.5 mg a day it can lower blood pressure and cause fluid retention, so your prescriber needs to know about your heart health and any blood-pressure medicines. Results take three to six months to show and stop if treatment stops.',
-    bestFor: 'Men and women with thinning hair who prefer a tablet to a topical.',
+      'Minoxidil is FDA-approved as a tablet for blood pressure, at much higher doses, and as a topical for the scalp. Low-dose oral minoxidil for hair is off-label; published studies, mostly small and observational, have looked at hair density in men and women. What we dispense is compounded, and compounded preparations are not FDA-approved. Even at 2.5 mg a day it can lower blood pressure and cause fluid retention, so your prescriber needs to know about your heart health and any blood-pressure medicines. Consistent daily use is part of the plan, and any effect depends on continuing it.',
+    bestFor: 'Men and women who prefer a tablet to a topical.',
     benefits: [
       'Studied for hair density at low doses',
       'One small tablet a day',
@@ -1563,16 +1563,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'spironolactone',
     name: 'Spironolactone',
-    tagline: "Women's Hair & Hormonal Skin",
+    tagline: 'For Women: Hair & Skin Support',
     category: 'skin-hair',
     shortDescription:
-      'A sustained-release capsule prescribed off-label for female-pattern hair thinning and hormonal acne.',
+      'A sustained-release capsule prescribed off-label to support fuller-looking hair and clear-looking skin in women.',
     longDescription:
-      'Spironolactone blocks androgen receptors and lowers androgen activity. It is FDA-approved as a tablet for heart failure, high blood pressure and fluid retention; use for female-pattern hair thinning or hormonal acne is off-label, supported by clinical experience and smaller studies. What we dispense is a compounded sustained-release capsule, which is not FDA-approved. It can raise potassium, so your prescriber may ask for blood work, and it must not be taken during pregnancy. Results take three to six months to show.',
-    bestFor: 'Women with thinning hair or hormonal acne discussing anti-androgen therapy with a prescriber.',
+      'Spironolactone blocks androgen receptors and lowers androgen activity. It is FDA-approved as a tablet for heart, blood-pressure and fluid-balance uses; use for hair and skin is off-label, supported by clinical experience and smaller studies. What we dispense is a compounded sustained-release capsule, which is not FDA-approved. It can raise potassium, so your prescriber may ask for blood work, and it must not be taken during pregnancy.',
+    bestFor: 'Women discussing androgen-balancing support for hair and skin with a prescriber.',
     benefits: [
-      'Studied for female-pattern hair thinning',
-      'Studied for hormonal acne along the jaw and chin',
+      'Supports fuller-looking hair in women',
+      'Supports clear-looking skin along the jaw and chin',
       'Sustained-release, once a day',
       'A long record of clinical use',
     ],
@@ -1609,16 +1609,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'tretinoin',
     name: 'Tretinoin Cream',
-    tagline: 'Fine Lines & Texture',
+    tagline: 'Supports Smooth, Renewed Skin',
     category: 'skin-hair',
     shortDescription:
-      'A prescription retinoid cream studied for fine lines, rough texture and uneven tone.',
+      'A prescription retinoid cream that supports healthy skin renewal, for smoother, more even-looking skin.',
     longDescription:
-      'Tretinoin is a retinoid, a form of vitamin A, that speeds skin-cell turnover. It is the active ingredient in FDA-approved creams for acne and, at 0.02%, for fine wrinkles, mottled pigmentation and rough skin as part of a skin-care and sun-protection routine. What we dispense is a compounded cream, which is not FDA-approved. Expect dryness and peeling in the first weeks; results build over several months, and daily sunscreen is essential.',
-    bestFor: 'Adults starting a prescription retinoid for fine lines and texture.',
+      'Tretinoin is a retinoid, a form of vitamin A, that speeds skin-cell turnover. It is the active ingredient in FDA-approved prescription skin creams, including a 0.02% strength used as part of a skin-care and sun-protection routine. What we dispense is a compounded cream, which is not FDA-approved. Expect dryness and peeling in the first weeks; consistent nightly use is part of the plan, and daily sunscreen is essential.',
+    bestFor: 'Adults starting a prescription retinoid for smoother-looking skin.',
     benefits: [
-      'Studied for fine lines and wrinkles',
-      'Studied for rough texture and uneven tone',
+      'Supports healthy skin renewal',
+      'Supports smoother texture and a more even-looking tone',
       'A gentle starting strength',
       'Applied once a day, at night',
     ],
@@ -1657,12 +1657,12 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shortDescription:
       'Tretinoin with hyaluronic acid and vitamin C in one cream, for texture, tone and hydration.',
     longDescription:
-      'Tretinoin is a retinoid and the active ingredient in FDA-approved creams for acne and fine wrinkles. This compounded cream pairs tretinoin 0.05% with hyaluronic acid, a humectant that helps skin hold water, and vitamin C, an antioxidant studied for brightness. The combination is not FDA-approved. Tretinoin 0.05% is a mid-range strength, so expect some dryness and peeling in the first weeks; results build over several months, and daily sunscreen is essential.',
+      'Tretinoin is a retinoid and the active ingredient in FDA-approved prescription skin creams. This compounded cream pairs tretinoin 0.05% with hyaluronic acid, a humectant that helps skin hold water, and vitamin C, an antioxidant studied for brightness. The combination is not FDA-approved. Tretinoin 0.05% is a mid-range strength, so expect some dryness and peeling in the first weeks; consistent nightly use is part of the plan, and daily sunscreen is essential.',
     bestFor: 'Adults who want a retinoid routine with added hydration.',
     benefits: [
-      'Tretinoin studied for fine lines and texture',
+      'Tretinoin supports healthy skin renewal',
       'Hyaluronic acid helps skin hold moisture',
-      'Vitamin C studied for brightness and uneven tone',
+      'Vitamin C supports a bright, even-looking tone',
       'Three ingredients, one step',
     ],
     whatsIncluded: [
@@ -1692,18 +1692,18 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
   },
   {
-    id: 'acne-cream',
-    name: 'Acne Cream',
+    id: 'clear-skin-cream',
+    name: 'Clear Skin Cream',
     tagline: 'Tretinoin 0.1% + Clindamycin',
     category: 'skin-hair',
     shortDescription:
-      'Tretinoin and the antibiotic clindamycin in one cream, aimed at clogged pores and acne-causing bacteria.',
+      'Tretinoin and the antibiotic clindamycin in one cream, to support clear, healthy-looking skin.',
     longDescription:
-      'Tretinoin is a retinoid that helps keep pores from clogging; clindamycin is a topical antibiotic that acts on acne-causing bacteria. Both are active ingredients in FDA-approved acne treatments, and the two are approved together at lower strengths. This compounded cream uses tretinoin 0.1%, the highest common strength, with clindamycin 2%, and is not FDA-approved. Expect dryness and peeling in the first weeks, and possibly a flare before improvement; results build over 8–12 weeks.',
-    bestFor: 'Adults with persistent acne that has not responded to over-the-counter products.',
+      'Tretinoin is a retinoid that helps keep pores clear; clindamycin is a topical antibiotic. Both are active ingredients in FDA-approved prescription skin treatments, and the two are approved together at lower strengths. This compounded cream uses tretinoin 0.1%, the highest common strength, with clindamycin 2%, and is not FDA-approved. Expect dryness and peeling in the first weeks, and possibly a temporary flare of breakouts when starting; consistent daily use is part of the plan.',
+    bestFor: 'Adults who want a prescription step up from over-the-counter skincare.',
     benefits: [
-      'Tretinoin studied for clearing and preventing clogged pores',
-      'Clindamycin acts on acne-causing bacteria',
+      'Tretinoin helps keep pores clear',
+      'Clindamycin, a topical antibiotic, supports a clear complexion',
       'Two prescription ingredients in one step',
       'Applied once a day, at night',
     ],
@@ -1715,9 +1715,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     cycleLength: '30-day supply',
     pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
-    image: '/brand/products/acne-cream.jpg',
+    image: '/brand/products/clear-skin-cream.jpg',
     shot: true,
-    gallery: ['/brand/products/acne-cream.jpg'],
+    gallery: ['/brand/products/clear-skin-cream.jpg'],
     requiresReview: true,
     fdaApproved: true,
     sideEffects: [
@@ -1740,12 +1740,12 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Hydroquinone 4% + Vitamin C',
     category: 'skin-hair',
     shortDescription:
-      'Prescription hydroquinone 4% with vitamin C, for dark spots and uneven skin tone.',
+      'Prescription hydroquinone 4% with vitamin C, to support a bright, even-looking complexion.',
     longDescription:
-      'Hydroquinone lightens areas of darkened skin by slowing the production of melanin, and is an active ingredient in FDA-approved prescription products for dark patches of skin. Since 2020 it has been available in the US only on prescription. This compounded cream pairs hydroquinone 4% with vitamin C, an antioxidant studied for brightness, and is not FDA-approved. It is usually used in courses of a few months with breaks, and daily sunscreen is essential; results build over 8–12 weeks.',
-    bestFor: 'Adults with dark spots, sun spots or post-acne marks.',
+      'Hydroquinone slows the production of melanin, the pigment that gives skin its colour, and is an active ingredient in FDA-approved prescription products. Since 2020 it has been available in the US only on prescription. This compounded cream pairs hydroquinone 4% with vitamin C, an antioxidant studied for brightness, and is not FDA-approved. It is usually used in courses of a few months with breaks, and daily sunscreen is essential.',
+    bestFor: 'Adults who want a brighter, more even-looking complexion.',
     benefits: [
-      'Hydroquinone studied for dark spots and uneven tone',
+      'Hydroquinone supports a more even-looking tone',
       'Vitamin C studied for brightness',
       'Prescription-only strength',
       'Used in short courses, with breaks',
@@ -1777,18 +1777,18 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
   },
   {
-    id: 'melasma',
-    name: 'Melasma Cream',
+    id: 'even-tone-cream',
+    name: 'Even Tone Cream',
     tagline: 'Maximum-Strength Hydroquinone 8%',
     category: 'skin-hair',
     shortDescription:
-      'Hydroquinone 8% with tretinoin and hydrocortisone, a triple combination prescribed for stubborn melasma.',
+      'Hydroquinone 8% with tretinoin and hydrocortisone, a triple combination to support an even-looking complexion.',
     longDescription:
-      'Melasma is a pattern of dark patches, often on the cheeks and forehead. The best-studied prescription approach combines hydroquinone, a retinoid and a mild steroid, and an FDA-approved triple-combination cream uses hydroquinone at 4%. This compounded cream uses hydroquinone 8%, twice that strength, with tretinoin 0.05% and hydrocortisone 2.5%, and is not FDA-approved. A higher strength means more irritation, so courses are kept short with breaks. Daily sunscreen is essential; melasma often returns with sun exposure.',
-    bestFor: 'Adults with melasma that has not responded to standard-strength products.',
+      'The best-studied prescription approach to an even skin tone combines hydroquinone, a retinoid and a mild steroid, and an FDA-approved triple-combination cream uses hydroquinone at 4%. This compounded cream uses hydroquinone 8%, twice that strength, with tretinoin 0.05% and hydrocortisone 2.5%, and is not FDA-approved. A higher strength means more irritation, so courses are kept short with breaks. Daily sunscreen is essential, because sun exposure works against an even tone.',
+    bestFor: 'Adults who have tried standard-strength brightening products and want a stronger prescription option.',
     benefits: [
-      'Hydroquinone studied for melasma and dark patches',
-      'Tretinoin studied alongside hydroquinone for melasma',
+      'Hydroquinone supports a more even-looking tone',
+      'Tretinoin supports skin renewal alongside hydroquinone',
       'Hydrocortisone to temper irritation',
       'Three prescription ingredients in one step',
     ],
@@ -1800,9 +1800,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     cycleLength: '30-day supply',
     pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
-    image: '/brand/products/melasma.jpg',
+    image: '/brand/products/even-tone-cream.jpg',
     shot: true,
-    gallery: ['/brand/products/melasma.jpg'],
+    gallery: ['/brand/products/even-tone-cream.jpg'],
     requiresReview: true,
     fdaApproved: true,
     sideEffects: [
@@ -1825,12 +1825,12 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: 'Kojic Acid + Vitamin C + Hyaluronic Acid',
     category: 'skin-hair',
     shortDescription:
-      'Kojic acid, vitamin C and hyaluronic acid in one cream, for dark spots without hydroquinone.',
+      'Kojic acid, vitamin C and hyaluronic acid in one cream, to support a brighter, more even-looking tone without hydroquinone.',
     longDescription:
-      'Kojic acid comes from fungi used in food fermentation and, like hydroquinone, slows the enzyme skin uses to make melanin. It is not an active ingredient in any FDA-approved drug, and its evidence base is smaller than hydroquinone’s, but it can be an option for people who cannot use hydroquinone. This compounded cream pairs kojic acid 5% with vitamin C and hyaluronic acid and is not FDA-approved. Results build over 8–12 weeks, and daily sunscreen is essential.',
-    bestFor: 'Adults with dark spots who cannot use, or want a break from, hydroquinone.',
+      'Kojic acid comes from fungi used in food fermentation and, like hydroquinone, slows the enzyme skin uses to make melanin. It is not an active ingredient in any FDA-approved drug, and its evidence base is smaller than hydroquinone’s, but it can be an option for people who cannot use hydroquinone. This compounded cream pairs kojic acid 5% with vitamin C and hyaluronic acid and is not FDA-approved. Daily sunscreen is essential.',
+    bestFor: 'Adults who want a more even-looking tone and cannot use, or want a break from, hydroquinone.',
     benefits: [
-      'Kojic acid studied for dark spots and uneven tone',
+      'Kojic acid supports a brighter, more even-looking tone',
       'Vitamin C studied for brightness',
       'Hyaluronic acid helps skin hold moisture',
       'No hydroquinone',
@@ -1861,19 +1861,19 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
   },
   {
-    id: 'rosacea',
-    name: 'Rosacea & Acne Capsules',
+    id: 'clear-skin-capsules',
+    name: 'Clear Skin Capsules',
     tagline: 'Doxycycline 50 mg',
     category: 'skin-hair',
     shortDescription:
-      'Doxycycline 50 mg, an antibiotic prescribed off-label at a low dose for the bumps and spots of rosacea and for inflammatory acne.',
+      'Doxycycline 50 mg, an antibiotic prescribed off-label at a low dose to support a clear, calm-looking complexion.',
     longDescription:
-      'Doxycycline is a tetracycline antibiotic. At low doses it acts mainly on inflammation. The FDA-approved low-dose product for rosacea is a different, 40 mg modified-release capsule; standard doxycycline is also approved as an add-on for severe acne. What we dispense is a compounded doxycycline 50 mg capsule, which is not FDA-approved and is prescribed off-label at a low dose. It does not address the persistent redness or visible blood vessels of rosacea. Take it with a full glass of water and stay upright afterwards.',
-    bestFor: 'Adults with rosacea bumps or inflammatory acne discussing an oral option with a prescriber.',
+      'Doxycycline is a tetracycline antibiotic. At low doses it is used mainly for its calming effect on the skin. The FDA-approved low-dose doxycycline product for skin is a different, 40 mg modified-release capsule. What we dispense is a compounded doxycycline 50 mg capsule, which is not FDA-approved and is prescribed off-label at a low dose. Take it with a full glass of water and stay upright afterwards.',
+    bestFor: 'Adults discussing a low-dose oral option for clear, calm-looking skin with a prescriber.',
     benefits: [
-      'Studied for inflammatory rosacea bumps and spots',
-      'Studied for inflammatory acne',
-      'A low dose, aimed at inflammation',
+      'Supports a clear, calm-looking complexion',
+      'Prescribed off-label at a low dose',
+      'Taken with a full glass of water, staying upright',
       'One capsule a day',
     ],
     whatsIncluded: [
@@ -1884,9 +1884,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     cycleLength: '30-day supply',
     pricing: { monthly: 49, quarterly: 138, sixMonth: 270, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
-    image: '/brand/products/rosacea.jpg',
+    image: '/brand/products/clear-skin-capsules.jpg',
     shot: true,
-    gallery: ['/brand/products/rosacea.jpg'],
+    gallery: ['/brand/products/clear-skin-capsules.jpg'],
     requiresReview: true,
     fdaApproved: true,
     sideEffects: [
@@ -1932,7 +1932,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
 // capsules, creams and foams are room temperature. The troches (ED Dual,
 // oxytocin) stay unset until the pharmacy confirms: "as directed on the label".
 {
-  const LABEL = new Set(['ed-dual', 'oxytocin']);
+  const LABEL = new Set(['sildenafil-tadalafil', 'oxytocin']);
   for (const p of SHOP_PRODUCTS) {
     if (LABEL.has(p.id)) continue;
     p.storage = p.delivery === 'oral' || p.delivery === 'topical' ? 'room' : 'refrigerated';

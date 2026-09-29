@@ -14,6 +14,7 @@ import {
   SUPPORT_PHONE_HREF,
   SUPPORT_HOURS,
   SERVICE_AREA,
+  FDA_DISCLAIMER,
 } from '@/lib/site';
 
 interface FooterLink {
@@ -139,7 +140,7 @@ export function Footer() {
             Prescriptions are written by a licensed physician following clinical review, and dispensed
             by an independently licensed 503A compounding pharmacy. Eternal Longevity is not a pharmacy. Rx
             only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or
-            quality. Not a substitute for primary care. Available to residents of {SERVICE_AREA} only. 18+.
+            quality. {FDA_DISCLAIMER} Not a substitute for primary care. Available to residents of {SERVICE_AREA} only. 18+.
           </p>
         </div>
       </div>

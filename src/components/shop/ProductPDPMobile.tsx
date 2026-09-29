@@ -1,5 +1,6 @@
 'use client';
 
+import { EXPLAINER } from '@/lib/explainers';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
@@ -52,10 +53,10 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
       <ProductImage
         product={product}
         sizes="100vw"
-        className="h-[44svh] min-h-[260px] w-full"
-        // The box is wider than the 3:4 photo, so anchor the crop near the
-        // top: the whole vial stays in and only its reflection is trimmed.
-        position="50% 18%"
+        className="h-[36svh] min-h-[240px] w-full"
+        // The box is wider than the 4:5 photo; centre the crop on the product
+        // so vials and taller bottles both stay whole.
+        position="50% 55%"
       />
 
       <div className="mt-4 flex items-end justify-between gap-4">
@@ -71,6 +72,9 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
           <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
         </div>
       </div>
+
+      {/* Full width under the name and price, not squeezed beside the price. */}
+      <p className="mt-3 text-[15px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
       <div ref={planRef} className="mt-5 scroll-mt-40">
         <PlanSegments tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} pulse={pulse} />

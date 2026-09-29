@@ -8,7 +8,7 @@ import {
   type CadenceTier,
   type ShopProduct,
 } from '@/lib/shopProducts';
-import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPORT_HOURS } from '@/lib/site';
+import { FDA_DISCLAIMER, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPORT_HOURS } from '@/lib/site';
 
 /**
  * Pieces shared by the desktop and mobile product pages, so the two can't
@@ -232,7 +232,7 @@ export function Disclosure() {
   return (
     <p className="text-[12px] leading-relaxed text-ink/55">
       Rx only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or
-      quality. Prescribed only after review by a licensed prescriber. Individual results vary. Product images are for illustration;
+      quality. {FDA_DISCLAIMER} Prescribed only after review by a licensed prescriber. Individual results vary. Product images are for illustration;
       your medication ships in the compounding pharmacy&rsquo;s own labelled vial.{' '}
       <Link href="/legal/compounded-medication" className="text-ink/75 underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
         Full disclosure
@@ -294,7 +294,7 @@ export function ProductDetails({ product, ordering = false }: { product: ShopPro
             <p>{product.longDescription}</p>
             <p className="mt-3">Best for: {product.bestFor}</p>
           </Row>
-          <Row title="What it does">
+          <Row title="What it supports">
             <Bullets items={product.benefits} />
           </Row>
           <Row title="What's included">
