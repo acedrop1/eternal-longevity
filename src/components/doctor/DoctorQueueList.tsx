@@ -283,6 +283,7 @@ function DoctorQueueRow({
               {catFlags} {catFlags === 1 ? 'answer' : 'answers'} to review
             </ReviewChip>
           )}
+          {review?.photosPending && <ReviewChip>Photos pending</ReviewChip>}
           <ThreadChip status={thread} />
         </div>
       </div>

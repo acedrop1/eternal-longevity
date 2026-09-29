@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth-server';
-import { intakeStateFor } from '@/lib/intake-status';
+import { intakeStateFor, pendingMediaFor } from '@/lib/intake-status';
 import type { Order } from '@/lib/orders';
 
 export interface OnboardingStep {
@@ -31,7 +31,9 @@ export async function getOnboardingSteps(
 ): Promise<OnboardingStep[]> {
   const user = await getSession();
 
-  const state = user ? await intakeStateFor(user.id) : 'none';
+  const [state, media] = user
+    ? await Promise.all([intakeStateFor(user.id), pendingMediaFor(user.id)])
+    : (['none', null] as const);
   // An intake exists at all — the pre-purchase questions and consents are in.
   const intakeStarted = state !== 'none';
   // The clinical visit is done once the intake is no longer waiting on it.
@@ -79,7 +81,7 @@ export async function getOnboardingSteps(
     },
     {
       key: 'visit',
-      title: 'Complete your medical visit',
+      title: 'Answer your medical questions',
       collects: [
         'Active cancer, pregnancy or breastfeeding, end-stage kidney or liver disease',
         'Medical history — cardiovascular, diabetes, autoimmune and related conditions',
@@ -88,8 +90,9 @@ export async function getOnboardingSteps(
         'A safety screen specific to the product you selected',
       ],
       done: visitDone,
-      href: visitDone ? undefined : '/portal/visit',
-      action: 'Complete visit',
+      // Asked in the assessment now; an intake from before that finishes its visit in the portal.
+      href: visitDone ? undefined : state === 'awaiting_visit' ? '/portal/visit' : '/start',
+      action: state === 'awaiting_visit' ? 'Complete visit' : 'Start',
     },
     {
       key: 'shipping',
@@ -97,6 +100,19 @@ export async function getOnboardingSteps(
       collects: ['Street address, city, state and ZIP — collected at checkout'],
       done: hasShipping,
     },
+    // Hair and skin: photos after checkout, before the prescriber can decide.
+    ...(media?.needsPhotos
+      ? [
+          {
+            key: 'photos',
+            title: 'Add your photos',
+            collects: ['Two or three quick photos, taken on your phone. Only your care team sees them.'],
+            done: !media.photos,
+            href: media.photos ? '/portal/visit' : undefined,
+            action: 'Add photos',
+          },
+        ]
+      : []),
     {
       key: 'review',
       title: 'Prescriber review',

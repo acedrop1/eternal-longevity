@@ -11,6 +11,7 @@ import {
   buildCategorySteps,
   type CategoryKey,
 } from '@/lib/intake-categories';
+import { fieldVisible } from '@/lib/intake-rules';
 
 export interface CategoryItem {
   label: string;
@@ -57,7 +58,7 @@ export function categoryAnswers(answers: unknown): CategorySection[] {
     for (const f of step.fields) {
       const v = a[f.id];
       if (empty(v)) continue;
-      if (f.showIf && !f.showIf.values.includes(String(a[f.showIf.field] ?? ''))) continue;
+      if (!fieldVisible(f, a)) continue;
 
       const sec =
         out.get(key) ??

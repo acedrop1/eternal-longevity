@@ -13,6 +13,7 @@ import {
   type CategorySection,
   type ThreadStatus,
 } from '@/lib/prescriber-view';
+import { photosPending } from '@/lib/intake-rules';
 
 export interface ReviewLine {
   label: string;
@@ -36,6 +37,8 @@ export interface PatientReview {
   contact: ReviewLine[];
   /** Per-category questions (hair, skin, ...), with signed photo/lab URLs. */
   categories: CategorySection[];
+  /** Hair/skin case whose required photos haven't been added in the portal yet. */
+  photosPending: boolean;
 }
 
 const SEX: Record<string, string> = {
@@ -225,6 +228,7 @@ function buildReview(input: {
       ft !== '—' ? `${ft}′ ${inch}″ · ${lb} lb` : lb !== '—' ? `${lb} lb` : '—',
     submittedAt: input.submittedAt ? formatDate(input.submittedAt) : '—',
     categories: categoryAnswers(a),
+    photosPending: photosPending(a),
     safety: [
       {
         label: 'Active cancer, or treated in the last 5 years',

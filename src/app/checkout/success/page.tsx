@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
+import { pendingMediaFor } from '@/lib/intake-status';
 
 export const metadata: Metadata = {
   title: 'Order confirmed',
@@ -14,7 +15,9 @@ export default async function CheckoutSuccessPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const pendingVisit = await getPendingVisit();
+  // A legacy open visit, or photos (hair, skin) still to add: either is the next step.
+  const [legacyVisit, media] = await Promise.all([getPendingVisit(), pendingMediaFor(user.id)]);
+  const pendingVisit = legacyVisit || media.photos;
 
   return (
     <PortalShell user={user}>
@@ -50,7 +53,14 @@ export default async function CheckoutSuccessPage() {
 
         <ol className="mb-8 grid gap-2">
           {[
-            { n: '01', text: 'Complete your clinical visit so your prescriber can review.' },
+            {
+              n: '01',
+              text: legacyVisit
+                ? 'Complete your clinical visit so your prescriber can review.'
+                : media.photos
+                  ? 'Add your photos so your prescriber can review.'
+                  : 'Your prescriber reviews your answers.',
+            },
             { n: '02', text: 'If approved, your prescription goes to the pharmacy and your card is charged.' },
             { n: '03', text: "It's compounded, tested, and shipped — tracking lands in your inbox." },
           ].map((s) => (
@@ -72,7 +82,7 @@ export default async function CheckoutSuccessPage() {
           href={pendingVisit ? '/portal/visit' : '/portal'}
           className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
         >
-          {pendingVisit ? 'Complete your visit' : 'Back to portal'}
+          {legacyVisit ? 'Complete your visit' : media.photos ? 'Add your photos' : 'Back to portal'}
           <span aria-hidden>→</span>
         </Link>
         </div>

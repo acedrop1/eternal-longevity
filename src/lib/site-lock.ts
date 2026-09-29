@@ -13,8 +13,8 @@ export const SITE_LOCKED = PRE_LAUNCH && (!!process.env.VERCEL_ENV || process.en
 export const LOCK_COOKIE = 'el_preview';
 
 /** Paths that must keep working while locked: the gate itself, Stripe/cron/API
- *  traffic, and links already emailed to members (pay, check-in). */
-const OPEN = ['/coming-soon', '/api/', '/pay/', '/checkin/', '/auth/', '/robots.txt', '/opengraph-image', '/icon', '/apple-icon', '/manifest'];
+ *  traffic, and links already emailed to members (pay, check-in, unsubscribe). */
+const OPEN = ['/coming-soon', '/api/', '/pay/', '/checkin/', '/unsubscribe/', '/auth/', '/robots.txt', '/opengraph-image', '/icon', '/apple-icon', '/manifest'];
 
 export function isOpenPath(pathname: string): boolean {
   return OPEN.some((p) => pathname.startsWith(p));

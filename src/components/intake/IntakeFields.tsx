@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Field, CONSENT_ITEMS, PASSWORD_RULES } from '@/lib/intakeSchema';
@@ -11,6 +12,12 @@ interface FieldRendererProps {
   onChange: (v: unknown) => void;
   /** Visit session id: the storage folder for photo-upload / file-upload. */
   mediaFolder?: string;
+  /** Shows the error state; the message itself is rendered by the wizard. */
+  invalid?: boolean;
+  /** Ids of the error / small print under the field. */
+  describedBy?: string;
+  /** Keyboard return key: 'next' moves on, 'done' on the step's last input. */
+  enterKeyHint?: 'next' | 'done';
 }
 
 // Same field treatment as the contact form. 16px text keeps iOS from zooming.
@@ -40,6 +47,16 @@ function CheckBox({ on, className }: { on: boolean; className?: string }) {
   );
 }
 
+const inputBad = 'ring-red-600/50 focus:ring-red-600/50';
+
+/** MMDDYYYY digits -> ISO yyyy-mm-dd, or null when it isn't a real date (02/31). */
+function isoFromDobDigits(d: string): string | null {
+  if (!/^\d{8}$/.test(d)) return null;
+  const iso = `${d.slice(4)}-${d.slice(0, 2)}-${d.slice(2, 4)}`;
+  const t = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === iso ? iso : null;
+}
+
 /** (201) 887-8847 as you type. Stored digits are unaffected by the mask. */
 function formatPhone(raw: string): string {
   const d = raw.replace(/\D/g, '').slice(0, 10);
@@ -48,11 +65,22 @@ function formatPhone(raw: string): string {
   return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
-export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }: FieldRendererProps) {
+export function FieldRenderer({
+  field,
+  value,
+  onChange,
+  mediaFolder = 'visit',
+  invalid,
+  describedBy,
+  enterKeyHint,
+}: FieldRendererProps) {
+  // Spread onto whichever element owns the answer (input, select or group).
+  const a11y = { 'aria-invalid': invalid || undefined, 'aria-describedby': describedBy || undefined };
+  const input = cn(inputBase, invalid && inputBad);
   switch (field.type) {
     case 'multi-select':
       return (
-        <div role="group" aria-label={field.label || 'Select all that apply'} className="grid gap-2 sm:grid-cols-2">
+        <div role="group" aria-label={field.label || 'Select all that apply'} {...a11y} className="grid gap-2 sm:grid-cols-2">
           {field.options?.map((opt) => {
             const selected = Array.isArray(value) && (value as string[]).includes(opt.value);
             return (
@@ -79,7 +107,7 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
 
     case 'single-select':
       return (
-        <div role="radiogroup" aria-label={field.label || 'Choose an option'} className="grid gap-2">
+        <div role="radiogroup" aria-label={field.label || 'Choose an option'} {...a11y} className="grid gap-2">
           {field.options?.map((opt) => {
             const selected = value === opt.value;
             return (
@@ -100,7 +128,15 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
                 >
                   {selected && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
                 </span>
-                <span className="text-[15px] leading-snug md:text-[16px]">{opt.label}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] leading-snug md:text-[16px]">{opt.label}</span>
+                  {opt.hint && <span className="mt-0.5 block text-[13px] leading-snug text-ink/55">{opt.hint}</span>}
+                </span>
+                {opt.image && (
+                  <span aria-hidden className="relative -my-2 -mr-2 h-14 w-14 flex-none overflow-hidden rounded-thumb bg-milk-deep">
+                    <Image src={opt.image} alt="" fill sizes="56px" className="object-cover" />
+                  </span>
+                )}
               </button>
             );
           })}
@@ -112,8 +148,10 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <div
           role="radiogroup"
           aria-label={field.label || 'Choose an option'}
+          {...a11y}
           className={cn(
-            'grid gap-2 sm:grid-cols-3',
+            'grid gap-2',
+            (field.options?.length ?? 0) === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
             (field.options?.length ?? 0) === 3 &&
               (field.options ?? []).every((o) => o.label.length <= 10)
               ? 'grid-cols-3'
@@ -145,15 +183,19 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
     case 'text-short': {
       const isPhone = field.id === 'phone';
       const isZip = field.id === 'zip';
+      const isName = field.id === 'first_name' || field.id === 'last_name';
       return (
         <input
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           type={isPhone ? 'tel' : 'text'}
-          inputMode={isPhone || isZip ? 'numeric' : undefined}
+          inputMode={isPhone ? 'tel' : isZip ? 'numeric' : undefined}
+          enterKeyHint={enterKeyHint}
+          autoCapitalize={isName ? 'words' : undefined}
           autoComplete={
             isPhone
-              ? 'tel'
+              ? 'tel-national'
               : isZip
                 ? 'postal-code'
                 : field.id === 'first_name'
@@ -162,7 +204,7 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
                     ? 'family-name'
                     : undefined
           }
-          maxLength={isPhone ? 14 : isZip ? 5 : undefined}
+          maxLength={isZip ? 5 : undefined}
           value={
             isPhone
               ? formatPhone((value as string) ?? '')
@@ -171,14 +213,15 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
           onChange={(e) =>
             onChange(
               isPhone
-                ? e.target.value.replace(/\D/g, '').slice(0, 10)
+                ? // US area codes never start with 1, so a leading 1 is the country code.
+                  e.target.value.replace(/\D/g, '').replace(/^1/, '').slice(0, 10)
                 : isZip
                   ? e.target.value.replace(/\D/g, '').slice(0, 5)
                   : e.target.value
             )
           }
           placeholder={field.placeholder}
-          className={inputBase}
+          className={input}
         />
       );
     }
@@ -187,10 +230,11 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
       return (
         <select
           id={`fld-${field.id}`}
+          {...a11y}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={field.id === 'state' ? 'address-level1' : undefined}
-          className={cn(inputBase, 'min-h-[52px] cursor-pointer', !value && 'text-ink/40')}
+          className={cn(input, 'min-h-[52px] cursor-pointer', !value && 'text-ink/40')}
         >
           <option value="" disabled>
             {field.placeholder ?? 'Choose one'}
@@ -208,11 +252,12 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <textarea
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           rows={4}
-          className={cn(inputBase, 'resize-none')}
+          className={cn(input, 'resize-none')}
         />
       );
 
@@ -232,21 +277,20 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <input
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           type="text"
           inputMode="numeric"
+          enterKeyHint={enterKeyHint}
           autoComplete="bday"
           maxLength={10}
           value={shown}
           onChange={(e) => {
             const d = e.target.value.replace(/\D/g, '').slice(0, 8);
-            onChange(
-              d.length === 8
-                ? `${d.slice(4)}-${d.slice(0, 2)}-${d.slice(2, 4)}`
-                : d
-            );
+            // Only a real date becomes ISO; 02/31 stays digits and fails validation.
+            onChange(isoFromDobDigits(d) ?? d);
           }}
           placeholder="MM / DD / YYYY"
-          className={inputBase}
+          className={input}
         />
       );
     }
@@ -256,7 +300,10 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <input
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           type="number"
+          inputMode="numeric"
+          enterKeyHint={enterKeyHint}
           value={(value as number | string) ?? ''}
           onChange={(e) => {
             const v = e.target.value;
@@ -272,7 +319,7 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
           placeholder={field.placeholder}
           min={field.min}
           max={field.max}
-          className={inputBase}
+          className={input}
         />
       );
 
@@ -365,11 +412,16 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <input
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           type="email"
+          inputMode="email"
+          autoComplete="email"
+          enterKeyHint={enterKeyHint}
+          spellCheck={false}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className={inputBase}
+          className={input}
         />
       );
 
@@ -378,11 +430,13 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
         <input
           id={`fld-${field.id}`}
           aria-label={field.label || undefined}
+          {...a11y}
           type="password"
+          enterKeyHint={enterKeyHint}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className={inputBase}
+          className={input}
         />
       );
 
@@ -476,11 +530,14 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
             <input
               id={`fld-${field.id}`}
               aria-label={field.label || undefined}
+              {...a11y}
               type="password"
+              autoComplete="new-password"
+              enterKeyHint="next"
               value={acc.password ?? ''}
               onChange={(e) => onChange({ ...acc, password: e.target.value })}
               placeholder="Create a password"
-              className={inputBase}
+              className={input}
             />
           </div>
           <div>
@@ -489,10 +546,12 @@ export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }:
               id={`fld-${field.id}-confirm`}
               aria-label={field.label || undefined}
               type="password"
+              autoComplete="new-password"
+              enterKeyHint="done"
               value={acc.confirm ?? ''}
               onChange={(e) => onChange({ ...acc, confirm: e.target.value })}
               placeholder="Same password"
-              className={inputBase}
+              className={input}
             />
           </div>
 

@@ -1,8 +1,9 @@
 /**
- * Category questions for the visit (Hims-style): after the shared health,
- * conditions and medications steps, each product's category adds the few
- * questions the prescriber actually needs, plus guided photos for hair and
- * skin. One short step per screen. Modelled on the standard telehealth
+ * Category questions (Hims-style): the first thing the assessment asks, before
+ * the shared eligibility and health steps (intakeSchema.buildAssessmentSteps).
+ * Each category asks the few questions the prescriber and the recommendation
+ * (lib/recommend) need; guided photos (hair, skin) and lab files are left for
+ * the portal after checkout (MEDIA_STEPS). Modelled on the standard telehealth
  * questionnaires (symptom first, then safety, then history), in our own words.
  *
  * DRAFT for Dr. Elder's review: wording and knockouts are clinical decisions.
@@ -13,7 +14,7 @@
  * and files are stored as storage paths: { slot, path }[] for photo-upload,
  * string[] for file-upload.
  */
-import type { Option, Step } from './intakeSchema';
+import type { Cond, Option, Step } from './intakeSchema';
 
 export type CategoryKey = 'longevity' | 'sexual-health' | 'hormones' | 'hair' | 'skin';
 
@@ -61,7 +62,35 @@ export const CATEGORY_LABEL: Record<CategoryKey, string> = {
 };
 
 const INJECTABLE = new Set(['nad-plus', 'glutathione', 'mic-b12', 'pt-141']);
-const PDE5 = new Set(['sildenafil', 'sildenafil-tadalafil']);
+export const PDE5 = new Set(['sildenafil', 'sildenafil-tadalafil']);
+const DESIRE = new Set(['pt-141', 'oxytocin']);
+
+const MALE: Cond = { field: 'sex', values: ['m', 'intersex'] };
+const FEMALE: Cond = { field: 'sex', values: ['f', 'intersex'] };
+
+/**
+ * Sex assigned at birth, asked first where the questions depend on it
+ * (hormones, sexual health). Same answer id as the about-you step, so it is
+ * asked once: the assessment drops the later copy.
+ */
+const sexStep = (key: string): Step => ({
+  id: `cat-${key}-sex`,
+  eyebrow: 'ABOUT YOU',
+  heading: 'What sex were you assigned at birth?',
+  fields: [
+    {
+      id: 'sex',
+      type: 'pill-grid',
+      label: '',
+      required: true,
+      options: [
+        { value: 'm', label: 'Male' },
+        { value: 'f', label: 'Female' },
+        { value: 'intersex', label: 'Intersex' },
+      ],
+    },
+  ],
+});
 
 /* ----------------------------------------------------------------------- */
 /*  Longevity                                                               */
@@ -95,10 +124,10 @@ const LONGEVITY_GOALS: Step = {
   ],
 };
 
-const LONGEVITY_INJECTION: Step = {
+const LONGEVITY_INJECTION = (product: boolean): Step => ({
   id: 'cat-longevity-injection',
   eyebrow: 'HOW YOU TAKE IT',
-  heading: 'This one is a small injection under the skin.',
+  heading: product ? 'This one is a small injection under the skin.' : 'Some of these are a small injection under the skin.',
   body: 'A short, fine needle, similar to what people use for vitamins. Your care team shows you how.',
   fields: [
     {
@@ -114,7 +143,7 @@ const LONGEVITY_INJECTION: Step = {
       flagOn: ['help', 'no'],
     },
   ],
-};
+});
 
 const METHYLENE_BLUE: Step = {
   id: 'cat-longevity-mb',
@@ -144,9 +173,32 @@ const METHYLENE_BLUE: Step = {
 /*  Sexual health                                                           */
 /* ----------------------------------------------------------------------- */
 
-const SEXUAL_ED: Step = {
+const PERFORMANCE: Cond = { field: 'sx_focus', values: ['performance', 'both'] };
+
+const SEXUAL_FOCUS: Step = {
+  id: 'cat-sexual-focus',
+  eyebrow: 'YOUR GOALS',
+  heading: 'What would you like help with?',
+  fields: [
+    {
+      id: 'sx_focus',
+      type: 'single-select',
+      label: '',
+      required: true,
+      options: [
+        { value: 'performance', label: 'Performance', hint: 'Getting or keeping an erection' },
+        { value: 'desire', label: 'Desire', hint: 'Interest in sex and arousal' },
+        { value: 'both', label: 'Both' },
+      ],
+    },
+  ],
+};
+
+/** Erections: men, when a PDE5 product is in play or performance is the goal. */
+const SEXUAL_ED = (pde5: boolean): Step => ({
   id: 'cat-sexual-ed',
   eyebrow: 'ABOUT YOU',
+  showIf: pde5 ? MALE : [MALE, PERFORMANCE],
   heading: 'Tell us what you have noticed.',
   body: 'Honest answers help your physician choose the right medicine and dose.',
   fields: [
@@ -198,11 +250,13 @@ const SEXUAL_ED: Step = {
       flagOn: ['pain'],
     },
   ],
-};
+});
 
-const SEXUAL_DESIRE: Step = {
+/** Desire: women, a desire product, or desire as the goal. */
+const SEXUAL_DESIRE = (desire: boolean): Step => ({
   id: 'cat-sexual-desire',
   eyebrow: 'ABOUT YOU',
+  showIfAny: desire ? undefined : [{ field: 'sex', values: ['f'] }, { field: 'sx_focus', values: ['desire', 'both'] }],
   heading: 'Tell us what you have noticed.',
   fields: [
     {
@@ -241,8 +295,9 @@ const SEXUAL_DESIRE: Step = {
       flagOn: ['meds'],
     },
   ],
-};
+});
 
+/** Nitrates and alpha-blockers matter only when a PDE5 product is in play or could be recommended. */
 const SEXUAL_HEART = (pde5: boolean): Step => ({
   id: 'cat-sexual-heart',
   eyebrow: 'HEART HEALTH',
@@ -291,26 +346,24 @@ const SEXUAL_HEART = (pde5: boolean): Step => ({
       ],
       flagOn: ['gt3y'],
     },
-    ...(pde5
-      ? [
-          {
-            id: 'sx_nitrates',
-            type: 'pill-grid' as const,
-            label: 'Do you use nitrates (such as nitroglycerin or isosorbide) or "poppers"?',
-            required: true,
-            options: YES_NO,
-            knockoutOn: { values: ['yes'], key: 'nitrates' },
-          },
-          {
-            id: 'sx_alpha',
-            type: 'pill-grid' as const,
-            label: 'Do you take medicine for blood pressure or the prostate, such as tamsulosin, doxazosin or terazosin?',
-            required: true,
-            options: YES_NO,
-            flagOn: ['yes'],
-          },
-        ]
-      : []),
+    {
+      id: 'sx_nitrates',
+      type: 'pill-grid',
+      label: 'Do you use nitrates (such as nitroglycerin or isosorbide) or "poppers"?',
+      required: true,
+      options: YES_NO,
+      knockoutOn: { values: ['yes'], key: 'nitrates' },
+      showIf: pde5 ? MALE : [MALE, PERFORMANCE],
+    },
+    {
+      id: 'sx_alpha',
+      type: 'pill-grid',
+      label: 'Do you take medicine for blood pressure or the prostate, such as tamsulosin, doxazosin or terazosin?',
+      required: true,
+      options: YES_NO,
+      flagOn: ['yes'],
+      showIf: pde5 ? MALE : [MALE, PERFORMANCE],
+    },
   ],
 });
 
@@ -362,6 +415,7 @@ const SEXUAL_USE: Step = {
 const HORMONES_MEN: Step = {
   id: 'cat-hormones-men',
   eyebrow: 'ABOUT YOU',
+  showIf: MALE,
   heading: 'Tell us what you have noticed.',
   fields: [
     {
@@ -398,7 +452,8 @@ const HORMONES_MEN: Step = {
 const HORMONES_MEN_HEALTH: Step = {
   id: 'cat-hormones-men-health',
   eyebrow: 'HEALTH AND LABS',
-  heading: 'A few safety questions, and your labs.',
+  showIf: MALE,
+  heading: 'A few safety questions.',
   body: "No recent blood test? That's fine. Your physician may ask for one before prescribing.",
   fields: [
     {
@@ -422,12 +477,22 @@ const HORMONES_MEN_HEALTH: Step = {
       required: true,
       options: YES_NO,
     },
+  ],
+};
+
+/** After checkout, in the portal: the results they said they have. Optional. */
+const HORMONES_LABS: Step = {
+  id: 'cat-hormones-labs',
+  eyebrow: 'LAB RESULTS',
+  heading: 'Your recent lab results.',
+  body: 'Optional. If you have your testosterone results to hand, your physician can use them in the review.',
+  showIf: [MALE, { field: 'hm_labs_recent', values: ['yes'] }],
+  fields: [
     {
       id: 'hm_labs_files',
       type: 'file-upload',
       label: 'Upload your results (optional)',
       accept: 'application/pdf,image/*',
-      showIf: { field: 'hm_labs_recent', values: ['yes'] },
     },
   ],
 };
@@ -435,6 +500,7 @@ const HORMONES_MEN_HEALTH: Step = {
 const HORMONES_WOMEN: Step = {
   id: 'cat-hormones-women',
   eyebrow: 'HORMONE HISTORY',
+  showIf: FEMALE,
   heading: 'A few questions about your cycle and history.',
   fields: [
     {
@@ -584,6 +650,17 @@ const HAIR_CONTEXT: Step = {
       type: 'text-long',
       label: 'What did you use, and how did it go? (optional)',
       showIf: { field: 'hr_tried', values: ['minoxidil', 'finasteride', 'supplements', 'other'] },
+    },
+    {
+      id: 'hr_format',
+      type: 'single-select',
+      label: 'How would you prefer to take it?',
+      required: true,
+      options: [
+        { value: 'pill', label: 'A daily pill' },
+        { value: 'foam', label: 'A scalp foam' },
+        { value: 'either', label: 'Either is fine' },
+      ],
     },
   ],
 };
@@ -739,42 +816,63 @@ export const CATEGORY_KNOCKOUTS: Record<string, { title: string; body: string }>
   },
 };
 
+/**
+ * One category's steps. `ids` are the products in play: empty for a category
+ * start (?category= or the goal picker), which asks everything the
+ * recommendation needs. Product-specific questions are decided here; the rest
+ * hang on step/field `showIf` against the answers.
+ */
+export function categorySteps(cat: CategoryKey, ids: string[] = []): Step[] {
+  const any = (set: Set<string>) => ids.some((id) => set.has(id));
+  switch (cat) {
+    case 'longevity': {
+      // Injection comfort decides injection vs nasal, so ask it unless they came for a needle-free product.
+      const needle = !ids.length || ids.some((id) => INJECTABLE.has(id) && PRODUCT_CATEGORY[id] === 'longevity');
+      const mb = ids.includes('methylene-blue');
+      return [
+        LONGEVITY_GOALS,
+        ...(needle ? [LONGEVITY_INJECTION(ids.length > 0)] : []),
+        mb ? METHYLENE_BLUE : { ...METHYLENE_BLUE, showIf: { field: 'lng_goals', values: ['focus'] } },
+      ];
+    }
+    case 'sexual-health':
+      return [sexStep('sexual'), SEXUAL_FOCUS, SEXUAL_ED(any(PDE5)), SEXUAL_DESIRE(any(DESIRE)), SEXUAL_HEART(any(PDE5)), SEXUAL_USE];
+    case 'hormones':
+      return [sexStep('hormones'), HORMONES_MEN, HORMONES_MEN_HEALTH, HORMONES_LABS, HORMONES_WOMEN];
+    case 'hair':
+      return [HAIR_HISTORY, HAIR_CONTEXT, HAIR_PHOTOS];
+    case 'skin':
+      return [SKIN_PROFILE, SKIN_ROUTINE, SKIN_PHOTOS];
+  }
+}
+
 /** The category steps for the products in this visit, in category order, without repeats. */
 export function buildCategorySteps(productIds: string[]): Step[] {
-  const ids = new Set(productIds);
-  const cats = new Set(productIds.map((id) => PRODUCT_CATEGORY[id]).filter(Boolean));
-  const out: Step[] = [];
-  if (cats.has('longevity')) {
-    out.push(LONGEVITY_GOALS);
-    if ([...ids].some((id) => INJECTABLE.has(id) && PRODUCT_CATEGORY[id] === 'longevity')) out.push(LONGEVITY_INJECTION);
-    if (ids.has('methylene-blue')) out.push(METHYLENE_BLUE);
-  }
-  if (cats.has('sexual-health')) {
-    const pde5 = [...ids].some((id) => PDE5.has(id));
-    if (pde5) out.push(SEXUAL_ED);
-    if (ids.has('pt-141') || ids.has('oxytocin')) out.push(SEXUAL_DESIRE);
-    out.push(SEXUAL_HEART(pde5), SEXUAL_USE);
-  }
-  if (cats.has('hormones')) {
-    if (ids.has('enclomiphene')) out.push(HORMONES_MEN, HORMONES_MEN_HEALTH);
-    if (ids.has('hrt-cream')) out.push(HORMONES_WOMEN);
-  }
-  if (cats.has('hair')) out.push(HAIR_HISTORY, HAIR_CONTEXT, HAIR_PHOTOS);
-  if (cats.has('skin')) out.push(SKIN_PROFILE, SKIN_ROUTINE, SKIN_PHOTOS);
-  return out;
+  return (Object.keys(CATEGORY_LABEL) as CategoryKey[])
+    .filter((cat) => productIds.some((id) => PRODUCT_CATEGORY[id] === cat))
+    .flatMap((cat) => categorySteps(cat, productIds.filter((id) => PRODUCT_CATEGORY[id] === cat)));
 }
+
+/** Uploads, completed in the portal after checkout. */
+export const MEDIA_STEPS: { step: Step; category: CategoryKey }[] = [
+  { step: HAIR_PHOTOS, category: 'hair' },
+  { step: SKIN_PHOTOS, category: 'skin' },
+  { step: HORMONES_LABS, category: 'hormones' },
+];
 
 /** Every category step, for label lookups in the prescriber view. */
 export const ALL_CATEGORY_STEPS: Step[] = [
   LONGEVITY_GOALS,
-  LONGEVITY_INJECTION,
+  LONGEVITY_INJECTION(true),
   METHYLENE_BLUE,
-  SEXUAL_ED,
-  SEXUAL_DESIRE,
+  SEXUAL_FOCUS,
+  SEXUAL_ED(true),
+  SEXUAL_DESIRE(true),
   SEXUAL_HEART(true),
   SEXUAL_USE,
   HORMONES_MEN,
   HORMONES_MEN_HEALTH,
+  HORMONES_LABS,
   HORMONES_WOMEN,
   HAIR_HISTORY,
   HAIR_CONTEXT,

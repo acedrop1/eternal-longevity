@@ -5,7 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
-import { intakeStateFor } from '@/lib/intake-status';
+import { intakeStateFor, pendingMediaFor } from '@/lib/intake-status';
 import { getCatalogProduct } from '@/lib/catalog';
 import { visitProducts } from '@/lib/visit-products';
 import { MEMBER_NAV, EmptyState, PageHeader, btnPrimary } from '@/components/portal/ui';
@@ -15,8 +15,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * The clinical half of the intake, completed after checkout. The prescriber
- * does not review — and nothing is charged or shipped — until this is done.
+ * What is left after checkout: the photos (hair, skin) and optional lab
+ * results. Every question is answered in the assessment before checkout.
+ * LEGACY: an intake opened before that change ('awaiting_visit') still
+ * completes its full clinical visit here.
  */
 export default async function VisitPage({
   searchParams,
@@ -38,6 +40,43 @@ export default async function VisitPage({
   const product = primaryId ? await getCatalogProduct(primaryId) : undefined;
 
   const nav = MEMBER_NAV;
+
+  const media = state === 'submitted' ? await pendingMediaFor(user.id) : null;
+  if (media?.stepIds.length) {
+    return (
+      <PortalShell user={user} nav={nav}>
+        <div>
+          <PageHeader
+            title={media.photos ? 'Add your photos' : 'Add your lab results'}
+            intro={
+              media.photos
+                ? 'The last thing your physician needs before reviewing your treatment.'
+                : 'Optional. Your physician can use recent results in the review.'
+            }
+          />
+        </div>
+        <IntakeWizard mode="media" mediaStepIds={media.stepIds} />
+      </PortalShell>
+    );
+  }
+
+  // No intake yet: the assessment is where every question is asked now.
+  if (state === 'none') {
+    return (
+      <PortalShell user={user} nav={nav}>
+        <PageHeader title="Start your assessment." />
+        <EmptyState
+          action={
+            <Link href="/start" className={btnPrimary}>
+              Start your assessment
+            </Link>
+          }
+        >
+          A few questions about your health and goals. A licensed physician reviews them before anything is prescribed.
+        </EmptyState>
+      </PortalShell>
+    );
+  }
 
   if (state === 'submitted') {
     return (

@@ -42,7 +42,7 @@ export default async function CategoryPage({ params }: Props) {
                 {countLabel(c.items.length)}<span className="hidden md:inline"> · Nothing charged unless a physician approves</span>
               </span>
               <Link
-                href="/start"
+                href={`/start?category=${c.slug}`}
                 className="group flex items-center gap-2 rounded-full bg-butter py-2 pl-5 pr-2 text-[14px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
                 Start your assessment

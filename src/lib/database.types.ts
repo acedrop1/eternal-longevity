@@ -118,6 +118,7 @@ export type Database = {
           cart: Json;
           cart_updated_at: string | null;
           cart_reminder_at: string | null;
+          unsubscribe_token: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -140,6 +141,7 @@ export type Database = {
           cart?: Json;
           cart_updated_at?: string | null;
           cart_reminder_at?: string | null;
+          unsubscribe_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -162,6 +164,7 @@ export type Database = {
           cart?: Json;
           cart_updated_at?: string | null;
           cart_reminder_at?: string | null;
+          unsubscribe_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -756,6 +759,55 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      // Migration 0020.
+      leads: {
+        Row: {
+          id: string;
+          email: string;
+          product_id: string | null;
+          category: string | null;
+          consent_at: string;
+          consent_text: string;
+          created_at: string;
+          last_seen_at: string;
+          converted_at: string | null;
+          unsubscribed_at: string | null;
+          emails_sent: number;
+          last_email_at: string | null;
+          unsubscribe_token: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          product_id?: string | null;
+          category?: string | null;
+          consent_at: string;
+          consent_text: string;
+          created_at?: string;
+          last_seen_at?: string;
+          converted_at?: string | null;
+          unsubscribed_at?: string | null;
+          emails_sent?: number;
+          last_email_at?: string | null;
+          unsubscribe_token?: string;
+        };
+        Update: {
+          product_id?: string | null;
+          category?: string | null;
+          last_seen_at?: string;
+          converted_at?: string | null;
+          unsubscribed_at?: string | null;
+          emails_sent?: number;
+          last_email_at?: string | null;
+        };
+        Relationships: [];
+      };
+      email_sends: {
+        Row: { id: number; email: string; stage: string; ref: string; step: number; sent_at: string };
+        Insert: { email: string; stage: string; ref: string; step: number; sent_at?: string };
+        Update: { sent_at?: string };
         Relationships: [];
       };
       // Migration 0016.

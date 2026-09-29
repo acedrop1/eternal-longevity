@@ -28,7 +28,7 @@ import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
 import { AWAITING_PAYMENT, intentBelongsTo } from '@/lib/order-rules';
 
-const TOKEN_TTL_DAYS = 7;
+export const TOKEN_TTL_DAYS = 7;
 
 export interface PayableOrder {
   orderNumber: string;

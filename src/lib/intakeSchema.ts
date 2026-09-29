@@ -4,11 +4,19 @@
  * Steps are configured as data; the wizard component reads this schema to
  * render inputs, validate answers, and decide which step comes next.
  *
- * DESIGN PRINCIPLE: as few steps as possible, pills over typing wherever
- * possible. Anything not strictly needed for routing or the safety screen is
- * deferred to the member portal after the order is placed.
+ * DESIGN PRINCIPLE: one question per screen, pills over typing wherever
+ * possible. Every question the prescriber needs is asked before checkout
+ * (buildAssessmentSteps); only photos and lab files are left for the portal.
  */
-import { CATEGORY_KNOCKOUTS, buildCategorySteps } from './intake-categories';
+import {
+  CATEGORY_KNOCKOUTS,
+  CATEGORY_LABEL,
+  PRODUCT_CATEGORY,
+  buildCategorySteps,
+  categorySteps,
+  type CategoryKey,
+} from './intake-categories';
+import { recommend, type Recommendation } from './recommend';
 
 /**
  * States we can actually ship to — the single source of truth for the
@@ -77,9 +85,14 @@ export type FieldType =
   /** Guided photos (one per slot), taken or chosen on the device; stored privately for the prescriber. */
   | 'photo-upload'
   /** Documents such as lab results (PDF or image), optional unless required. */
-  | 'file-upload';
+  | 'file-upload'
+  /** The recommended product and plan: { productId, cadence }. */
+  | 'recommendation';
 
-export type Option = { value: string; label: string; hint?: string };
+export type Option = { value: string; label: string; hint?: string; image?: string };
+
+/** Shown when the answer `field` holds one of `values` (any answer in the assessment). */
+export type Cond = { field: string; values: string[] };
 
 export type Field = {
   id: string;
@@ -96,8 +109,8 @@ export type Field = {
   knockoutOn?: { values: string[]; key: string };
   /** Not a stop: these answers are highlighted for the prescriber as "Review". */
   flagOn?: string[];
-  /** Only show (and only require) this field when another field on the step has one of these values. */
-  showIf?: { field: string; values: string[] };
+  /** Only show (and only require) this field when every condition holds. */
+  showIf?: Cond | Cond[];
   /** photo-upload: the shots to take, in order. `required` slots must be filled to continue. */
   slots?: { id: string; label: string; hint: string; required?: boolean }[];
   /** file-upload: accepted types, e.g. 'application/pdf,image/*'. */
@@ -121,6 +134,12 @@ export type Step = {
   fields: Field[];
   /** Optional: this step counts as the "email capture" pivot point */
   isEmailCapture?: boolean;
+  /** Skip the step (and clear its answers) unless every condition holds. */
+  showIf?: Cond | Cond[];
+  /** ...and unless at least one of these holds. */
+  showIfAny?: Cond[];
+  /** A calm screen with no questions. */
+  kind?: 'interstitial';
 };
 
 const YES_NO: Option[] = [
@@ -130,8 +149,29 @@ const YES_NO: Option[] = [
 
 export const STEPS: Step[] = [
   // -------------------------------------------------------------
-  // 0. STATE — first, so nobody outside the service area fills anything in.
-  // Any state we do not serve is a knockout (see KNOCKOUT_MESSAGES.out_of_state).
+  // EMAIL CAPTURE: after the category questions, so progress can be saved and
+  // an existing account is caught before the personal details (IntakeWizard).
+  // -------------------------------------------------------------
+  {
+    id: 'email-capture',
+    eyebrow: '01 / STAY IN TOUCH',
+    heading: 'Where should we reach you?',
+    body: 'So we can save your progress.',
+    isEmailCapture: true,
+    fields: [
+      {
+        id: 'email',
+        type: 'email',
+        label: 'Email',
+        placeholder: 'you@example.com',
+        required: true,
+      },
+    ],
+  },
+
+  // -------------------------------------------------------------
+  // STATE: first of the eligibility questions. Any state we do not serve is a
+  // knockout (see KNOCKOUT_MESSAGES.out_of_state).
   // -------------------------------------------------------------
   {
     id: 'state',
@@ -157,11 +197,11 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // 1. ABOUT YOU — name, DOB, phone, ZIP, sex. Nothing else belongs here.
+  // 2. ABOUT YOU — name, DOB, phone, ZIP, sex. Nothing else belongs here.
   // -------------------------------------------------------------
   {
     id: 'about',
-    eyebrow: '01 / ABOUT YOU',
+    eyebrow: '02 / ABOUT YOU',
     heading: 'A few quick facts.',
     body: 'The prescriber uses this in his review.',
     smsDisclaimer:
@@ -186,18 +226,11 @@ export const STEPS: Step[] = [
       {
         id: 'dob',
         type: 'date',
+        half: true,
         label: 'Date of birth',
         required: true,
         // Age is computed from the date; under 18 fires the knockout.
         knockoutOn: { values: ['under18'], key: 'under18' },
-      },
-      {
-        id: 'phone',
-        type: 'text-short',
-        half: true,
-        label: 'Mobile number',
-        placeholder: '(201) 555-0100',
-        required: true,
       },
       {
         id: 'zip',
@@ -205,6 +238,13 @@ export const STEPS: Step[] = [
         half: true,
         label: 'ZIP code',
         placeholder: '07512',
+        required: true,
+      },
+      {
+        id: 'phone',
+        type: 'text-short',
+        label: 'Mobile number',
+        placeholder: '(201) 555-0100',
         required: true,
       },
       {
@@ -217,26 +257,6 @@ export const STEPS: Step[] = [
           { value: 'f', label: 'Female' },
           { value: 'intersex', label: 'Intersex' },
         ],
-      },
-    ],
-  },
-
-  // -------------------------------------------------------------
-  // 3. EMAIL CAPTURE
-  // -------------------------------------------------------------
-  {
-    id: 'email-capture',
-    eyebrow: '02 / STAY IN TOUCH',
-    heading: 'Where should we reach you?',
-    body: "If you don't finish today, we'll save your progress.",
-    isEmailCapture: true,
-    fields: [
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        placeholder: 'you@example.com',
-        required: true,
       },
     ],
   },
@@ -535,8 +555,9 @@ export const MEDS_STEP: Step = {
     {
       id: 'allergies_detail',
       type: 'text-long',
-      label: 'If yes — which, and what happened',
+      label: 'Which, and what happened?',
       placeholder: 'e.g. Penicillin — hives',
+      showIf: { field: 'allergies_any', values: ['yes'] },
     },
   ],
 };
@@ -547,40 +568,165 @@ export const MEDS_STEP: Step = {
 
 
 
-/**
- * Assemble the intake for this visitor.
- *
- * The base wizard stays as-is; clinical depth is added around it. A visitor
- * who arrived from a product gets that product's own contraindication screen.
- * Order is deliberate: every medical question comes before checkout, so
- * nobody is charged and then disqualified.
- */
 export type IntakeProduct = {
   id: string;
   name: string;
   contraindications: string[];
 };
 
+/* -------------------------------------------------------------------------- */
+/*  The assessment (pre-checkout, Hims-style)                                 */
+/* -------------------------------------------------------------------------- */
+
+/** "What would you like help with?": only when /start has no ?product= or ?category=. */
+export const GOAL_STEP: Step = {
+  id: 'goal',
+  eyebrow: 'YOUR GOAL',
+  heading: 'What would you like help with?',
+  fields: [
+    {
+      id: 'goal_category',
+      type: 'single-select',
+      label: '',
+      required: true,
+      options: [
+        { value: 'longevity', label: CATEGORY_LABEL.longevity, hint: 'Energy and healthy ageing', image: '/brand/cat-longevity.jpg' },
+        { value: 'sexual-health', label: CATEGORY_LABEL['sexual-health'], hint: 'Performance and desire', image: '/brand/cat-sexual.jpg' },
+        { value: 'hormones', label: CATEGORY_LABEL.hormones, hint: 'For men and for women in midlife', image: '/brand/cat-hormones.jpg' },
+        { value: 'hair', label: CATEGORY_LABEL.hair, hint: 'Thinning and hair loss', image: '/brand/cat-hair.jpg' },
+        { value: 'skin', label: CATEGORY_LABEL.skin, hint: 'Blemishes, tone and texture', image: '/brand/cat-skin.jpg' },
+      ],
+    },
+  ],
+};
+
+const GOOD_NEWS: Step = {
+  id: 'good-news',
+  eyebrow: 'NEXT',
+  heading: 'Good news. A licensed physician can review your answers.',
+  body: 'Next, see what your physician may prescribe and choose a plan.',
+  kind: 'interstitial',
+  fields: [],
+};
+
+const ALMOST_DONE: Step = {
+  id: 'almost-done',
+  eyebrow: 'NEXT',
+  heading: 'Almost done.',
+  body: 'Create your account so your physician can review.',
+  kind: 'interstitial',
+  fields: [],
+};
+
+/** Answer id of the recommendation screen: { productId, cadence }. */
+export const PLAN_FIELD = 'plan_choice';
+
+export const RECOMMEND_STEP: Step = {
+  id: 'recommendation',
+  eyebrow: 'YOUR TREATMENT',
+  heading: 'Based on your answers, your physician may prescribe',
+  fields: [{ id: PLAN_FIELD, type: 'recommendation', label: '', required: true }],
+};
+
+/** What /start knows before the first question. */
+export interface AssessmentContext {
+  /** ?product=: the product they started from. */
+  productId?: string;
+  /** ?category=: the category they started from. */
+  category?: CategoryKey;
+  /** Signed in: no email or password, and nothing already on file. */
+  member?: boolean;
+  /** Answer ids already on file for this member; never asked again. */
+  known?: string[];
+  /** Live products that can be recommended, by id. */
+  catalog: Record<string, { name: string; contraindications: string[] }>;
+}
+
+export const isCategoryKey = (v: unknown): v is CategoryKey =>
+  typeof v === 'string' && Object.prototype.hasOwnProperty.call(CATEGORY_LABEL, v);
+
+export function assessmentCategory(ctx: AssessmentContext, answers: Record<string, unknown>): CategoryKey | undefined {
+  if (ctx.category) return ctx.category;
+  if (ctx.productId) return PRODUCT_CATEGORY[ctx.productId];
+  return isCategoryKey(answers.goal_category) ? answers.goal_category : undefined;
+}
+
+export function recommendationFor(ctx: AssessmentContext, answers: Record<string, unknown>): Recommendation | null {
+  const category = assessmentCategory(ctx, answers);
+  if (!category) return null;
+  return recommend({ category, answers, requested: ctx.productId, live: new Set(Object.keys(ctx.catalog)) });
+}
+
+/** The product picked on the recommendation screen: the primary unless they switched to the alternative. */
+export function chosenProduct(rec: Recommendation | null, answers: Record<string, unknown>): string | null {
+  const id = (answers[PLAN_FIELD] as { productId?: unknown } | undefined)?.productId;
+  return rec && typeof id === 'string' && id === rec.alternative ? id : rec?.primary ?? null;
+}
+
+const MEDIA_TYPES: FieldType[] = ['photo-upload', 'file-upload'];
+
 /**
- * Two-phase intake, matching the telehealth pattern underwriters expect:
+ * Every pre-checkout screen for this visitor, in order. Steps still carry
+ * their showIf; the wizard and the server both skip the ones that don't hold.
  *
- *   PRE  — the short pre-checkout profile: goals, demographics, body,
- *          consents, account. Enough to open the account and place the order.
- *   VISIT — the clinical portion, completed inside the portal after checkout
- *          ("Complete your visit"). Nothing is prescribed until it's done.
+ *   goal (no product/category) → category questions (no photos) → email →
+ *   state → about you → body → health → conditions → medications →
+ *   safety screen for the recommended product → "Good news" →
+ *   recommendation → safety screen for the alternative, if they switched →
+ *   consents → "Almost done" → account
+ *
+ * Every answer is asked once: a field that appears again (sex) or is on file
+ * (a member's `known`) is dropped from the later step.
+ */
+export function buildAssessmentSteps(ctx: AssessmentContext, answers: Record<string, unknown>): Step[] {
+  const category = assessmentCategory(ctx, answers);
+  const rec = recommendationFor(ctx, answers);
+  const chosen = chosenProduct(rec, answers);
+  const step = (id: string) => STEPS.find((st) => st.id === id)!;
+  const screen = (id: string | null): Step[] => {
+    const p = id ? ctx.catalog[id] : undefined;
+    return p?.contraindications.length ? [productScreeningStep(p, id!)] : [];
+  };
+  const all: Step[] = [
+    ...(ctx.category || ctx.productId ? [] : [GOAL_STEP]),
+    // State first, Hims-style: someone we can't treat finds out before answering anything else.
+    step('state'),
+    ...(category ? categorySteps(category, ctx.productId ? [ctx.productId] : []) : []).map((st) => ({
+      ...st,
+      fields: st.fields.filter((f) => !MEDIA_TYPES.includes(f.type)),
+    })),
+    ...(ctx.member ? [] : [step('email-capture')]),
+    step('about'),
+    step('body'),
+    step('health'),
+    CONDITIONS_STEP,
+    MEDS_STEP,
+    ...screen(rec?.primary ?? null),
+    GOOD_NEWS,
+    RECOMMEND_STEP,
+    ...(chosen !== rec?.primary ? screen(chosen) : []),
+    step('consents'),
+    ...(ctx.member ? [] : [ALMOST_DONE, step('account')]),
+  ];
+  const seen = new Set(ctx.known ?? []);
+  const out: Step[] = [];
+  for (const st of all) {
+    const fields = st.fields.filter((f) => !seen.has(f.id));
+    fields.forEach((f) => seen.add(f.id));
+    if (fields.length || st.kind) out.push({ ...st, fields });
+  }
+  return out;
+}
+
+/**
+ * The clinical visit completed in the portal. LEGACY: members who signed up
+ * before the assessment moved ahead of checkout still have one open
+ * ('awaiting_visit'); everyone else only has photos/labs left (MEDIA_STEPS).
  */
 const VISIT_TOPLEVEL_IDS = new Set(['health']);
 
-export function buildPreSteps(): Step[] {
-  return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));
-}
-
 export function buildVisitSteps(products: IntakeProduct[] = []): Step[] {
   const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
-  // Safety knockouts → history → meds → category questions (hair, skin…) →
-  // each product's own contraindications. Symptoms, prior-treatment and "any
-  // questions" were cut: none changed a decision, and the member can message
-  // the prescriber from the portal.
   out.push(CONDITIONS_STEP, MEDS_STEP, ...buildCategorySteps(products.map((p) => p.id)));
   products
     .filter((p, i) => p.contraindications?.length && products.findIndex((q) => q.id === p.id) === i)

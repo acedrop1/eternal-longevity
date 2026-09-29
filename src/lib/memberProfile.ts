@@ -76,6 +76,11 @@ export const NOTIFICATION_DEFS: NotificationDef[] = [
     body: 'New peptides, formulary changes.',
   },
   {
+    key: 'reminders',
+    title: 'Reminders',
+    body: 'A nudge if an assessment or plan is left unfinished.',
+  },
+  {
     key: 'marketing',
     title: 'Marketing & offers',
     body: 'Promotions, member-only pricing.',
@@ -88,6 +93,7 @@ export const DEFAULT_NOTIFICATIONS: Record<string, boolean> = {
   cycle: true,
   checkins: true,
   product: false,
+  reminders: true,
   marketing: false,
 };
 

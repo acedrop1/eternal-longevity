@@ -11,6 +11,7 @@ import 'server-only';
 import { Resend } from 'resend';
 import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SITE_URL } from '@/lib/site';
 import { orderRef } from '@/lib/format';
+import type { Stage } from '@/lib/followups';
 
 let cached: Resend | null = null;
 
@@ -38,6 +39,8 @@ export interface SendEmailInput {
   subject: string;
   html: string;
   replyTo?: string;
+  /** Extra headers, e.g. List-Unsubscribe on reminder email. */
+  headers?: Record<string, string>;
 }
 
 export interface SendEmailResult {
@@ -61,6 +64,7 @@ export async function sendEmail(
       subject: input.subject,
       html: input.html,
       replyTo: input.replyTo ?? SUPPORT_EMAIL,
+      headers: input.headers,
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: data?.id };
@@ -88,15 +92,18 @@ const H1 = `margin:0 0 14px;color:${INK};font-family:${FONT};font-size:27px;line
 const EYEBROW = `margin:0 0 10px;color:${MUTED};font-size:12px;letter-spacing:0.12em;font-weight:600;`;
 const PANEL = `background:${MILK};border-radius:18px;`;
 
-/** Wrap body content in a minimal branded shell. */
-export function shell(body: string): string {
+/**
+ * Wrap body content in a minimal branded shell. Reminder and marketing email
+ * passes `unsubscribeUrl`, which adds the opt-out line to the footer.
+ */
+export function shell(body: string, opts?: { unsubscribeUrl?: string }): string {
   return `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body style="margin:0;background:${MILK};padding:0;font-family:${FONT};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MILK};"><tr><td align="center" style="padding:40px 16px;">
     <!--[if mso]><table role="presentation" width="560" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:28px;">
       <tr><td style="padding:36px 36px 8px;font-family:${FONT};color:${INK};">
-        <div style="font-size:28px;line-height:1;font-weight:600;letter-spacing:-0.02em;">eternal</div>
-        <div style="margin-top:4px;font-size:11px;line-height:1;font-weight:600;letter-spacing:0.32em;color:${MUTED};">LONGEVITY</div>
+        <!-- The real logo; its alt text reads as the wordmark when images are blocked. -->
+        <img src="${SITE_URL}/brand/email-logo.png" width="160" height="53" alt="eternal longevity" style="display:block;border:0;outline:none;width:160px;height:auto;font-size:24px;font-weight:600;color:#111111;" />
       </td></tr>
       <tr><td style="padding:24px 36px 36px;font-family:${FONT};color:${INK};font-size:15px;line-height:1.6;">
         ${body}
@@ -107,7 +114,13 @@ export function shell(body: string): string {
         Prescribed by a licensed physician. Dispensed by a licensed U.S. pharmacy.<br />
         This message may contain confidential information intended only for the
         named recipient.<br />
-        ${BUSINESS_LEGAL_NAME} · ${BUSINESS_ADDRESS}
+        ${BUSINESS_LEGAL_NAME} · ${BUSINESS_ADDRESS}${
+          opts?.unsubscribeUrl
+            ? `<br /><br />Don&rsquo;t want these reminders? <a href="${escapeHtml(
+                opts.unsubscribeUrl,
+              )}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a>.`
+            : ''
+        }
       </td></tr>
     </table>
     <!--[if mso]></td></tr></table><![endif]-->
@@ -155,6 +168,7 @@ export function noticeEmail(input: {
   rows?: [string, string][];
   cta?: { label: string; href: string };
   footnote?: string;
+  unsubscribeUrl?: string;
 }): string {
   return shell(
     `<div style="${EYEBROW}">${escapeHtml(
@@ -171,6 +185,7 @@ export function noticeEmail(input: {
          ? `<p style="margin:18px 0 0;color:${MUTED};font-size:13px;">${text(input.footnote)}</p>`
          : ''
      }`,
+    { unsubscribeUrl: input.unsubscribeUrl },
   );
 }
 
@@ -320,22 +335,22 @@ export function intakeConfirmationEmail(firstName: string): {
        <h1 style="${H1}">Hi ${escapeHtml(
          firstName,
        )}, your account is ready.</h1>
-       <p>Welcome to Eternal Longevity. Your portal is where everything lives —
-       messages with your care team, your protocol details, refills and order
+       <p>Welcome to Eternal Longevity. Your portal is where everything lives:
+       messages with your care team, your treatment details, refills and order
        tracking.</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:18px 0;">
          <tr><td style="padding:18px 20px;color:${INK};font-size:14px;line-height:1.6;">
            <div style="${EYEBROW}">WHAT HAPPENS NEXT</div>
-           <p style="margin:0 0 10px;"><strong style="color:${INK};">1. Complete your clinical visit.</strong><br/>
-           A short set of health questions in your portal. You cannot order until this is done — it is what your prescriber reviews.</p>
-           <p style="margin:0 0 10px;"><strong style="color:${INK};">2. Place your order.</strong><br/>
-           You're only charged if a licensed prescriber approves your treatment.</p>
+           <p style="margin:0 0 10px;"><strong style="color:${INK};">1. Finish checkout.</strong><br/>
+           Your card is saved, not charged. You're only charged if a licensed physician approves your treatment.</p>
+           <p style="margin:0 0 10px;"><strong style="color:${INK};">2. Add anything your physician needs.</strong><br/>
+           Some treatments need a couple of photos. If yours does, your portal will show it.</p>
            <p style="margin:0;"><strong style="color:${INK};">3. Your treatment ships discreetly.</strong><br/>
            Tracking is added to your order the moment it leaves the pharmacy.</p>
          </td></tr>
        </table>
        <div style="margin:18px 0 6px;">
-         ${button('Complete my visit', `${SITE_URL}/portal/visit`)}
+         ${button('Go to my portal', `${SITE_URL}/portal`)}
        </div>`,
     ),
   };
@@ -606,6 +621,7 @@ export function abandonedCartEmail(input: {
   firstName: string;
   items: { name: string; cadence: string }[];
   cartUrl: string;
+  unsubscribeUrl?: string;
 }): { subject: string; html: string } {
   // No item names: the cart is in the portal, and this lands unannounced.
   const count = input.items.length;
@@ -619,6 +635,7 @@ export function abandonedCartEmail(input: {
        <p style="margin:0 0 22px;">Placing the order does not charge you. A licensed prescriber reviews it first, and only if they approve do we send a secure link to pay.</p>
        ${button('Pick up where you left off', input.cartUrl)}
        <p style="margin:22px 0 0;color:${MUTED};font-size:12px;">Do not want reminders like this? Turn them off under Notifications in your account.</p>`,
+      { unsubscribeUrl: input.unsubscribeUrl },
     ),
   };
 }
@@ -1116,6 +1133,174 @@ export function checkinFollowUpInternalEmail(input: {
       ],
       cta: { label: 'Open check-ins', href: input.adminUrl },
       footnote: 'Reach out through the member’s message thread. The member saw the same thank-you as everyone else.',
+    }),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Follow-up sequences (sent by the recovery cron — see lib/followups.ts)    */
+/* -------------------------------------------------------------------------- */
+
+const NOTHING_CHARGED = 'Nothing is charged unless your physician approves.';
+
+/**
+ * Every follow-up step, one template. Subjects and bodies never name a
+ * product or a condition — an inbox is not always only its owner's to read —
+ * and make no claim about results. `lead` and `plan` are reminders and carry
+ * the unsubscribe link; `photos` and `pay` are about an order already placed.
+ */
+export function followupEmail(input: {
+  stage: Stage;
+  step: number;
+  firstName?: string;
+  url: string;
+  unsubscribeUrl?: string;
+  /** Pay stage only. */
+  order?: { number: string; totalCents: number; expires: string };
+}): { subject: string; html: string } {
+  const hi = input.firstName ? `Hi ${input.firstName}` : 'Hi there';
+  const help = `Questions? Reply to this email or write to ${SUPPORT_EMAIL}.`;
+  const step = Math.max(0, input.step);
+  const u = input.unsubscribeUrl;
+
+  if (input.stage === 'lead') {
+    const cta = { label: 'Continue your assessment', href: input.url };
+    const steps = [
+      {
+        subject: 'Finish your assessment',
+        html: noticeEmail({
+          eyebrow: 'Your assessment',
+          heading: 'Pick up where you left off.',
+          body: `${hi} — you started your assessment with us. It takes a few minutes to finish, and a licensed physician reviews it once you do.\n\n${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+      {
+        subject: 'How it works',
+        html: noticeEmail({
+          eyebrow: 'How it works',
+          heading: 'Three steps, all online.',
+          rows: [
+            ['1 · Assessment', 'A few minutes of questions about your health and goals.'],
+            ['2 · Physician review', 'A licensed physician reviews it and decides whether treatment is right for you.'],
+            ['3 · Delivery', 'If approved, your treatment ships free from a licensed U.S. pharmacy.'],
+          ],
+          body: `${hi} — here is what happens after you finish your assessment. ${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+      {
+        subject: 'Still want to finish your assessment?',
+        html: noticeEmail({
+          eyebrow: 'Last reminder',
+          heading: 'Your assessment is still waiting.',
+          body: `${hi} — whenever you are ready, you can finish in a few minutes. This is the last reminder we will send about it.\n\n${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+    ];
+    return steps[Math.min(step, steps.length - 1)];
+  }
+
+  if (input.stage === 'plan') {
+    const cta = { label: 'Review your plan', href: input.url };
+    const steps = [
+      {
+        subject: 'Your plan is ready',
+        html: noticeEmail({
+          eyebrow: 'Your plan',
+          heading: 'Your plan is ready.',
+          body: `${hi} — your assessment is complete and your plan is waiting in your cart. Place your order and a licensed physician will review it.\n\n${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+      {
+        subject: 'One step from your physician review',
+        html: noticeEmail({
+          eyebrow: 'Your plan',
+          heading: 'One step from your physician review.',
+          body: `${hi} — once you place your order, a licensed physician reviews your assessment and decides whether treatment is right for you. If approved, it ships free.\n\n${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+      {
+        subject: 'Your plan is still waiting',
+        html: noticeEmail({
+          eyebrow: 'Last reminder',
+          heading: 'Your plan is still in your cart.',
+          body: `${hi} — your plan is saved whenever you are ready. This is the last reminder we will send about it.\n\n${NOTHING_CHARGED}`,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+    ];
+    return steps[Math.min(step, steps.length - 1)];
+  }
+
+  if (input.stage === 'photos') {
+    const cta = { label: 'Add your photos', href: input.url };
+    const steps = [
+      {
+        subject: 'Add your photos so your physician can review',
+        heading: 'One step left: your photos.',
+        lead: `${hi} — thanks for your order. Your physician needs a few photos before they can review your treatment. It takes about two minutes from your phone.`,
+      },
+      {
+        subject: 'Your physician is waiting on your photos',
+        heading: 'Your review is waiting on your photos.',
+        lead: `${hi} — your order is in, but your physician cannot start the review until your photos are added.`,
+      },
+      {
+        subject: 'Reminder: add your photos to finish your review',
+        heading: 'Your photos are still needed.',
+        lead: `${hi} — your order is on hold until your photos are added. Once they are in, your physician can review it.`,
+      },
+    ];
+    const s = steps[Math.min(step, steps.length - 1)];
+    return {
+      subject: s.subject,
+      html: noticeEmail({
+        eyebrow: 'Your order',
+        heading: s.heading,
+        body: `${s.lead}\n\n${NOTHING_CHARGED}`,
+        cta,
+        footnote: help,
+      }),
+    };
+  }
+
+  // pay
+  const o = input.order;
+  const expires = o
+    ? new Date(o.expires).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'America/New_York',
+      })
+    : 'soon';
+  const last = step >= 1;
+  return {
+    subject: last
+      ? 'Reminder: your payment link expires soon'
+      : 'Reminder: complete payment for your approved treatment',
+    html: noticeEmail({
+      eyebrow: 'Physician approved',
+      heading: last ? 'Your payment link expires soon.' : 'Your treatment is approved.',
+      body: `${hi} — your physician approved your treatment, but payment has not gone through yet. Complete it below and your prescription goes straight to the pharmacy. This secure link expires ${expires}.`,
+      rows: o
+        ? [
+            ['Order', orderRef(o.number)],
+            ['Amount due', `$${(o.totalCents / 100).toFixed(2)}`],
+          ]
+        : undefined,
+      cta: { label: 'Complete payment', href: input.url },
+      footnote: `This link is unique to your order — please don’t forward it. ${help}`,
     }),
   };
 }

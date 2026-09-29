@@ -5,6 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 import { getOnboardingSteps } from '@/lib/onboarding';
+import { pendingMediaFor } from '@/lib/intake-status';
 import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
 import { listOrders } from '@/lib/orders-db';
 import { listOpenCheckinsForUser } from '@/lib/checkins-db';
@@ -27,8 +28,9 @@ export default async function MemberPortalPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, orders, checkins, doctorThread] = await Promise.all([
+  const [pendingVisit, media, orders, checkins, doctorThread] = await Promise.all([
     getPendingVisit(),
+    pendingMediaFor(user.id),
     listOrders().catch(() => []),
     listOpenCheckinsForUser(user.id).catch(() => []),
     listMyMessages('doctor').catch(() => []),
@@ -78,7 +80,7 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit || preview
+          pendingVisit || preview || media.photos
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'

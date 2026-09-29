@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { cadenceTiersForProduct, type ShopProduct } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
-import type { Cadence, CartItem } from '@/lib/cartTypes';
+import { CART_STORAGE_KEY, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { saveCartAction } from '@/lib/profile-db';
 
 // Shared with the server actions — see lib/cartTypes.ts. Re-exported here so
@@ -45,7 +45,7 @@ interface CartAPI extends CartState {
 }
 
 const CartContext = createContext<CartAPI | null>(null);
-const STORAGE_KEY = 'el_cart_v1';
+const STORAGE_KEY = CART_STORAGE_KEY;
 
 function loadFromStorage(): CartItem[] {
   if (typeof window === 'undefined') return [];
