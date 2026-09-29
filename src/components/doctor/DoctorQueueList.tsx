@@ -9,6 +9,8 @@ import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import type { PatientReview } from '@/lib/clinical-review';
 import { orderRef } from '@/lib/format';
+import { categoryFlagCount, type ThreadStatus } from '@/lib/prescriber-view';
+import { CategoryAnswers, ReviewChip, ThreadChip } from '@/components/doctor/CategoryAnswers';
 
 interface DoctorQueueListProps {
   doctorName: string;
@@ -16,18 +18,25 @@ interface DoctorQueueListProps {
   signWindowOpen: boolean;
   /** The intake behind each waiting order, keyed by order number. */
   reviews: Record<string, PatientReview>;
+  /** Doctor-thread state per patient (user id): waiting on them, or they replied. */
+  threads: Record<string, ThreadStatus>;
 }
 
 export function DoctorQueueList({
   doctorName,
   reviews,
   signWindowOpen,
+  threads,
 }: DoctorQueueListProps) {
+  const [filter, setFilter] = useState<'all' | 'waiting'>('all');
   const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
     useOrders();
 
   // One medical director handles every case — no per-physician routing.
-  const queue = clinicalQueue();
+  const allQueue = clinicalQueue();
+  const isWaiting = (o: Order) => threads[o.userId ?? '']?.state === 'waiting';
+  const waitingCount = allQueue.filter(isWaiting).length;
+  const queue = filter === 'waiting' ? allQueue.filter(isWaiting) : allQueue;
   const active = activeClinicalCases();
   const recent = recentClinicalCases(4);
 
@@ -47,7 +56,7 @@ export function DoctorQueueList({
       <div className="grid gap-3 mb-8 sm:grid-cols-3">
         <Metric
           label="Awaiting my review"
-          value={String(queue.length)}
+          value={String(allQueue.length)}
           tone="blue"
         />
         <Metric
@@ -69,10 +78,35 @@ export function DoctorQueueList({
           title="Sign or decline"
           count={queue.length}
         />
+        <div role="group" aria-label="Filter queue" className="mb-4 flex flex-wrap gap-1.5">
+          {(
+            [
+              ['all', `All · ${allQueue.length}`],
+              ['waiting', `Waiting on patient · ${waitingCount}`],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={filter === key}
+              onClick={() => setFilter(key)}
+              className={cn(
+                'min-h-[36px] rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors',
+                filter === key ? 'bg-ink text-white' : 'bg-milk text-ink hover:bg-milk-deep',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {queue.length === 0 ? (
           <EmptySection
-            title="Queue is clear"
-            body="New orders appear here as soon as a member checks out."
+            title={filter === 'waiting' ? 'Nobody to wait on' : 'Queue is clear'}
+            body={
+              filter === 'waiting'
+                ? 'Cases you have asked a question on appear here until the patient replies.'
+                : 'New orders appear here as soon as a member checks out.'
+            }
           />
         ) : (
           <div className="space-y-3">
@@ -83,6 +117,7 @@ export function DoctorQueueList({
                 doctorName={doctorName}
                 signWindowOpen={signWindowOpen}
                 review={reviews[o.id]}
+                thread={threads[o.userId ?? '']}
               />
             ))}
           </div>
@@ -173,12 +208,15 @@ function DoctorQueueRow({
   doctorName,
   signWindowOpen,
   review,
+  thread,
 }: {
   order: Order;
   doctorName: string;
   signWindowOpen: boolean;
   review?: PatientReview;
+  thread?: ThreadStatus;
 }) {
+  const catFlags = review ? categoryFlagCount(review.categories) : 0;
   const { signRx, declineClinical } = useOrders();
   const router = useRouter();
   const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask'>(null);
@@ -235,11 +273,17 @@ function DoctorQueueRow({
           </div>
         </div>
 
-        <div className="md:text-right md:flex-shrink-0">
+        <div className="flex flex-wrap gap-1.5 md:flex-shrink-0 md:flex-col md:items-end">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-600/25 bg-sky-50 text-sky-800 px-2.5 py-1 text-[12px]">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
             Awaiting my review
           </span>
+          {catFlags > 0 && (
+            <ReviewChip>
+              {catFlags} {catFlags === 1 ? 'answer' : 'answers'} to review
+            </ReviewChip>
+          )}
+          <ThreadChip status={thread} />
         </div>
       </div>
 
@@ -890,9 +934,12 @@ function ReviewPanel({
    */
   const [open, setOpen] = useState(false);
 
-  const flags = [...review.safety, ...review.history, ...review.context].filter(
-    (l) => l.flag,
-  );
+  const flags = [
+    ...review.categories.flatMap((c) => c.items),
+    ...review.safety,
+    ...review.history,
+    ...review.context,
+  ].filter((l) => l.flag);
   const summary =
     flags.length === 0
       ? 'Nothing flagged'
@@ -952,6 +999,12 @@ function ReviewPanel({
               ['Intake completed', review.submittedAt],
             ]}
           />
+
+          {review.categories.length > 0 && (
+            <Group title="Category answers">
+              <CategoryAnswers sections={review.categories} />
+            </Group>
+          )}
 
           <Group title="Safety screen">
             <Answers lines={review.safety} />

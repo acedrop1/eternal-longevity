@@ -8,6 +8,7 @@
  * possible. Anything not strictly needed for routing or the safety screen is
  * deferred to the member portal after the order is placed.
  */
+import { CATEGORY_KNOCKOUTS, buildCategorySteps } from './intake-categories';
 
 /**
  * States we can actually ship to — the single source of truth for the
@@ -72,7 +73,11 @@ export type FieldType =
   | 'consent-stack'
   | 'account-creation'
   | 'id-upload'
-  | 'optional-upload';
+  | 'optional-upload'
+  /** Guided photos (one per slot), taken or chosen on the device; stored privately for the prescriber. */
+  | 'photo-upload'
+  /** Documents such as lab results (PDF or image), optional unless required. */
+  | 'file-upload';
 
 export type Option = { value: string; label: string; hint?: string };
 
@@ -89,6 +94,14 @@ export type Field = {
   max?: number;
   /** For knockout: if the user picks one of these values, fire the named knockout */
   knockoutOn?: { values: string[]; key: string };
+  /** Not a stop: these answers are highlighted for the prescriber as "Review". */
+  flagOn?: string[];
+  /** Only show (and only require) this field when another field on the step has one of these values. */
+  showIf?: { field: string; values: string[] };
+  /** photo-upload: the shots to take, in order. `required` slots must be filled to continue. */
+  slots?: { id: string; label: string; hint: string; required?: boolean }[];
+  /** file-upload: accepted types, e.g. 'application/pdf,image/*'. */
+  accept?: string;
 };
 
 export type Step = {
@@ -362,6 +375,7 @@ export function passwordValid(p: string): boolean {
 }
 
 export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> = {
+  ...CATEGORY_KNOCKOUTS,
   out_of_state: {
     title: "We're not in your state yet",
     body: 'Our physician is licensed only in the states below for now. We hope to add more.',
@@ -420,18 +434,22 @@ export const CONSENT_ITEMS = [
  * asks about blood pressure. Answering "yes" is a knockout: the order stops
  * before it reaches the prescriber.
  */
-export function productScreeningStep(product: {
-  name: string;
-  contraindications: string[];
-}): Step {
+export function productScreeningStep(
+  product: {
+    name: string;
+    contraindications: string[];
+  },
+  /** Set for every screened product after the first, so each keeps its own answer. */
+  suffix?: string,
+): Step {
   return {
-    id: 'product-screen',
+    id: suffix ? `product-screen-${suffix}` : 'product-screen',
     eyebrow: `SAFETY SCREEN · ${product.name.toUpperCase()}`,
     heading: `A few questions specific to ${product.name}.`,
     body: `These are the conditions that would make ${product.name} unsafe for you. Answer honestly — this is the screen that protects you.`,
     fields: [
       {
-        id: 'product_contraindications',
+        id: suffix ? `${PRODUCT_SCREEN_FIELD}__${suffix}` : PRODUCT_SCREEN_FIELD,
         type: 'single-select',
         label: `Do any of the following apply to you?\n\n${product.contraindications
           .map((c) => `• ${c}`)
@@ -446,6 +464,9 @@ export function productScreeningStep(product: {
     ],
   };
 }
+
+/** Answer key of the first product's screen; later products add `__<productId>`. */
+export const PRODUCT_SCREEN_FIELD = 'product_contraindications';
 
 /** Knockout shown when a product-specific contraindication is reported. */
 export const PRODUCT_KNOCKOUT = {
@@ -554,12 +575,15 @@ export function buildPreSteps(): Step[] {
   return STEPS.filter((s) => !VISIT_TOPLEVEL_IDS.has(s.id));
 }
 
-export function buildVisitSteps(product?: IntakeProduct): Step[] {
+export function buildVisitSteps(products: IntakeProduct[] = []): Step[] {
   const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
-  // Safety knockouts → history → meds → the product's own contraindications.
-  // Symptoms, prior-treatment and "any questions" were cut: none changed a
-  // decision, and the member can message the prescriber from the portal.
-  out.push(CONDITIONS_STEP, MEDS_STEP);
-  if (product?.contraindications?.length) out.push(productScreeningStep(product));
+  // Safety knockouts → history → meds → category questions (hair, skin…) →
+  // each product's own contraindications. Symptoms, prior-treatment and "any
+  // questions" were cut: none changed a decision, and the member can message
+  // the prescriber from the portal.
+  out.push(CONDITIONS_STEP, MEDS_STEP, ...buildCategorySteps(products.map((p) => p.id)));
+  products
+    .filter((p, i) => p.contraindications?.length && products.findIndex((q) => q.id === p.id) === i)
+    .forEach((p, i) => out.push(productScreeningStep(p, i === 0 ? undefined : p.id)));
   return out;
 }

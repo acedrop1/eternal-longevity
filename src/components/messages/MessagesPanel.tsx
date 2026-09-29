@@ -32,11 +32,13 @@ function fmtTime(iso: string): string {
 
 export function MessagesPanel({
   threads,
+  initialChannel = 'support',
 }: {
   threads: Record<MessageChannel, PortalMessage[]>;
+  initialChannel?: MessageChannel;
 }) {
   const router = useRouter();
-  const [channel, setChannel] = useState<MessageChannel>('support');
+  const [channel, setChannel] = useState<MessageChannel>(initialChannel);
   const messages = threads[channel];
   const [draft, setDraft] = useState('');
   const [pendingMsgs, setPendingMsgs] = useState<PortalMessage[]>([]);
@@ -168,6 +170,7 @@ export function MessagesPanel({
               }
             }}
             rows={2}
+            enterKeyHint="send"
             placeholder={
               channel === 'doctor' ? 'Message your doctor…' : 'Message support…'
             }

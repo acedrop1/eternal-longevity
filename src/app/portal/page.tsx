@@ -9,6 +9,8 @@ import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
 import { listOrders } from '@/lib/orders-db';
 import { listOpenCheckinsForUser } from '@/lib/checkins-db';
 import { STATUS_LABEL } from '@/lib/orders';
+import { listMyMessages } from '@/lib/messages-db';
+import { threadStatuses } from '@/lib/prescriber-view';
 import { MEMBER_NAV, PageHeader, StatusChip, panel, sentenceCase } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
@@ -25,11 +27,27 @@ export default async function MemberPortalPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, orders, checkins] = await Promise.all([
+  const [pendingVisit, orders, checkins, doctorThread] = await Promise.all([
     getPendingVisit(),
     listOrders().catch(() => []),
     listOpenCheckinsForUser(user.id).catch(() => []),
+    listMyMessages('doctor').catch(() => []),
   ]);
+  // Their own thread only (RLS). Unanswered = the prescriber spoke last.
+  const question = threadStatuses(
+    doctorThread.map((m) => ({
+      thread_user_id: 'me',
+      sender_id: m.senderRole === 'member' ? 'me' : 'staff',
+      body: m.body,
+      created_at: m.createdAt,
+    })),
+  ).me;
+  const preview =
+    question?.state === 'waiting'
+      ? question.question.length > 140
+        ? `${question.question.slice(0, 140).trimEnd()}…`
+        : question.question
+      : null;
   const checkin = checkins[0] ?? null;
   const onboarding = await getOnboardingSteps(orders);
   const latest = orders[0] ?? null;
@@ -60,13 +78,38 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit
+          pendingVisit || preview
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
               : 'Ready when you are.'
         }
       />
+
+      {preview && (
+        <section
+          aria-labelledby="dr-question"
+          className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
+        >
+          <p className="mb-1 text-[13px] font-medium text-ink/60">From your prescriber</p>
+          <h2
+            id="dr-question"
+            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
+          >
+            Dr. Elder has a question for you
+          </h2>
+          <p className="mt-3 whitespace-pre-wrap break-words rounded-inner bg-white px-4 py-3 text-[15px] leading-relaxed text-ink ring-1 ring-ink/5">
+            {preview}
+          </p>
+          <Link
+            href="/portal/messages?thread=doctor"
+            className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
+          >
+            Reply
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+          </Link>
+        </section>
+      )}
 
       <OnboardingChecklist steps={onboarding} />
 

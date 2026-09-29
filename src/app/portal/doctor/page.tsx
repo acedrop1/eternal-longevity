@@ -5,7 +5,7 @@ import { DOCTOR_NAV } from '@/components/portal/ui';
 import { DoctorQueueList } from "@/components/doctor/DoctorQueueList";
 import { getSession } from "@/lib/auth-server";
 import { listOrders } from "@/lib/orders-db";
-import { reviewsForOrders } from "@/lib/clinical-review";
+import { doctorThreadStatuses, reviewsForOrders } from "@/lib/clinical-review";
 import { getPrescriber } from "@/lib/prescriber";
 import { signWindowOpen } from "@/lib/reauth";
 
@@ -24,10 +24,11 @@ export default async function DoctorPortalPage() {
    * the record loads with the queue, not after a second round trip.
    */
   const orders = await listOrders().catch(() => []);
-  const waiting = orders
-    .filter((o) => o.status === "assigned")
-    .map((o) => o.id);
-  const reviews = await reviewsForOrders(waiting).catch(() => ({}));
+  const assigned = orders.filter((o) => o.status === "assigned");
+  const [reviews, threads] = await Promise.all([
+    reviewsForOrders(assigned.map((o) => o.id)).catch(() => ({})),
+    doctorThreadStatuses(assigned.map((o) => o.userId ?? "")),
+  ]);
 
   /*
    * "Dr." is not automatic — an NP or PA holds the same queue but not the
@@ -68,6 +69,7 @@ export default async function DoctorPortalPage() {
       <DoctorQueueList
         doctorName={user.name}
         reviews={reviews}
+        threads={threads}
         signWindowOpen={reauthed}
       />
     </PortalShell>

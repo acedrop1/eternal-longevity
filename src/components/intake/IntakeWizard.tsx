@@ -7,14 +7,13 @@ import { Check, CircleAlert } from 'lucide-react';
 import { FieldRenderer } from './IntakeFields';
 import {
   KNOCKOUT_MESSAGES,
-  passwordValid,
   PRODUCT_KNOCKOUT,
   buildPreSteps,
   buildVisitSteps,
   SERVICEABLE_STATES,
   STATE_NAMES,
+  type IntakeProduct,
   type Step,
-  type Field,
 } from '@/lib/intakeSchema';
 import {
   emailHasAccountAction,
@@ -22,7 +21,7 @@ import {
   submitVisitAction,
   declineVisitAction,
 } from '@/lib/intake-actions';
-import { ageFromDob, consentsComplete, fieldKnockout } from '@/lib/intake-rules';
+import { ageFromDob, fieldComplete, fieldKnockout, fieldVisible } from '@/lib/intake-rules';
 import { cn } from '@/lib/utils';
 
 type Answers = Record<string, unknown>;
@@ -33,30 +32,16 @@ type WizardStatus =
   | { kind: 'has-account' }
   | { kind: 'submitted' };
 
-function valueIsPresent(field: Field, v: unknown): boolean {
-  if (!field.required) return true;
-  if (v === null || v === undefined || v === '') return false;
-  if (Array.isArray(v) && v.length === 0) return false;
-  if (field.type === 'consent-stack') return consentsComplete(v);
-  if (field.type === 'account-creation') {
-    const acc = (v as { password?: string; confirm?: string }) ?? {};
-    return !!acc.password && passwordValid(acc.password) && acc.password === acc.confirm;
-  }
-  if (field.type === 'id-upload') {
-    return v instanceof File || typeof v === 'string';
-  }
-  return true;
-}
-
 function validateStep(step: Step, answers: Answers): { ok: boolean; knockout?: string } {
   for (const f of step.fields) {
+    if (!fieldVisible(f, answers)) continue;
     // The height slider writes two answers; both must be set.
     if (f.type === 'height') {
       if (typeof answers.height_ft !== 'number' || typeof answers.height_in !== 'number') return { ok: false };
       continue;
     }
     const v = answers[f.id];
-    if (!valueIsPresent(f, v)) return { ok: false };
+    if (!fieldComplete(f, v)) return { ok: false };
     if (f.type === 'date' && f.knockoutOn?.values.includes('under18')) {
       const age = ageFromDob(v);
       if (age === null || age > 120) return { ok: false };
@@ -84,15 +69,25 @@ interface IntakeWizardProps {
    *           review ("Complete your visit").
    */
   mode?: 'pre' | 'visit';
+  /** Visit only: every product the visit covers; their categories are all asked. */
+  visitProducts?: IntakeProduct[];
 }
 
-export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) {
+/** One id per visit session: the storage folder for its photos and files. */
+function newVisitId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function IntakeWizard({ product, mode = 'pre', visitProducts }: IntakeWizardProps = {}) {
   const compact = mode === 'visit';
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', stepIdx: 0 });
   const [answers, setAnswers] = useState<Answers>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const reduceMotion = useReducedMotion();
+  const [visitId] = useState(newVisitId);
 
   /*
    * Steps for this run. When the visitor arrived from a product, its own
@@ -100,8 +95,11 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
    * what they are actually ordering.
    */
   const steps = useMemo(
-    () => (mode === 'visit' ? buildVisitSteps(product) : buildPreSteps()),
-    [product, mode]
+    () =>
+      mode === 'visit'
+        ? buildVisitSteps(visitProducts ?? (product ? [product] : []))
+        : buildPreSteps(),
+    [product, mode, visitProducts]
   );
 
   const total = steps.length;
@@ -127,8 +125,16 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [scrollKey]);
 
+  /** Takes a value or an updater (uploads finish after other answers change). */
   function setField(id: string, v: unknown) {
-    setAnswers((prev) => ({ ...prev, [id]: v }));
+    setAnswers((prev) => {
+      const next = { ...prev, [id]: typeof v === 'function' ? v(prev[id]) : v };
+      // A field hidden by this answer loses its own answer (showIf).
+      for (const f of currentStep?.fields ?? []) {
+        if (f.showIf && !fieldVisible(f, next)) delete next[f.id];
+      }
+      return next;
+    });
   }
 
   function handleContinue() {
@@ -155,6 +161,9 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
 
         ...(product
           ? { requestedProduct: product.name, requestedProductId: product.id }
+          : {}),
+        ...(mode === 'visit' && visitProducts?.length
+          ? { visitProductIds: visitProducts.map((p) => p.id) }
           : {}),
       };
       startTransition(async () => {
@@ -445,8 +454,9 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
       )}
 
       {/* Fields */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-5">
-        {currentStep.fields.map((f) => (
+      {/* scroll-mb keeps a focused input clear of the sticky action bar. */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-5 [&_input]:scroll-mb-32 [&_textarea]:scroll-mb-32">
+        {currentStep.fields.filter((f) => fieldVisible(f, answers)).map((f) => (
           <div key={f.id} className={f.half ? 'col-span-1 min-w-0' : 'col-span-2 min-w-0'}>
             {f.label && (
               <label
@@ -474,6 +484,7 @@ export function IntakeWizard({ product, mode = 'pre' }: IntakeWizardProps = {}) 
                 field={f}
                 value={answers[f.id]}
                 onChange={(v) => setField(f.id, v)}
+                mediaFolder={visitId}
               />
             )}
           </div>
@@ -532,7 +543,7 @@ function Shell({
       onKeyDown={onKeyDown}
       className={
         compact
-          ? 'relative mx-auto flex w-full max-w-2xl flex-col overflow-x-hidden pb-0 pt-2 text-ink'
+          ? 'relative mx-auto flex w-full max-w-2xl flex-col overflow-x-clip pb-0 pt-2 text-ink'
           : 'relative mx-auto flex h-[100svh] max-w-2xl flex-col px-4 pb-3 pt-[100px] text-ink md:px-6 md:pb-5 md:pt-[120px]'
       }
     >

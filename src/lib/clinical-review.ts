@@ -1,3 +1,4 @@
+import { SHOP_PRODUCTS } from './shopProducts';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -5,6 +6,13 @@ import {
 import { ageFrom, formatDate } from '@/lib/format';
 import { defaultCardSummary } from '@/lib/pay-on-approval';
 import { stripeConfigured } from '@/lib/stripe';
+import { getSession } from '@/lib/auth-server';
+import {
+  categoryAnswers,
+  threadStatuses,
+  type CategorySection,
+  type ThreadStatus,
+} from '@/lib/prescriber-view';
 
 export interface ReviewLine {
   label: string;
@@ -26,6 +34,8 @@ export interface PatientReview {
   context: ReviewLine[];
   /** Where it ships and how to reach them. */
   contact: ReviewLine[];
+  /** Per-category questions (hair, skin, ...), with signed photo/lab URLs. */
+  categories: CategorySection[];
 }
 
 const SEX: Record<string, string> = {
@@ -166,6 +176,7 @@ export async function reviewsForOrders(
       shippingAddress: o.shipping_address,
     });
   }
+  await signIntakeMedia(Object.values(out).flatMap((r) => r.categories));
   return out;
 }
 
@@ -213,6 +224,7 @@ function buildReview(input: {
     body:
       ft !== '—' ? `${ft}′ ${inch}″ · ${lb} lb` : lb !== '—' ? `${lb} lb` : '—',
     submittedAt: input.submittedAt ? formatDate(input.submittedAt) : '—',
+    categories: categoryAnswers(a),
     safety: [
       {
         label: 'Active cancer, or treated in the last 5 years',
@@ -268,16 +280,20 @@ function buildReview(input: {
       },
       { label: 'Drug allergies', value: allergies.text, flag: allergies.flag },
       { label: 'Allergy detail', value: str(a, 'allergies_detail') },
-      {
-        label: 'Product safety screen',
-        value:
-          String(a.product_contraindications ?? '') === 'none'
-            ? 'None of the listed contraindications apply'
-            : String(a.product_contraindications ?? '') === 'some'
-              ? 'One or more applies'
-              : '—',
-        flag: String(a.product_contraindications ?? '') === 'some',
-      },
+      // One screen per product in the visit: the first is `product_contraindications`,
+      // each extra one `product_contraindications__<productId>`.
+      ...Object.keys(a)
+        .filter((k) => k === 'product_contraindications' || k.startsWith('product_contraindications__'))
+        .map((k) => {
+          const v = String(a[k] ?? '');
+          const id = k.split('__')[1];
+          const name = id ? SHOP_PRODUCTS.find((p) => p.id === id)?.name ?? id : '';
+          return {
+            label: name ? `Product safety screen · ${name}` : 'Product safety screen',
+            value: v === 'none' ? 'None of the listed contraindications apply' : v === 'some' ? 'One or more applies' : '—',
+            flag: v === 'some',
+          };
+        }),
     ],
   };
 }
@@ -322,5 +338,55 @@ export async function reviewsForUsers(
       shippingAddress: null,
     });
   }
+  await signIntakeMedia(Object.values(out).flatMap((r) => r.categories));
   return out;
+}
+
+/**
+ * Fills each photo/lab file's `url` with a 10-minute signed URL from the
+ * private `intake-media` bucket, in one call. Clinical roles only; anything
+ * missing (bucket, file, or the call failing) stays null = "unavailable".
+ */
+export async function signIntakeMedia(sections: CategorySection[]): Promise<void> {
+  const media = sections.flatMap((s) => [...s.photos, ...s.files]);
+  media.forEach((m) => (m.url = null));
+  if (!media.length || !supabaseAdminConfigured()) return;
+  const user = await getSession();
+  if (!user || (user.role !== 'doctor' && user.role !== 'admin')) return;
+  try {
+    const { data } = await createSupabaseAdminClient()
+      .storage.from('intake-media')
+      .createSignedUrls([...new Set(media.map((m) => m.path))], 600);
+    const urls = new Map(
+      (data ?? []).filter((d) => !d.error && d.signedUrl).map((d) => [d.path, d.signedUrl]),
+    );
+    media.forEach((m) => (m.url = urls.get(m.path) ?? null));
+  } catch {
+    // Leave them unavailable rather than break the queue.
+  }
+}
+
+/**
+ * "Waiting on patient" / "Patient replied" for each member, from their
+ * 'doctor' thread, in one query. Callers have already checked the role.
+ */
+export async function doctorThreadStatuses(
+  userIds: string[],
+): Promise<Record<string, ThreadStatus>> {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (!ids.length || !supabaseAdminConfigured()) return {};
+  try {
+    const { data } = await createSupabaseAdminClient()
+      .from('messages')
+      .select('thread_user_id, sender_id, body, created_at')
+      .eq('channel', 'doctor')
+      .in('thread_user_id', ids)
+      .order('created_at', { ascending: false })
+      // ponytail: newest 2000 rows across the visible patients; a per-thread
+      // latest-by-sender view if threads ever get that long.
+      .limit(2000);
+    return threadStatuses(data ?? []);
+  } catch {
+    return {};
+  }
 }

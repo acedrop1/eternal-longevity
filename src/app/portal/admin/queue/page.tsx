@@ -12,6 +12,9 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { ALL_CATEGORY_STEPS } from '@/lib/intake-categories';
+import { categoryAnswers } from '@/lib/prescriber-view';
+import { doctorThreadStatuses, signIntakeMedia } from '@/lib/clinical-review';
 
 export const metadata: Metadata = {
   title: 'Applications',
@@ -19,9 +22,16 @@ export const metadata: Metadata = {
 
 
 
+/** Category fields are shown labelled (with photos) above; keep them out of the raw list. */
+const CATEGORY_FIELD_IDS = new Set(
+  ALL_CATEGORY_STEPS.flatMap((s) => s.fields.map((f) => f.id)),
+);
+
 function flattenAnswers(answers: unknown): { label: string; value: string }[] {
   if (!answers || typeof answers !== 'object') return [];
-  return Object.entries(answers as Record<string, unknown>).map(
+  return Object.entries(answers as Record<string, unknown>)
+    .filter(([label]) => !CATEGORY_FIELD_IDS.has(label))
+    .map(
     ([label, value]) => ({
       label,
       value:
@@ -47,10 +57,13 @@ export default async function AdminQueuePage() {
       const db = createSupabaseAdminClient();
       const { data } = await db
         .from('intake_submissions')
-        .select('id, case_id, email, status, answers, created_at')
+        .select('id, user_id, case_id, email, status, answers, created_at')
         .in('status', ['submitted', 'in_review', 'needs_info'])
         .order('created_at', { ascending: true });
       if (data) {
+        const threads = await doctorThreadStatuses(
+          data.map((r) => r.user_id ?? ''),
+        );
         intakes = data.map((r) => ({
           id: r.id,
           caseId: r.case_id,
@@ -63,7 +76,10 @@ export default async function AdminQueuePage() {
               ? String((r.answers as Record<string, unknown>).requestedProduct)
               : null,
           answers: flattenAnswers(r.answers),
+          categories: categoryAnswers(r.answers),
+          thread: r.user_id ? threads[r.user_id] : undefined,
         }));
+        await signIntakeMedia(intakes.flatMap((i) => i.categories));
       }
     } catch {
       intakes = [];

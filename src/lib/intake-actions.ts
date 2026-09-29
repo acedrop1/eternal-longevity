@@ -12,7 +12,7 @@
  */
 import type { Json } from '@/lib/database.types';
 import { getSession } from '@/lib/auth-server';
-import { passwordValid, SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { buildVisitSteps, passwordValid, SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SERVICE_AREA_OR } from '@/lib/site';
 import {
   createSupabaseAdminClient,
@@ -25,7 +25,8 @@ import {
   SUPPORT_EMAIL,
 } from '@/lib/email';
 import { LIMITS, allow } from './rate-limit';
-import { ageFromDob, consentsComplete, firstKnockout } from './intake-rules';
+import { ageFromDob, consentsComplete, firstKnockout, visitProblem } from './intake-rules';
+import { visitProducts } from './visit-products';
 import { intakeStateFor } from './intake-status';
 
 /**
@@ -287,6 +288,9 @@ export async function submitVisitAction(
 ): Promise<IntakeSubmitResult> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'Please log in to complete your visit.' };
+  if (!visitAnswers || typeof visitAnswers !== 'object' || Array.isArray(visitAnswers)) {
+    return { ok: false, error: 'Missing payload.' };
+  }
   if (!supabaseAdminConfigured()) return { ok: true, caseId: 'demo' };
 
   /*
@@ -342,6 +346,17 @@ export async function submitVisitAction(
     visitCompletedAt: new Date().toISOString(),
   };
 
+  /*
+   * Rebuild the visit's steps from what the server knows (open intake, orders,
+   * cart) plus any products the wizard says it showed — extra ids only add
+   * questions. visitProblem drops hidden answers first, so a stale hidden
+   * answer can't trip a knockout; the missing-answer error waits until after
+   * the knockout check, so a crafted submit with a knockout is still declined.
+   */
+  const extra = Array.isArray(visitAnswers.visitProductIds) ? visitAnswers.visitProductIds : [];
+  const steps = buildVisitSteps(await visitProducts(user.id, extra));
+  const problem = visitProblem(steps, merged, user.id);
+
   // The wizard stops a knockout in the browser; this stops one sent without it.
   const knockout = firstKnockout(merged);
   if (knockout) {
@@ -351,6 +366,7 @@ export async function submitVisitAction(
       .eq('id', intake.id);
     return { ok: false, knockout };
   }
+  if (problem) return { ok: false, error: problem };
   const { error } = await db
     .from('intake_submissions')
     .update({ answers: merged as unknown as Json, status: 'submitted' })

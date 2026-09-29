@@ -8,6 +8,12 @@ import {
 } from '@/lib/clinical-actions';
 import { cn } from '@/lib/utils';
 import { SERVICE_AREA } from '@/lib/site';
+import {
+  categoryFlagCount,
+  type CategorySection,
+  type ThreadStatus,
+} from '@/lib/prescriber-view';
+import { CategoryAnswers, ReviewChip, ThreadChip } from '@/components/doctor/CategoryAnswers';
 
 export interface IntakeRowView {
   id: string;
@@ -18,6 +24,10 @@ export interface IntakeRowView {
   source: string | null;
   submittedAt: string;
   answers: { label: string; value: string }[];
+  /** Category questions as labels, with signed photo/lab URLs. */
+  categories: CategorySection[];
+  /** Their thread with the prescriber: waiting on them, or they replied. */
+  thread?: ThreadStatus;
 }
 
 /*
@@ -150,6 +160,7 @@ function IntakeCard({
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ClinicalResult | null>(null);
+  const catFlags = categoryFlagCount(intake.categories);
 
   async function run(fn: () => Promise<ClinicalResult>) {
     setBusy(true);
@@ -192,19 +203,27 @@ function IntakeCard({
             )}
           </p>
         </div>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
-            STATUS_BADGE[intake.status] ?? STATUS_BADGE.submitted,
+        <div className="flex flex-wrap gap-1.5 sm:flex-col sm:items-end">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
+              STATUS_BADGE[intake.status] ?? STATUS_BADGE.submitted,
+            )}
+          >
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+            {intake.status.replace('_', ' ')}
+          </span>
+          {catFlags > 0 && (
+            <ReviewChip>
+              {catFlags} {catFlags === 1 ? 'answer' : 'answers'} to review
+            </ReviewChip>
           )}
-        >
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-          {intake.status.replace('_', ' ')}
-        </span>
+          <ThreadChip status={intake.thread} />
+        </div>
       </div>
 
       {/* Answers */}
-      {intake.answers.length > 0 && (
+      {(intake.answers.length > 0 || intake.categories.length > 0) && (
         <div className="mt-3">
           <button
             type="button"
@@ -213,7 +232,13 @@ function IntakeCard({
           >
             {showAnswers ? 'Hide answers ↑' : 'View answers ↓'}
           </button>
-          {showAnswers && (
+          {showAnswers && intake.categories.length > 0 && (
+            <div className="mt-3 rounded-inner border border-ink/10 bg-white p-4">
+              <div className="mb-2 text-[13px] font-medium text-ink/55">Category answers</div>
+              <CategoryAnswers sections={intake.categories} />
+            </div>
+          )}
+          {showAnswers && intake.answers.length > 0 && (
             <dl className="mt-3 space-y-2 rounded-inner border border-ink/10 bg-white p-4">
               {intake.answers.map((a, i) => (
                 <div

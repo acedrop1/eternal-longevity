@@ -12,6 +12,10 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
+import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { getPrescriber } from '@/lib/prescriber';
+import { SITE_URL } from '@/lib/site';
+import { shouldNotifyReply } from '@/lib/prescriber-view';
 
 export type MessageChannel = 'support' | 'doctor';
 
@@ -78,8 +82,45 @@ export async function sendMessageAction(channel: MessageChannel, body: string): 
     body: text,
   });
   if (error) return { ok: false, error: error.message };
+  if (channel === 'doctor') await notifyPrescriberOfReply(user.id);
   revalidatePath('/portal/messages');
   return { ok: true };
+}
+
+/**
+ * Tell the prescriber a patient wrote on their doctor thread. At most one email
+ * per thread per 15 minutes, worked out from the member's own message times
+ * (no send log). No patient name or drug anywhere in the email.
+ */
+async function notifyPrescriberOfReply(userId: string): Promise<void> {
+  try {
+    const db = await createSupabaseServerClient();
+    const { data } = await db
+      .from('messages')
+      .select('created_at')
+      .eq('thread_user_id', userId)
+      .eq('sender_id', userId)
+      .eq('channel', 'doctor')
+      .order('created_at', { ascending: false })
+      // ponytail: replaying the last 50 is exact unless a burst runs longer.
+      .limit(50);
+    if (!shouldNotifyReply((data ?? []).map((m) => m.created_at))) return;
+
+    const prescriber = await getPrescriber().catch(() => null);
+    await sendEmail({
+      to: prescriber?.email || SUPPORT_EMAIL,
+      subject: 'New patient reply',
+      html: noticeEmail({
+        eyebrow: 'Patient messages',
+        heading: 'A patient replied.',
+        // No name or details: email isn't where patient information goes.
+        body: 'Open the portal to read it and reply.',
+        cta: { label: 'Open messages', href: `${SITE_URL}/portal/doctor/messages` },
+      }),
+    });
+  } catch {
+    // The message is saved either way; the notice is best effort.
+  }
 }
 
 /* ---------------------------- clinical side ------------------------------ */

@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { STATUS_LABEL, type OrderStatus } from '@/lib/orders';
 import { reviewForMember, type PatientReview } from '@/lib/clinical-review';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { CategoryAnswers } from '@/components/doctor/CategoryAnswers';
 
 export const metadata: Metadata = {
   title: 'Member record',
@@ -499,6 +500,14 @@ export default async function MemberDetailPage({ params }: PageProps) {
               <RecordGroup title="Billing" lines={detail.review.context} />
               <RecordGroup title="Safety screen" lines={detail.review.safety} />
               <RecordGroup title="History" lines={detail.review.history} />
+              {detail.review.categories.length > 0 && (
+                <div>
+                  <div className="mb-1.5 text-[13px] font-medium text-ink/55">
+                    Category answers
+                  </div>
+                  <CategoryAnswers sections={detail.review.categories} />
+                </div>
+              )}
             </div>
           )}
         </Section>

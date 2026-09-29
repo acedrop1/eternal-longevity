@@ -6,7 +6,8 @@ import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import { getSession } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 import { intakeStateFor } from '@/lib/intake-status';
-import { getLiveProduct } from '@/lib/catalog';
+import { getCatalogProduct } from '@/lib/catalog';
+import { visitProducts } from '@/lib/visit-products';
 import { MEMBER_NAV, EmptyState, PageHeader, btnPrimary } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
@@ -17,16 +18,24 @@ export const metadata: Metadata = {
  * The clinical half of the intake, completed after checkout. The prescriber
  * does not review — and nothing is charged or shipped — until this is done.
  */
-export default async function VisitPage() {
+export default async function VisitPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ product?: string }>;
+}) {
   const user = await getSession();
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [visit, state] = await Promise.all([
+  const { product: param } = await searchParams;
+  const [visit, state, products] = await Promise.all([
     getPendingVisit(),
     intakeStateFor(user.id),
+    // Intake's product, ?product=, undecided orders and cart: every category is asked.
+    visitProducts(user.id, [param]),
   ]);
-  const product = visit?.productId ? await getLiveProduct(visit.productId) : undefined;
+  const primaryId = products[0]?.id;
+  const product = primaryId ? await getCatalogProduct(primaryId) : undefined;
 
   const nav = MEMBER_NAV;
 
@@ -92,6 +101,7 @@ export default async function VisitPage() {
               }
             : undefined
         }
+        visitProducts={products}
       />
     </PortalShell>
   );

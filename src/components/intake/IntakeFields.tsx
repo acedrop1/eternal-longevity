@@ -3,11 +3,14 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Field, CONSENT_ITEMS, PASSWORD_RULES } from '@/lib/intakeSchema';
+import { FileUpload, PhotoUpload } from './MediaFields';
 
 interface FieldRendererProps {
   field: Field;
   value: unknown;
   onChange: (v: unknown) => void;
+  /** Visit session id: the storage folder for photo-upload / file-upload. */
+  mediaFolder?: string;
 }
 
 // Same field treatment as the contact form. 16px text keeps iOS from zooming.
@@ -45,7 +48,7 @@ function formatPhone(raw: string): string {
   return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
-export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
+export function FieldRenderer({ field, value, onChange, mediaFolder = 'visit' }: FieldRendererProps) {
   switch (field.type) {
     case 'multi-select':
       return (
@@ -60,7 +63,9 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
                 onClick={() => {
                   const arr = Array.isArray(value) ? [...(value as string[])] : [];
                   if (selected) onChange(arr.filter((v) => v !== opt.value));
-                  else onChange([...arr, opt.value]);
+                  // "None of these" can't sit alongside a real answer.
+                  else if (opt.value === 'none') onChange(['none']);
+                  else onChange([...arr.filter((v) => v !== 'none'), opt.value]);
                 }}
                 className={cn(tileBase, selected ? tileOn : tileIdle)}
               >
@@ -530,6 +535,12 @@ export function FieldRenderer({ field, value, onChange }: FieldRendererProps) {
         </div>
       );
     }
+
+    case 'photo-upload':
+      return <PhotoUpload field={field} value={value} onChange={onChange} folder={mediaFolder} />;
+
+    case 'file-upload':
+      return <FileUpload field={field} value={value} onChange={onChange} folder={mediaFolder} />;
 
     case 'id-upload':
     case 'optional-upload':
