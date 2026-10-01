@@ -64,6 +64,8 @@ export async function writePrescriptionForOrder(
    * was routed to.
    */
   signedByDoctorId?: string,
+  /** The sig he signed. Every refill on this prescription ships with it. */
+  directions?: string,
 ): Promise<{
   ok: boolean;
   prescriptionId?: string;
@@ -111,6 +113,7 @@ export async function writePrescriptionForOrder(
       status: 'signed',
       signed_at: now.toISOString(),
       notes: order.physician_note,
+      directions: directions ?? null,
       cadence,
       expires_at: isoDate(addMonths(now, PRESCRIPTION_MONTHS)),
       refills_remaining: refillsFor(cadence),

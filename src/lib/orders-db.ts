@@ -17,7 +17,7 @@
 import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
-import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
+import { autoSubmitToPharmacy, withdrawFromPharmacy } from '@/lib/auto-pharmacy';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import {
   declinedEmail,
@@ -581,6 +581,8 @@ export async function denyOrderAction(
   if (!moved) return { ok: false, error: 'order_moved_on' };
   await appendUpdate(id, user.name, 'admin', 'Cancelled', reason, 'denied-admin');
   await voidPlanForOrder(id);
+  // Off the board, and cancelled at the pharmacy if it already went and hasn't shipped.
+  await withdrawFromPharmacy(orderNumber);
 
   // Whatever was charged goes back, described the way it actually happened.
   const refund = await refundDeclinedOrder(
@@ -679,9 +681,15 @@ export async function signRxAction(
   note: string | undefined,
   firstChargeAmount: number,
   password: string,
+  /** The sig. The pharmacist verifies the compound against it, so it is required. */
+  directions: string,
 ): Promise<ActionResult> {
   const { user, error } = await requireRole(['doctor']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  const sig = (directions ?? '').trim().replace(/\s+/g, ' ');
+  if (!sig) return { ok: false, error: 'no_directions' };
+  if (sig.length > 1000) return { ok: false, error: 'directions_too_long' };
 
   /*
    * The signature, not the session, is what a board asks about. Thirty idle
@@ -741,7 +749,7 @@ export async function signRxAction(
    * record of what he just decided, and it is what a refill ships against —
    * without it a plan reaches its second cycle with nothing to renew from.
    */
-  await writePrescriptionForOrder(orderNumber, user.id);
+  await writePrescriptionForOrder(orderNumber, user.id, sig);
 
   // The signing itself belongs in the trail admin reads, not only the order.
   await recordAudit([

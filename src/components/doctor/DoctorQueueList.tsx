@@ -11,6 +11,7 @@ import type { PatientReview } from '@/lib/clinical-review';
 import { orderRef } from '@/lib/format';
 import { categoryFlagCount, type ThreadStatus } from '@/lib/prescriber-view';
 import { CategoryAnswers, ReviewChip, ThreadChip } from '@/components/doctor/CategoryAnswers';
+import { PHARMACY_CATALOG } from '@/lib/pharmacy-catalog';
 
 interface DoctorQueueListProps {
   doctorName: string;
@@ -222,6 +223,10 @@ function DoctorQueueRow({
   const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask'>(null);
   const [note, setNote] = useState('');
   const [password, setPassword] = useState('');
+  // The sig, prefilled with the directions he approved for this product.
+  const [directions, setDirections] = useState(
+    () => PHARMACY_CATALOG[order.lines[0]?.productId ?? '']?.defaultSig ?? '',
+  );
   const [signError, setSignError] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
 
@@ -335,6 +340,30 @@ function DoctorQueueRow({
             </span>{' '}
             to the card on file and releases the order to the pharmacy.
           </p>
+          <label
+            htmlFor={`sig-${order.id}`}
+            className="mb-1.5 block text-[13px] font-medium text-ink/70"
+          >
+            Directions
+          </label>
+          <p className="mb-2 text-xs leading-relaxed text-ink/55">
+            Printed on the label. The pharmacist verifies the compound against
+            them, and every refill on this prescription ships with them.
+          </p>
+          <textarea
+            id={`sig-${order.id}`}
+            value={directions}
+            onChange={(e) => {
+              setDirections(e.target.value);
+              setSignError(null);
+            }}
+            rows={2}
+            maxLength={1000}
+            required
+            placeholder="e.g. Inject 0.25 mL (50 mg) subcutaneously twice weekly."
+            className="mb-4 w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+          />
+
           {signWindowOpen ? (
             <p className="text-xs leading-relaxed text-ink/55">
               Your password is still good for a few more minutes, so you are not
@@ -377,13 +406,13 @@ function DoctorQueueRow({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={(!password && !signWindowOpen) || busy !== null}
+              disabled={(!password && !signWindowOpen) || !directions.trim() || busy !== null}
               onClick={async () => {
-                if ((!password && !signWindowOpen) || busy) return;
+                if ((!password && !signWindowOpen) || !directions.trim() || busy) return;
                 setBusy('sign');
                 setSignError(null);
                 try {
-                  const res = await signRx(order.id, doctorName, password);
+                  const res = await signRx(order.id, doctorName, password, directions.trim());
                   if (res.ok) {
                     setOpen(null);
                     setPassword('');
@@ -391,7 +420,9 @@ function DoctorQueueRow({
                     setSignError(
                       res.error === 'bad_password'
                         ? 'That password is not right. Nothing was signed or charged.'
-                        : 'Could not sign. Nothing was charged — try again.',
+                        : res.error === 'no_directions'
+                          ? 'Add the directions. Nothing was signed or charged.'
+                          : 'Could not sign. Nothing was charged — try again.',
                     );
                   }
                 } finally {

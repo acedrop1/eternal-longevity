@@ -213,6 +213,17 @@ export interface BoardRow {
   createdAt: string;
   /** Days since it was paid and queued, for the "waiting too long" flag. */
   ageDays: number;
+  /** Our order number, when the row belongs to one (FUL-<number>). */
+  orderNumber: string | null;
+  /** What the pharmacy's API says, for orders sent through it. */
+  pharmacy: {
+    status: string;
+    orderId: string | null;
+    /** Ours: why it was not sent. */
+    error: string | null;
+    /** The pharmacist's or carrier's note on a hold, exception or cancel. */
+    reason: string | null;
+  } | null;
 }
 
 function fmtAddress(a: unknown): string {
@@ -253,6 +264,33 @@ export async function loadFulfillmentBoard(): Promise<BoardRow[]> {
     for (const p of profiles ?? []) phones.set(p.id, p.phone ?? null);
   }
 
+  // The pharmacy API's view of each order, and the latest note behind a hold,
+  // exception or cancel (staff-only, in pharmacy_events).
+  const numbers = rows.map((r) => numberOf(r.order_ref)).filter(Boolean) as string[];
+  const pharmacy = new Map<string, { status: string | null; id: string | null; error: string | null }>();
+  const reasons = new Map<string, string>();
+  if (numbers.length) {
+    const [{ data: orders }, { data: events }] = await Promise.all([
+      db
+        .from('orders')
+        .select('order_number, pharmacy_status, pharmacy_order_id, pharmacy_error')
+        .in('order_number', numbers),
+      db
+        .from('pharmacy_events')
+        .select('reference, event, reason')
+        .in('reference', numbers)
+        .not('reason', 'is', null)
+        .order('occurred_at', { ascending: false }),
+    ]);
+    for (const o of orders ?? []) {
+      pharmacy.set(o.order_number, { status: o.pharmacy_status, id: o.pharmacy_order_id, error: o.pharmacy_error });
+    }
+    for (const e of events ?? []) {
+      const key = `${e.reference}|${e.event}`;
+      if (e.reason && !reasons.has(key)) reasons.set(key, e.reason);
+    }
+  }
+
   return rows.map((r) => {
     const queued = r.submitted_at ?? r.created_at;
     return {
@@ -272,6 +310,22 @@ export async function loadFulfillmentBoard(): Promise<BoardRow[]> {
       trackingNumber: r.tracking_number,
       createdAt: r.created_at,
       ageDays: Math.floor((Date.now() - new Date(queued).getTime()) / 86400_000),
+      orderNumber: numberOf(r.order_ref),
+      pharmacy: (() => {
+        const p = pharmacy.get(numberOf(r.order_ref) ?? '');
+        if (!p?.status) return null;
+        return {
+          status: p.status,
+          orderId: p.id,
+          error: p.error,
+          reason: reasons.get(`${numberOf(r.order_ref)}|${p.status}`) ?? null,
+        };
+      })(),
     };
   });
+}
+
+/** FUL-<order number> → the order number; null for the old free-standing refs. */
+function numberOf(orderRef: string): string | null {
+  return orderRef.startsWith('FUL-') ? orderRef.slice(4) : null;
 }

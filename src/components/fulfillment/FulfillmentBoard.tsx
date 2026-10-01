@@ -6,6 +6,7 @@ import {
   markDeliveredAction,
   pharmacyAcceptOrder,
   pharmacyAddTracking,
+  retrySendToPharmacyAction,
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
@@ -33,7 +34,7 @@ const GROUPS: {
     key: 'place',
     statuses: ['draft', 'submitted'],
     title: 'To place',
-    note: 'Paid and approved. Place each one in the MedShiftRx portal, then mark it placed.',
+    note: 'Paid and approved. Orders with a pharmacy SKU are sent automatically. Place any others in the pharmacy portal, then mark them placed.',
     lateAfter: 1,
   },
   {
@@ -98,6 +99,47 @@ const STATUS: Record<BoardRow['status'], [string, Tone]> = {
   canceled: ['Canceled', 'muted'],
 };
 
+/** The pharmacy API's status words (and our own: SENDING, ERROR, MANUAL, DRY_RUN). */
+const PHARMACY: Record<string, [string, Tone]> = {
+  SENDING: ['Sending to pharmacy', 'info'],
+  COMPOUNDING: ['Compounding', 'info'],
+  QA_PENDING: ['Pharmacy QA', 'info'],
+  SHIPPED: ['Shipped by pharmacy', 'gold'],
+  IN_TRANSIT: ['In transit', 'gold'],
+  OUT_FOR_DELIVERY: ['Out for delivery', 'gold'],
+  DELIVERED: ['Delivered', 'success'],
+  HOLD: ['Pharmacy hold', 'error'],
+  EXCEPTION: ['Carrier exception', 'error'],
+  CANCELLED: ['Pharmacy cancelled', 'error'],
+  ERROR: ['Pharmacy error', 'error'],
+  MANUAL: ['Place by hand', 'warn'],
+  DRY_RUN: ['Dry run · not sent', 'warn'],
+};
+const RETRYABLE = ['ERROR', 'MANUAL', 'DRY_RUN'];
+
+function trackingHref(carrier: string | null, n: string): string | null {
+  return /fedex/i.test(carrier ?? '') ? `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}` : null;
+}
+
+function PharmacyLine({ row }: { row: BoardRow }) {
+  const p = row.pharmacy;
+  if (!p) return null;
+  // Anything else the pharmacy says before verification (AWAITING_VERIFICATION…) reads as sent.
+  const [label, tone] = PHARMACY[p.status] ?? ['Sent to pharmacy', 'info'];
+  const note = p.reason ?? p.error;
+  return (
+    <div className="mt-2 space-y-1">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink/60">
+        <StatusChip tone={tone}>{label}</StatusChip>
+        {p.orderId && <span>Pharmacy order {p.orderId}</span>}
+      </div>
+      {note && (
+        <p className={cn('text-[13px]', tone === 'error' ? 'text-red-800' : 'text-ink/70')}>{note}</p>
+      )}
+    </div>
+  );
+}
+
 function BoardCard({ row, late }: { row: BoardRow; late: boolean }) {
   const [label, tone] = STATUS[row.status];
   const refill = row.cycleLabel?.startsWith('Refill');
@@ -128,9 +170,22 @@ function BoardCard({ row, late }: { row: BoardRow; late: boolean }) {
           {row.notes && <p className="mt-1 text-[12px] text-ink/55">{row.notes}</p>}
           {row.trackingNumber && (
             <p className="mt-1 text-[12px] text-ink/70">
-              {row.trackingCarrier} {row.trackingNumber}
+              {row.trackingCarrier}{' '}
+              {trackingHref(row.trackingCarrier, row.trackingNumber) ? (
+                <a
+                  href={trackingHref(row.trackingCarrier, row.trackingNumber)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                >
+                  {row.trackingNumber}
+                </a>
+              ) : (
+                row.trackingNumber
+              )}
             </p>
           )}
+          <PharmacyLine row={row} />
 
           <details className="mt-3 group">
             <summary className="cursor-pointer select-none text-[13px] text-ink/70 hover:text-ink">
@@ -198,8 +253,24 @@ function Actions({ row }: { row: BoardRow }) {
   const input =
     'w-full rounded-inner bg-white px-3 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
+  const canRetry =
+    (row.status === 'submitted' || row.status === 'draft') &&
+    !!row.pharmacy &&
+    !row.pharmacy.orderId &&
+    RETRYABLE.includes(row.pharmacy.status);
+
   return (
     <div className="space-y-2">
+      {canRetry && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => run(() => retrySendToPharmacyAction(row.id))}
+          className={cn(btnSecondary, 'w-full')}
+        >
+          {pending ? 'Sending…' : 'Retry send to pharmacy'}
+        </button>
+      )}
       {(row.status === 'submitted' || row.status === 'draft') && (
         <>
           <label className="block text-[13px] font-medium text-ink/70" htmlFor={`ref-${row.id}`}>

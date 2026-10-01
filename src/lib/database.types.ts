@@ -311,6 +311,7 @@ export type Database = {
           cadence: string | null;
           expires_at: string | null;
           refills_remaining: number;
+          directions: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -328,6 +329,7 @@ export type Database = {
           cadence?: string | null;
           expires_at?: string | null;
           refills_remaining?: number;
+          directions?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -345,6 +347,7 @@ export type Database = {
           cadence?: string | null;
           expires_at?: string | null;
           refills_remaining?: number;
+          directions?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -377,6 +380,12 @@ export type Database = {
           pay_token: string | null;
           pay_token_expires: string | null;
           paid_confirmed_at: string | null;
+          pharmacy_order_id: string | null;
+          pharmacy_batch_id: string | null;
+          pharmacy_status: string | null;
+          pharmacy_submitted_at: string | null;
+          pharmacy_updated_at: string | null;
+          pharmacy_error: string | null;
           tax_cents: number;
           created_at: string;
           updated_at: string;
@@ -407,6 +416,12 @@ export type Database = {
           pay_token?: string | null;
           pay_token_expires?: string | null;
           paid_confirmed_at?: string | null;
+          pharmacy_order_id?: string | null;
+          pharmacy_batch_id?: string | null;
+          pharmacy_status?: string | null;
+          pharmacy_submitted_at?: string | null;
+          pharmacy_updated_at?: string | null;
+          pharmacy_error?: string | null;
           tax_cents?: number;
           created_at?: string;
           updated_at?: string;
@@ -437,6 +452,12 @@ export type Database = {
           pay_token?: string | null;
           pay_token_expires?: string | null;
           paid_confirmed_at?: string | null;
+          pharmacy_order_id?: string | null;
+          pharmacy_batch_id?: string | null;
+          pharmacy_status?: string | null;
+          pharmacy_submitted_at?: string | null;
+          pharmacy_updated_at?: string | null;
+          pharmacy_error?: string | null;
           tax_cents?: number;
           created_at?: string;
           updated_at?: string;
@@ -762,6 +783,34 @@ export type Database = {
         Relationships: [];
       };
       // Migration 0020.
+      pharmacy_events: {
+        Row: {
+          id: string;
+          reference: string;
+          event: string;
+          occurred_at: string;
+          tracking_number: string | null;
+          carrier: string | null;
+          reason: string | null;
+          processed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reference: string;
+          event: string;
+          occurred_at: string;
+          tracking_number?: string | null;
+          carrier?: string | null;
+          reason?: string | null;
+          processed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          processed_at?: string | null;
+        };
+        Relationships: [];
+      };
       leads: {
         Row: {
           id: string;

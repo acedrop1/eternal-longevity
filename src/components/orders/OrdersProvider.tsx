@@ -48,6 +48,8 @@ interface OrdersAPI {
     id: string,
     author: string,
     password: string,
+    /** The sig, sent to the pharmacy with every shipment of this prescription. */
+    directions: string,
     note?: string,
   ) => Promise<{ ok: boolean; error?: string }>;
   declineClinical: (id: string, author: string, note: string) => Promise<void>;
@@ -263,7 +265,7 @@ export function OrdersProvider({
    * pharmacy. Recorded as two timeline entries — the sign-off and the charge.
    */
   const signRx = useCallback<OrdersAPI['signRx']>(
-    async (id, author, password, note) => {
+    async (id, author, password, directions, note) => {
       /*
        * The server runs first here, unlike every other action in this file.
        * A wrong password must not leave a card flipped to "signed" on screen
@@ -271,7 +273,7 @@ export function OrdersProvider({
        */
       const charged = orders.find((o) => o.id === id)?.total ?? 0;
       if (live) {
-        const res = await signRxAction(id, note, charged, password);
+        const res = await signRxAction(id, note, charged, password, directions);
         if (!res.ok) return res;
       }
 

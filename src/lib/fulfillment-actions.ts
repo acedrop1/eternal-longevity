@@ -19,6 +19,8 @@ import {
 } from './supabase/admin';
 import { pharmacyQueueEmail, sendEmail } from './email';
 import { advanceFulfillment } from './fulfillment-core';
+import { sendToPharmacyApi } from './auto-pharmacy';
+import { revalidatePath } from 'next/cache';
 import { SITE_URL } from './site';
 
 export interface FulfillmentResult {
@@ -244,4 +246,25 @@ export async function markDeliveredAction(fulfillmentId: string): Promise<Fulfil
     actorName: actor.name,
     actorRole: actor.role,
   });
+}
+
+/**
+ * "Retry send to pharmacy" on the board, for an order the API did not take.
+ * sendToPharmacyApi refuses anything already sent or already in flight.
+ */
+export async function retrySendToPharmacyAction(fulfillmentId: string): Promise<FulfillmentResult> {
+  const actor = await staffActor();
+  if ('ok' in actor) return actor;
+  const db = createSupabaseAdminClient();
+  const { data: row } = await db
+    .from('fulfillment_orders')
+    .select('order_ref')
+    .eq('id', fulfillmentId)
+    .maybeSingle();
+  if (!row?.order_ref.startsWith('FUL-')) {
+    return { ok: false, message: 'This order has no order number to send. Place it by hand.' };
+  }
+  const res = await sendToPharmacyApi(row.order_ref.slice(4));
+  for (const p of ['/portal/admin/fulfillment', '/portal/doctor/fulfillment', '/portal/orders']) revalidatePath(p);
+  return { ok: res.sent, message: res.message };
 }

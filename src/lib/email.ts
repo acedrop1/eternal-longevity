@@ -248,7 +248,7 @@ export function readyToPlaceEmail(input: {
     html: noticeEmail({
       eyebrow: input.refill ? 'Refill to place' : 'New order to place',
       heading: 'A paid order is waiting to be placed with the pharmacy',
-      body: 'Place it in the MedShiftRx portal, then mark it placed so nobody places it twice. Everything you need to enter is on the order.',
+      body: 'Place it in the pharmacy portal, then mark it placed so nobody places it twice. Everything you need to enter is on the order.',
       rows: [
         ['Order', input.orderRef],
         ['Patient', input.patientName],
