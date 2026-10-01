@@ -17,6 +17,7 @@ import {
   type PromoCode,
 } from '@/lib/promo-db';
 import { cn } from '@/lib/utils';
+import { SHIPPING_PRICE } from '@/lib/shipping';
 
 export interface BillingCustomer {
   id: string;
@@ -561,7 +562,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
     <Panel
       eyebrow="Subscription"
       title="Create a subscription"
-      description="Starts a recurring charge against the customer's saved card."
+      description={`Starts a recurring charge against the customer's saved card. Every cycle ships, so enter the amount including shipping: $${SHIPPING_PRICE['2_DAY']} 2-day, $${SHIPPING_PRICE.OVERNIGHT} overnight cold-chain.`}
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

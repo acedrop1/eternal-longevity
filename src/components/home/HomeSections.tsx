@@ -174,7 +174,7 @@ const TRUST = [
   { icon: Stethoscope, title: 'Licensed physician', body: 'Every prescription decided by Dr. Elder.' },
   { icon: FlaskConical, title: '503A pharmacy', body: 'Made to order, just for you.' },
   { icon: ShieldCheck, title: 'LegitScript certified', body: 'Independently verified.' },
-  { icon: Truck, title: 'Free shipping', body: 'Cold-chain where it needs it.' },
+  { icon: Truck, title: 'Fast, tracked shipping', body: 'Cold-chain where it needs it.' },
 ];
 
 function TrustTile({ icon: Icon, title, body, className, dupe }: (typeof TRUST)[number] & { className?: string; dupe?: boolean }) {
@@ -214,7 +214,7 @@ const TICKER = [
   'Prescribed by a licensed physician',
   'Made to order by a 503A pharmacy',
   'Nothing charged unless approved',
-  'Free shipping on every order',
+  'Shipped from a licensed pharmacy',
   'Decided by a physician, never a bot',
 ];
 
@@ -458,7 +458,7 @@ export function Beliefs() {
 const STEPS = [
   { title: 'Tell us about you', body: 'A five-minute online assessment: your goals, health history and medications.' },
   { title: 'A physician reviews it', body: 'Dr. Elder decides every prescription himself. Nothing is charged unless he approves.' },
-  { title: 'Delivered to your door', body: 'Made to order by a licensed 503A pharmacy and shipped free.' },
+  { title: 'Delivered to your door', body: 'Made to order by a licensed 503A pharmacy and shipped to you, tracked.' },
 ];
 
 export function HowItWorks() {

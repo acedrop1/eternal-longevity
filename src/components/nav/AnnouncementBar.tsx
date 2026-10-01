@@ -13,7 +13,7 @@ import { SERVICE_AREA_SHORT } from '@/lib/site';
 const MESSAGES = [
   { text: `Prescribed by a licensed physician. ${SERVICE_AREA_SHORT}.`, href: '/about' },
   { text: 'Compounded by a licensed 503A pharmacy.', href: '/legal/pharmacy-fulfillment' },
-  { text: 'Free shipping on every cycle.', href: '/legal/shipping' },
+  { text: 'Fast, tracked shipping. Cold-chain where it needs it.', href: '/legal/shipping' },
 ];
 
 const ROTATE_MS = 4500;

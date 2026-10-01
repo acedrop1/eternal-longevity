@@ -37,6 +37,7 @@ import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } fro
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getLiveProducts } from '@/lib/catalog';
+import { orderTotalCents, shippingPriceFor } from '@/lib/shipping';
 import { checkPromoAction } from '@/lib/promo-db';
 import { redeemPromo } from '@/lib/promo-redeem';
 import {
@@ -404,18 +405,17 @@ export async function placeOrderAction(input: {
   }
 
   /*
-   * Shipping and tax are set here, not taken from the request. Shipping is
-   * included in the price (expedited cold-chain, carrier cost absorbed), and
-   * no sales tax is charged: prescription drugs are exempt in every state we
-   * serve (NJ, NY, PA, MI). If a taxable item is ever sold, compute it here
-   * (e.g. Stripe Tax calculations) rather than trusting a number the browser
-   * sent.
+   * Shipping and tax are set here, not taken from the request. Shipping is per
+   * order (one product, one shipment) at the product's price (lib/shipping),
+   * and the promo never touches it. No sales tax is charged: prescription
+   * drugs are exempt in every state we serve (NJ, NY, PA, MI). If a taxable
+   * item is ever sold, compute it here (e.g. Stripe Tax calculations) rather
+   * than trusting a number the browser sent.
    */
-  const cartShippingCents = 0;
   const cartTaxCents = 0;
 
-  // Shipping and tax belong to the basket, so they are split across it by
-  // value, and the rounding remainder lands on the first order.
+  // Tax and the promo belong to the basket, so they are split across it by
+  // value, and the rounding remainder lands on the last order.
   const share = (total: number, i: number) => {
     if (i < lines.length - 1) {
       return Math.round((total * lineSubtotal(lines[i])) / cartSubtotalCents);
@@ -429,16 +429,15 @@ export async function placeOrderAction(input: {
 
   const created: string[] = [];
   let bookedTotalCents = 0;
+  let bookedShippingCents = 0;
+  let bookedDiscountCents = 0;
 
   for (const [i, line] of lines.entries()) {
     const subtotalCents = lineSubtotal(line);
-    const shippingCents = share(cartShippingCents, i);
+    const shippingCents = shippingPriceFor(live.get(line.productId)) * 100;
     const taxCents = share(cartTaxCents, i);
     const discountCents = share(cartDiscountCents, i);
-    const totalCents = Math.max(
-      0,
-      subtotalCents + shippingCents + taxCents - discountCents,
-    );
+    const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents, discountCents });
 
     /*
      * One number per order, and a multi-product cart is several orders — each
@@ -497,6 +496,8 @@ export async function placeOrderAction(input: {
 
     created.push(orderNumber);
     bookedTotalCents += totalCents;
+    bookedShippingCents += shippingCents;
+    bookedDiscountCents += Math.min(discountCents, subtotalCents);
   }
 
   // ponytail: a code claimed for a basket that then failed to insert stays
@@ -511,8 +512,10 @@ export async function placeOrderAction(input: {
       items: lines.map((l) => ({
         name: l.productName,
         qty: l.quantity,
-        amount: Math.round(l.perCycle * 100),
+        amount: Math.round(l.perCycle * 100) * (l.quantity ?? 1),
       })),
+      shipping: bookedShippingCents,
+      discount: bookedDiscountCents,
       total: bookedTotalCents,
     });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });

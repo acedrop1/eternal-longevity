@@ -1,5 +1,9 @@
 import type { ShopProduct } from '@/lib/shopProducts';
 import { SERVICE_AREA } from '@/lib/site';
+import { SHIPPING_PRICE } from '@/lib/shipping';
+
+const TWO_DAY = `$${SHIPPING_PRICE['2_DAY']}`;
+const OVERNIGHT = `$${SHIPPING_PRICE.OVERNIGHT}`;
 
 /*
  * The pricing answer quotes live prices, which admins edit in Admin →
@@ -62,7 +66,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How long until my order arrives?',
-    a: "A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days. Shipping is free. Results vary by person and treatment, and we don't promise specific results or timelines.",
+    a: "A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days, by 2-day service or overnight cold-chain depending on the product. Results vary by person and treatment, and we don't promise specific results or timelines.",
   },
 
   // === Eligibility ===
@@ -113,7 +117,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'How much does treatment cost?',
-    a: "Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months, and the 6-month plan to {{sixMonth}} a month, billed every six months. A one-time order is also available. Shipping is free. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.",
+    a: `Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months, and the 6-month plan to {{sixMonth}} a month, billed every six months. A one-time order is also available. Shipping is ${TWO_DAY} (2-day) or ${OVERNIGHT} (overnight cold-chain) per shipment, depending on the product, and each renewal ships and is charged shipping again. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.`,
   },
   {
     category: 'Pricing',
@@ -123,7 +127,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What does a plan include?',
-    a: "Refills on your prescription on the schedule you choose, free shipping, and access to our team and the prescriber through the portal. Longer plans cost less per month. You can pause, change or cancel any time from Portal › Subscriptions, with no fee.",
+    a: "Refills on your prescription on the schedule you choose, tracked shipping on each one, and access to our team and the prescriber through the portal. Longer plans cost less per month. You can pause, change or cancel any time from Portal › Subscriptions, with no fee.",
   },
   {
     category: 'Pricing',
@@ -150,7 +154,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How are medications shipped?',
-    a: "Shipping is free. Temperature-sensitive medications ship cold-chain in insulated packaging; others ship by standard service. You'll get a tracking number when your order ships.",
+    a: `Temperature-sensitive medications ship overnight cold-chain in insulated packaging (${OVERNIGHT} per shipment); others ship 2-day (${TWO_DAY} per shipment). Every shipment is charged shipping, renewals included. You'll get a tracking number when your order ships.`,
   },
   {
     category: 'Safety',

@@ -17,7 +17,7 @@ const QUICK_LINKS = [
   {
     title: 'How it works',
     body:
-      'A short intake, a physician’s decision, then the pharmacy prepares and ships your order. Shipping is free.',
+      'A short intake, a physician’s decision, then the pharmacy prepares and ships your order, tracked.',
     href: '/shop',
     cta: 'Browse the shop',
   },
@@ -113,7 +113,7 @@ export default function FAQPage() {
                 />
               </div>
               <figcaption className="mt-4 max-w-[440px] text-[14px] leading-relaxed text-ink-soft">
-                Compounded for you by a licensed pharmacy, and shipped free.
+                Compounded for you by a licensed pharmacy, and shipped to your door.
               </figcaption>
             </figure>
           </div>

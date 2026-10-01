@@ -15,6 +15,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getLiveProduct } from '@/lib/catalog';
+import { shippingPriceFor } from '@/lib/shipping';
 import {
   addMonthsIso,
   cadenceOfLabel,
@@ -82,7 +83,8 @@ export async function changeSubscriptionPlanAction(
     .from('subscriptions')
     .update({
       cadence_label: tier.label,
-      per_cycle_cents: Math.round(tier.total * 100),
+      // Every renewal ships, so the per-cycle charge includes shipping.
+      per_cycle_cents: Math.round(tier.total * 100) + shippingPriceFor(product) * 100,
     })
     .eq('id', sub.id);
   if (error) return { ok: false, error: error.message };

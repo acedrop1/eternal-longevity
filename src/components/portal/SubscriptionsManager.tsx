@@ -167,7 +167,8 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   <div className="text-[20px] font-medium text-ink tabular-nums">
                     ${s.perMonth}
                     <span className="text-[15px] font-normal text-ink/55">
-                      /mo
+                      {/* What each renewal charges (per_cycle_cents), so per cycle rather than per month. */}
+                      {{ monthly: '/mo', quarterly: '/3 mo', sixMonth: '/6 mo', annual: '/yr' }[planOf(s.cadenceLabel)]}
                     </span>
                   </div>
                 </div>

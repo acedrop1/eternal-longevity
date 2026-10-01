@@ -2,10 +2,12 @@
  * What the pharmacy needs to know about each product we sell, keyed by our
  * product id (the catalogue id, which is also the lineup's `live` id).
  *
- * Plain data with no server imports: the prescriber's sign step reads
- * `defaultSig` from here to prefill the directions.
+ * This is the SEED. The owner edits every field below in Admin → Products
+ * (stored with the product, see lib/catalog); `pharmacyEntryFor` in
+ * lib/catalog lays those values over this file, and everything that sends or
+ * prefills reads that, never this map directly.
  *
- * Filled in by hand:
+ * Fields:
  *   sku         — from the pharmacy's catalogue (owner). null = not on the
  *                 API yet: the order stays on the board to place by hand,
  *                 marked "No pharmacy SKU yet".
@@ -67,11 +69,68 @@ export const PHARMACY_CATALOG: Record<string, PharmacyItem> = {
   'clear-skin-capsules': { sku: null, name: 'Doxycycline', strength: '50 mg', size: '30 Capsules', dosageForm: 'Oral Capsule', defaultSig: null, quantity: 1 },
 };
 
-/**
- * How the pharmacy ships it. The one place to change it: cold-chain products
- * go overnight, everything else two-day. `storage` is the product's own field
- * (Admin → Products); unset counts as room temperature.
- */
-export function shippingMethodFor(storage: 'refrigerated' | 'room' | undefined): '2_DAY' | 'OVERNIGHT' {
-  return storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY';
+
+/** The pharmacy fields Admin → Products stores with a product (lib/catalog). */
+export interface StoredPharmacy {
+  sku: string | null;
+  quantity: number;
+  defaultSig: string | null;
+  name: string;
+  strength: string;
+  size: string;
+  dosageForm: string;
 }
+
+const trim = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+
+/**
+ * Stored admin values over the seed. Once saved, the SKU and directions are the
+ * admin's (blank = none); the name/strength/size/form fall back to the seed when
+ * left blank; units fall back unless a whole number of at least 1.
+ */
+export function mergePharmacy(seed: PharmacyItem | undefined, stored: Partial<StoredPharmacy> | undefined, productName = ''): PharmacyItem {
+  const s = stored ?? {};
+  const owned = (k: 'sku' | 'defaultSig') => (k in s ? trim(s[k]) || null : (seed?.[k] ?? null));
+  const label = (k: 'strength' | 'size' | 'dosageForm') => trim(s[k]) || seed?.[k] || '';
+  return {
+    sku: owned('sku'),
+    defaultSig: owned('defaultSig'),
+    name: trim(s.name) || seed?.name || productName,
+    strength: label('strength'),
+    size: label('size'),
+    dosageForm: label('dosageForm'),
+    quantity: Number.isInteger(s.quantity) && s.quantity! >= 1 ? s.quantity! : (seed?.quantity ?? 1),
+  };
+}
+
+const SKU = /^[A-Za-z0-9._/-]+$/;
+
+/** Validates the Admin → Products pharmacy section. Pure, so it can be checked outside Next. */
+export function cleanPharmacy(input: unknown): { ok: true; value: StoredPharmacy } | { ok: false; message: string } {
+  const p = (input ?? {}) as Record<string, unknown>;
+  const text = (v: unknown, max: number) => String(v ?? '').trim().slice(0, max);
+  const sku = String(p.sku ?? '').trim();
+  if (sku.length > 80 || (sku && !SKU.test(sku))) {
+    return { ok: false, message: 'The pharmacy SKU is up to 80 letters, numbers, dashes, dots, underscores or slashes, with no spaces.' };
+  }
+  const quantity = Number(p.quantity);
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 1000) {
+    return { ok: false, message: 'Units per 30-day supply is a whole number from 1 to 1,000.' };
+  }
+  const defaultSig = String(p.defaultSig ?? '').trim();
+  if (defaultSig.length > 1000) return { ok: false, message: 'Default directions are 1,000 characters max.' };
+  return {
+    ok: true,
+    value: {
+      sku: sku || null,
+      quantity,
+      defaultSig: defaultSig || null,
+      name: text(p.name, 120),
+      strength: text(p.strength, 120),
+      size: text(p.size, 120),
+      dosageForm: text(p.dosageForm, 120),
+    },
+  };
+}
+
+// How each product ships (and what shipping costs the customer): see lib/shipping.

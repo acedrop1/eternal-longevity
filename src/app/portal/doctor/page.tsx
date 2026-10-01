@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth-server";
 import { listOrders } from "@/lib/orders-db";
 import { doctorThreadStatuses, reviewsForOrders } from "@/lib/clinical-review";
 import { getPrescriber } from "@/lib/prescriber";
+import { getPharmacyEntries } from "@/lib/catalog";
 import { signWindowOpen } from "@/lib/reauth";
 
 export const metadata: Metadata = {
@@ -25,10 +26,14 @@ export default async function DoctorPortalPage() {
    */
   const orders = await listOrders().catch(() => []);
   const assigned = orders.filter((o) => o.status === "assigned");
-  const [reviews, threads] = await Promise.all([
+  const [reviews, threads, pharmacy] = await Promise.all([
     reviewsForOrders(assigned.map((o) => o.id)).catch(() => ({})),
     doctorThreadStatuses(assigned.map((o) => o.userId ?? "")),
+    getPharmacyEntries(),
   ]);
+  // Only the sig prefills cross to the client, never the pharmacy mapping.
+  const defaultSigs: Record<string, string> = {};
+  for (const [id, item] of Object.entries(pharmacy)) if (item.defaultSig) defaultSigs[id] = item.defaultSig;
 
   /*
    * "Dr." is not automatic — an NP or PA holds the same queue but not the
@@ -71,6 +76,7 @@ export default async function DoctorPortalPage() {
         reviews={reviews}
         threads={threads}
         signWindowOpen={reauthed}
+        defaultSigs={defaultSigs}
       />
     </PortalShell>
   );

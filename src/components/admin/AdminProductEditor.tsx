@@ -48,6 +48,8 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
   };
   const setPrice = (k: keyof ProductInput['pricing'], v: string) =>
     set('pricing', { ...p.pricing, [k]: v === '' ? 0 : Math.round(Number(v)) });
+  const setRx = <K extends keyof ProductInput['pharmacy']>(k: K, v: ProductInput['pharmacy'][K]) =>
+    set('pharmacy', { ...p.pharmacy, [k]: v });
 
   const quarterlyPerMonth = Math.round(p.pricing.quarterly / 3);
   const quarterlySave = p.pricing.monthly ? Math.round((1 - p.pricing.quarterly / (p.pricing.monthly * 3)) * 100) : 0;
@@ -186,6 +188,56 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             <ListField label="Possible side effects" value={p.sideEffects} onChange={(v) => set('sideEffects', v)} />
             <ListField label="Contraindications (do not use if…)" value={p.contraindications} onChange={(v) => set('contraindications', v)} />
           </div>
+        </Section>
+
+        <Section title="Pharmacy" note="What is sent to the pharmacy with each order of this product.">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              label="Pharmacy SKU"
+              hint={p.pharmacy.sku.trim() ? 'Orders are sent automatically.' : 'Empty: orders stay on the board to place by hand.'}
+            >
+              <input
+                className={field}
+                value={p.pharmacy.sku}
+                maxLength={80}
+                spellCheck={false}
+                onChange={(e) => setRx('sku', e.target.value.replace(/\s/g, ''))}
+              />
+            </Field>
+            <Field label="Units per 30-day supply" hint="A 3- or 6-month plan ships that many months at once.">
+              <input
+                className={cn(field, 'tabular-nums')}
+                inputMode="numeric"
+                value={p.pharmacy.quantity || ''}
+                onChange={(e) => setRx('quantity', Number(e.target.value.replace(/[^0-9]/g, '')))}
+              />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Default directions" hint="Prefills the directions Dr. Elder signs. He can edit them on every prescription.">
+                <textarea
+                  className={cn(field, 'min-h-[88px]')}
+                  value={p.pharmacy.defaultSig}
+                  maxLength={1000}
+                  onChange={(e) => setRx('defaultSig', e.target.value)}
+                />
+              </Field>
+            </div>
+            <Field label="Name for the pharmacy">
+              <input className={field} value={p.pharmacy.name} maxLength={120} onChange={(e) => setRx('name', e.target.value)} />
+            </Field>
+            <Field label="Strength">
+              <input className={field} value={p.pharmacy.strength} maxLength={120} onChange={(e) => setRx('strength', e.target.value)} />
+            </Field>
+            <Field label="Size">
+              <input className={field} value={p.pharmacy.size} maxLength={120} onChange={(e) => setRx('size', e.target.value)} />
+            </Field>
+            <Field label="Dosage form">
+              <input className={field} value={p.pharmacy.dosageForm} maxLength={120} onChange={(e) => setRx('dosageForm', e.target.value)} />
+            </Field>
+          </div>
+          <p className="mt-3 text-[12px] text-ink/50">
+            Name, strength, size and form are sent alongside the SKU so the pharmacist can check the order. Left empty, the built-in value is used.
+          </p>
         </Section>
 
         <Section title="Flags">

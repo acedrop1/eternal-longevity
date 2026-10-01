@@ -8,6 +8,7 @@ import {
   type CadenceTier,
   type ShopProduct,
 } from '@/lib/shopProducts';
+import { shippingPriceFor } from '@/lib/shipping';
 import { FDA_DISCLAIMER, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPORT_HOURS } from '@/lib/site';
 
 /**
@@ -78,6 +79,9 @@ export function MonthlyRate({ product, active, className }: { product: ShopProdu
 export const coldChain = (p: ShopProduct) => p.storage === 'refrigerated';
 const STORAGE_LABEL = { refrigerated: 'Refrigerated 2–8°C', room: 'Room temperature' } as const;
 const storageLabel = (p: ShopProduct) => (p.storage ? STORAGE_LABEL[p.storage] : 'Store as directed on the label');
+/** "Overnight cold-chain shipping $40" / "Shipping $30 (2-day)" (lib/shipping has the price). */
+export const shippingLine = (p: ShopProduct) =>
+  coldChain(p) ? `Overnight cold-chain shipping $${shippingPriceFor(p)}` : `Shipping $${shippingPriceFor(p)} (2-day)`;
 
 /** Headline price for the selected plan, with the monthly-plan rate labelled beside it when it's higher. */
 export function PriceBlock({ product, active }: { product: ShopProduct; active: CadenceTier }) {
@@ -91,7 +95,10 @@ export function PriceBlock({ product, active }: { product: ShopProduct; active: 
       <p className="mt-2 text-[14px] text-ink-soft tabular-nums">
         {active.key === 'once'
           ? `One-time · $${active.total} · no subscription`
-          : `Billed $${active.total} ${billedEvery(active)} · free shipping · cancel anytime`}
+          : `Billed $${active.total} ${billedEvery(active)} · cancel anytime`}
+      </p>
+      <p className="mt-0.5 text-[14px] text-ink-soft tabular-nums">
+        + ${shippingPriceFor(product)} shipping{active.key === 'once' ? '' : ' each shipment'}
       </p>
     </div>
   );
@@ -311,9 +318,9 @@ export function ProductDetails({ product, ordering = false }: { product: ShopPro
           <Row title="Shipping">
             <p>
               {coldChain(product)
-                ? 'Free cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
-                : 'Free shipping from our licensed 503A pharmacy.'}{' '}
-              Tracking is available in your portal once your order ships.
+                ? `Overnight cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging: $${shippingPriceFor(product)} per shipment.`
+                : `2-day shipping from our licensed 503A pharmacy: $${shippingPriceFor(product)} per shipment.`}{' '}
+              Each plan renewal ships again and is charged shipping again. Tracking is available in your portal once your order ships.
             </p>
           </Row>
           {ordering && (

@@ -6,6 +6,7 @@ import {
   SUPPORT_EMAIL,
   SERVICE_AREA,
 } from '@/lib/site';
+import { SHIPPING_PRICE } from '@/lib/shipping';
 
 export const metadata: Metadata = {
   title: 'Shipping & Delivery Policy',
@@ -23,7 +24,7 @@ export default function ShippingPage() {
   return (
     <LegalLayout
       title="Shipping & Delivery Policy"
-      effective="September 2026"
+      effective="October 2026"
       lead="Every order is prepared by a licensed 503A pharmacy after a prescriber approves it, so the clock starts at approval — not at the moment you place the order. This page sets out how long each step typically takes, how your order travels, and what happens if something goes wrong in transit."
       sections={[
         {
@@ -47,7 +48,8 @@ export default function ShippingPage() {
         {
           heading: 'Shipping Cost',
           paragraphs: [
-            'Shipping is free on every order. There is no shipping charge at checkout and no upgrade to buy.',
+            `Shipping is charged per shipment and set by the medication, not chosen at checkout: $${SHIPPING_PRICE.OVERNIGHT} for overnight cold-chain (temperature-sensitive medications) and $${SHIPPING_PRICE['2_DAY']} for 2-day service (everything else). The amount is shown on the product page and at checkout before you place your order.`,
+            'Every shipment is charged shipping, including each refill on a plan. Each renewal charge is the plan price plus shipping for that shipment, and the checkout authorization states the combined amount.',
             'Refills on an active plan ship on their scheduled date on the same prescription, without a new review, and follow the same preparation and shipping timeline.',
           ],
         },
@@ -61,7 +63,7 @@ export default function ShippingPage() {
         {
           heading: 'Cold-Chain Handling',
           paragraphs: [
-            'Temperature-sensitive medications ship cold-chain, in an insulated container with a cold pack. Other medications ship by standard service.',
+            'Temperature-sensitive medications ship overnight cold-chain, in an insulated container with a cold pack. Other medications ship by 2-day service.',
             'Store your medication as its label says. If a cold-chain package arrives warm to the touch, or the cold pack is fully thawed and the medication is at room temperature, do not use the contents. Photograph the package as it arrived and contact us the same day.',
           ],
         },

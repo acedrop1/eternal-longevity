@@ -15,7 +15,7 @@ import {
 import { fromPrice } from '@/lib/lineup';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, useCtaOffscreen } from './BuyBar';
-import { coldChain, Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage } from './pdpParts';
+import { Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage, shippingLine } from './pdpParts';
 
 interface ProductPDPProps {
   /** Route prefix for shop links. '/shop' on the public storefront. */
@@ -105,7 +105,7 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
           </div>
 
           <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] text-ink-soft">
-            {['Only charged if approved', coldChain(product) ? 'Free cold-chain shipping' : 'Free shipping', 'Physician-reviewed', 'Cancel anytime'].map(
+            {['Only charged if approved', shippingLine(product), 'Physician-reviewed', 'Cancel anytime'].map(
               (t) => (
                 <li key={t} className="flex items-start gap-1.5">
                   <Check aria-hidden className="mt-[2px] h-3.5 w-3.5 shrink-0" strokeWidth={2} />

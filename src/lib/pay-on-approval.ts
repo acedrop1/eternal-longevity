@@ -34,6 +34,8 @@ export interface PayableOrder {
   orderNumber: string;
   memberName: string;
   totalCents: number;
+  /** Part of totalCents. */
+  shippingCents: number;
   items: { name: string; qty: number }[];
   /** 'Monthly' | 'Quarterly' | '6-month' | 'Annual' | 'One-time' — drives the billing consent copy. */
   cadenceLabel: string;
@@ -97,7 +99,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, total_cents, pay_token_expires, paid_confirmed_at, status')
+    .select('id, order_number, member_name, total_cents, shipping_cents, pay_token_expires, paid_confirmed_at, status')
     .eq('pay_token', token)
     .maybeSingle();
   if (!order) return null;
@@ -121,6 +123,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
     orderNumber: order.order_number,
     memberName: order.member_name ?? '',
     totalCents: order.total_cents ?? 0,
+    shippingCents: order.shipping_cents ?? 0,
     items: (items ?? []).map((i) => ({
       name: i.product_name,
       qty: i.quantity ?? 1,

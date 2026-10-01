@@ -18,7 +18,9 @@ import { getPrescriber } from '@/lib/prescriber';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
-import { isLive } from '@/lib/catalog';
+import { getLiveProduct } from '@/lib/catalog';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
+import { renewalSplit, shippingPriceFor } from '@/lib/shipping';
 import { cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
 
 /**
@@ -76,7 +78,7 @@ export async function writePrescriptionForOrder(
 
   const { data: order } = await db
     .from('orders')
-    .select('id, user_id, assigned_physician_id, physician_note')
+    .select('id, user_id, assigned_physician_id, physician_note, shipping_cents')
     .eq('order_number', orderNumber)
     .maybeSingle();
   if (!order?.user_id) return { ok: false, error: 'not_found' };
@@ -125,10 +127,16 @@ export async function writePrescriptionForOrder(
   // A one-time order is finished here; there is nothing to renew.
   if (cadence === 'once') return { ok: true, prescriptionId: rx.id };
 
-  const perCycleCents = items.reduce(
-    (sum, i) => sum + (i.unit_price_cents ?? 0) * (i.quantity ?? 1),
-    0,
-  );
+  /*
+   * Every renewal ships again, so the per-cycle amount is the items plus this
+   * order's shipping, the same shipment charge the member just agreed to at
+   * checkout. per_cycle_cents is what a renewal charges, shipping included;
+   * renewSubscription charges it as-is and never adds shipping on top. An
+   * order placed before shipping was charged carries 0 and renews without it.
+   */
+  const perCycleCents =
+    items.reduce((sum, i) => sum + (i.unit_price_cents ?? 0) * (i.quantity ?? 1), 0) +
+    (order.shipping_cents ?? 0);
 
   await db.from('subscriptions').insert({
     user_id: order.user_id,
@@ -193,11 +201,12 @@ export async function renewSubscription(
     : { data: null };
 
   const today = isoDate(new Date());
+  const product = await getLiveProduct(String(sub.product_id));
   const lapsed =
     !rx ||
     (rx.expires_at !== null && rx.expires_at < today) ||
     (rx.refills_remaining ?? 0) <= 0 ||
-    !(await isLive(String(sub.product_id)));
+    !product;
 
   /*
    * Out of date, out of refills, or a product we no longer sell (withheld or
@@ -205,7 +214,7 @@ export async function renewSubscription(
    * prescription or shipping something off the catalogue, so the plan pauses
    * and goes back for review instead.
    */
-  if (lapsed) {
+  if (lapsed || !product) {
     await db
       .from('subscriptions')
       .update({ status: 'pending_review' })
@@ -287,8 +296,12 @@ export async function renewSubscription(
     return { subscriptionId, result: 'needs_review', detail: 'address' };
   }
 
+  // Charged as-is: per_cycle_cents already includes shipping (see
+  // writePrescriptionForOrder). The split is only for the receipt.
   const amount = sub.per_cycle_cents ?? 0;
   if (amount <= 0) return { subscriptionId, result: 'error', detail: 'zero_amount' };
+  const plan = cadenceTiersForProduct(product).find((t) => t.key === cadence);
+  const split = renewalSplit(amount, Math.round((plan?.total ?? 0) * 100), shippingPriceFor(product) * 100);
 
   const customerId = await getOrCreateStripeCustomer({
     userId: sub.user_id,
@@ -316,8 +329,8 @@ export async function renewSubscription(
       member_name: profile.full_name,
       member_email: profile.email,
       ship_state: shipState,
-      subtotal_cents: amount,
-      shipping_cents: 0,
+      subtotal_cents: split.subtotalCents,
+      shipping_cents: split.shippingCents,
       tax_cents: 0,
       total_cents: amount,
       shipping_address: shipTo as unknown as Json,
@@ -335,7 +348,7 @@ export async function renewSubscription(
     product_id: String(sub.product_id),
     product_name: sub.product_name,
     quantity: 1,
-    unit_price_cents: amount,
+    unit_price_cents: split.subtotalCents,
     cadence,
     cadence_label: sub.cadence_label ?? 'Monthly',
   });

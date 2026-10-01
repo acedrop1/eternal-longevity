@@ -7,7 +7,8 @@ import { Check } from 'lucide-react';
 import { cadenceTiersForProduct, defaultTier, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, useCtaOffscreen } from './BuyBar';
-import { billedEvery, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage } from './pdpParts';
+import { billedEvery, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine } from './pdpParts';
+import { shippingPriceFor } from '@/lib/shipping';
 
 interface ProductPDPMobileProps {
   product: ShopProduct;
@@ -70,6 +71,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
             {active.key !== 'once' && <span className="text-[14px] text-ink-soft">/mo</span>}
           </p>
           <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
+          <span className="mt-1 block text-[11px] text-ink/55">+ ${shippingPriceFor(product)} shipping</span>
         </div>
       </div>
 
@@ -99,8 +101,8 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         )}
         <p className="mt-2.5 text-center text-[12px] text-ink/55 tabular-nums">
           {active.key === 'once'
-            ? `One-time · $${active.total} · no subscription`
-            : `Billed $${active.total} ${billedEvery(active)} · free shipping · cancel anytime`}
+            ? `One-time · $${active.total} · ${shippingLine(product)} · no subscription`
+            : `Billed $${active.total} ${billedEvery(active)} · ${shippingLine(product)} · cancel anytime`}
         </p>
       </div>
 

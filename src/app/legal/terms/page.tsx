@@ -7,6 +7,7 @@ import {
   STATEMENT_DESCRIPTOR,
   SERVICE_AREA,
 } from '@/lib/site';
+import { SHIPPING_PRICE } from '@/lib/shipping';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -17,7 +18,7 @@ export default function TermsPage() {
   return (
     <LegalLayout
       title="Terms of Service"
-      effective="September 2026"
+      effective="October 2026"
       lead="These Terms of Service govern your use of the telehealth practice operated by Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”), including our website, member portal, and any medications prescribed through it and dispensed by our partner pharmacy. By using any part of our service, you agree to these terms."
       sections={[
         {
@@ -44,7 +45,7 @@ export default function TermsPage() {
         {
           heading: 'Pricing & Billing',
           paragraphs: [
-            'Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. Taxes and shipping are included; there are no membership fees, consultation fees, or other charges beyond the price shown.',
+            `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. Shipping is charged per shipment, including each plan renewal: $${SHIPPING_PRICE['2_DAY']} for 2-day or $${SHIPPING_PRICE.OVERNIGHT} for overnight cold-chain, depending on the medication, as shown on the product page and at checkout. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
             'All payments are processed by Stripe, a PCI-DSS Level 1 service provider. We do not receive or store your full card number.',
           ],
         },

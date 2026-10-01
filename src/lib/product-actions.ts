@@ -15,7 +15,8 @@ import path from 'path';
 import { getSession } from './auth-server';
 import { recordAudit } from './prescriber';
 import { DELIVERY_LABEL, NEVER_LIVE, type DeliveryForm, type ShopCategory, type ShopProduct } from './shopProducts';
-import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, writeRow, type ProductStatus } from './catalog';
+import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, pharmacyEntryFor, writeRow, type ProductStatus } from './catalog';
+import { cleanPharmacy, type StoredPharmacy } from './pharmacy-catalog';
 import { createSupabaseAdminClient } from './supabase/admin';
 
 export interface ProductInput {
@@ -39,6 +40,8 @@ export interface ProductInput {
   image: string;
   popular: boolean;
   fdaApproved: boolean;
+  /** The pharmacy mapping. Blank SKU: the order is placed by hand. */
+  pharmacy: { sku: string; quantity: number; defaultSig: string; name: string; strength: string; size: string; dosageForm: string };
 }
 
 export interface ProductResult {
@@ -99,6 +102,9 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     return { ok: false, message: 'Prices are whole dollars between $1 and $10,000.' };
   }
 
+  const pharmacy = cleanPharmacy(input.pharmacy);
+  if (!pharmacy.ok) return { ok: false, message: pharmacy.message };
+
   const image = String(input.image ?? '').trim();
   if (image && !/^(\/(?!\/)|https:\/\/)/.test(image)) {
     return { ok: false, message: 'The photo must be an uploaded image or an https:// link.' };
@@ -116,7 +122,8 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     if (missing.length) return { ok: false, message: `To go live, add ${missing.join(', ')}.` };
   }
 
-  const data: Omit<ShopProduct, 'id'> = {
+  const pharmacyBefore = before ? await pharmacyEntryFor(id) : null;
+  const data: Omit<ShopProduct, 'id'> & { pharmacy: StoredPharmacy } = {
     name,
     tagline: text(input.tagline, 80),
     category: input.category,
@@ -139,6 +146,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     requiresReview: true,
     popular: Boolean(input.popular) || undefined,
     fdaApproved: Boolean(input.fdaApproved) || undefined,
+    pharmacy: pharmacy.value,
   };
 
   try {
@@ -177,6 +185,13 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
         ['Contraindications', join(was?.contraindications), join(data.contraindications)],
         ['What it does', join(was?.benefits), join(data.benefits)],
         ["What's included", join(was?.whatsIncluded), join(data.whatsIncluded)],
+        ['Pharmacy SKU', pharmacyBefore?.sku, data.pharmacy.sku ?? ''],
+        ['Units per 30-day supply', pharmacyBefore ? String(pharmacyBefore.quantity) : null, String(data.pharmacy.quantity)],
+        ['Default directions', pharmacyBefore?.defaultSig, data.pharmacy.defaultSig ?? ''],
+        ['Pharmacy name', pharmacyBefore?.name, data.pharmacy.name],
+        ['Pharmacy strength', pharmacyBefore?.strength, data.pharmacy.strength],
+        ['Pharmacy size', pharmacyBefore?.size, data.pharmacy.size],
+        ['Pharmacy dosage form', pharmacyBefore?.dosageForm, data.pharmacy.dosageForm],
       ] as [string, string | null | undefined, string][]
     ).map(([field, oldValue, newValue]) => ({
       actorId: session.id,

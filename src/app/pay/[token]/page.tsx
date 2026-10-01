@@ -102,7 +102,7 @@ export default async function PayPage({ params }: PayPageProps) {
                   <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 py-3">
                     <dt className="text-ink-soft">Medication + physician care</dt>
                     <dd className="tabular-nums text-ink">
-                      ${(order.totalCents / 100).toFixed(2)}
+                      ${((order.totalCents - order.shippingCents) / 100).toFixed(2)}
                     </dd>
                   </div>
                   <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 py-3">
@@ -110,8 +110,8 @@ export default async function PayPage({ params }: PayPageProps) {
                     <dd className="text-ink">Included</dd>
                   </div>
                   <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 py-3">
-                    <dt className="text-ink-soft">Cold-chain shipping</dt>
-                    <dd className="text-ink">Free</dd>
+                    <dt className="text-ink-soft">Shipping</dt>
+                    <dd className="tabular-nums text-ink">${(order.shippingCents / 100).toFixed(2)}</dd>
                   </div>
                 </dl>
                 <div className="flex items-baseline justify-between">
@@ -162,7 +162,7 @@ export default async function PayPage({ params }: PayPageProps) {
                   {[
                     ['Payment clears', 'Your card is charged once, now.'],
                     ['Compounded for you', 'Your signed Rx reaches our licensed 503A pharmacy immediately. Paid before 4p ET, it goes out the same day.'],
-                    ['At your door', 'Expedited cold-chain, 1–2 business days. Tracking lands in your inbox.'],
+                    ['At your door', 'Overnight cold-chain or 2-day, depending on the treatment. Tracking lands in your inbox.'],
                   ].map(([t, d], i) => (
                     <li key={t} className="flex gap-3">
                       <span className="flex h-8 w-8 flex-none items-center justify-center rounded-inner bg-ink text-[13px] font-semibold text-butter">

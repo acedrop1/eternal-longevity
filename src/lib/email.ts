@@ -459,11 +459,22 @@ export function welcomeEmail(input: {
   };
 }
 
+/** A label / amount row for the order tables below. Cents; negative shows as a credit. */
+const moneyRow = (label: string, cents: number) => `<tr>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;">${label}</td>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;" align="right">${cents < 0 ? '-' : ''}$${(
+          Math.abs(cents) / 100
+        ).toFixed(2)}</td>
+      </tr>`;
+
 /** Sent to the customer once payment succeeds. */
 export function orderConfirmationEmail(input: {
   firstName: string;
   orderNumber: string;
   items: { name: string; qty: number; amount: number }[];
+  /** Cents. */
+  shipping: number;
+  discount: number;
   total: number;
 }): { subject: string; html: string } {
   const rows = input.items
@@ -478,7 +489,9 @@ export function orderConfirmationEmail(input: {
         ).toFixed(2)}</td>
       </tr>`,
     )
-    .join('');
+    .join('') +
+    moneyRow('Shipping', input.shipping) +
+    (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
     subject: `Order confirmed — ${orderRef(input.orderNumber)}`,
     html: shell(
@@ -857,6 +870,9 @@ export function orderReceivedEmail(input: {
   firstName: string;
   orderNumber: string;
   items: { name: string; qty: number; amount: number }[];
+  /** Cents, every order in the basket together. */
+  shipping: number;
+  discount: number;
   total: number;
 }): { subject: string; html: string } {
   const rows = input.items
@@ -871,7 +887,9 @@ export function orderReceivedEmail(input: {
         ).toFixed(2)}</td>
       </tr>`,
     )
-    .join('');
+    .join('') +
+    moneyRow('Shipping', input.shipping) +
+    (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
     subject: `We received your order — ${orderRef(input.orderNumber)}`,
     html: shell(
@@ -1184,7 +1202,7 @@ export function followupEmail(input: {
           rows: [
             ['1 · Assessment', 'A few minutes of questions about your health and goals.'],
             ['2 · Physician review', 'A licensed physician reviews it and decides whether treatment is right for you.'],
-            ['3 · Delivery', 'If approved, your treatment ships free from a licensed U.S. pharmacy.'],
+            ['3 · Delivery', 'If approved, your treatment ships from a licensed U.S. pharmacy, tracked.'],
           ],
           body: `${hi} — here is what happens after you finish your assessment. ${NOTHING_CHARGED}`,
           cta,
@@ -1223,7 +1241,7 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Your plan',
           heading: 'One step from your physician review.',
-          body: `${hi} — once you place your order, a licensed physician reviews your assessment and decides whether treatment is right for you. If approved, it ships free.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} — once you place your order, a licensed physician reviews your assessment and decides whether treatment is right for you. If approved, it ships from a licensed pharmacy, tracked.\n\n${NOTHING_CHARGED}`,
           cta,
           unsubscribeUrl: u,
         }),

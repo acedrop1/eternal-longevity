@@ -18,6 +18,8 @@ export interface Offer {
   tiers: CadenceTier[];
   /** Cheapest per month: the plan the screen opens on. */
   defaultCadence: CadenceTier['key'];
+  /** Whole dollars per shipment (lib/shipping), charged on every shipment. */
+  shipping: number;
 }
 
 export type PlanChoice = { productId: string; cadence: CadenceTier['key'] };
@@ -97,6 +99,7 @@ export function RecommendationPicker({
 
       <p className="mb-3 mt-6 text-[13px] font-medium text-ink/55">Choose your plan</p>
       <PlanOptions tiers={chosen.tiers} selected={cadence} onSelect={(key) => onChange({ productId: chosen.id, cadence: key })} />
+      <p className="mt-2 text-[14px] tabular-nums text-ink-soft">+ ${chosen.shipping} shipping each shipment</p>
 
       <p className="mt-5 text-[14px] leading-relaxed text-ink-soft">
         Nothing is charged unless your physician approves. Your physician makes the final decision.

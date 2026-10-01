@@ -371,7 +371,7 @@ async function sendOrderConfirmation(
   try {
     const { data: order } = await db
       .from('orders')
-      .select('id, order_number, total_cents, user_id')
+      .select('id, order_number, total_cents, shipping_cents, discount_cents, subtotal_cents, user_id')
       .eq('stripe_payment_intent_id', paymentIntentId)
       .maybeSingle();
     if (!order) return;
@@ -386,6 +386,8 @@ async function sendOrderConfirmation(
       firstName: (profile.full_name || '').split(' ')[0] || 'there',
       orderNumber: order.order_number,
       total: order.total_cents ?? 0,
+      shipping: order.shipping_cents ?? 0,
+      discount: Math.min(order.discount_cents ?? 0, order.subtotal_cents ?? 0),
       items: (items ?? []).map((i) => ({
         name: i.product_name,
         qty: i.quantity ?? 1,

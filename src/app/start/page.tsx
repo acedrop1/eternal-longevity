@@ -11,6 +11,7 @@ import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
+import { shippingPriceFor } from '@/lib/shipping';
 
 export const metadata: Metadata = pageMeta(
   '/start',
@@ -55,6 +56,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             contraindications: p.contraindications,
             tiers,
             defaultCadence: defaultTier(tiers).key,
+            shipping: shippingPriceFor(p),
           },
         ];
       }),

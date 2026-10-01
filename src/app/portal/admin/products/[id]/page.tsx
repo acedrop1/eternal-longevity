@@ -5,7 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminProductEditor } from '@/components/admin/AdminProductEditor';
 import { getSession } from '@/lib/auth-server';
-import { catalogStore, getCatalogProduct } from '@/lib/catalog';
+import { catalogStore, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import type { ProductInput } from '@/lib/product-actions';
 
 export const metadata: Metadata = { title: 'Edit product' };
@@ -37,6 +37,7 @@ const BLANK: ProductInput = {
   image: '',
   popular: false,
   fdaApproved: false,
+  pharmacy: { sku: '', quantity: 1, defaultSig: '', name: '', strength: '', size: '', dosageForm: '' },
 };
 
 export default async function AdminProductPage({ params }: PageProps) {
@@ -47,8 +48,8 @@ export default async function AdminProductPage({ params }: PageProps) {
   const { id } = await params;
   let initial: ProductInput = BLANK;
   if (id !== 'new') {
-    const p = await getCatalogProduct(id);
-    if (!p) notFound();
+    const [p, rx] = await Promise.all([getCatalogProduct(id), pharmacyEntryFor(id)]);
+    if (!p || !rx) notFound();
     initial = {
       id: p.id,
       isNew: false,
@@ -69,6 +70,7 @@ export default async function AdminProductPage({ params }: PageProps) {
       image: p.image,
       popular: Boolean(p.popular),
       fdaApproved: Boolean(p.fdaApproved),
+      pharmacy: { ...rx, sku: rx.sku ?? '', defaultSig: rx.defaultSig ?? '' },
     };
   }
 

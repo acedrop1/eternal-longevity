@@ -98,7 +98,7 @@ function CardFields({
             <>
               , on the <strong className="font-medium text-ink">{cadenceLabel.toLowerCase()} plan</strong>.
               Refills ship on this same prescription and are charged to this
-              card on that schedule, without a new review, until I cancel, my
+              card, shipping included, on that schedule, without a new review, until I cancel, my
               prescriber pauses or stops the plan, or the prescription runs
               out. I can{' '}
               <strong className="font-medium text-ink">pause or cancel anytime</strong> from my account.

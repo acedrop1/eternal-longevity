@@ -6,7 +6,8 @@
  * the portal after checkout (MEDIA_STEPS). Modelled on the standard telehealth
  * questionnaires (symptom first, then safety, then history), in our own words.
  *
- * DRAFT for Dr. Elder's review: wording and knockouts are clinical decisions.
+ * Reviewed and approved (Oct 2026). Wording and knockouts are clinical decisions:
+ * change them only with Dr. Elder's sign-off.
  * Edit here; the wizard, the server check and the prescriber view all read
  * this file.
  *

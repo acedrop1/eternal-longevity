@@ -39,8 +39,8 @@ import { getPrescriber } from '@/lib/prescriber';
 import { BUSINESS_LEGAL_NAME } from '@/lib/site';
 import { TERMINAL_ORDER } from '@/lib/order-rules';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
-import { getCatalogProduct } from '@/lib/catalog';
-import { PHARMACY_CATALOG, shippingMethodFor } from '@/lib/pharmacy-catalog';
+import { getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
+import { shippingMethodFor } from '@/lib/shipping';
 import { buildOrderPayload, isPatientSpecific, type PayloadError } from '@/lib/rxhere-rules';
 import {
   cancelPharmacyOrder,
@@ -244,7 +244,7 @@ const STUCK_MS = 2 * 60_000;
  * or the pharmacy's response body.
  */
 const NOT_SENT: Record<PayloadError | 'multi_item', string> = {
-  sku_missing: 'No pharmacy SKU yet. Place it in the pharmacy portal.',
+  sku_missing: 'No pharmacy SKU yet. Place it in the pharmacy portal, or add the SKU in Admin → Products.',
   no_directions: 'No directions on the prescription and no approved default for this product.',
   patient_incomplete: 'The patient’s legal name or date of birth is missing or invalid. Fix the profile, then retry.',
   no_address: 'No shipping address on the order.',
@@ -252,7 +252,7 @@ const NOT_SENT: Record<PayloadError | 'multi_item', string> = {
   multi_item: 'More than one product on this order. Place it in the pharmacy portal.',
 };
 const REJECTED: Record<RxHereErrorCode, string> = {
-  sku_unknown: 'The pharmacy does not recognise this SKU. Check the pharmacy catalogue map, then retry.',
+  sku_unknown: 'The pharmacy does not recognise this SKU. Check it in Admin → Products, then retry.',
   patient_incomplete: 'The pharmacy rejected the patient’s name, date of birth or address. Fix them, then retry.',
   bad_request: 'The pharmacy rejected the order (400). Retry, or place it by hand.',
   auth: 'The pharmacy refused our API token. Check RXHERE_API_TOKEN.',
@@ -373,7 +373,7 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
     const line = items[0];
 
     const rxQuery = db.from('prescriptions').select('directions, doctor_id');
-    const [{ data: rx }, { data: profile }, { data: intake }, product] = await Promise.all([
+    const [{ data: rx }, { data: profile }, { data: intake }, product, item] = await Promise.all([
       row.prescription_id
         ? rxQuery.eq('id', row.prescription_id).maybeSingle()
         : rxQuery.eq('order_id', order.id).maybeSingle(),
@@ -387,6 +387,7 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
         .limit(1)
         .maybeSingle(),
       getCatalogProduct(String(line.product_id)),
+      pharmacyEntryFor(String(line.product_id)),
     ]);
     const prescriber = await getPrescriber(rx?.doctor_id ?? order.assigned_physician_id ?? undefined);
 
@@ -394,7 +395,6 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
     const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
     // The legal name as given at the assessment; a profile name only if it has both parts.
     const [pFirst, ...pRest] = str(profile?.full_name).split(/\s+/);
-    const item = PHARMACY_CATALOG[String(line.product_id)] ?? null;
 
     const built = buildOrderPayload({
       orderNumber: order.order_number,

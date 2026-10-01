@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV, PageHeader, SectionTitle, StatusChip, btnPrimary, inset, panel, type Tone } from '@/components/portal/ui';
 import { getSession } from '@/lib/auth-server';
-import { catalogStore, getCatalog, type CatalogProduct, type ProductStatus } from '@/lib/catalog';
+import { catalogStore, getCatalog, getPharmacyEntries, type CatalogProduct, type ProductStatus } from '@/lib/catalog';
 import { SHOP_CATEGORIES } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
 
@@ -35,7 +35,7 @@ export default async function AdminProductsPage() {
   if (!user) redirect('/login');
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const products = await getCatalog();
+  const [products, pharmacy] = await Promise.all([getCatalog(), getPharmacyEntries()]);
   const note = STORE_NOTE[catalogStore()];
 
   return (
@@ -75,7 +75,7 @@ export default async function AdminProductsPage() {
               ) : (
                 <ul className={`${panel} divide-y divide-ink/10 overflow-hidden`}>
                   {rows.map((p) => (
-                    <ProductRow key={p.id} p={p} tone={g.tone} label={g.label} />
+                    <ProductRow key={p.id} p={p} tone={g.tone} label={g.label} hasSku={Boolean(pharmacy[p.id]?.sku)} />
                   ))}
                 </ul>
               )}
@@ -87,7 +87,7 @@ export default async function AdminProductsPage() {
   );
 }
 
-function ProductRow({ p, tone, label }: { p: CatalogProduct; tone: Tone; label: string }) {
+function ProductRow({ p, tone, label, hasSku }: { p: CatalogProduct; tone: Tone; label: string; hasSku: boolean }) {
   const category = SHOP_CATEGORIES.find((c) => c.key === p.category)?.label ?? p.category;
   return (
     <li>
@@ -102,6 +102,8 @@ function ProductRow({ p, tone, label }: { p: CatalogProduct; tone: Tone; label: 
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-[16px] font-medium text-ink">{p.name}</span>
             <StatusChip tone={tone}>{label}</StatusChip>
+            {/* Set: orders go to the pharmacy automatically. Missing: placed by hand. */}
+            <StatusChip tone={hasSku ? 'neutral' : 'muted'}>{hasSku ? 'Pharmacy SKU set' : 'No pharmacy SKU'}</StatusChip>
           </span>
           <span className="mt-1 block truncate text-[12px] text-ink/55">
             /{p.id} · {category}

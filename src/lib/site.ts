@@ -39,7 +39,7 @@ export const SITE_TAGLINE = 'Physician-prescribed longevity and wellness care.';
 export const FDA_DISCLAIMER =
   'These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.';
 
-export const SITE_DESCRIPTION = `Online care for longevity, sexual health, hormones, hair and skin. Prescribed by a licensed physician for adults in ${serviceAreaProse('and')}, and shipped free from a licensed pharmacy.`;
+export const SITE_DESCRIPTION = `Online care for longevity, sexual health, hormones, hair and skin. Prescribed by a licensed physician for adults in ${serviceAreaProse('and')}, and shipped from a licensed pharmacy.`;
 
 /* ------------------------- merchant identity ------------------------------ */
 

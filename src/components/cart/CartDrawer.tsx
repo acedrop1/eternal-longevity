@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { useCart, type Cadence } from './CartProvider';
 import { cn } from '@/lib/utils';
+import { shippingLabelFor, shippingPriceFor } from '@/lib/shipping';
 
 /**
  * Slide-in cart drawer: a white panel docked to the right edge, rounded on
@@ -24,6 +25,8 @@ export function CartDrawer() {
     setQuantity,
     removeItem,
   } = useCart();
+
+  const shipping = resolvedItems.reduce((s, it) => s + shippingPriceFor(it.product), 0);
 
   // Esc to close
   useEffect(() => {
@@ -127,6 +130,9 @@ export function CartDrawer() {
                           <p className="mt-1 text-[13px] tabular-nums text-ink-soft">
                             ${it.perMonth}/mo · ${it.total}/cycle
                           </p>
+                          <p className="mt-0.5 text-[12px] tabular-nums text-ink/55">
+                            {shippingLabelFor(it.product)} ${shippingPriceFor(it.product)}
+                          </p>
                         </div>
                         <div className="text-right">
                           <div className="text-[15px] font-semibold text-ink tabular-nums">
@@ -211,7 +217,9 @@ export function CartDrawer() {
 
             <div className="space-y-1 text-[15px]">
               <Row label="Subtotal" value={`$${subtotal}`} />
-              <Row label="Shipping &amp; Tax" value="Calculated at checkout" muted />
+              {/* One shipment per item; prescriptions carry no sales tax. */}
+              <Row label="Shipping" value={`$${shipping}`} />
+              <Row label="Total" value={`$${subtotal + shipping}`} />
             </div>
 
             <Link

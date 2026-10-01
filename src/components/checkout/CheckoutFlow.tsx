@@ -19,6 +19,7 @@ import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
 import { SERVICE_AREA_OR, SITE_NAME } from '@/lib/site';
 import { monthsPerCycle } from '@/lib/order-rules';
+import { shippingLabelFor, shippingPriceFor } from '@/lib/shipping';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -41,19 +42,16 @@ interface ShippingForm {
 }
 
 /**
- * The pharmacy dispatches every patient-specific order on an expedited
- * cold-chain service; there is no slower tier to sell, because peptides should
- * not spend five days in a truck. We absorb the carrier cost rather than bill
- * it, so the price on the product page is the price charged — which is also
- * what the pay page and the shipping policy promise. Left as a list so a
- * second tier can come back without rewiring the section.
+ * The pharmacy ships each order overnight cold-chain (refrigerated products)
+ * or 2-day (everything else); the product decides, not the member, so there is
+ * no tier to pick. The price per shipment is in lib/shipping, the same number
+ * the server charges. Left as a list so a choice can come back without
+ * rewiring the section.
  */
 const SHIPPING_OPTIONS = [
   {
     id: 'expedited',
-    label: 'Expedited cold-chain',
-    eta: '1–2 business days after dispatch',
-    price: 0,
+    label: 'Tracked shipping from the pharmacy',
   },
 ] as const;
 
@@ -369,6 +367,9 @@ export function CheckoutFlow({
         qty: it.quantity,
         perMonth: it.perMonth,
         total: it.total * it.quantity,
+        // One shipment per order, and every renewal ships again.
+        shipping: shippingPriceFor(it.product),
+        shippingLabel: shippingLabelFor(it.product),
         sub: it.product.cycleLength,
         image: it.product.image,
         swatch: it.product.swatch,
@@ -378,11 +379,14 @@ export function CheckoutFlow({
   );
 
   const subtotal = cartSubtotal;
-  const shippingCost = SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.price ?? 0;
+  // Each item is its own order and shipment; the server prices it the same way.
+  const shippingCost = lines.reduce((s, l) => s + l.shipping, 0);
+  const shippingLabels = [...new Set(lines.map((l) => l.shippingLabel))].join(' · ');
   // Prescription drugs carry no sales tax in NJ, NY, PA or MI; the server sets it too.
   const tax = 0;
   const discount = promo?.ok ? (promo.discountCents ?? 0) / 100 : 0;
-  const total = Math.max(0, subtotal + shippingCost + tax - discount);
+  // The promo comes off the items only, never shipping (lib/shipping orderTotalCents).
+  const total = Math.max(0, subtotal - discount) + shippingCost + tax;
 
   async function applyPromo() {
     if (!promoInput.trim() || promoBusy) return;
@@ -760,6 +764,9 @@ export function CheckoutFlow({
                           <div className="mt-0.5 text-[13px] text-ink/55">
                             {l.sub} · Qty {l.qty}
                           </div>
+                          <div className="mt-0.5 text-[13px] text-ink/55">
+                            {l.shippingLabel} ${l.shipping}
+                          </div>
                           {l.productId && l.cadence && (
                             <button
                               type="button"
@@ -806,7 +813,7 @@ export function CheckoutFlow({
                   <SummaryRow label="Subtotal" value={`$${subtotal}`} />
                   <SummaryRow
                     label="Shipping"
-                    value={shippingCost === 0 ? 'Included' : `$${shippingCost}`}
+                    value={`$${shippingCost}`}
                   />
                   {promo?.ok && (
                     <SummaryRow
@@ -1246,7 +1253,7 @@ export function CheckoutFlow({
             isComplete={completed.method}
             summary={
               completed.method
-                ? `${SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.label} · ${SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)?.eta}`
+                ? `${shippingLabels} · $${shippingCost}`
                 : ''
             }
             disabled={!completed.shipping}
@@ -1283,11 +1290,11 @@ export function CheckoutFlow({
                         {opt.label}
                       </span>
                       <span className="mt-0.5 block text-[13px] text-ink/55">
-                        {opt.eta}
+                        {shippingLabels}
                       </span>
                     </span>
                     <span className="flex-shrink-0 text-[15px] font-semibold text-ink tabular-nums">
-                      {opt.price === 0 ? 'Included' : `+$${opt.price}`}
+                      {`+$${shippingCost}`}
                     </span>
                   </button>
                 );
@@ -1404,7 +1411,7 @@ export function CheckoutFlow({
                       {l.qty > 1 ? ` ×${l.qty}` : ''}:{' '}
                       {l.cadence === 'once'
                         ? 'a single charge, included above. It does not renew.'
-                        : `$${l.total} every ${n === 1 ? 'month' : `${n} months`}, automatically, until I cancel.`}
+                        : `$${l.total} + $${l.shipping} shipping = $${l.total + l.shipping} every ${n === 1 ? 'month' : `${n} months`}, automatically, until I cancel.`}
                     </span>
                   );
                 })}

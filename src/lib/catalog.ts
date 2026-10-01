@@ -24,6 +24,7 @@ import path from 'path';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DRAFT, NEVER_LIVE, SHOP_PRODUCTS, isSellable, type ShopProduct } from './shopProducts';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
+import { PHARMACY_CATALOG, mergePharmacy, type PharmacyItem, type StoredPharmacy } from './pharmacy-catalog';
 
 export type ProductStatus = 'draft' | 'live' | 'withheld';
 export const PRODUCT_STATUSES: ProductStatus[] = ['live', 'draft', 'withheld'];
@@ -36,11 +37,14 @@ export interface CatalogProduct extends ShopProduct {
   updatedBy: string | null;
 }
 
-/** One stored row. `data` holds every ShopProduct field except the id. */
+/**
+ * One stored row. `data` holds every ShopProduct field except the id, plus the
+ * pharmacy mapping (read only through getPharmacyEntries, never put on a product).
+ */
 interface ProductRow {
   id: string;
   status: ProductStatus;
-  data: Omit<ShopProduct, 'id'>;
+  data: Omit<ShopProduct, 'id'> & { pharmacy?: StoredPharmacy };
   updated_at: string;
   updated_by: string | null;
 }
@@ -79,6 +83,12 @@ async function readRows(): Promise<ProductRow[]> {
   return [];
 }
 
+const loadRows = cache(readRows);
+
+// Product fields only: the pharmacy mapping stays server-side.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const productData = ({ pharmacy, ...data }: ProductRow['data']) => data;
+
 export async function writeRow(row: ProductRow): Promise<void> {
   const store = catalogStore();
   if (store === 'supabase') {
@@ -100,7 +110,7 @@ const seedStatus = (id: string): ProductStatus => (isSellable(id) ? 'live' : DRA
 
 /** Every product, any status, seed order first then new products by name. */
 export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
-  const rows = new Map((await readRows()).map((r) => [r.id, r]));
+  const rows = new Map((await loadRows()).map((r) => [r.id, r]));
 
   const fromSeed: CatalogProduct[] = SHOP_PRODUCTS.map((seed) => {
     const row = rows.get(seed.id);
@@ -108,7 +118,7 @@ export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
     if (!row) return { ...seed, status: seedStatus(seed.id), edited: false, updatedAt: null, updatedBy: null };
     return {
       ...seed,
-      ...row.data,
+      ...productData(row.data),
       id: seed.id,
       status: row.status,
       edited: true,
@@ -119,7 +129,7 @@ export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
 
   const added: CatalogProduct[] = [...rows.values()]
     .map((row) => ({
-      ...row.data,
+      ...productData(row.data),
       id: row.id,
       status: row.status,
       edited: true,
@@ -156,4 +166,21 @@ export function toShopProduct(p: CatalogProduct): ShopProduct {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { status, edited, updatedAt, updatedBy, ...product } = p;
   return product;
+}
+
+/**
+ * What the pharmacy gets for every product: the values saved in Admin →
+ * Products laid over the seed in lib/pharmacy-catalog. Server only; the
+ * client gets just the resolved values it needs.
+ */
+export const getPharmacyEntries = cache(async (): Promise<Record<string, PharmacyItem>> => {
+  const stored = new Map((await loadRows()).map((r) => [r.id, r.data.pharmacy]));
+  return Object.fromEntries(
+    (await getCatalog()).map((p) => [p.id, mergePharmacy(PHARMACY_CATALOG[p.id], stored.get(p.id), p.name)]),
+  );
+});
+
+/** One product's pharmacy entry, or null for an id the catalogue doesn't know. */
+export async function pharmacyEntryFor(productId: string): Promise<PharmacyItem | null> {
+  return (await getPharmacyEntries())[productId] ?? null;
 }

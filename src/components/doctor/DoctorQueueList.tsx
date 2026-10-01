@@ -11,7 +11,6 @@ import type { PatientReview } from '@/lib/clinical-review';
 import { orderRef } from '@/lib/format';
 import { categoryFlagCount, type ThreadStatus } from '@/lib/prescriber-view';
 import { CategoryAnswers, ReviewChip, ThreadChip } from '@/components/doctor/CategoryAnswers';
-import { PHARMACY_CATALOG } from '@/lib/pharmacy-catalog';
 
 interface DoctorQueueListProps {
   doctorName: string;
@@ -21,6 +20,8 @@ interface DoctorQueueListProps {
   reviews: Record<string, PatientReview>;
   /** Doctor-thread state per patient (user id): waiting on them, or they replied. */
   threads: Record<string, ThreadStatus>;
+  /** Approved default directions per product id (Admin → Products), to prefill the sig. */
+  defaultSigs: Record<string, string>;
 }
 
 export function DoctorQueueList({
@@ -28,6 +29,7 @@ export function DoctorQueueList({
   reviews,
   signWindowOpen,
   threads,
+  defaultSigs,
 }: DoctorQueueListProps) {
   const [filter, setFilter] = useState<'all' | 'waiting'>('all');
   const { orders, clinicalQueue, activeClinicalCases, recentClinicalCases } =
@@ -119,6 +121,7 @@ export function DoctorQueueList({
                 signWindowOpen={signWindowOpen}
                 review={reviews[o.id]}
                 thread={threads[o.userId ?? '']}
+                defaultSig={defaultSigs[o.lines[0]?.productId ?? ''] ?? ''}
               />
             ))}
           </div>
@@ -210,12 +213,14 @@ function DoctorQueueRow({
   signWindowOpen,
   review,
   thread,
+  defaultSig,
 }: {
   order: Order;
   doctorName: string;
   signWindowOpen: boolean;
   review?: PatientReview;
   thread?: ThreadStatus;
+  defaultSig: string;
 }) {
   const catFlags = review ? categoryFlagCount(review.categories) : 0;
   const { signRx, declineClinical } = useOrders();
@@ -224,9 +229,7 @@ function DoctorQueueRow({
   const [note, setNote] = useState('');
   const [password, setPassword] = useState('');
   // The sig, prefilled with the directions he approved for this product.
-  const [directions, setDirections] = useState(
-    () => PHARMACY_CATALOG[order.lines[0]?.productId ?? '']?.defaultSig ?? '',
-  );
+  const [directions, setDirections] = useState(defaultSig);
   const [signError, setSignError] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
 
