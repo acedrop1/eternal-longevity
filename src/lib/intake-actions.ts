@@ -29,6 +29,7 @@ import { getLiveProducts } from '@/lib/catalog';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { withCartItem, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { supabaseConfigured } from '@/lib/env';
+import { DEMO_USERS } from '@/lib/auth';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from '@/lib/session-policy';
 import { SERVICE_AREA_OR } from '@/lib/site';
@@ -74,7 +75,9 @@ export async function emailHasAccountAction(email: string): Promise<boolean> {
   // needs it to route someone to sign-in instead of a duplicate account.
   if (!(await allow('enumeration', LIMITS.enumeration))) return false;
   const clean = email.trim().toLowerCase();
-  if (!clean.includes('@') || !supabaseAdminConfigured()) return false;
+  if (!clean.includes('@')) return false;
+  // Demo mode: the demo accounts exist, so the sign-in-to-continue screen can be previewed.
+  if (!supabaseAdminConfigured()) return DEMO_USERS.some((u) => u.email.toLowerCase() === clean);
   try {
     const db = createSupabaseAdminClient();
     const { data } = await db

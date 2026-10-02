@@ -35,6 +35,7 @@ import {
 import { fieldKnockout, fieldProblem, fieldVisible, pruneHidden, stepVisible } from '@/lib/intake-rules';
 import { CART_STORAGE_KEY, withCartItem, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { captureLeadAction } from '@/lib/lead-actions';
+import { assessmentSignInAction } from '@/lib/auth-actions';
 import { LEAD_CONSENT } from '@/lib/followups';
 import { cn } from '@/lib/utils';
 
@@ -201,6 +202,8 @@ export function IntakeWizard({
   const [attempted, setAttempted] = useState<string | null>(null);
   /** Screen resumed from saved progress, for the "welcome back" note. */
   const [restored, setRestored] = useState<string | null>(null);
+  /** Signed in mid-assessment: once the page knows the member, go to the first unanswered screen. */
+  const [resumeAfterSignIn, setResumeAfterSignIn] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
   const leaveRef = useRef<HTMLDialogElement>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -285,6 +288,19 @@ export function IntakeWizard({
   useEffect(() => () => {
     if (autoTimer.current) clearTimeout(autoTimer.current);
   }, []);
+
+  /*
+   * Signed in from the "you already have an account" screen. The refresh
+   * brings `member`, which drops the email, details and account screens; the
+   * answers given so far are still in state, so carry on from the first
+   * screen that still needs one.
+   */
+  useEffect(() => {
+    if (!resumeAfterSignIn || !member) return;
+    setResumeAfterSignIn(false);
+    const next = screens.find((s) => !validateFields(s.fields, answersRef.current).ok) ?? screens[screens.length - 1];
+    setStatus({ kind: 'in-progress', key: next?.key ?? '' });
+  }, [resumeAfterSignIn, member, screens]);
 
   function clearSaved() {
     try {
@@ -457,30 +473,21 @@ export function IntakeWizard({
     else if (status.kind === 'knockout') goTo(status.from);
   }
 
-  // === Already has an account ===
+  // === Already has an account: sign in here and carry on ===
   if (status.kind === 'has-account') {
+    const email = typeof answers.email === 'string' ? answers.email : '';
+    const emailScreen = screens.find((s) => s.step.isEmailCapture);
     return (
-      <Shell progressPct={100} compact={compact} onLeave={requestLeave}>
-        <div className="mx-auto max-w-xl text-center">
-          <h2 className={cn(H2, 'mb-3')}>
-            You already have an account.
-          </h2>
-          <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
-            That email is registered with us. Sign in and your details are
-            already there — no need to fill this in again.
-          </p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/login" className={BTN_PRIMARY}>
-              Sign in
-            </Link>
-            <Link
-              href="/forgot-password"
-              className="text-[14px] text-ink-soft underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-        </div>
+      <Shell progressPct={progressPct} compact={compact} onLeave={requestLeave}>
+        <SignInToContinue
+          email={email}
+          onSignedIn={() => {
+            clearSaved();
+            setResumeAfterSignIn(true);
+            router.refresh();
+          }}
+          onChangeEmail={emailScreen ? () => goTo(emailScreen.key) : undefined}
+        />
       </Shell>
     );
   }
@@ -922,6 +929,93 @@ export function IntakeWizard({
 
 
 const H2 = 'text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] text-ink [text-wrap:balance] md:text-[40px]';
+
+const SIGN_IN_ERRORS = {
+  invalid: 'That password doesn’t match. Try again, or reset it below.',
+  throttled: 'Too many attempts. Wait a minute and try again.',
+  use_login: 'Staff accounts sign in on the sign-in page.',
+} as const;
+
+/** The returning member signs in without leaving the assessment (the Hims pattern). */
+function SignInToContinue({
+  email,
+  onSignedIn,
+  onChangeEmail,
+}: {
+  email: string;
+  onSignedIn: () => void;
+  onChangeEmail?: () => void;
+}) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<keyof typeof SIGN_IN_ERRORS | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await assessmentSignInAction(email, password);
+      if (res.ok) return onSignedIn();
+      setError(res.error ?? 'invalid');
+    } catch {
+      setError('invalid');
+    }
+    setBusy(false);
+  }
+
+  const link =
+    'text-[14px] text-ink-soft underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink';
+  return (
+    <form onSubmit={onSubmit} className="mx-auto max-w-md">
+      <h2 className={cn(H2, 'mb-3')}>Welcome back.</h2>
+      <p className="mb-6 text-[16px] leading-relaxed text-ink-soft">
+        You already have an account. Enter your password and we&rsquo;ll pick up right where you are. Your answers are kept.
+      </p>
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-inner bg-milk px-4 py-3.5 text-[15px] text-ink">
+        <span className="min-w-0 truncate">{email}</span>
+        {onChangeEmail && (
+          <button type="button" onClick={onChangeEmail} className={cn(link, 'flex-none')}>
+            Change
+          </button>
+        )}
+      </div>
+      <label htmlFor="continue-password" className="mb-1.5 block text-[14px] font-medium text-ink">
+        Password
+      </label>
+      <input
+        id="continue-password"
+        type="password"
+        autoComplete="current-password"
+        autoFocus
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        aria-invalid={error === 'invalid'}
+        aria-describedby={error ? 'continue-error' : undefined}
+        className="w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20"
+      />
+      {error && (
+        <p id="continue-error" role="alert" className="mt-2 text-[14px] text-red-700">
+          {SIGN_IN_ERRORS[error]}{' '}
+          {error === 'use_login' && (
+            <Link href="/login" className="underline underline-offset-[3px]">
+              Go to sign in
+            </Link>
+          )}
+        </p>
+      )}
+      <button type="submit" disabled={!password || busy} className={cn(BTN_PRIMARY, 'mt-6 w-full disabled:opacity-50 disabled:hover:translate-y-0')}>
+        {busy ? 'Signing in…' : 'Continue'}
+      </button>
+      <p className="mt-5 text-center">
+        <Link href="/forgot-password" className={link}>
+          Forgot your password?
+        </Link>
+      </p>
+    </form>
+  );
+}
 
 const BTN_PRIMARY =
   'inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5';

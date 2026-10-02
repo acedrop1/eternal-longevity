@@ -151,6 +151,39 @@ export async function loginAction(formData: FormData): Promise<void> {
   redirect(redirectForRole(role));
 }
 
+/**
+ * Sign in from inside the assessment. A returning member keeps the answers
+ * already given (they live only in the page, never in storage) instead of
+ * being sent to /login and starting over. Members only: staff have a second
+ * factor, so they are told to use /login.
+ */
+export async function assessmentSignInAction(
+  rawEmail: string,
+  password: string,
+): Promise<{ ok: boolean; error?: 'invalid' | 'throttled' | 'use_login' }> {
+  const email = rawEmail.trim().toLowerCase();
+  if (!(await allow('login', LIMITS.login))) return { ok: false, error: 'throttled' };
+
+  if (!supabaseConfigured) {
+    const demo = DEMO_USERS.find((u) => u.email.toLowerCase() === email && u.password === password);
+    if (!demo) return { ok: false, error: 'invalid' };
+    if (demo.role !== 'member') return { ok: false, error: 'use_login' };
+    await setSession(demo.role);
+    return { ok: true };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !data.user) return { ok: false, error: 'invalid' };
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+  if ((profile?.role ?? 'member') !== 'member') {
+    await supabase.auth.signOut();
+    return { ok: false, error: 'use_login' };
+  }
+  await stampNewSession();
+  return { ok: true };
+}
+
 /** Create an account. Form fields: name, email, password. Live mode only. */
 export async function signupAction(formData: FormData): Promise<void> {
   if (!supabaseConfigured) redirect('/login');
