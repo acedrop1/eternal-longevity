@@ -36,6 +36,7 @@ import { fieldKnockout, fieldProblem, fieldVisible, pruneHidden, stepVisible } f
 import { CART_STORAGE_KEY, withCartItem, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { captureLeadAction } from '@/lib/lead-actions';
 import { assessmentSignInAction } from '@/lib/auth-actions';
+import { saveAssessmentDraftAction } from '@/lib/assessment-drafts';
 import { LEAD_CONSENT } from '@/lib/followups';
 import { cn } from '@/lib/utils';
 
@@ -168,6 +169,8 @@ interface IntakeWizardProps {
   offers?: Record<string, Offer>;
   /** Pre only, signed in: answers on file are not asked again. */
   member?: { known: string[]; prefill: Answers };
+  /** Pre only, signed in: their unfinished run from this entry point, resumed where they left. */
+  draft?: { answers: Answers; screen: string | null };
 }
 
 /** One id per visit session: the storage folder for its photos and files. */
@@ -185,6 +188,7 @@ export function IntakeWizard({
   mediaStepIds,
   offers,
   member,
+  draft,
 }: IntakeWizardProps = {}) {
   const compact = mode !== 'pre';
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', key: '' });
@@ -275,6 +279,22 @@ export function IntakeWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Signed in with an unfinished run from here: resume it on the screen they left.
+  useEffect(() => {
+    if (mode !== 'pre' || !member || !draft || !Object.keys(draft.answers).length) return;
+    const a = { ...(member.prefill ?? {}), ...draft.answers };
+    const list = screensOf(stepsFor(a), a);
+    const at =
+      list.find((s) => s.key === draft.screen) ??
+      list.find((s) => !validateFields(s.fields, a).ok) ??
+      list[list.length - 1];
+    answersRef.current = a;
+    setAnswers(a);
+    setStatus({ kind: 'in-progress', key: at.key });
+    setRestored(at.key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!saves || status.kind !== 'in-progress' || !Object.keys(answers).length) return;
     try {
@@ -326,6 +346,22 @@ export function IntakeWizard({
   );
 
   const progressPct = status.kind === 'in-progress' ? Math.round(((idx + 1) / Math.max(screens.length, 1)) * 100) : 100;
+
+  /*
+   * Signed in: save the run to their account as they go, so the portal can
+   * offer to continue it from any device. Files are already stored by path.
+   */
+  const draftEntry = entryProduct ?? category ?? 'general';
+  const screenKey = status.kind === 'in-progress' ? screen?.key ?? null : null;
+  useEffect(() => {
+    if (mode !== 'pre' || !member || !screenKey) return;
+    const own = Object.entries(answers).filter(([k, v]) => !(v instanceof File) && !(k in (member.prefill ?? {})));
+    if (!own.length) return;
+    const t = setTimeout(() => {
+      void saveAssessmentDraftAction(draftEntry, Object.fromEntries(own), screenKey, progressPct).catch(() => {});
+    }, 800);
+    return () => clearTimeout(t);
+  }, [mode, member, answers, screenKey, draftEntry, progressPct]);
 
   // Scroll to the top whenever the screen changes or we reach a terminal state.
   // Without this, on mobile the next screen renders at the previous scroll

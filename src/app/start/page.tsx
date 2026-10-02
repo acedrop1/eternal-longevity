@@ -8,6 +8,7 @@ import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
 import { knownAnswerIds } from '@/lib/intake-rules';
 import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { getAssessmentDraft } from '@/lib/assessment-drafts';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
@@ -75,6 +76,9 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const member = isMember
     ? { known: knownAnswerIds(onFile), prefill: typeof onFile.sex === 'string' ? { sex: onFile.sex } : {} }
     : undefined;
+  // Their unfinished run from this same entry point (the wizard keys it the same way).
+  const entry = (requested && PRODUCT_CATEGORY[requested.id] ? requested.id : undefined) ?? category ?? 'general';
+  const saved = isMember ? await getAssessmentDraft(entry) : null;
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -109,6 +113,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           category={category}
           offers={offers}
           member={member}
+          draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
         />
       )}
     </main>

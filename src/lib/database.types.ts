@@ -56,6 +56,33 @@ export type AccountStatus = 'active' | 'suspended' | 'deactivated';
 export type Database = {
   public: {
     Tables: {
+      assessment_drafts: {
+        Row: {
+          user_id: string;
+          entry: string;
+          answers: Json;
+          screen: string | null;
+          progress: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          entry: string;
+          answers?: Json;
+          screen?: string | null;
+          progress?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          entry?: string;
+          answers?: Json;
+          screen?: string | null;
+          progress?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       promo_codes: {
         Row: {
           id: string;

@@ -13,6 +13,19 @@ import { STATUS_LABEL } from '@/lib/orders';
 import { listMyMessages } from '@/lib/messages-db';
 import { threadStatuses } from '@/lib/prescriber-view';
 import { MEMBER_NAV, PageHeader, StatusChip, panel, sentenceCase } from '@/components/portal/ui';
+import { listAssessmentDrafts } from '@/lib/assessment-drafts';
+import { getAnyShopProduct } from '@/lib/shopProducts';
+import { CATEGORY_LABEL } from '@/lib/intake-categories';
+import { isCategoryKey } from '@/lib/intakeSchema';
+import { formatDate } from '@/lib/format';
+
+/** "Continue your Finasteride visit": what the unfinished run was for, and where it resumes. */
+function resumeFor(entry: string): { title: string; href: string } {
+  const product = getAnyShopProduct(entry);
+  if (product) return { title: `Continue your ${product.name} visit`, href: `/start?product=${encodeURIComponent(entry)}` };
+  if (isCategoryKey(entry)) return { title: `Continue your ${CATEGORY_LABEL[entry].toLowerCase()} visit`, href: `/start?category=${entry}` };
+  return { title: 'Continue your assessment', href: '/start' };
+}
 
 export const metadata: Metadata = {
   title: 'Portal',
@@ -28,13 +41,15 @@ export default async function MemberPortalPage() {
   if (!user) redirect('/login');
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, media, orders, checkins, doctorThread] = await Promise.all([
+  const [pendingVisit, media, orders, checkins, doctorThread, drafts] = await Promise.all([
     getPendingVisit(),
     pendingMediaFor(user.id),
     listOrders().catch(() => []),
     listOpenCheckinsForUser(user.id).catch(() => []),
     listMyMessages('doctor').catch(() => []),
+    listAssessmentDrafts().catch(() => []),
   ]);
+  const unfinished = drafts[0] ? { ...drafts[0], ...resumeFor(drafts[0].entry) } : null;
   // Their own thread only (RLS). Unanswered = the prescriber spoke last.
   const question = threadStatuses(
     doctorThread.map((m) => ({
@@ -80,7 +95,7 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit || preview || media.photos
+          pendingVisit || preview || media.photos || unfinished
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
@@ -108,6 +123,47 @@ export default async function MemberPortalPage() {
             className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
           >
             Reply
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+          </Link>
+        </section>
+      )}
+
+      {/* An assessment they started and left: the first thing to offer back. */}
+      {unfinished && (
+        <section
+          aria-labelledby="resume-visit"
+          className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
+        >
+          <p className="mb-1 text-[13px] font-medium text-ink/60">Pick up where you left off</p>
+          <h2
+            id="resume-visit"
+            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
+          >
+            {unfinished.title}
+          </h2>
+          <div className="mt-4 flex items-center gap-3">
+            <div
+              className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10"
+              role="progressbar"
+              aria-label="Assessment progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={unfinished.progress}
+            >
+              <div className="h-full rounded-full bg-butter-deep" style={{ width: `${unfinished.progress}%` }} />
+            </div>
+            <span className="flex-none text-[13px] font-medium tabular-nums text-ink/60">
+              {unfinished.progress}% done
+            </span>
+          </div>
+          <p className="mt-2 text-[14px] text-ink/60">
+            Your answers are saved. Last updated {formatDate(unfinished.updatedAt)}.
+          </p>
+          <Link
+            href={unfinished.href}
+            className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
+          >
+            Continue
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
           </Link>
         </section>

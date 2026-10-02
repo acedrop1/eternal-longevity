@@ -30,6 +30,7 @@ import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { withCartItem, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { supabaseConfigured } from '@/lib/env';
 import { DEMO_USERS } from '@/lib/auth';
+import { deleteAssessmentDraft } from '@/lib/assessment-drafts';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from '@/lib/session-policy';
 import { SERVICE_AREA_OR } from '@/lib/site';
@@ -395,7 +396,12 @@ export async function submitMemberAssessmentAction(
   merged.assessedProductIds = [...new Set([...intakeProductIds(onFile), plan.productId])];
 
   const caseId = `case_${Math.random().toString(36).slice(2, 9)}`;
-  if (!supabaseAdminConfigured()) return { ok: true, caseId, next: '/checkout' };
+  // The saved draft for where this assessment started is finished with.
+  const entry = String(answers.entryProductId ?? answers.entryCategory ?? 'general');
+  if (!supabaseAdminConfigured()) {
+    await deleteAssessmentDraft(user.id, entry);
+    return { ok: true, caseId, next: '/checkout' };
+  }
 
   const db = createSupabaseAdminClient();
   const { error } = await db.from('intake_submissions').insert({
@@ -411,6 +417,7 @@ export async function submitMemberAssessmentAction(
   }
   await syncProfileFromAnswers(db, user.id, merged);
   await saveChosenToCart(db, user.id, plan);
+  await deleteAssessmentDraft(user.id, entry);
   return { ok: true, caseId, next: '/checkout' };
 }
 
