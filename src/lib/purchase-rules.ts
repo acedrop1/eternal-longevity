@@ -33,9 +33,10 @@ export function heldProducts(
 
 /**
  * Whether the member's intake answered this product's questions. A product
- * with no category has no questions of its own, and an intake that names no
- * product at all (local demo, or one filed before products were recorded)
- * keeps covering what it always did.
+ * with no category has no questions of its own. An intake that names no
+ * product (one filed before products were recorded) covers nothing: that
+ * member answers the product's questions once, like anyone else. Local demo
+ * stores no intakes, so callers skip this check there.
  */
 export function intakeCovers(answers: Record<string, unknown>, productId: string): boolean {
   if (!Object.prototype.hasOwnProperty.call(PRODUCT_CATEGORY, productId)) return true;
@@ -43,7 +44,7 @@ export function intakeCovers(answers: Record<string, unknown>, productId: string
     ...intakeProductIds(answers),
     ...(Array.isArray(answers.visitProductIds) ? answers.visitProductIds : []),
   ];
-  return ids.length === 0 || ids.includes(productId);
+  return ids.includes(productId);
 }
 
 /** The cart with one line moved to another plan, merged into that plan's line if there is one. */

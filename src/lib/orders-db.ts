@@ -363,7 +363,8 @@ export async function placeOrderAction(input: {
   if (new Set(ids).size !== ids.length) return { ok: false, error: 'duplicate_product' };
   const [held, answers] = await Promise.all([heldProductsFor(user.id), latestIntakeAnswers(user.id)]);
   if (ids.some((id) => held.has(id))) return { ok: false, error: 'already_ordered' };
-  const unassessed = ids.find((id) => !intakeCovers(answers, id));
+  // Demo stores no intakes, so there is nothing to check against there.
+  const unassessed = supabaseAdminConfigured() ? ids.find((id) => !intakeCovers(answers, id)) : undefined;
   if (unassessed) return { ok: false, error: 'not_assessed', productId: unassessed };
 
   /*

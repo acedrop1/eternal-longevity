@@ -9,6 +9,7 @@ import { MEMBER_NAV } from '@/components/portal/ui';
 import { getLiveProduct, getLiveProducts, toShopProduct } from '@/lib/catalog';
 import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { intakeCovers } from '@/lib/purchase-rules';
+import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,7 +44,9 @@ export default async function ShopProductPage({ params }: PageProps) {
   const product = toShopProduct(live);
   // Not assessed for this one yet: its own questions first (checkout enforces the same).
   const [state, answers] = await Promise.all([intakeStateFor(user.id), latestIntakeAnswers(user.id)]);
-  const ctaHref = state === 'submitted' && intakeCovers(answers, product.id) ? undefined : `/start?product=${product.id}`;
+  // Demo stores no intakes: keep add-to-cart there so checkout can be tried locally.
+  const covered = !supabaseAdminConfigured() || (state === 'submitted' && intakeCovers(answers, product.id));
+  const ctaHref = covered ? undefined : `/start?product=${product.id}`;
 
   // Same category first, then the rest, three in all.
   const others = (await getLiveProducts()).filter((p) => p.id !== product.id).map(toShopProduct);
