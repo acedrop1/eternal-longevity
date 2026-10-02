@@ -165,7 +165,7 @@ const ORDER_ERROR: Record<string, string> = {
   intake_incomplete: 'Please finish your assessment before placing an order.',
   product_unavailable: 'One of these treatments is not available right now. Please review your cart.',
   empty_cart: 'Your cart is empty.',
-  invalid_quantity: 'You can order up to 3 of each treatment and 5 treatments at a time.',
+  invalid_quantity: 'Each treatment is ordered once, on one plan, and up to 5 treatments at a time.',
   invalid_address: 'Please check your shipping address.',
   promo_unavailable: 'That code is no longer available, so we removed it. Check your total and place your order again.',
   already_ordered: 'You already have one of these treatments, on a plan or on its way. Remove it to continue, or manage it in your portal.',
@@ -698,7 +698,7 @@ export function CheckoutFlow({
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/portal/shop"
+            href="/shop"
             className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
           >
             Browse treatments

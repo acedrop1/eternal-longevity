@@ -52,14 +52,14 @@ function PillLabel({ label }: { label: string }) {
 /**
  * Portal navigation. Renders a vertical left rail on desktop and a swipeable
  * glass strip under the top bar on mobile. Active state is derived from the
- * current pathname, with longest-prefix-match so that e.g. /portal/shop/ghk-cu
- * still highlights the "Shop" tab.
+ * current pathname, with longest-prefix-match so that e.g. /portal/orders/EL-1001
+ * still highlights the "Orders" tab.
  */
 export function PortalNav({ nav, variant }: PortalNavProps) {
   const pathname = usePathname() ?? '';
 
   // Find the best-matching nav item (longest prefix) so deep routes like
-  // /portal/shop/ghk-cu stay highlighted under "Shop".
+  // /portal/orders/EL-1001 stay highlighted under "Orders".
   const activeHref = (() => {
     const matches = nav
       .filter(

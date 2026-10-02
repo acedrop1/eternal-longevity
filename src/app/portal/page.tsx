@@ -84,7 +84,7 @@ export default async function MemberPortalPage() {
 
   const tiles = [
     {
-      href: '/portal/shop',
+      href: '/shop',
       title: 'Shop',
       body: 'Browse the peptide catalog.',
     },

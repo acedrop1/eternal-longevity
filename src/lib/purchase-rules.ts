@@ -47,6 +47,20 @@ export function intakeCovers(answers: Record<string, unknown>, productId: string
   return ids.includes(productId);
 }
 
+/**
+ * One line per product, quantity 1. A prescription's amount is set by its
+ * plan, not by ordering several, and one product can't be on two plans at
+ * once: the newest line for a product wins.
+ */
+export function oneEach(items: CartItem[]): CartItem[] {
+  const latest = new Map<string, CartItem>();
+  for (const it of items) {
+    const prev = latest.get(it.productId);
+    if (!prev || (it.addedAt ?? 0) >= (prev.addedAt ?? 0)) latest.set(it.productId, it);
+  }
+  return items.filter((it) => latest.get(it.productId) === it).map((it) => ({ ...it, quantity: 1 }));
+}
+
 /** The cart with one line moved to another plan, merged into that plan's line if there is one. */
 export function withCadence(items: CartItem[], productId: string, from: Cadence, to: Cadence): CartItem[] {
   const at = (it: CartItem, c: Cadence) => it.productId === productId && it.cadence === c;

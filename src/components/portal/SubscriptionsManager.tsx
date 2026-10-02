@@ -98,7 +98,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
     return (
       <EmptyState
         action={
-          <Link href="/portal/shop" className={btnPrimary}>
+          <Link href="/shop" className={btnPrimary}>
             Browse the shop
           </Link>
         }

@@ -26,6 +26,8 @@ interface ProductPDPProps {
    * ordering requires a completed assessment and an account.
    */
   ctaHref?: string;
+  /** Label for the ctaHref button. Default: Start assessment. */
+  ctaLabel?: string;
   product: ShopProduct;
   /** Kept for callers; related products render through <RelatedProducts />. */
   related: ShopProduct[];
@@ -36,7 +38,7 @@ interface ProductPDPProps {
  * right, then details and safety information. The sticky offset reads
  * --pdp-sticky-top so the public page can clear its taller fixed header.
  */
-export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
+export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPProps) {
   const tiers = cadenceTiersForProduct(product);
   const initialTier = defaultTier(tiers);
   const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(initialTier.key);
@@ -91,7 +93,7 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
                 href={ctaHref}
                 className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
               >
-                Start assessment
+                {ctaLabel}
               </Link>
             ) : (
               <button
@@ -128,6 +130,7 @@ export function ProductPDP({ product, ctaHref }: ProductPDPProps) {
         active={active}
         visible={showBar}
         ctaHref={ctaHref}
+        ctaLabel={ctaLabel}
         onAddToCart={() => addItem(product.id, selectedTier)}
         onChangePlan={() => planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
       />

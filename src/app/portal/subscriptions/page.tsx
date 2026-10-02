@@ -89,7 +89,7 @@ export default async function SubscriptionsPage() {
                 protocol. Every addition goes back to the prescriber first.
               </p>
             </div>
-            <Link href="/portal/shop" className={`${btnPrimary} self-start md:self-auto`}>
+            <Link href="/shop" className={`${btnPrimary} self-start md:self-auto`}>
               Browse the shop →
             </Link>
           </div>

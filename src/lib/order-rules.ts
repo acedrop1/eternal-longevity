@@ -53,7 +53,7 @@ export function intentBelongsTo(
 }
 
 export const MAX_ORDER_LINES = 5;
-export const MAX_LINE_QUANTITY = 3;
+export const MAX_LINE_QUANTITY = 1;
 
 /** Server-side shipping address check. Returns an error code, or null. */
 export function shippingAddressError(a: unknown): string | null {

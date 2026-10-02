@@ -34,7 +34,7 @@ export const DOCTOR_NAV: NavItem[] = [
 
 export const MEMBER_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/portal' },
-  { label: 'Shop', href: '/portal/shop' },
+  { label: 'Shop', href: '/shop' },
   { label: 'Orders', href: '/portal/orders' },
   { label: 'Messages', href: '/portal/messages' },
   { label: 'Subscriptions', href: '/portal/subscriptions' },

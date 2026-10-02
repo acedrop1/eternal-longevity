@@ -1,7 +1,7 @@
 /**
  * Member-shop catalog. Individual peptides offered as standalone
  * subscriptions, separate from the 4 signature protocols. This is what
- * /portal/shop displays.
+ * /shop displays.
  *
  * Sold as a subscription (1, 3 or 6-month plans, per the Product & Pricing
  * Plan) or a one-time purchase.
@@ -97,7 +97,7 @@ export interface ShopProduct {
   /**
    * True when the active ingredient has an FDA-approved reference drug
    * (e.g. tesamorelin → Egrifta). Only these are listed on the public
-   * storefront at /shop; everything else is member-only at /portal/shop.
+   * storefront at /shop.
    */
   fdaApproved?: boolean;
 }

@@ -50,6 +50,7 @@ export function BuyBar({
   active,
   visible,
   ctaHref,
+  ctaLabel = 'Start assessment',
   onAddToCart,
   onChangePlan,
 }: {
@@ -58,6 +59,7 @@ export function BuyBar({
   visible: boolean;
   /** Public page: link to the assessment. Portal: omit and pass onAddToCart. */
   ctaHref?: string;
+  ctaLabel?: string;
   onAddToCart?: () => void;
   onChangePlan: () => void;
 }) {
@@ -100,7 +102,7 @@ export function BuyBar({
 
         {ctaHref ? (
           <Link href={ctaHref} className={ctaCls}>
-            Start assessment
+            {ctaLabel}
           </Link>
         ) : (
           <button type="button" onClick={onAddToCart} className={ctaCls}>

@@ -20,6 +20,16 @@
   ],
   "redirects": [
     {
+      "source": "/portal/shop",
+      "destination": "/shop",
+      "permanent": false
+    },
+    {
+      "source": "/portal/shop/:id",
+      "destination": "/shop/:id",
+      "permanent": false
+    },
+    {
       "source": "/legal/telehealth",
       "destination": "/legal/consent",
       "permanent": true

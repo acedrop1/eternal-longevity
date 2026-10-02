@@ -11,18 +11,31 @@ import { pageMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { getSession } from '@/lib/auth-server';
 import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
-import { intakeProductIds } from '@/lib/intake-rules';
+import { intakeCovers } from '@/lib/purchase-rules';
+import { heldProductsFor } from '@/lib/held-products';
+import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 
 /**
- * A member already assessed for this product skips the assessment: the
- * product page lets them pick a plan and add it to the cart. Everyone else
- * starts the assessment.
+ * The one shop, for visitors and members alike. The button fits who is
+ * looking: a member who already has this product goes to that order or plan;
+ * one assessed for it picks a plan and adds it to the cart; everyone else
+ * starts the assessment (members only answer this product's questions).
+ * Demo stores no intakes, so a demo member can add to cart to try checkout.
  */
-async function assessedFor(productId: string): Promise<boolean> {
+async function ctaFor(productId: string): Promise<{ href?: string; label?: string }> {
+  const start = { href: `/start?product=${productId}` };
   const user = await getSession();
-  if (user?.role !== 'member') return false;
-  if ((await intakeStateFor(user.id)) !== 'submitted') return false;
-  return intakeProductIds(await latestIntakeAnswers(user.id)).includes(productId);
+  if (user?.role !== 'member') return start;
+  if (!supabaseAdminConfigured()) return {};
+  const [held, state, answers] = await Promise.all([
+    heldProductsFor(user.id),
+    intakeStateFor(user.id),
+    latestIntakeAnswers(user.id),
+  ]);
+  const has = held.get(productId);
+  if (has === 'plan') return { href: '/portal/subscriptions', label: 'Manage your plan' };
+  if (has === 'order') return { href: '/portal/orders', label: 'View your order' };
+  return state === 'submitted' && intakeCovers(answers, productId) ? {} : start;
 }
 
 interface PageProps {
@@ -50,7 +63,7 @@ export default async function PublicProductPage({ params }: PageProps) {
   const live = await getLiveProduct(id);
   if (!live) notFound();
   const product = toShopProduct(live);
-  const ctaHref = (await assessedFor(product.id)) ? undefined : `/start?product=${product.id}`;
+  const cta = await ctaFor(product.id);
 
   const relatedLive = (await getLiveProducts()).filter((p) => p.id !== product.id).slice(0, 3);
   const related = relatedLive.map(toShopProduct);
@@ -69,9 +82,9 @@ export default async function PublicProductPage({ params }: PageProps) {
             <span className="text-ink">{product.name}</span>
           </nav>
 
-          <ProductPDPMobile product={product} ctaHref={ctaHref} />
+          <ProductPDPMobile product={product} ctaHref={cta.href} ctaLabel={cta.label} />
           <div className="hidden md:block">
-            <ProductPDP product={product} related={related} basePath="/shop" ctaHref={ctaHref} />
+            <ProductPDP product={product} related={related} basePath="/shop" ctaHref={cta.href} ctaLabel={cta.label} />
           </div>
         </section>
 

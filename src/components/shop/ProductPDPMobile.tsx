@@ -17,6 +17,8 @@ interface ProductPDPMobileProps {
    * storefront points it at the assessment.
    */
   ctaHref?: string;
+  /** Label for the ctaHref button. Default: Start assessment. */
+  ctaLabel?: string;
 }
 
 /**
@@ -26,7 +28,7 @@ interface ProductPDPMobileProps {
  * CTA is off screen; "Change" scrolls back to the plan picker and flashes the
  * selected row. Hidden from md, where ProductPDP takes over.
  */
-export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
+export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPMobileProps) {
   const { addItem } = useCart();
   const tiers = cadenceTiersForProduct(product);
   const initialTier = defaultTier(tiers);
@@ -88,7 +90,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
             href={ctaHref}
             className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
-            Start assessment
+            {ctaLabel}
           </Link>
         ) : (
           <button
@@ -141,6 +143,7 @@ export function ProductPDPMobile({ product, ctaHref }: ProductPDPMobileProps) {
         active={active}
         visible={showBar}
         ctaHref={ctaHref}
+        ctaLabel={ctaLabel}
         onAddToCart={handleAddToCart}
         onChangePlan={scrollToPlan}
       />

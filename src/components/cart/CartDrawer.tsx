@@ -22,7 +22,6 @@ export function CartDrawer() {
     subtotal,
     itemCount,
     closeDrawer,
-    setQuantity,
     removeItem,
   } = useCart();
 
@@ -118,7 +117,7 @@ export function CartDrawer() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <Link
-                            href={`/portal/shop/${it.product.id}`}
+                            href={`/shop/${it.product.id}`}
                             onClick={closeDrawer}
                             className="block truncate text-[15px] font-semibold tracking-[-0.01em] text-ink decoration-ink/30 underline-offset-[3px] hover:underline"
                           >
@@ -150,40 +149,6 @@ export function CartDrawer() {
                         </div>
                       </div>
 
-                      {/* Qty stepper */}
-                      <div className="mt-3 inline-flex items-center self-start rounded-full bg-white ring-1 ring-ink/10">
-                        <button
-                          type="button"
-                          aria-label="Decrease quantity"
-                          onClick={() =>
-                            setQuantity(
-                              it.productId,
-                              it.cadence as Cadence,
-                              it.quantity - 1
-                            )
-                          }
-                          className="grid h-9 w-9 place-items-center rounded-full text-base text-ink/70 transition-colors hover:text-ink"
-                        >
-                          −
-                        </button>
-                        <span className="min-w-7 text-center text-[14px] font-semibold tabular-nums text-ink">
-                          {it.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label="Increase quantity"
-                          onClick={() =>
-                            setQuantity(
-                              it.productId,
-                              it.cadence as Cadence,
-                              it.quantity + 1
-                            )
-                          }
-                          className="grid h-9 w-9 place-items-center rounded-full text-base text-ink/70 transition-colors hover:text-ink"
-                        >
-                          +
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </li>
@@ -294,7 +259,7 @@ function EmptyState({ onClose }: { onClose: () => void }) {
         Browse our treatments.
       </p>
       <Link
-        href="/portal/shop"
+        href="/shop"
         onClick={onClose}
         className="rounded-full bg-ink px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85"
       >

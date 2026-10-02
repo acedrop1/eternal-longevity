@@ -14,7 +14,7 @@ import { cadenceTiersForProduct, type ShopProduct } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { CART_STORAGE_KEY, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { saveCartAction } from '@/lib/profile-db';
-import { withCadence } from '@/lib/purchase-rules';
+import { oneEach, withCadence } from '@/lib/purchase-rules';
 
 // Shared with the server actions — see lib/cartTypes.ts. Re-exported here so
 // the many existing `from '@/components/cart/CartProvider'` imports still work.
@@ -94,7 +94,7 @@ export function CartProvider({
   live = false,
 }: CartProviderProps) {
   const [state, setState] = useState<CartState>({
-    items: live ? initialItems ?? [] : [],
+    items: live ? oneEach(initialItems ?? []) : [],
     drawerOpen: false,
   });
   const [hydrated, setHydrated] = useState(live);
@@ -103,7 +103,7 @@ export function CartProvider({
   // handed us the member's saved cart.
   useEffect(() => {
     if (live) return;
-    setState((s) => ({ ...s, items: loadFromStorage() }));
+    setState((s) => ({ ...s, items: oneEach(loadFromStorage()) }));
     setHydrated(true);
   }, [live]);
 
@@ -149,14 +149,11 @@ export function CartProvider({
       const existing = s.items.find(
         (it) => it.productId === productId && it.cadence === cadence
       );
+      // One of each, on one plan: adding again keeps it, another plan replaces it.
       const next: CartItem[] = existing
-        ? s.items.map((it) =>
-            it.productId === productId && it.cadence === cadence
-              ? { ...it, quantity: it.quantity + 1 }
-              : it
-          )
+        ? s.items
         : [
-            ...s.items,
+            ...s.items.filter((it) => it.productId !== productId),
             { productId, cadence, quantity: 1, addedAt: Date.now() },
           ];
       return { items: next, drawerOpen: true };
@@ -183,7 +180,7 @@ export function CartProvider({
               )
             : s.items.map((it) =>
                 it.productId === productId && it.cadence === cadence
-                  ? { ...it, quantity: qty }
+                  ? { ...it, quantity: 1 }
                   : it
               ),
       }));

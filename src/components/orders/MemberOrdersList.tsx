@@ -56,7 +56,7 @@ export function MemberOrdersList({ memberEmail }: MemberOrdersListProps) {
     return (
       <EmptyState
         action={
-          <Link href="/portal/shop" className={btnPrimary}>
+          <Link href="/shop" className={btnPrimary}>
             Browse the shop
           </Link>
         }
@@ -209,7 +209,7 @@ function MemberOrderCard({ order }: { order: Order }) {
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
         {productId && !NO_REORDER.includes(order.status) && (
           <Link
-            href={`/portal/shop/${encodeURIComponent(productId)}`}
+            href={`/shop/${encodeURIComponent(productId)}`}
             className={btnSecondary}
           >
             Reorder
