@@ -435,6 +435,7 @@ function ProfileSection({
     setDirty(true);
   };
 
+  const dobLocked = Boolean(baseline.dob);
   const valid = form.fullName.trim().length > 1;
   const canSave = dirty && valid && status === 'idle';
 
@@ -444,7 +445,8 @@ function ProfileSection({
       patchProfile({
         fullName: form.fullName.trim(),
         phone: form.phone.trim(),
-        dateOfBirth: form.dob.trim(),
+        // Once on file it is part of the medical record (locked in the database too).
+        ...(dobLocked ? {} : { dateOfBirth: form.dob.trim() }),
       });
       setDirty(false);
     });
@@ -483,6 +485,8 @@ function ProfileSection({
           value={form.dob}
           onChange={(v) => edit({ dob: v })}
           placeholder="MM / DD / YYYY"
+          disabled={dobLocked}
+          hint={dobLocked ? 'Part of your medical record. Message your care team to change it.' : undefined}
         />
       </div>
       <div className="mt-6 flex items-center justify-end gap-4">

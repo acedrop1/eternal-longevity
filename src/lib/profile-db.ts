@@ -159,7 +159,10 @@ export async function patchProfileAction(
 
   const db = await createSupabaseServerClient();
   const { error } = await db.from('profiles').update(row).eq('id', user.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[profile-db] patchProfile:', error.message);
+    return { ok: false, error: 'We couldn’t save that. Please try again, or message your care team.' };
+  }
   revalidatePath('/portal/account');
   return { ok: true };
 }
