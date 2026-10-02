@@ -6,7 +6,7 @@ import {
   SubscriptionsManager,
   type Subscription,
 } from '@/components/portal/SubscriptionsManager';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 import { getLiveProducts } from '@/lib/catalog';
@@ -33,6 +33,7 @@ async function loadSubscriptions(userId: string): Promise<Subscription[]> {
     const product = live.get(r.product_id);
     return {
       id: r.id,
+      productId: r.product_id,
       productName: r.product_name,
       cycleLabel: product?.cycleLength ?? '',
       cadenceLabel: r.cadence_label ?? '',
@@ -53,7 +54,7 @@ async function loadSubscriptions(userId: string): Promise<Subscription[]> {
 
 export default async function SubscriptionsPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const SUBSCRIPTIONS = await loadSubscriptions(user.id);

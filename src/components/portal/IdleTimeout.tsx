@@ -38,7 +38,8 @@ export function IdleTimeout({ idleMinutes }: { idleMinutes: number }) {
     const tick = window.setInterval(() => {
       const idleFor = Date.now() - lastActive.current;
       if (idleFor >= idleMs) {
-        window.location.href = '/login?timeout=idle';
+        const here = window.location.pathname + window.location.search;
+        window.location.href = `/login?timeout=idle&next=${encodeURIComponent(here)}`;
       } else if (idleFor >= warnAtMs) {
         setLeft(Math.ceil((idleMs - idleFor) / 1000));
       }

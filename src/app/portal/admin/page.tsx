@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -116,7 +116,7 @@ async function loadOverview(): Promise<Overview> {
 
 export default async function AdminPortalPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const o = await loadOverview();

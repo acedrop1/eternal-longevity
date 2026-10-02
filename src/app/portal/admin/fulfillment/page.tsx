@@ -4,7 +4,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminFulfillment, type ReadyRxView } from '@/components/admin/AdminFulfillment';
 import { FulfillmentBoard } from '@/components/fulfillment/FulfillmentBoard';
 import { loadFulfillmentBoard, type BoardRow } from '@/lib/fulfillment-core';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -24,7 +24,7 @@ const DEMO_READY: ReadyRxView[] = [];
 
 export default async function AdminFulfillmentPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();

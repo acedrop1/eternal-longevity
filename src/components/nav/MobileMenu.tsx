@@ -15,6 +15,8 @@ interface MobileMenuProps {
   links: { label: string; href: string }[];
   /** Ink icon on a light bar; white over photography. */
   light?: boolean;
+  /** The signed-in person's dashboard; null when signed out. */
+  home?: string | null;
 }
 
 /**
@@ -26,7 +28,7 @@ interface MobileMenuProps {
  * uses backdrop-filter, which makes it the containing block for any fixed
  * child, so a scrim inside it would only cover the header itself.
  */
-export function MobileMenu({ links, light = true }: MobileMenuProps) {
+export function MobileMenu({ links, light = true, home = null }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [openCat, setOpenCat] = useState<string | null>(null);
   const top = useCatalog().products.filter((p) => p.category !== 'metabolic');
@@ -220,11 +222,11 @@ export function MobileMenu({ links, light = true }: MobileMenuProps) {
                   Start your assessment
                 </Link>
                 <Link
-                  href="/login"
+                  href={home ?? '/login'}
                   onClick={() => setOpen(false)}
                   className="block rounded-full bg-milk px-5 py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-milk-deep"
                 >
-                  Log in
+                  {home ? 'My portal' : 'Log in'}
                 </Link>
                 <p className="mt-2 text-center text-[12px] text-ink/50">
                   {SERVICE_AREA_SHORT} only · Prescription required · 18+

@@ -10,7 +10,8 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DEMO_USERS, redirectForRole, type Role } from './auth';
-import { clearSession, setSession } from './auth-server';
+import { clearSession, getSession, setSession } from './auth-server';
+import { loginHref, safeNext } from './safe-next';
 import { supabaseConfigured } from './env';
 import { createSupabaseServerClient } from './supabase/server';
 import {
@@ -49,22 +50,27 @@ export async function loginAction(formData: FormData): Promise<void> {
     .trim()
     .toLowerCase();
   const password = String(formData.get('password') ?? '');
+  // Where they were headed. Checked against the role once it is known.
+  const next = formData.get('next');
+  const keep = safeNext(next);
+  const withNext = (path: string) =>
+    keep ? `${path}${path.includes('?') ? '&' : '?'}next=${encodeURIComponent(keep)}` : path;
 
   /*
    * Nothing stood between an attacker and unlimited password guesses against
    * a known staff address, and the admin account reaches every chart.
    */
   if (!(await allow('login', LIMITS.login))) {
-    redirect('/login?error=throttled');
+    redirect(withNext('/login?error=throttled'));
   }
 
   if (!supabaseConfigured) {
     const demo = DEMO_USERS.find(
       (u) => u.email.toLowerCase() === email && u.password === password,
     );
-    if (!demo) redirect('/login?error=invalid');
+    if (!demo) redirect(withNext('/login?error=invalid'));
     await setSession(demo.role);
-    redirect(demo.redirectTo);
+    redirect(safeNext(next, demo.role) ?? demo.redirectTo);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -72,7 +78,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     email,
     password,
   });
-  if (error) redirect('/login?error=invalid');
+  if (error) redirect(withNext('/login?error=invalid'));
 
   /*
    * A fresh sign-in starts a fresh clock. Without this the stamps from the
@@ -125,13 +131,13 @@ export async function loginAction(formData: FormData): Promise<void> {
         name: fullName,
         role,
       });
-      redirect(redirectForRole(role));
+      redirect(safeNext(next, role) ?? redirectForRole(role));
     }
 
     const sent = await issueCode(user.id, user.email ?? email, fullName);
-    if (sent) redirect('/login/verify');
+    if (sent) redirect(withNext('/login/verify'));
     // Could not email a code — do not silently drop the second factor.
-    redirect('/login?error=mfa_unavailable');
+    redirect(withNext('/login?error=mfa_unavailable'));
   }
 
   /*
@@ -148,7 +154,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     });
   }
 
-  redirect(redirectForRole(role));
+  redirect(safeNext(next, role) ?? redirectForRole(role));
 }
 
 /**
@@ -242,10 +248,14 @@ export async function requestPasswordResetAction(
   const email = String(formData.get('email') ?? '')
     .trim()
     .toLowerCase();
+  // Carried through the email link so the reset lands where they were headed.
+  const keep = safeNext(formData.get('next'));
+  const sentPath = keep ? `/forgot-password?sent=1&next=${encodeURIComponent(keep)}` : '/forgot-password?sent=1';
+  const resetPath = keep ? `/auth/reset?next=${encodeURIComponent(keep)}` : '/auth/reset';
 
   // Reset mail is free outbound email addressed to anyone you name.
   if (!(await allow('reset', LIMITS.passwordReset))) {
-    redirect('/forgot-password?sent=1');
+    redirect(sentPath);
   }
 
   if (supabaseAdminConfigured() && email.includes('@')) {
@@ -263,7 +273,7 @@ export async function requestPasswordResetAction(
       if (tokenHash) {
         const link = `${SITE_URL}/auth/confirm?token_hash=${encodeURIComponent(
           tokenHash,
-        )}&type=recovery&next=/auth/reset`;
+        )}&type=recovery&next=${encodeURIComponent(resetPath)}`;
         const msg = passwordResetEmail(link);
         await sendEmail({ to: email, subject: msg.subject, html: msg.html });
       }
@@ -280,7 +290,7 @@ export async function requestPasswordResetAction(
   }
 
   // Always confirm the same way — never reveal whether an account exists.
-  redirect('/forgot-password?sent=1');
+  redirect(sentPath);
 }
 
 /** Set a new password. Form field: password. Requires a recovery session. */
@@ -289,12 +299,26 @@ export async function updatePasswordAction(
 ): Promise<void> {
   if (!supabaseConfigured) redirect('/login');
 
+  const next = formData.get('next');
+  const keep = safeNext(next);
+  const again = (err: string) =>
+    `/auth/reset?error=${err}${keep ? `&next=${encodeURIComponent(keep)}` : ''}`;
+
   const password = String(formData.get('password') ?? '');
-  if (!passwordValid(password)) redirect('/auth/reset?error=weak');
+  if (!passwordValid(password)) redirect(again('weak'));
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) redirect('/auth/reset?error=failed');
+  if (error) redirect(again('failed'));
 
-  redirect('/portal');
+  /*
+   * The recovery link is a fresh sign-in: restart the logoff clocks, or the
+   * idle stamp of an older session bounces them out on the next page.
+   */
+  await stampNewSession();
+
+  // Staff still owe the second factor (no session yet), so they sign in again
+  // and land on `next` from there.
+  const user = await getSession();
+  redirect(user ? (safeNext(next, user.role) ?? user.redirectTo) : loginHref(next));
 }

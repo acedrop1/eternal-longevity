@@ -7,7 +7,7 @@ import {
   MemberOrderHistory,
   type MemberOrderView,
 } from '@/components/orders/MemberOrderHistory';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { MEMBER_NAV, PageHeader } from '@/components/portal/ui';
 import {
   createSupabaseAdminClient,
@@ -40,7 +40,7 @@ function flattenItems(raw: unknown): { label: string; detail: string }[] {
 
 export default async function OrdersPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();
@@ -49,15 +49,21 @@ export default async function OrdersPage() {
   if (live) {
     try {
       const db = createSupabaseAdminClient();
-      const { data } = await db
-        .from('fulfillment_orders')
-        .select(
-          'id, order_ref, status, items, tracking_carrier, tracking_number, created_at',
-        )
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const [{ data }, { data: placed }] = await Promise.all([
+        db
+          .from('fulfillment_orders')
+          .select(
+            'id, order_ref, status, items, tracking_carrier, tracking_number, created_at',
+          )
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        db.from('orders').select('order_number').eq('user_id', user.id),
+      ]);
+      // FUL-<order number> is the pharmacy side of an order already listed
+      // above it; only shipments with no order of their own show here.
+      const listed = new Set((placed ?? []).map((o) => `FUL-${o.order_number}`));
       if (data) {
-        orders = data.map((o) => ({
+        orders = data.filter((o) => !listed.has(o.order_ref)).map((o) => ({
           id: o.id,
           ref: o.order_ref,
           status: o.status,

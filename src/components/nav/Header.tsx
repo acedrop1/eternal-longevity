@@ -20,6 +20,25 @@ const NAV_LINKS = [
 ];
 
 /**
+ * The signed-in person's dashboard, or null. Asked on each page rather than
+ * cached, so signing out shows at once. Public pages stay static this way.
+ */
+function useSessionHome(): string | null {
+  const [home, setHome] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch('/api/session', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { home?: string | null } | null) => live && setHome(d?.home ?? null))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  return home;
+}
+
+/**
  * Floating header: a rounded frosted bar, and on shopping pages a frosted
  * category strip under it (thumbnail + name), swipeable on phones. Over the
  * hero photo it runs clear glass with white type; once the page scrolls it
@@ -27,6 +46,7 @@ const NAV_LINKS = [
  */
 export function Header({ categoryStrip = false, overlay = false }: { categoryStrip?: boolean; overlay?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
+  const home = useSessionHome();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -59,7 +79,7 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
         >
           <div className="flex items-center gap-2 md:gap-6">
             <div className="md:hidden">
-              <MobileMenu links={NAV_LINKS} light={!onPhoto} />
+              <MobileMenu links={NAV_LINKS} light={!onPhoto} home={home} />
             </div>
             {/* Deeper than butter (#FFEC9F) so the logo reads on the white bar. */}
             <Wordmark className={cn('text-[30px] md:text-[34px]', !onPhoto && 'text-[#F2D060]')} />
@@ -89,24 +109,27 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
           <div className="flex items-center gap-2">
             <Search onPhoto={onPhoto} />
             {/* Phones get Log in from the menu, keeping room for search. */}
+            {!home && (
+              <Link
+                href="/login"
+                aria-label="Log in"
+                className={cn(
+                  'hidden h-10 w-10 place-items-center rounded-full transition-colors md:grid',
+                  onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 ring-1 ring-black/5 hover:bg-white'
+                )}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </Link>
+            )}
+            {/* Signed in: straight back to the portal, not another assessment. */}
             <Link
-              href="/login"
-              aria-label="Log in"
-              className={cn(
-                'hidden h-10 w-10 place-items-center rounded-full transition-colors md:grid',
-                onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 ring-1 ring-black/5 hover:bg-white'
-              )}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </Link>
-            <Link
-              href="/start"
+              href={home ?? '/start'}
               className="rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink shadow-[0_6px_20px_-8px_rgba(247,221,116,0.9)] transition-[background-color,transform] hover:-translate-y-px hover:bg-butter-deep md:px-5"
             >
-              Get started
+              {home ? 'My portal' : 'Get started'}
             </Link>
           </div>
         </div>

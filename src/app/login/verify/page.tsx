@@ -12,11 +12,12 @@ import { getSessionBeforeMfa } from '@/lib/auth-server';
 import { mfaRequiredFor } from '@/lib/mfa';
 import { redirectForRole } from '@/lib/auth';
 import { verifyMfaAction, resendMfaAction, mfaMessageFor } from '@/lib/mfa-actions';
+import { loginHref, safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = { title: 'Confirm it is you', robots: { index: false, follow: false } };
 
 interface PageProps {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; sent?: string; next?: string }>;
 }
 
 /**
@@ -26,11 +27,11 @@ interface PageProps {
  * to anyone who has not already got that far.
  */
 export default async function VerifyPage({ searchParams }: PageProps) {
+  const { error, sent, next: rawNext } = await searchParams;
   const user = await getSessionBeforeMfa();
-  if (!user) redirect('/login');
-  if (!mfaRequiredFor(user.role)) redirect(redirectForRole(user.role));
-
-  const { error, sent } = await searchParams;
+  if (!user) redirect(loginHref(rawNext));
+  const next = safeNext(rawNext, user.role);
+  if (!mfaRequiredFor(user.role)) redirect(next ?? redirectForRole(user.role));
   const message = await mfaMessageFor(error);
 
   const masked = user.email.replace(/^(.).*(@.*)$/, (_m, a, b) => `${a}••••${b}`);
@@ -44,6 +45,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
       </p>
 
       <form action={verifyMfaAction} className="space-y-6">
+        {next && <input type="hidden" name="next" value={next} />}
         {sent && (
           <p role="status" className={authNoticeClass}>
             A new code is on its way.

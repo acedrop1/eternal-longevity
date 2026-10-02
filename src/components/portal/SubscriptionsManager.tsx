@@ -22,6 +22,7 @@ import {
 
 export interface Subscription {
   id: string;
+  productId: string;
   productName: string;
   cycleLabel: string;
   cadenceLabel: string;
@@ -38,7 +39,7 @@ type Status = 'active' | 'paused' | 'pending-review' | 'canceled';
 const STATUS_THEME: Record<Status, { label: string; tone: Tone }> = {
   active: { label: 'Active', tone: 'gold' },
   paused: { label: 'Paused', tone: 'warn' },
-  'pending-review': { label: 'In review', tone: 'info' },
+  'pending-review': { label: 'Renewal needed', tone: 'warn' },
   canceled: { label: 'Cancelled', tone: 'muted' },
 };
 
@@ -266,11 +267,21 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   </>
                 )}
 
-                {/* Pending-review: read-only */}
+                {/* Pending-review: the prescription ran its term. Renewing is
+                    a short assessment (what is on file is skipped), then a
+                    new order back to Dr. Elder. */}
                 {status === 'pending-review' && (
-                  <p className="text-[14px] text-ink/60">
-                    In review. Controls unlock once your order is confirmed.
-                  </p>
+                  <>
+                    <p className="w-full text-[14px] leading-relaxed text-ink/60">
+                      Your prescription is up for renewal. Confirm nothing has changed and Dr. Elder takes another look. You won’t be charged unless he approves.
+                    </p>
+                    <Link
+                      href={`/start?product=${encodeURIComponent(s.productId)}`}
+                      className={btnPrimary}
+                    >
+                      Confirm and continue
+                    </Link>
+                  </>
                 )}
 
                 <Link

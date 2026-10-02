@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 import { pendingMediaFor } from '@/lib/intake-status';
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function CheckoutSuccessPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   // A legacy open visit, or photos (hair, skin) still to add: either is the next step.

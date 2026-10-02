@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { DOCTOR_NAV } from '@/components/portal/ui';
 import { DoctorQueueList } from "@/components/doctor/DoctorQueueList";
-import { getSession } from "@/lib/auth-server";
+import { getSession, loginUrl } from "@/lib/auth-server";
 import { listOrders } from "@/lib/orders-db";
 import { doctorThreadStatuses, reviewsForOrders } from "@/lib/clinical-review";
 import { getPrescriber } from "@/lib/prescriber";
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function DoctorPortalPage() {
   const user = await getSession();
-  if (!user) redirect("/login");
+  if (!user) redirect(await loginUrl());
   if (user.role !== "doctor") redirect(user.redirectTo);
 
   /*

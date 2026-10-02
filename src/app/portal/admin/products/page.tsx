@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV, PageHeader, SectionTitle, StatusChip, btnPrimary, inset, panel, type Tone } from '@/components/portal/ui';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalog, getPharmacyEntries, type CatalogProduct, type ProductStatus } from '@/lib/catalog';
 import { SHOP_CATEGORIES } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
@@ -32,7 +32,7 @@ const STORE_NOTE: Record<ReturnType<typeof catalogStore>, string | null> = {
 
 export default async function AdminProductsPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const [products, pharmacy] = await Promise.all([getCatalog(), getPharmacyEntries()]);

@@ -5,13 +5,14 @@ import { AuthShell, AuthLabel, authErrorClass } from '@/components/auth/AuthShel
 import { PasswordField } from '@/components/auth/PasswordField';
 import { updatePasswordAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
+import { safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
   title: 'Set a new password',
 };
 
 interface ResetPageProps {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }
 
 /**
@@ -22,7 +23,8 @@ interface ResetPageProps {
 export default async function ResetPasswordPage({
   searchParams,
 }: ResetPageProps) {
-  const { error } = await searchParams;
+  const { error, next: rawNext } = await searchParams;
+  const next = safeNext(rawNext);
 
   if (!supabaseConfigured) {
     return (
@@ -45,6 +47,7 @@ export default async function ResetPasswordPage({
   return (
     <AuthShell eyebrow="Account" title="Set a new password.">
       <form action={updatePasswordAction} className="space-y-6">
+        {next && <input type="hidden" name="next" value={next} />}
         {error === 'weak' && (
           <div role="alert" className={authErrorClass}>
             Password must be 8+ characters with an uppercase letter, a lowercase letter, and a special character.

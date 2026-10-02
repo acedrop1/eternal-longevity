@@ -20,6 +20,7 @@ import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
 import { SERVICE_AREA_OR, SITE_NAME } from '@/lib/site';
 import { monthsPerCycle } from '@/lib/order-rules';
 import { shippingLabelFor, shippingPriceFor } from '@/lib/shipping';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -57,6 +58,9 @@ const SHIPPING_OPTIONS = [
 
 type ShippingMethodId = (typeof SHIPPING_OPTIONS)[number]['id'];
 
+/** The address typed so far, for this tab only, so a refresh keeps it. Cleared once the order is placed. */
+const SHIPPING_DRAFT = 'el-checkout-shipping';
+
 interface CheckoutFlowProps {
   defaultEmail: string;
   defaultName: string;
@@ -70,6 +74,8 @@ interface CheckoutFlowProps {
   /** Empty when Stripe is unconfigured; the card step hides and the order
    *  can still be placed, which keeps preview environments usable. */
   stripePublishableKey?: string;
+  /** The card on file ("Visa •••• 4242"), when there is one: the card step starts done. */
+  savedCard?: string | null;
 }
 
 // ============================================================================
@@ -161,7 +167,10 @@ const ORDER_ERROR: Record<string, string> = {
   empty_cart: 'Your cart is empty.',
   invalid_quantity: 'You can order up to 3 of each treatment and 5 treatments at a time.',
   invalid_address: 'Please check your shipping address.',
-  promo_unavailable: 'That code is no longer available. Remove it to continue.',
+  promo_unavailable: 'That code is no longer available, so we removed it. Check your total and place your order again.',
+  already_ordered: 'You already have one of these treatments, on a plan or on its way. Remove it to continue, or manage it in your portal.',
+  not_assessed: 'One of these treatments needs a few questions of its own first.',
+  duplicate_product: 'The same treatment is in your cart twice. Keep one plan to continue.',
   not_authorized: 'Please sign in to place your order.',
   default: 'We could not place your order. Please try again.',
 };
@@ -174,9 +183,17 @@ export function CheckoutFlow({
   defaultState = '',
   googlePlacesKey,
   stripePublishableKey,
+  savedCard,
 }: CheckoutFlowProps) {
   const router = useRouter();
-  const { resolvedItems, subtotal: cartSubtotal, removeItem, clear: clearCart } = useCart();
+  const {
+    resolvedItems,
+    subtotal: cartSubtotal,
+    hydrated,
+    removeItem,
+    setCadence,
+    clear: clearCart,
+  } = useCart();
   const { placeOrder } = useOrders();
   const {
     profile,
@@ -277,8 +294,11 @@ export function CheckoutFlow({
   const [promoInput, setPromoInput] = useState('');
   const [promo, setPromo] = useState<PromoCheck | null>(null);
   const [promoBusy, setPromoBusy] = useState(false);
-  // The card is captured (not charged) before the order can be placed.
-  const [cardSaved, setCardSaved] = useState(false);
+  // The card is captured (not charged) before the order can be placed. A card
+  // already on file counts, until they choose to use a different one.
+  const [cardSaved, setCardSaved] = useState(!!savedCard);
+  const [newCard, setNewCard] = useState(false);
+  const [notAssessed, setNotAssessed] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   // Separate, explicit consent to the charges themselves, recurring ones
   // included — the card is billed later with nobody at the keyboard.
@@ -343,18 +363,35 @@ export function CheckoutFlow({
   const hasCart = resolvedItems.length > 0;
 
   /*
-   * Nothing to check out: back to the shop. There used to be a stand-in line
-   * for a default product here, which meant an empty cart could place a real
-   * order for something nobody chose. The timer lets a cart still hydrating
-   * from storage land first, and `placed` stops the cart clearing after a
-   * successful order from racing the redirect to the success page.
+   * Nothing to check out: an empty state, once the saved cart has loaded
+   * (never before: that is how a full cart got bounced to the shop). There
+   * used to be a stand-in line for a default product here, which meant an
+   * empty cart could place a real order for something nobody chose. `placed`
+   * stops the cart clearing after a successful order from flashing the empty
+   * state on the way to the success page.
    */
   const placed = useRef(false);
+
+  // Restore the address typed before a refresh, then keep it as they type.
   useEffect(() => {
-    if (hasCart || placed.current) return;
-    const t = window.setTimeout(() => router.replace('/shop'), 0);
-    return () => window.clearTimeout(t);
-  }, [hasCart, router]);
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(SHIPPING_DRAFT) ?? 'null') as Record<string, unknown> | null;
+      if (!saved || typeof saved !== 'object') return;
+      setShipping((s) => ({
+        ...s,
+        ...Object.fromEntries(Object.entries(saved).filter(([k, v]) => k in s && typeof v === 'string' && v.trim())),
+      }));
+    } catch {
+      // Storage blocked or corrupt: the form starts from the defaults.
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(SHIPPING_DRAFT, JSON.stringify(shipping));
+    } catch {
+      // Private mode / quota: a refresh just starts over.
+    }
+  }, [shipping]);
 
   const lines = useMemo(
     () =>
@@ -363,6 +400,7 @@ export function CheckoutFlow({
         productId: it.productId,
         cadence: it.cadence,
         name: it.product.name,
+        tiers: cadenceTiersForProduct(it.product),
         cadenceLabel: it.cadence === 'once' ? 'One-time purchase' : `${it.cadenceLabel} billing`,
         qty: it.quantity,
         perMonth: it.perMonth,
@@ -390,6 +428,19 @@ export function CheckoutFlow({
   const freeShipping = Boolean(promo?.ok && promo.includesShipping);
   const shippingPrice = freeShipping ? 'Free' : `$${shippingCost}`;
   const total = Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax;
+
+  // A discount is priced on the basket it was applied to: re-price it when a plan or line changes.
+  useEffect(() => {
+    if (!promo?.ok || !promo.code) return;
+    let stale = false;
+    checkPromoAction(promo.code, Math.round(subtotal * 100))
+      .then((r) => !stale && setPromo(r))
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
 
   async function applyPromo() {
     if (!promoInput.trim() || promoBusy) return;
@@ -544,9 +595,20 @@ export function CheckoutFlow({
     if (!res.ok) {
       setIsPaying(false);
       setPayError(ORDER_ERROR[res.error ?? ''] ?? ORDER_ERROR.default);
+      if (res.error === 'promo_unavailable') {
+        setPromo(null);
+        setPromoInput('');
+      }
+      // The server names the product whose questions are still to answer.
+      setNotAssessed(res.error === 'not_assessed' ? ((res as { productId?: string }).productId ?? null) : null);
       return;
     }
     placed.current = true;
+    try {
+      window.sessionStorage.removeItem(SHIPPING_DRAFT);
+    } catch {
+      // Nothing to clear.
+    }
 
     // Clear the cart and route to success
     startTransition(() => {
@@ -624,6 +686,33 @@ export function CheckoutFlow({
 
   // Brand chip in card-number field
   const cardBrand = detectCardBrand(card.number);
+
+  if (hydrated && !hasCart && !placed.current) {
+    return (
+      <div className="mx-auto max-w-[640px] px-5 pb-20 pt-24 text-center md:pt-32">
+        <h1 className="mb-4 text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] text-ink md:text-[40px]">
+          Your cart is empty.
+        </h1>
+        <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
+          Pick a treatment and a plan, and you&rsquo;ll check out here.
+        </p>
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/portal/shop"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
+          >
+            Browse treatments
+          </Link>
+          <Link
+            href="/portal"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full px-6 py-3 text-[15px] font-semibold text-ink ring-1 ring-ink/15"
+          >
+            Back to your portal
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-12">
@@ -761,9 +850,24 @@ export function CheckoutFlow({
                           <div className="truncate text-[15px] font-semibold text-ink">
                             {l.name}
                           </div>
-                          <div className="mt-0.5 text-[13px] font-medium text-ink/60">
-                            {l.cadenceLabel}
-                          </div>
+                          {l.tiers.length > 1 ? (
+                            <select
+                              aria-label={`Plan for ${l.name}`}
+                              value={l.cadence}
+                              onChange={(e) => setCadence(l.productId, l.cadence, e.target.value as Cadence)}
+                              className="mt-1 w-full max-w-[260px] rounded-full bg-white py-1 pl-3 pr-2 text-[16px] font-medium text-ink ring-1 ring-ink/10 focus:outline-none focus:ring-2 focus:ring-ink/20 lg:text-[13px]"
+                            >
+                              {l.tiers.map((t) => (
+                                <option key={t.key} value={t.key}>
+                                  {t.key === 'once' ? 'One-time purchase' : `${t.label} billing`} · ${t.total}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div className="mt-0.5 text-[13px] font-medium text-ink/60">
+                              {l.cadenceLabel}
+                            </div>
+                          )}
                           <div className="mt-0.5 text-[13px] text-ink/55">
                             {l.sub} · Qty {l.qty}
                           </div>
@@ -1345,13 +1449,29 @@ export function CheckoutFlow({
                 <p className="mb-2.5 text-[13px] font-medium text-ink/70">
                   Payment method
                 </p>
-                <CheckoutCardStep
-                  publishableKey={stripePublishableKey}
-                  amountLabel={`$${total}`}
-                  amountCents={Math.round(total * 100)}
-                  saved={cardSaved}
-                  onSaved={() => setCardSaved(true)}
-                />
+                {savedCard && !newCard ? (
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-inner bg-butter-soft px-4 py-3.5 ring-1 ring-butter-deep/40">
+                    <span className="text-[15px] font-medium text-ink">{savedCard}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCard(true);
+                        setCardSaved(false);
+                      }}
+                      className="text-[14px] text-ink/70 underline decoration-ink/30 underline-offset-[3px] hover:text-ink"
+                    >
+                      Use a different card
+                    </button>
+                  </div>
+                ) : (
+                  <CheckoutCardStep
+                    publishableKey={stripePublishableKey}
+                    amountLabel={`$${total}`}
+                    amountCents={Math.round(total * 100)}
+                    saved={cardSaved}
+                    onSaved={() => setCardSaved(true)}
+                  />
+                )}
               </div>
             )}
 
@@ -1445,6 +1565,17 @@ export function CheckoutFlow({
             {payError && (
               <p role="alert" className="mt-3 text-center text-[14px] text-red-600">
                 {payError}
+                {notAssessed && (
+                  <>
+                    {' '}
+                    <Link
+                      href={`/start?product=${encodeURIComponent(notAssessed)}`}
+                      className="font-semibold text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                    >
+                      Answer them now
+                    </Link>
+                  </>
+                )}
               </p>
             )}
             <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/55">

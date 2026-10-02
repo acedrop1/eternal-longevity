@@ -27,6 +27,7 @@ import {
 import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
 import { AWAITING_PAYMENT, intentBelongsTo } from '@/lib/order-rules';
+import { REFILL_CHARGE_FAILED } from '@/lib/orders';
 
 export const TOKEN_TTL_DAYS = 7;
 
@@ -44,11 +45,16 @@ export interface PayableOrder {
 
 /**
  * Issue a pay link for a signed order and email it to the member. Called from
- * the prescriber's sign action; safe to call again to re-send.
+ * the prescriber's sign action; safe to call again to re-send. `email: false`
+ * when the member is already in the portal and is sent straight to it.
  */
-export async function issuePayLink(orderNumber: string): Promise<{
+export async function issuePayLink(
+  orderNumber: string,
+  opts: { email?: boolean } = {},
+): Promise<{
   ok: boolean;
   payUrl?: string;
+  token?: string;
   error?: string;
 }> {
   if (!supabaseAdminConfigured()) return { ok: false, error: 'not_configured' };
@@ -74,7 +80,7 @@ export async function issuePayLink(orderNumber: string): Promise<{
 
   const payUrl = `${SITE_URL}/pay/${token}`;
 
-  if (order.member_email) {
+  if (order.member_email && opts.email !== false) {
     const firstName = (order.member_name ?? '').trim().split(/\s+/)[0] || 'there';
     const msg = approvedPayNowEmail({
       firstName,
@@ -89,7 +95,48 @@ export async function issuePayLink(orderNumber: string): Promise<{
     });
   }
 
-  return { ok: true, payUrl };
+  return { ok: true, payUrl, token };
+}
+
+/**
+ * The member's own "Complete payment" button: their live pay link if it has
+ * an hour or more left, else a fresh one (not emailed: they are already here).
+ * Scoped to their own order. A refill whose charge failed is not paid here:
+ * paying it would ship the cycle while its plan stays paused, and restarting
+ * the plan would then charge for it again. It restarts from a fixed card.
+ */
+export async function payPathForMember(
+  userId: string,
+  orderNumber: string,
+): Promise<{ path?: string; error?: 'not_configured' | 'not_found' | 'not_payable' | 'refill' }> {
+  if (!supabaseAdminConfigured()) return { error: 'not_configured' };
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select('id, status, paid_confirmed_at, pay_token, pay_token_expires')
+    .eq('order_number', orderNumber)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!order) return { error: 'not_found' };
+  if (order.paid_confirmed_at || !AWAITING_PAYMENT.includes(order.status)) {
+    return { error: 'not_payable' };
+  }
+  const { data: failed } = await db
+    .from('order_updates')
+    .select('id')
+    .eq('order_id', order.id)
+    .eq('label', REFILL_CHARGE_FAILED)
+    .limit(1);
+  if (failed?.length) return { error: 'refill' };
+
+  const live =
+    order.pay_token &&
+    order.pay_token_expires &&
+    new Date(order.pay_token_expires).getTime() > Date.now() + 3600_000;
+  if (live) return { path: `/pay/${order.pay_token}` };
+
+  const fresh = await issuePayLink(orderNumber, { email: false });
+  return fresh.token ? { path: `/pay/${fresh.token}` } : { error: 'not_payable' };
 }
 
 /** Look up an order by its pay token. Returns null for expired/unknown tokens. */

@@ -6,7 +6,7 @@ import {
   AdminIntakeQueue,
   type IntakeRowView,
 } from '@/components/admin/AdminIntakeQueue';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -46,7 +46,7 @@ function flattenAnswers(answers: unknown): { label: string; value: string }[] {
 
 export default async function AdminQueuePage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();

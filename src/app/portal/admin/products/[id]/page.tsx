@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminProductEditor } from '@/components/admin/AdminProductEditor';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import type { ProductInput } from '@/lib/product-actions';
 
@@ -42,7 +42,7 @@ const BLANK: ProductInput = {
 
 export default async function AdminProductPage({ params }: PageProps) {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const { id } = await params;

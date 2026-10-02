@@ -9,6 +9,7 @@ import {
   useStripe,
 } from '@stripe/react-stripe-js';
 import { createOrderAuthAction } from '@/lib/checkout-payment-actions';
+import { setDefaultCardAction } from '@/lib/cards';
 
 /**
  * Card capture at checkout — saved, not charged.
@@ -42,7 +43,7 @@ function CardCapture({
       return;
     }
 
-    const { error: confirmErr } = await stripe.confirmSetup({
+    const { error: confirmErr, setupIntent } = await stripe.confirmSetup({
       elements,
       redirect: 'if_required',
     });
@@ -51,6 +52,15 @@ function CardCapture({
       setBusy(false);
       return;
     }
+    /*
+     * The approval charge takes the default card. Without this, a member who
+     * already had one and chose "Use a different card" would be charged the
+     * old one. Best effort: a failure leaves the newest card, which is still
+     * what gets charged when no default is set.
+     */
+    const pm = setupIntent?.payment_method;
+    const pmId = typeof pm === 'string' ? pm : pm?.id;
+    if (pmId) await setDefaultCardAction(pmId).catch(() => {});
     setBusy(false);
     onSaved();
   }
@@ -99,6 +109,8 @@ export function CheckoutCardStep({
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Bumped by "Try again" to ask for a fresh card form.
+  const [attempt, setAttempt] = useState(0);
 
   const stripePromise = useMemo<Promise<Stripe | null>>(
     () => loadStripe(publishableKey),
@@ -108,18 +120,21 @@ export function CheckoutCardStep({
   useEffect(() => {
     if (saved) return;
     let cancelled = false;
-    createOrderAuthAction(amountCents).then((res) => {
-      if (cancelled) return;
-      if (res.ok && res.clientSecret) {
-        setClientSecret(res.clientSecret);
-      } else {
-        setError('Card entry is unavailable right now.');
-      }
-    });
+    setError(null);
+    createOrderAuthAction(amountCents)
+      .catch(() => ({ ok: false, clientSecret: undefined }))
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok && res.clientSecret) {
+          setClientSecret(res.clientSecret);
+        } else {
+          setError('Card entry is unavailable right now.');
+        }
+      });
     return () => {
       cancelled = true;
     };
-  }, [saved, amountCents]);
+  }, [saved, amountCents, attempt]);
 
   if (saved) {
     return (
@@ -137,9 +152,16 @@ export function CheckoutCardStep({
 
   if (error) {
     return (
-      <p role="alert" className="rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-700 ring-1 ring-red-600/20">
-        {error}
-      </p>
+      <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-700 ring-1 ring-red-600/20">
+        <span>{error}</span>
+        <button
+          type="button"
+          onClick={() => setAttempt((n) => n + 1)}
+          className="min-h-[36px] rounded-full bg-white px-4 text-[14px] font-semibold text-ink ring-1 ring-ink/10 hover:bg-milk"
+        >
+          Try again
+        </button>
+      </div>
     );
   }
 

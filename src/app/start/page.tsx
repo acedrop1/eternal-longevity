@@ -9,6 +9,7 @@ import { isCategoryKey } from '@/lib/intakeSchema';
 import { knownAnswerIds } from '@/lib/intake-rules';
 import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { getAssessmentDraft } from '@/lib/assessment-drafts';
+import { heldProductsFor } from '@/lib/held-products';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
@@ -79,6 +80,8 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   // Their unfinished run from this same entry point (the wizard keys it the same way).
   const entry = (requested && PRODUCT_CATEGORY[requested.id] ? requested.id : undefined) ?? category ?? 'general';
   const saved = isMember ? await getAssessmentDraft(entry) : null;
+  // Already ordered, or already on a plan: no second assessment, no second order.
+  const held = isMember && requested ? (await heldProductsFor(user.id)).get(requested.id) : undefined;
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -96,6 +99,23 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
           >
             Message your care team
+          </Link>
+        </div>
+      ) : held && requested ? (
+        <div className="mx-auto max-w-[640px] px-5 pb-20 pt-24 text-center md:pt-32">
+          <h1 className="mb-4 text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] md:text-[40px]">
+            You already have {requested.name}.
+          </h1>
+          <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
+            {held === 'plan'
+              ? 'It’s on your plan, so there’s nothing new to order. You can change, pause or cancel it anytime.'
+              : 'Your order is already with us, so there’s no need to order it again. You can follow it in your portal.'}
+          </p>
+          <Link
+            href={held === 'plan' ? '/portal/subscriptions' : '/portal/orders'}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
+          >
+            {held === 'plan' ? 'Manage your plan' : 'View your order'}
           </Link>
         </div>
       ) : (

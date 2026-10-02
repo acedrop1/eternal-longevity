@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 import { intakeStateFor, pendingMediaFor } from '@/lib/intake-status';
 import { getCatalogProduct } from '@/lib/catalog';
@@ -26,7 +26,7 @@ export default async function VisitPage({
   searchParams: Promise<{ product?: string }>;
 }) {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const { product: param } = await searchParams;

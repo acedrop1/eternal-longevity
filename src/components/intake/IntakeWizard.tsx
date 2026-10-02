@@ -253,13 +253,35 @@ export function IntakeWizard({
   useEffect(() => {
     if (!saves) return;
     try {
-      const raw = window.localStorage.getItem(storageKey);
+      /*
+       * Nothing saved from this entry point: take the newest run from any
+       * other (/start?product=x and /start are the same person), keeping only
+       * the answers this run asks for.
+       */
+      let key = storageKey;
+      let raw = window.localStorage.getItem(key);
+      const fallback = !raw;
+      for (let i = 0, newest = 0; fallback && i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        const v = k?.startsWith('el-assessment:') ? window.localStorage.getItem(k) : null;
+        const at = v ? ((JSON.parse(v) as { savedAt?: number }).savedAt ?? 0) : 0;
+        if (k && v && at > newest) {
+          newest = at;
+          key = k;
+          raw = v;
+        }
+      }
       if (!raw) return;
       const saved = JSON.parse(raw) as { answers?: Answers; savedAt?: number };
-      const a = Object.fromEntries(Object.entries(saved.answers ?? {}).filter(([k]) => SAVED.has(k)));
+      let a = Object.fromEntries(Object.entries(saved.answers ?? {}).filter(([k]) => SAVED.has(k)));
       if (!Object.keys(a).length || Date.now() - (saved.savedAt ?? 0) > SAVE_DAYS * 864e5) {
-        window.localStorage.removeItem(storageKey);
+        window.localStorage.removeItem(key);
         return;
+      }
+      if (fallback) {
+        const asked = new Set(screensOf(stepsFor(a), a).flatMap((s) => s.fields.map((f) => f.id)));
+        a = Object.fromEntries(Object.entries(a).filter(([k]) => asked.has(k)));
+        if (!Object.keys(a).length) return;
       }
       const list = screensOf(stepsFor(a), a);
       const gap = list.findIndex((s) => !validateFields(s.fields, a).ok);
@@ -488,7 +510,8 @@ export function IntakeWizard({
           // The server saved the cart for a signed-in account; this covers demo mode.
           addToLocalCart(choice.productId, choice.cadence);
           setStatus({ kind: 'redirecting' });
-          router.push('/checkout');
+          // Replace: Back from checkout returns to where they started, not to a fresh assessment.
+          router.replace('/checkout');
           return;
         }
         setStatus({ kind: 'submitted' });
@@ -1045,7 +1068,10 @@ function SignInToContinue({
         {busy ? 'Signing in…' : 'Continue'}
       </button>
       <p className="mt-5 text-center">
-        <Link href="/forgot-password" className={link}>
+        <Link
+          href={`/forgot-password?next=${encodeURIComponent(`/start${typeof window === 'undefined' ? '' : window.location.search}`)}`}
+          className={link}
+        >
           Forgot your password?
         </Link>
       </p>

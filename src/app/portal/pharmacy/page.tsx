@@ -6,7 +6,7 @@ import {
   type PharmacyOrderView,
   type FulfillmentItemView,
 } from '@/components/pharmacy/PharmacyQueue';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -53,7 +53,7 @@ function rowToView(row: {
 
 export default async function PharmacyPortalPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'pharmacy') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();

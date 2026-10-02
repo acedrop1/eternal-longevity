@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPrescriber, listAudit } from '@/lib/prescriber';
 import { formatDateTime } from '@/lib/format';
 import { BUSINESS_LEGAL_NAME, BUSINESS_ADDRESS, SERVICE_AREA } from '@/lib/site';
@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: 'Compliance & audit' };
  */
 export default async function CompliancePage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const [record, audit] = await Promise.all([getPrescriber(), listAudit(200)]);

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminEmailMember } from '@/components/admin/AdminEmailMember';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import type { AccountStatus } from '@/lib/database.types';
 import {
   createSupabaseAdminClient,
@@ -261,7 +261,7 @@ interface PageProps {
 
 export default async function MemberDetailPage({ params }: PageProps) {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const { id } = await params;

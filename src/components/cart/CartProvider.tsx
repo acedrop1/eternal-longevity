@@ -14,6 +14,7 @@ import { cadenceTiersForProduct, type ShopProduct } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { CART_STORAGE_KEY, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { saveCartAction } from '@/lib/profile-db';
+import { withCadence } from '@/lib/purchase-rules';
 
 // Shared with the server actions — see lib/cartTypes.ts. Re-exported here so
 // the many existing `from '@/components/cart/CartProvider'` imports still work.
@@ -36,9 +37,13 @@ interface CartAPI extends CartState {
   resolvedItems: ResolvedCartItem[];
   subtotal: number;
   itemCount: number;
+  /** False until the saved cart has loaded: an empty cart before then means nothing yet. */
+  hydrated: boolean;
   addItem: (productId: string, cadence: Cadence) => void;
   removeItem: (productId: string, cadence: Cadence) => void;
   setQuantity: (productId: string, cadence: Cadence, qty: number) => void;
+  /** Move a line to another plan, merging with that plan's line if there is one. */
+  setCadence: (productId: string, from: Cadence, to: Cadence) => void;
   clear: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -186,6 +191,10 @@ export function CartProvider({
     []
   );
 
+  const setCadence = useCallback((productId: string, from: Cadence, to: Cadence) => {
+    setState((s) => ({ ...s, items: withCadence(s.items, productId, from, to) }));
+  }, []);
+
   const clear = useCallback(() => {
     setState((s) => ({ ...s, items: [] }));
   }, []);
@@ -234,9 +243,11 @@ export function CartProvider({
       resolvedItems,
       subtotal,
       itemCount,
+      hydrated,
       addItem,
       removeItem,
       setQuantity,
+      setCadence,
       clear,
       openDrawer,
       closeDrawer,
@@ -246,9 +257,11 @@ export function CartProvider({
       resolvedItems,
       subtotal,
       itemCount,
+      hydrated,
       addItem,
       removeItem,
       setQuantity,
+      setCadence,
       clear,
       openDrawer,
       closeDrawer,

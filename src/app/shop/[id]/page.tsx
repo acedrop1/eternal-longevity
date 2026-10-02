@@ -9,6 +9,21 @@ import { ProductPDPMobile } from '@/components/shop/ProductPDPMobile';
 import { getLiveProduct, getLiveProducts, toShopProduct } from '@/lib/catalog';
 import { pageMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
+import { getSession } from '@/lib/auth-server';
+import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { intakeProductIds } from '@/lib/intake-rules';
+
+/**
+ * A member already assessed for this product skips the assessment: the
+ * product page lets them pick a plan and add it to the cart. Everyone else
+ * starts the assessment.
+ */
+async function assessedFor(productId: string): Promise<boolean> {
+  const user = await getSession();
+  if (user?.role !== 'member') return false;
+  if ((await intakeStateFor(user.id)) !== 'submitted') return false;
+  return intakeProductIds(await latestIntakeAnswers(user.id)).includes(productId);
+}
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -35,6 +50,7 @@ export default async function PublicProductPage({ params }: PageProps) {
   const live = await getLiveProduct(id);
   if (!live) notFound();
   const product = toShopProduct(live);
+  const ctaHref = (await assessedFor(product.id)) ? undefined : `/start?product=${product.id}`;
 
   const relatedLive = (await getLiveProducts()).filter((p) => p.id !== product.id).slice(0, 3);
   const related = relatedLive.map(toShopProduct);
@@ -53,9 +69,9 @@ export default async function PublicProductPage({ params }: PageProps) {
             <span className="text-ink">{product.name}</span>
           </nav>
 
-          <ProductPDPMobile product={product} ctaHref={`/start?product=${product.id}`} />
+          <ProductPDPMobile product={product} ctaHref={ctaHref} />
           <div className="hidden md:block">
-            <ProductPDP product={product} related={related} basePath="/shop" ctaHref={`/start?product=${product.id}`} />
+            <ProductPDP product={product} related={related} basePath="/shop" ctaHref={ctaHref} />
           </div>
         </section>
 

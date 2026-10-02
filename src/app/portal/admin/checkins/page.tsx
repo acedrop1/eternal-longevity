@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { listCheckinsForStaff } from '@/lib/checkins-db';
 import { formatDate } from '@/lib/format';
 import { ADMIN_NAV, StatusChip } from '@/components/portal/ui';
@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: 'Check-ins' };
  */
 export default async function AdminCheckinsPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const rows = await listCheckinsForStaff();

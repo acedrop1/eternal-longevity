@@ -3,9 +3,9 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import type { Json } from '@/lib/database.types';
-import { getStripe } from '@/lib/stripe';
+import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
-import { defaultCardFor } from '@/lib/pay-on-approval';
+import { chargeOnApproval, defaultCardFor } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import {
   planNeedsReviewEmail,
@@ -21,7 +21,8 @@ import { nextOrderNumber } from '@/lib/order-number';
 import { getLiveProduct } from '@/lib/catalog';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { renewalSplit, shippingPriceFor } from '@/lib/shipping';
-import { cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
+import { AWAITING_PAYMENT, cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
+import { REFILL_CHARGE_FAILED } from '@/lib/orders';
 
 /**
  * How long a prescription written here stays good for.
@@ -231,7 +232,9 @@ export async function renewSubscription(
       const msg = planNeedsReviewEmail({
         firstName: (who.full_name ?? '').trim().split(/\s+/)[0] || 'there',
         productName: sub.product_name,
-        portalUrl: `${SITE_URL}/portal/subscriptions`,
+        // The renewal path: a signed-in member's assessment skips what is on
+        // file, and a plan in review no longer blocks a new order for it.
+        portalUrl: `${SITE_URL}/start?product=${encodeURIComponent(String(sub.product_id))}`,
       });
       try {
         await sendEmail({ to: who.email, subject: msg.subject, html: msg.html });
@@ -308,15 +311,9 @@ export async function renewSubscription(
     email: profile.email,
     name: profile.full_name ?? undefined,
   });
+  // No card is handled as a failed charge below, so it leaves the same
+  // order and marker a declined card does, and restarts the same way.
   const paymentMethodId = await defaultCardFor(customerId);
-  if (!paymentMethodId) {
-    await db
-      .from('subscriptions')
-      .update({ status: 'paused' })
-      .eq('id', sub.id);
-    await notifyRenewalFailed(sub, profile, 'No card on file.');
-    return { subscriptionId, result: 'no_card' };
-  }
 
   const orderNumber = await nextOrderNumber();
   const { data: order, error: orderErr } = await db
@@ -355,6 +352,7 @@ export async function renewSubscription(
 
   const addr = shipTo as Record<string, string | undefined>;
   try {
+    if (!paymentMethodId) throw new Error('No card on file.');
     const intent = await getStripe().paymentIntents.create({
       amount,
       currency: 'usd',
@@ -395,7 +393,7 @@ export async function renewSubscription(
     const reason = err instanceof Error ? err.message : 'charge_failed';
     await db.from('order_updates').insert({
       order_id: order.id,
-      label: 'Refill charge failed',
+      label: REFILL_CHARGE_FAILED,
       body: `${reason} The plan is paused until the card is fixed.`,
       author: 'System',
       author_role: 'system',
@@ -432,6 +430,113 @@ export async function renewSubscription(
   await autoSubmitToPharmacy(orderNumber, { refill: true, prescriptionId: rx.id });
 
   return { subscriptionId, result: 'charged', orderNumber };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  After a card is fixed                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface OwedPayment {
+  orderNumber: string;
+  productId: string;
+  productName: string;
+  /** A refill whose charge failed (restarts from the card), not a first order (pays by link). */
+  refill: boolean;
+}
+
+/** This member's approved orders still waiting on money. */
+export async function paymentsOwed(userId: string): Promise<OwedPayment[]> {
+  if (!supabaseAdminConfigured()) return [];
+  const db = createSupabaseAdminClient();
+  const { data: orders } = await db
+    .from('orders')
+    .select('id, order_number')
+    .eq('user_id', userId)
+    .in('status', AWAITING_PAYMENT)
+    .is('paid_confirmed_at', null);
+  if (!orders?.length) return [];
+  const ids = orders.map((o) => o.id);
+  const [{ data: items }, { data: failed }] = await Promise.all([
+    db.from('order_items').select('order_id, product_id, product_name').in('order_id', ids),
+    db.from('order_updates').select('order_id').in('order_id', ids).eq('label', REFILL_CHARGE_FAILED),
+  ]);
+  return orders.map((o) => {
+    const lines = (items ?? []).filter((i) => i.order_id === o.id);
+    return {
+      orderNumber: o.order_number,
+      productId: String(lines[0]?.product_id ?? ''),
+      productName: lines.map((i) => i.product_name).join(' + ') || 'your order',
+      refill: (failed ?? []).some((f) => f.order_id === o.id),
+    };
+  });
+}
+
+/**
+ * The member has saved a card: restart what a failed charge stopped. No
+ * Stripe webhook needed, the account page calls this.
+ *
+ * A failed refill is closed (it never took money) and its plan switched back
+ * on, so the next renewals run, within a day, charges the card on file for
+ * that cycle. Paying the old order instead would ship the cycle while the
+ * plan stayed paused. An approved first order gets a fresh pay link, emailed.
+ */
+export async function resumeAfterNewCard(user: {
+  id: string;
+  email: string;
+  name?: string;
+}): Promise<{ plans: number; payLinks: number }> {
+  const done = { plans: 0, payLinks: 0 };
+  if (!stripeConfigured()) return done;
+  const owed = await paymentsOwed(user.id);
+  if (!owed.length) return done;
+
+  // Still no card: switching a plan back on would only fail again tomorrow.
+  const card = owed.some((o) => o.refill)
+    ? await defaultCardFor(
+        await getOrCreateStripeCustomer({ userId: user.id, email: user.email, name: user.name }),
+      )
+    : undefined;
+
+  const db = createSupabaseAdminClient();
+  for (const o of owed) {
+    if (!o.refill) {
+      /*
+       * Approved, never paid: charge the card they just added and send it on,
+       * the same as at approval. A decline there emails the pay link itself.
+       */
+      const charge = await chargeOnApproval(o.orderNumber);
+      if (charge.charged) await autoSubmitToPharmacy(o.orderNumber);
+      else if (charge.ok) done.payLinks++;
+      continue;
+    }
+    if (!card) continue;
+    // Conditional on still being unpaid, so a double submit closes it once.
+    const { data: closed } = await db
+      .from('orders')
+      .update({ status: 'canceled', pay_token: null, pay_token_expires: null })
+      .eq('order_number', o.orderNumber)
+      .in('status', AWAITING_PAYMENT)
+      .is('paid_confirmed_at', null)
+      .select('id')
+      .maybeSingle();
+    if (!closed) continue;
+    await db.from('order_updates').insert({
+      order_id: closed.id,
+      label: 'Retrying on your updated card',
+      body: 'This charge didn’t go through, so it’s closed. Your plan is back on, and this refill is charged to your card within a day.',
+      author: 'System',
+      author_role: 'system',
+    });
+    const { data: back } = await db
+      .from('subscriptions')
+      .update({ status: 'active' })
+      .eq('user_id', user.id)
+      .eq('product_id', o.productId)
+      .eq('status', 'paused')
+      .select('id');
+    done.plans += back?.length ?? 0;
+  }
+  return done;
 }
 
 /** Subscriptions whose next cycle is due. */

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { IdVerificationForm } from '@/components/portal/IdVerificationForm';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { MEMBER_NAV, PageHeader, panel } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ const ACCEPTED_DOCS = [
 
 export default async function VerifyIdPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   return (

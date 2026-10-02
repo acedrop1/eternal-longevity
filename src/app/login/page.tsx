@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import {
   AuthShell,
   AuthLabel,
@@ -14,6 +15,8 @@ import { PasswordField } from '@/components/auth/PasswordField';
 import { DemoCredentials } from '@/components/auth/DemoCredentials';
 import { loginAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
+import { getSession } from '@/lib/auth-server';
+import { safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
   title: 'Log in',
@@ -21,11 +24,20 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  searchParams: Promise<{ error?: string; notice?: string; timeout?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; timeout?: string; next?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, notice, timeout } = await searchParams;
+  const { error, notice, timeout, next: rawNext } = await searchParams;
+
+  /*
+   * Already signed in: carry on rather than ask again. Not after an idle
+   * sign-out, though — the browser timer can fire a few seconds before the
+   * server's, and bouncing back in would undo the logoff.
+   */
+  const user = timeout ? null : await getSession();
+  if (user) redirect(safeNext(rawNext, user.role) ?? user.redirectTo);
+  const next = safeNext(rawNext);
 
   return (
     <AuthShell
@@ -42,6 +54,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       }
     >
       <form action={loginAction} className="space-y-6">
+        {/* Where to land after sign-in; loginAction re-checks it for the role. */}
+        {next && <input type="hidden" name="next" value={next} />}
         {notice === 'check-email' && (
           <div role="status" className={authNoticeClass}>
             Account created. Check your email for a confirmation link, then log
@@ -102,7 +116,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="flex items-baseline justify-between">
             <AuthLabel htmlFor="login-password">Password</AuthLabel>
             <Link
-              href={supabaseConfigured ? '/forgot-password' : '/contact'}
+              href={
+                supabaseConfigured
+                  ? `/forgot-password${next ? `?next=${encodeURIComponent(next)}` : ''}`
+                  : '/contact'
+              }
               className={`text-[13px] ${authLinkClass}`}
             >
               Forgot?

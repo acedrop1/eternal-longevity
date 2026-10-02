@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { LOCK_COOKIE, SITE_LOCKED, isOpenPath, lockToken } from '@/lib/site-lock';
+import { PATH_HEADER } from '@/lib/safe-next';
 
 /**
  * Root middleware. Refreshes the Supabase auth session on every request once
@@ -16,6 +17,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url, 307);
     }
   }
+  /*
+   * Tell server pages where they are, so a signed-out visitor to a guarded
+   * page goes to /login?next=<here> (see loginUrl). Set, never appended, so a
+   * browser cannot supply its own.
+   */
+  const here = request.nextUrl.clone();
+  here.searchParams.delete('_rsc');
+  request.headers.set(PATH_HEADER, here.pathname + here.search);
   return updateSession(request);
 }
 

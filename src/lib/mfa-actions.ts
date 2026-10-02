@@ -1,5 +1,6 @@
 'use server';
 
+import { safeNext } from '@/lib/safe-next';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSessionBeforeMfa } from '@/lib/auth-server';
@@ -77,7 +78,8 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
       name: user.name,
       role: user.role,
     });
-    redirect(redirectForRole(user.role));
+    // Back to where they were headed (validated for this role), else their dashboard.
+    redirect(safeNext(formData.get('next'), user.role) ?? redirectForRole(user.role));
   }
 
   if (result === 'expired' || result === 'locked') {

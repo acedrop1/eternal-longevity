@@ -6,7 +6,7 @@ import {
   AdminSettings,
   type ServiceStatus,
 } from '@/components/admin/AdminSettings';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { supabaseConfigured } from '@/lib/env';
 import { stripeConfigured } from '@/lib/stripe';
 import { emailConfigured } from '@/lib/email';
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default async function AdminSettingsPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const services: ServiceStatus[] = [

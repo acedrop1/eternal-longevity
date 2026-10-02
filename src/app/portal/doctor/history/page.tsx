@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DOCTOR_NAV } from '@/components/portal/ui';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { listOrders } from '@/lib/orders-db';
 import { cn } from '@/lib/utils';
 import { orderRef } from '@/lib/format';
@@ -60,7 +60,7 @@ async function loadSignedRx(): Promise<SignedRx[]> {
 
 export default async function DoctorHistoryPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'doctor') redirect(user.redirectTo);
 
   const signed = await loadSignedRx();

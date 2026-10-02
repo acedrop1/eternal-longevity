@@ -11,6 +11,7 @@ import 'server-only';
 import { Resend } from 'resend';
 import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SITE_URL } from '@/lib/site';
 import { orderRef } from '@/lib/format';
+import { trackingUrl } from '@/lib/orders';
 import type { Stage } from '@/lib/followups';
 
 let cached: Resend | null = null;
@@ -198,17 +199,18 @@ export function shippedEmail(input: {
 }): { subject: string; html: string } {
   return {
     subject: `Your ${orderRef(input.orderRef)} has shipped`,
-    html: noticeEmail({
-      eyebrow: 'On its way',
-      heading: `Good news, ${input.firstName} — your order has shipped.`,
-      rows: [
-        ['Order', input.orderRef],
-        ['Carrier', input.carrier],
-        ['Tracking', input.tracking],
-      ],
-      footnote:
-        'Store it as the label directs. Temperature-sensitive medications ship cold-chain — if yours says to refrigerate, do so on arrival.',
-    }),
+    html: shell(
+      `<div style="${EYEBROW}">ON ITS WAY</div>
+       <h1 style="${H1}">${escapeHtml(`Good news, ${input.firstName} — your order has shipped.`)}</h1>
+       ${dataRows([
+         ['Order', input.orderRef],
+         ['Carrier', input.carrier],
+         ['Tracking', input.tracking],
+       ])}
+       <div style="margin:24px 0 0;">${button('Track your package', trackingUrl(input.carrier, input.tracking))}</div>
+       <p style="margin:18px 0 0;">Every update on your order is in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>.</p>
+       <p style="margin:18px 0 0;color:${MUTED};font-size:13px;">Store it as the label directs. Temperature-sensitive medications ship cold-chain — if yours says to refrigerate, do so on arrival.</p>`,
+    ),
   };
 }
 
@@ -271,7 +273,7 @@ export function renewalFailedMemberEmail(input: {
     html: noticeEmail({
       eyebrow: 'Payment issue',
       heading: `${input.firstName}, we couldn’t charge your card for your refill.`,
-      body: 'Your plan is paused, so nothing will ship until the card is updated. Add or update your card and we’ll pick it straight back up.',
+      body: 'Your plan is paused, so nothing will ship until your card is updated. Update it in your account and tap Restart my plan, and we’ll charge the refill to that card within a day.',
       cta: { label: 'Update your card', href: `${SITE_URL}/portal/account` },
       footnote: 'If you meant to stop, you don’t need to do anything.',
     }),
@@ -291,7 +293,7 @@ export function renewalFailedTeamEmail(input: {
     html: noticeEmail({
       eyebrow: 'Refill failed',
       heading: 'A refill was not charged and will not ship',
-      body: 'The plan is paused and the patient has been emailed a link to update their card. Nothing needs placing with the pharmacy.',
+      body: 'The plan is paused and the patient has been emailed a link to update their card. Once they do, their account page restarts the plan and the next renewals run charges it. Nothing needs placing with the pharmacy.',
       rows: [
         ['Patient', `${input.patientName} · ${input.patientEmail}`],
         ['Plan', input.productName],
@@ -686,17 +688,22 @@ export function unfinishedVisitEmail(input: {
  */
 export function intakeNeedsInfoEmail(input: {
   firstName: string;
-  note: string;
+  /** Where the question is: their message thread, or the portal when there is no account to post it to. */
   portalUrl: string;
+  /** False when it could not be posted to their messages: then the note goes in the email. */
+  inThread: boolean;
+  note: string;
 }): { subject: string; html: string } {
   return {
     subject: 'One more thing before your review',
     html: shell(
       `<h1 style="${H1}">We need a little more from you.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — before a prescriber can review your visit, our team needs one more detail:</p>
-       <p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.note)}</p>
-       <p style="margin:0 0 18px;">Reply to this email, or message us from your portal. Nothing has been charged and nothing is waiting on you other than this.</p>
-       ${button('Open your portal', input.portalUrl)}`,
+       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — before Dr. Elder can review your visit, our team needs one more detail.${
+         input.inThread ? ' Your question is waiting in your messages, so it stays private.' : ''
+       }</p>
+       ${input.inThread ? '' : `<p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.note)}</p>`}
+       <p style="margin:0 0 18px;">Nothing has been charged and nothing is waiting on you other than this.</p>
+       ${button(input.inThread ? 'Read and reply' : 'Open your portal', input.portalUrl)}`,
     ),
   };
 }
@@ -753,8 +760,8 @@ export function planNeedsReviewEmail(input: {
     html: shell(
       `<h1 style="${H1}">Time for a check-in.</h1>
        <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescription has reached the end of its term, so your plan is paused until your prescriber reviews it again.</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">You have not been charged</strong> and nothing has shipped. Open your portal and confirm nothing has changed in your health, and it goes straight back to him.</p>
-       ${button('Review and restart', input.portalUrl)}`,
+       <p style="margin:0 0 18px;"><strong style="color:${INK};">You have not been charged</strong> and nothing has shipped. Confirm nothing has changed in your health (it takes a couple of minutes, and we skip what we already have), and it goes straight back to him.</p>
+       ${button('Confirm and continue', input.portalUrl)}`,
     ),
   };
 }

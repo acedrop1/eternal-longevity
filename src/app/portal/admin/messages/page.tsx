@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { StaffInbox } from '@/components/messages/StaffInbox';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   listMessageThreads,
   listThreadMessages,
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default async function AdminMessagesPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const threads = await listMessageThreads('support');

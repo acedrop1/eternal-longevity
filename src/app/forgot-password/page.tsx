@@ -10,19 +10,23 @@ import {
 } from '@/components/auth/AuthShell';
 import { requestPasswordResetAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
+import { loginHref, safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
   title: 'Reset password',
 };
 
 interface ForgotPageProps {
-  searchParams: Promise<{ sent?: string; error?: string }>;
+  searchParams: Promise<{ sent?: string; error?: string; next?: string }>;
 }
 
 export default async function ForgotPasswordPage({
   searchParams,
 }: ForgotPageProps) {
-  const { sent, error } = await searchParams;
+  const { sent, error, next: rawNext } = await searchParams;
+  // Where they were headed before the password got in the way.
+  const next = safeNext(rawNext);
+  const backToLogin = loginHref(next);
 
   // Demo mode — no real accounts to reset.
   if (!supabaseConfigured) {
@@ -34,7 +38,7 @@ export default async function ForgotPasswordPage({
             the portal uses demo logins — no password needed.
           </p>
           <Link
-            href="/login"
+            href={backToLogin}
             className="block w-full rounded-full bg-ink px-5 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-ink/85"
           >
             Back to login →
@@ -51,7 +55,7 @@ export default async function ForgotPasswordPage({
       footer={
         <>
           Remembered it?{' '}
-          <Link href="/login" className={authLinkClass}>
+          <Link href={backToLogin} className={authLinkClass}>
             Back to login
           </Link>
           .
@@ -71,7 +75,7 @@ export default async function ForgotPasswordPage({
             way. Check your inbox.
           </p>
           <Link
-            href="/login"
+            href={backToLogin}
             className={`inline-block text-[14px] ${authLinkClass}`}
           >
             Back to login →
@@ -79,6 +83,7 @@ export default async function ForgotPasswordPage({
         </div>
       ) : (
         <form action={requestPasswordResetAction} className="space-y-6">
+          {next && <input type="hidden" name="next" value={next} />}
           <p className="text-[15px] leading-relaxed text-ink-soft">
             Enter your account email and we&apos;ll send a link to set a new
             password.

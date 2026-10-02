@@ -4,9 +4,11 @@ import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ProductPDP, RelatedProducts } from '@/components/shop/ProductPDP';
 import { ProductPDPMobile } from '@/components/shop/ProductPDPMobile';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { MEMBER_NAV } from '@/components/portal/ui';
 import { getLiveProduct, getLiveProducts, toShopProduct } from '@/lib/catalog';
+import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { intakeCovers } from '@/lib/purchase-rules';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -32,13 +34,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ShopProductPage({ params }: PageProps) {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const { id } = await params;
   const live = await getLiveProduct(id);
   if (!live) notFound();
   const product = toShopProduct(live);
+  // Not assessed for this one yet: its own questions first (checkout enforces the same).
+  const [state, answers] = await Promise.all([intakeStateFor(user.id), latestIntakeAnswers(user.id)]);
+  const ctaHref = state === 'submitted' && intakeCovers(answers, product.id) ? undefined : `/start?product=${product.id}`;
 
   // Same category first, then the rest, three in all.
   const others = (await getLiveProducts()).filter((p) => p.id !== product.id).map(toShopProduct);
@@ -62,11 +67,11 @@ export default async function ShopProductPage({ params }: PageProps) {
       </nav>
 
       {/* Mobile: photo + plan picker, with the floating buy bar */}
-      <ProductPDPMobile product={product} />
+      <ProductPDPMobile product={product} ctaHref={ctaHref} />
 
       {/* Desktop: two-column PDP */}
       <div className="hidden pb-16 md:block lg:pb-0">
-        <ProductPDP product={product} related={related} />
+        <ProductPDP product={product} related={related} ctaHref={ctaHref} />
         <div className="mt-16">
           <RelatedProducts related={related} basePath="/portal/shop" />
         </div>

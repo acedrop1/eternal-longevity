@@ -51,13 +51,15 @@ export async function listMyMessages(channel: MessageChannel): Promise<PortalMes
   const user = await getSession();
   if (!user || !supabaseConfigured) return [];
   const db = await createSupabaseServerClient();
-  const { data } = await db
+  const { data, error } = await db
     .from('messages')
     .select('id, sender_id, body, created_at')
     .eq('thread_user_id', user.id)
     .eq('channel', channel)
     .order('created_at', { ascending: true })
     .limit(200);
+  // A failed load is not an empty thread: throw so the page can say so.
+  if (error) throw new Error(`listMyMessages(${channel}): ${error.message}`);
   return (data ?? []).map((m) => ({
     id: m.id,
     senderRole: m.sender_id === user.id ? ('member' as const) : ('staff' as const),

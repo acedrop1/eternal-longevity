@@ -1,5 +1,5 @@
 import 'server-only';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import {
   DEMO_USERS,
   SESSION_COOKIE,
@@ -10,6 +10,7 @@ import {
 import { supabaseConfigured } from './env';
 import { createSupabaseServerClient } from './supabase/server';
 import { MFA_COOKIE, mfaConfigured, mfaRequiredFor, verifyTicket } from './mfa';
+import { PATH_HEADER, loginHref } from './safe-next';
 
 /**
  * Read the current session.
@@ -32,6 +33,15 @@ export async function getSession(): Promise<SessionUser | null> {
     if (!verifyTicket(ticket, user.id)) return null;
   }
   return user;
+}
+
+/**
+ * The login page, set to come back here. For a guarded page whose visitor is
+ * signed out: `if (!user) redirect(await loginUrl());`. The middleware stamps
+ * the page path on every request, so no page has to spell out its own route.
+ */
+export async function loginUrl(): Promise<string> {
+  return loginHref((await headers()).get(PATH_HEADER));
 }
 
 /**

@@ -241,7 +241,7 @@ export async function submitIntakeAction(
     }
     await new Promise((resolve) => setTimeout(resolve, 600));
     // Local demo only: sign in as the demo member so checkout can be tried.
-    if (supabaseConfigured) return { ok: true, caseId, next: '/login' };
+    if (supabaseConfigured) return { ok: true, caseId, next: '/login?next=%2Fcheckout' };
     await setSession('member');
     return { ok: true, caseId, next: '/checkout' };
   }

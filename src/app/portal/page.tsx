@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
-import { getOnboardingSteps } from '@/lib/onboarding';
-import { pendingMediaFor } from '@/lib/intake-status';
-import { OnboardingChecklist } from '@/components/portal/OnboardingChecklist';
+import { intakeNeedsInfo, intakeStateFor, latestIntakeAnswers, pendingMediaFor } from '@/lib/intake-status';
+import { loadCart } from '@/lib/profile-db';
+import { memberNextStep } from '@/lib/member-next-step';
 import { listOrders } from '@/lib/orders-db';
 import { listOpenCheckinsForUser } from '@/lib/checkins-db';
 import { STATUS_LABEL } from '@/lib/orders';
@@ -38,16 +38,20 @@ export const metadata: Metadata = {
  */
 export default async function MemberPortalPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, media, orders, checkins, doctorThread, drafts] = await Promise.all([
+  const [pendingVisit, media, orders, checkins, doctorThread, drafts, state, latestAnswers, cart, needsInfo] = await Promise.all([
     getPendingVisit(),
     pendingMediaFor(user.id),
     listOrders().catch(() => []),
     listOpenCheckinsForUser(user.id).catch(() => []),
     listMyMessages('doctor').catch(() => []),
     listAssessmentDrafts().catch(() => []),
+    intakeStateFor(user.id),
+    latestIntakeAnswers(user.id),
+    loadCart().catch(() => ({ items: [] })),
+    intakeNeedsInfo(user.id).catch(() => false),
   ]);
   const unfinished = drafts[0] ? { ...drafts[0], ...resumeFor(drafts[0].entry) } : null;
   // Their own thread only (RLS). Unanswered = the prescriber spoke last.
@@ -66,7 +70,15 @@ export default async function MemberPortalPage() {
         : question.question
       : null;
   const checkin = checkins[0] ?? null;
-  const onboarding = await getOnboardingSteps(orders);
+  const next = memberNextStep({
+    state,
+    latestAnswers,
+    orders,
+    cart: cart.items,
+    photosOwed: media.photos,
+    hasDraft: Boolean(unfinished),
+    needsInfo,
+  });
   const latest = orders[0] ?? null;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
 
@@ -95,7 +107,7 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit || preview || media.photos || unfinished
+          pendingVisit || preview || media.photos || unfinished || next
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
@@ -169,11 +181,30 @@ export default async function MemberPortalPage() {
         </section>
       )}
 
-      <OnboardingChecklist steps={onboarding} />
-
-      {/* The visit used to get its own REQUIRED card here. The checklist
-          above already opens on whichever step is outstanding, so this was the
-          same call to action twice on one screen. */}
+      {/* One next step, named for the product it is about. Shown only when
+          there is no unfinished assessment to continue (that card is the step). */}
+      {next && !unfinished && (
+        <section
+          aria-labelledby="next-step"
+          className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
+        >
+          <p className="mb-1 text-[13px] font-medium text-ink/60">{next.eyebrow}</p>
+          <h2
+            id="next-step"
+            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
+          >
+            {next.title}
+          </h2>
+          <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">{next.body}</p>
+          <Link
+            href={next.cta.href}
+            className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
+          >
+            {next.cta.label}
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+          </Link>
+        </section>
+      )}
       {/* Latest order, one line */}
       {latest && (
         <Link

@@ -48,7 +48,9 @@ import {
 } from '@/lib/order-rules';
 import type { Database } from '@/lib/database.types';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
-import { canOrder } from '@/lib/intake-status';
+import { canOrder, latestIntakeAnswers } from '@/lib/intake-status';
+import { heldProductsFor } from '@/lib/held-products';
+import { intakeCovers } from '@/lib/purchase-rules';
 import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
 import { nextOrderNumber } from '@/lib/order-number';
@@ -289,7 +291,7 @@ export async function placeOrderAction(input: {
   shippingAddress: Order['shippingAddress'];
   /** Promotion code the member entered, if any. */
   promoCode?: string;
-}): Promise<ActionResult & { orderNumber?: string }> {
+}): Promise<ActionResult & { orderNumber?: string; productId?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
 
@@ -351,6 +353,20 @@ export async function placeOrderAction(input: {
   }
 
   /*
+   * One of each product, and only what the intake covers. A second order for
+   * something already in flight or on a plan is a duplicate charge waiting to
+   * happen; a product whose questions were never asked reaches the prescriber
+   * with nothing to review. The start and product pages route around both;
+   * these hold for a saved cart or a crafted request.
+   */
+  const ids = input.lines.map((l) => l.productId);
+  if (new Set(ids).size !== ids.length) return { ok: false, error: 'duplicate_product' };
+  const [held, answers] = await Promise.all([heldProductsFor(user.id), latestIntakeAnswers(user.id)]);
+  if (ids.some((id) => held.has(id))) return { ok: false, error: 'already_ordered' };
+  const unassessed = ids.find((id) => !intakeCovers(answers, id));
+  if (unassessed) return { ok: false, error: 'not_assessed', productId: unassessed };
+
+  /*
    * Name, plan and price come from the catalogue, never from the request.
    * The browser sends what it displayed; this is what gets charged, so an
    * edited request can't set its own price, and a price changed in
@@ -393,6 +409,9 @@ export async function placeOrderAction(input: {
       cartDiscountCents = check.discountCents ?? 0;
       appliedCode = check.code ?? null;
       freeShipping = Boolean(check.includesShipping);
+    } else {
+      // They were shown a discount; booking full price without a word is worse than asking.
+      return { ok: false, error: 'promo_unavailable' };
     }
   }
 

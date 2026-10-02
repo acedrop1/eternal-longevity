@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { useOrders } from './OrdersProvider';
 import {
   getPhysicianName,
-  STATUS_LABEL,
+  isFailedRefill,
+  memberNote,
+  statusLabel,
+  trackingUrl,
   type Order,
   type OrderStatus,
 } from '@/lib/orders';
@@ -23,15 +26,23 @@ import { orderRef } from '@/lib/format';
 
 // Same semantic colours as before, as dot + label chips.
 const STATUS_TONE: Record<OrderStatus, Tone> = {
+  pending: 'neutral',
   'pending-admin': 'neutral',
   'denied-admin': 'error',
   assigned: 'gold',
-  signed: 'gold',
+  // Waiting on the member: the one state they have to act on.
+  signed: 'warn',
+  paid: 'info',
   'declined-clinical': 'error',
   compounding: 'info',
   shipped: 'gold',
   delivered: 'muted',
+  canceled: 'muted',
+  refunded: 'muted',
 };
+
+/** Ended without shipping on a decision: nothing to reorder from here. */
+const NO_REORDER: string[] = ['denied-admin', 'declined-clinical'];
 
 interface MemberOrdersListProps {
   memberEmail: string;
@@ -72,6 +83,9 @@ function MemberOrderCard({ order }: { order: Order }) {
     year: 'numeric',
   });
   const physician = getPhysicianName(order.assignedToPhysicianId);
+  const owed = order.status === 'signed';
+  const refill = isFailedRefill(order);
+  const productId = order.lines[0]?.productId;
 
   return (
     <article className={`${panel} p-5 md:p-6`}>
@@ -115,8 +129,8 @@ function MemberOrderCard({ order }: { order: Order }) {
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 sm:block sm:flex-shrink-0 sm:text-right">
-          <StatusChip tone={STATUS_TONE[order.status]}>
-            {sentenceCase(STATUS_LABEL[order.status])}
+          <StatusChip tone={STATUS_TONE[order.status] ?? 'neutral'}>
+            {sentenceCase(statusLabel(order.status))}
           </StatusChip>
           <div className="text-[17px] font-medium text-ink tabular-nums sm:mt-2">
             ${order.total}
@@ -124,20 +138,37 @@ function MemberOrderCard({ order }: { order: Order }) {
         </div>
       </div>
 
+      {/* Approved and unpaid: the one thing to do. A refill restarts from a
+          fixed card rather than a pay link (see refills.ts). */}
+      {owed && (
+        <div className={`${inset} mt-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
+          <p className="text-[15px] leading-relaxed text-ink/85">
+            {refill
+              ? 'Your card didn’t go through for this refill. Update it and we’ll restart your plan.'
+              : 'Dr. Elder approved this order. Complete payment and we’ll send it to the pharmacy.'}
+          </p>
+          <Link
+            href={refill ? '/portal/account' : `/portal/orders/pay/${encodeURIComponent(order.id)}`}
+            prefetch={false}
+            className={`${btnPrimary} flex-shrink-0`}
+          >
+            {refill ? 'Update your card' : 'Complete payment'}
+          </Link>
+        </div>
+      )}
+
       {order.tracking && (
         <div className={`${inset} mt-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="min-w-0">
             <div className="font-medium text-[12px] text-ink/55">
-              {order.carrier} · Tracking
+              {order.carrier ? `${order.carrier} · ` : ''}Tracking
             </div>
             <div className="mt-0.5 truncate font-medium text-[14px] text-ink">
               {order.tracking}
             </div>
           </div>
           <Link
-            href={`https://fedex.com/fedextrack/?trknbr=${encodeURIComponent(
-              order.tracking.replace(/\s/g, '')
-            )}`}
+            href={trackingUrl(order.carrier, order.tracking)}
             target="_blank"
             rel="noopener noreferrer"
             className={`${btnSecondary} flex-shrink-0`}
@@ -167,7 +198,7 @@ function MemberOrderCard({ order }: { order: Order }) {
                     <span className="tabular-nums">{relativeTime(u.at)}</span>
                   </div>
                   <p className="text-[15px] leading-relaxed text-ink/85">
-                    {u.note}
+                    {memberNote(u.note)}
                   </p>
                 </li>
               ))}
@@ -176,14 +207,16 @@ function MemberOrderCard({ order }: { order: Order }) {
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
+        {productId && !NO_REORDER.includes(order.status) && (
+          <Link
+            href={`/portal/shop/${encodeURIComponent(productId)}`}
+            className={btnSecondary}
+          >
+            Reorder
+          </Link>
+        )}
         <Link
-          href="/portal/shop"
-          className={btnSecondary}
-        >
-          Reorder
-        </Link>
-        <Link
-          href="/contact"
+          href="/portal/messages?thread=support"
           className={btnSecondary}
         >
           Issue with this order?

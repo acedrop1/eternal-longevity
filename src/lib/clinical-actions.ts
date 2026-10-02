@@ -89,12 +89,29 @@ export async function requestIntakeInfo(input: {
       .from('intake_submissions')
       .update({ status: 'needs_info', review_notes: input.note.trim() })
       .eq('id', input.intakeId)
-      .select('email, answers')
+      .select('email, answers, user_id')
       .maybeSingle();
     if (error) return { ok: false, message: error.message };
 
+    /*
+     * The question goes where they can answer it: their support thread, which
+     * is the admin inbox. The email then only says where to look, so the note
+     * itself stays behind the sign-in.
+     */
+    const session = await getSession();
+    let inThread = false;
+    if (intake?.user_id && session) {
+      const { error: msgErr } = await db.from('messages').insert({
+        thread_user_id: intake.user_id,
+        sender_id: session.id,
+        channel: 'support',
+        body: input.note.trim(),
+      });
+      inThread = !msgErr;
+    }
+
     // Asking for information nobody is told about is just a stalled case.
-    const sent = await notifyNeedsInfo(intake, input.note.trim());
+    const sent = await notifyNeedsInfo(intake, input.note.trim(), inThread);
     return {
       ok: true,
       message: sent
@@ -234,13 +251,15 @@ function fullNameOf(answers: unknown): string {
 async function notifyNeedsInfo(
   intake: { email?: string | null; answers?: unknown } | null,
   note: string,
+  inThread: boolean,
 ): Promise<boolean> {
   const email = intake?.email;
   if (!email) return false;
   const msg = intakeNeedsInfoEmail({
     firstName: firstNameOf(intake?.answers),
     note,
-    portalUrl: `${SITE_URL}/portal`,
+    inThread,
+    portalUrl: inThread ? `${SITE_URL}/portal/messages?thread=support` : `${SITE_URL}/portal`,
   });
   try {
     const res = await sendEmail({ to: email, subject: msg.subject, html: msg.html });

@@ -15,6 +15,7 @@ import {
   idleMinutesForPath,
   isStaffPath,
 } from '@/lib/session-policy';
+import { PATH_HEADER } from '@/lib/safe-next';
 
 const MFA_COOKIE = 'el_mfa';
 
@@ -97,6 +98,8 @@ export async function updateSession(request: NextRequest) {
    * in the browser because a timer a user can stop is not a control.
    */
   const path = request.nextUrl.pathname;
+  // This page, for `?next=` on the way out (the root middleware strips _rsc).
+  const here = request.headers.get(PATH_HEADER) ?? path;
 
   /*
    * Staff areas need the second factor as well as the password. Checked here
@@ -113,12 +116,21 @@ export async function updateSession(request: NextRequest) {
     if (!ok) {
       const url = request.nextUrl.clone();
       url.pathname = '/login/verify';
-      url.search = '';
+      url.search = `?next=${encodeURIComponent(here)}`;
       return NextResponse.redirect(url);
     }
   }
 
-  if (path.startsWith('/portal') || path.startsWith('/checkout')) {
+  /*
+   * Every page counts as activity, not just the portal: a member who spends
+   * forty minutes between the shop and the assessment is not idle, and must
+   * not be bounced when the wizard hands them to checkout. The idle check runs
+   * on the same requests, so a stale session cannot be revived by visiting a
+   * public page first. API polling is not a person, and /auth is where a
+   * fresh session is being set up (updatePasswordAction restarts the clocks).
+   */
+  const guarded = path.startsWith('/portal') || path.startsWith('/checkout');
+  if (!path.startsWith('/api/') && !path.startsWith('/auth/')) {
     const now = Date.now();
     const seen = Number(request.cookies.get(ACTIVITY_COOKIE)?.value ?? 0);
     const since = Number(request.cookies.get(SESSION_START_COOKIE)?.value ?? 0);
@@ -137,14 +149,22 @@ export async function updateSession(request: NextRequest) {
 
     if (idledOut || agedOut) {
       await supabase.auth.signOut();
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.search = `?timeout=${idledOut ? 'idle' : 'expired'}`;
-      const out = NextResponse.redirect(url);
-      // Drop every auth cookie, not just the session stamps.
-      for (const c of request.cookies.getAll()) {
-        if (c.name.startsWith('sb-')) out.cookies.delete(c.name);
+      const authCookies = request.cookies
+        .getAll()
+        .filter((c) => c.name.startsWith('sb-') || c.name === MFA_COOKIE);
+      let out: NextResponse;
+      if (guarded) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/login';
+        url.search = `?timeout=${idledOut ? 'idle' : 'expired'}&next=${encodeURIComponent(here)}`;
+        out = NextResponse.redirect(url);
+      } else {
+        // A public page just renders signed out; no reason to send them to /login.
+        for (const c of authCookies) request.cookies.delete(c.name);
+        out = NextResponse.next({ request });
       }
+      // Drop every auth cookie, not just the session stamps.
+      for (const c of authCookies) out.cookies.delete(c.name);
       out.cookies.delete(ACTIVITY_COOKIE);
       out.cookies.delete(SESSION_START_COOKIE);
       out.cookies.delete(MFA_COOKIE);

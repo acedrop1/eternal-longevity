@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DOCTOR_NAV } from '@/components/portal/ui';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPrescriber } from '@/lib/prescriber';
 import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
 
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
  */
 export default async function DoctorProfilePage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'doctor') redirect(user.redirectTo);
 
   // Contact details come from the prescriber's own profile row, never from

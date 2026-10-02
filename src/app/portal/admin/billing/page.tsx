@@ -6,7 +6,7 @@ import {
   type BillingCustomer,
   type BillingSummary,
 } from '@/components/admin/AdminBilling';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { billingConfigured } from '@/lib/billing';
 import {
   createSupabaseAdminClient,
@@ -44,7 +44,7 @@ const REVENUE_STATUSES = ['paid', 'compounding', 'shipped', 'delivered'];
 
 export default async function AdminBillingPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   let customers: BillingCustomer[] = DEMO_CUSTOMERS;

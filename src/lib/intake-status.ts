@@ -39,6 +39,23 @@ export async function intakeStateFor(userId: string): Promise<IntakeState> {
   return 'none';
 }
 
+/**
+ * True while the newest intake is sent back for more information. intakeStateFor
+ * folds that into 'submitted' (ordering stays open); the dashboard needs it on
+ * its own so the member is told a question is waiting.
+ */
+export async function intakeNeedsInfo(userId: string): Promise<boolean> {
+  if (!supabaseAdminConfigured()) return false;
+  const { data } = await createSupabaseAdminClient()
+    .from('intake_submissions')
+    .select('status')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.status === 'needs_info';
+}
+
 /** Only a completed intake may place an order. */
 export async function canOrder(userId: string): Promise<boolean> {
   return (await intakeStateFor(userId)) === 'submitted';

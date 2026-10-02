@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminUsers, type AdminUserRow } from '@/components/admin/AdminUsers';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -30,7 +30,7 @@ function formatJoined(iso: string): string {
 
 export default async function AdminUsersPage() {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();
