@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ui/useConfirm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import {
@@ -87,6 +88,7 @@ export function StripeCardsManager({
 }: {
   publishableKey: string;
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -121,6 +123,7 @@ export function StripeCardsManager({
 
   return (
     <div className="space-y-3">
+      {confirmDialog}
       {loading && (
         <p role="status" className="text-[15px] text-ink/55">Loading your cards…</p>
       )}
@@ -172,7 +175,7 @@ export function StripeCardsManager({
               type="button"
               disabled={busyId === c.id}
               onClick={async () => {
-                if (!window.confirm(`Remove the card ending ${c.last4}?`)) return;
+                if (!(await confirm({ title: `Remove the card ending ${c.last4}?`, confirmLabel: 'Remove card', danger: true }))) return;
                 setBusyId(c.id);
                 await removeCardAction(c.id);
                 setBusyId(null);

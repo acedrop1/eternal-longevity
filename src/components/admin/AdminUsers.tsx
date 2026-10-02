@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ui/useConfirm';
 import { Fragment, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Role } from '@/lib/auth';
@@ -88,6 +89,7 @@ export function AdminUsers({
   /** Dev-only fixture rows are showing. */
   sample?: boolean;
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [rows, setRows] = useState(users);
   const [tab, setTab] = useState<Tab>('all');
   const [role, setRole] = useState<Role | 'all'>('all');
@@ -134,6 +136,7 @@ export function AdminUsers({
 
   return (
     <div className="space-y-5">
+      {confirmDialog}
       <AdminPageHeader
         title="Members"
         subtitle={`${rows.length} people · ${memberCount} members. Members, doctors, the pharmacy and admins.`}
@@ -212,6 +215,7 @@ export function AdminUsers({
                   onToggle={() => setOpenId((id) => (id === u.id ? null : u.id))}
                   onStatus={patchStatus}
                   onRole={patchRole}
+                  confirm={confirm}
                 />
               ))
             )}
@@ -233,6 +237,7 @@ function UserRow({
   onToggle,
   onStatus,
   onRole,
+  confirm,
 }: {
   user: AdminUserRow;
   orders: number | null;
@@ -240,6 +245,7 @@ function UserRow({
   onToggle: () => void;
   onStatus: (id: string, status: AccountStatus) => void;
   onRole: (id: string, role: Role) => void;
+  confirm: ReturnType<typeof useConfirm>[0];
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,7 +257,7 @@ function UserRow({
         : status === 'suspended'
           ? 'Suspend'
           : 'Deactivate';
-    if (!window.confirm(`${verb} ${user.name}'s account?`)) return;
+    if (!(await confirm({ title: `${verb} ${user.name}'s account?`, confirmLabel: verb, danger: status !== 'active' }))) return;
 
     setBusy(true);
     setError(null);
@@ -340,9 +346,11 @@ function UserRow({
                       const next = e.target.value as Role;
                       if (next === user.role) return;
                       if (
-                        !window.confirm(
-                          `Change ${user.name} from ${user.role} to ${next}? This changes what they can see and do.`,
-                        )
+                        !(await confirm({
+                          title: `Change ${user.name} from ${user.role} to ${next}?`,
+                          body: 'This changes what they can see and do.',
+                          confirmLabel: 'Change role',
+                        }))
                       ) {
                         return;
                       }
@@ -369,7 +377,7 @@ function UserRow({
                     setError(null);
                     const res = await adminSendPasswordEmail({ userId: user.id });
                     setError(res.ok ? null : res.message);
-                    if (res.ok) window.alert(res.message);
+                    if (res.ok) void confirm({ title: 'Email sent', body: res.message, alert: true });
                     setBusy(false);
                   }}
                 />

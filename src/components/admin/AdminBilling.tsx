@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ui/useConfirm';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   adminChargeOnce,
@@ -204,6 +205,7 @@ export function AdminBilling({
 }
 
 function PromoPanel() {
+  const [confirm, confirmDialog] = useConfirm();
   const [codes, setCodes] = useState<PromoCode[]>([]);
   // The code being edited; null = the form creates a new one.
   const [editing, setEditing] = useState<string | null>(null);
@@ -274,7 +276,7 @@ function PromoPanel() {
   }
 
   async function remove(c: PromoCode) {
-    if (!window.confirm(`Delete ${c.code}? This cannot be undone.`)) return;
+    if (!(await confirm({ title: `Delete ${c.code}?`, body: 'This can’t be undone.', confirmLabel: 'Delete', danger: true }))) return;
     setResult(await deletePromoAction(c.id));
     if (editing === c.id) reset();
     load();
@@ -286,6 +288,7 @@ function PromoPanel() {
       title="Discount codes"
       description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
     >
+      {confirmDialog}
       <form onSubmit={onSubmit} className="space-y-4">
         {editing && (
           <p className="text-[13px] font-medium text-ink">
@@ -692,6 +695,7 @@ function SubscriptionPanel({ userId }: { userId: string }) {
 }
 
 function ChargePanel({ userId, name }: { userId: string; name: string }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
@@ -701,9 +705,11 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
     e.preventDefault();
     const dollars = Number(amount) || 0;
     if (
-      !window.confirm(
-        `Charge ${name}'s card ${money(Math.round(dollars * 100))} now? This bills them immediately.`,
-      )
+      !(await confirm({
+        title: `Charge ${name}'s card ${money(Math.round(dollars * 100))}?`,
+        body: 'This bills them immediately.',
+        confirmLabel: 'Charge now',
+      }))
     ) {
       return;
     }
@@ -726,6 +732,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
       title="Charge the card"
       description="Bills the customer's saved card a single amount — an add-on, an adjustment, or a manual cycle."
     >
+      {confirmDialog}
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className={labelClass}>Amount (USD)</label>
@@ -757,6 +764,7 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
 }
 
 function RefundPanel() {
+  const [confirm, confirmDialog] = useConfirm();
   const [ref, setRef] = useState('');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
@@ -775,7 +783,7 @@ function RefundPanel() {
     const partial = amount.trim()
       ? ` ${money(Math.round((Number(amount) || 0) * 100))} of`
       : ' all of';
-    if (!window.confirm(`Refund${partial} ${trimmed}? This cannot be undone.`)) {
+    if (!(await confirm({ title: `Refund${partial} ${trimmed}?`, body: 'This can’t be undone.', confirmLabel: 'Refund', danger: true }))) {
       return;
     }
     setBusy(true);
@@ -805,6 +813,7 @@ function RefundPanel() {
       title="Refund an order"
       description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Stripe pi_ id still works for anything without an order."
     >
+      {confirmDialog}
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="refund-ref" className={labelClass}>
