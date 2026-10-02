@@ -39,15 +39,17 @@ export function shippingLabelFor(product: { storage?: Storage } | null | undefin
 
 /**
  * One order's total. The promo comes off the items only, so it can never eat
- * into shipping or tax. Server and checkout both price with this.
+ * into tax, nor into shipping unless the code says it waives shipping
+ * (freeShipping). Server and checkout both price with this.
  */
 export function orderTotalCents(o: {
   subtotalCents: number;
   shippingCents: number;
   taxCents: number;
   discountCents: number;
+  freeShipping?: boolean;
 }): number {
-  return Math.max(0, o.subtotalCents - o.discountCents) + o.shippingCents + o.taxCents;
+  return Math.max(0, o.subtotalCents - o.discountCents) + (o.freeShipping ? 0 : o.shippingCents) + o.taxCents;
 }
 
 /**

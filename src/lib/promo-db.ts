@@ -32,6 +32,8 @@ export interface PromoCode {
   expiresAt: string | null;
   active: boolean;
   note: string | null;
+  /** Also waives the order's shipping. */
+  includesShipping: boolean;
   createdAt: string;
 }
 
@@ -41,6 +43,8 @@ export interface PromoCheck {
   discountCents?: number;
   code?: string;
   label?: string;
+  /** Shipping is waived too; the server adds it to the order's discount. */
+  includesShipping?: boolean;
   error?: string;
 }
 
@@ -73,7 +77,7 @@ export async function checkPromoAction(
   const db = createSupabaseAdminClient();
   const { data: promo } = await db
     .from('promo_codes')
-    .select('code, kind, value, max_redemptions, redeemed_count, expires_at, active')
+    .select('code, kind, value, max_redemptions, redeemed_count, expires_at, active, includes_shipping')
     .eq('code', code)
     .maybeSingle();
 
@@ -105,9 +109,11 @@ export async function checkPromoAction(
     discountCents,
     code: promo.code,
     label:
-      promo.kind === 'percent'
+      (promo.kind === 'percent'
         ? `${promo.value}% off`
-        : `$${(promo.value / 100).toFixed(2)} off`,
+        : `$${(promo.value / 100).toFixed(2)} off`) +
+      (promo.includes_shipping ? ' + free shipping' : ''),
+    includesShipping: promo.includes_shipping,
   };
 }
 
@@ -131,11 +137,12 @@ export async function listPromosAction(): Promise<PromoCode[]> {
     expiresAt: r.expires_at,
     active: r.active,
     note: r.note,
+    includesShipping: r.includes_shipping,
     createdAt: r.created_at,
   }));
 }
 
-export async function createPromoAction(input: {
+export interface PromoInput {
   code: string;
   kind: 'percent' | 'fixed';
   /** Percent 1-100, or dollars for a fixed code. */
@@ -143,7 +150,44 @@ export async function createPromoAction(input: {
   maxRedemptions?: number;
   expiresAt?: string;
   note?: string;
-}): Promise<{ ok: boolean; message: string }> {
+  includesShipping?: boolean;
+}
+
+/** The columns a create or an edit writes, or why the input is refused. */
+function promoFields(input: PromoInput):
+  | { ok: true; code: string; fields: { code: string; kind: string; value: number; max_redemptions: number | null; expires_at: string | null; note: string | null; includes_shipping: boolean } }
+  | { ok: false; message: string } {
+  const code = input.code.trim().toUpperCase();
+  if (!/^[A-Z0-9-]{3,24}$/.test(code)) {
+    return { ok: false, message: 'Codes are 3–24 characters: letters, numbers and hyphens.' };
+  }
+  if (input.kind === 'percent' && (input.value < 1 || input.value > 100)) {
+    return { ok: false, message: 'A percentage must be between 1 and 100.' };
+  }
+  if (input.kind === 'fixed' && !(input.value > 0)) {
+    return { ok: false, message: 'A fixed discount must be more than $0.' };
+  }
+  const max = input.maxRedemptions;
+  if (max !== undefined && (!Number.isInteger(max) || max < 1)) {
+    return { ok: false, message: 'Max uses is a whole number of at least 1, or blank for unlimited.' };
+  }
+  return {
+    ok: true,
+    code,
+    fields: {
+      code,
+      kind: input.kind,
+      // Percent stays a percent; a fixed discount is stored in cents.
+      value: input.kind === 'percent' ? Math.round(input.value) : Math.round(input.value * 100),
+      max_redemptions: max ?? null,
+      expires_at: input.expiresAt || null,
+      note: input.note?.trim() || null,
+      includes_shipping: Boolean(input.includesShipping),
+    },
+  };
+}
+
+export async function createPromoAction(input: PromoInput): Promise<{ ok: boolean; message: string }> {
   const user = await getSession();
   if (!user || user.role !== 'admin') {
     return { ok: false, message: 'Not authorised.' };
@@ -152,34 +196,12 @@ export async function createPromoAction(input: {
     return { ok: false, message: 'Database is not configured.' };
   }
 
-  const code = input.code.trim().toUpperCase();
-  if (!/^[A-Z0-9-]{3,24}$/.test(code)) {
-    return {
-      ok: false,
-      message: 'Codes are 3–24 characters: letters, numbers and hyphens.',
-    };
-  }
-  if (input.kind === 'percent' && (input.value < 1 || input.value > 100)) {
-    return { ok: false, message: 'A percentage must be between 1 and 100.' };
-  }
-  if (input.kind === 'fixed' && input.value <= 0) {
-    return { ok: false, message: 'A fixed discount must be more than $0.' };
-  }
+  const f = promoFields(input);
+  if (!f.ok) return f;
+  const { code } = f;
 
   const db = createSupabaseAdminClient();
-  const { error } = await db.from('promo_codes').insert({
-    code,
-    kind: input.kind,
-    // Percent stays a percent; a fixed discount is stored in cents.
-    value:
-      input.kind === 'percent'
-        ? Math.round(input.value)
-        : Math.round(input.value * 100),
-    max_redemptions: input.maxRedemptions ?? null,
-    expires_at: input.expiresAt || null,
-    note: input.note?.trim() || null,
-    created_by: user.id,
-  });
+  const { error } = await db.from('promo_codes').insert({ ...f.fields, created_by: user.id });
 
   if (error) {
     return {
@@ -204,4 +226,49 @@ export async function togglePromoAction(
   if (error) return { ok: false, message: error.message };
   revalidatePath('/portal/admin/billing');
   return { ok: true, message: active ? 'Code enabled.' : 'Code disabled.' };
+}
+
+/**
+ * Edit a code. Its redemption count is kept: an edit changes what the code
+ * does from now on, not the orders already placed with it (those stored their
+ * own discount).
+ */
+export async function updatePromoAction(
+  id: string,
+  input: PromoInput,
+): Promise<{ ok: boolean; message: string }> {
+  if (!(await adminOnly())) return { ok: false, message: 'Not authorised.' };
+  if (!supabaseAdminConfigured()) return { ok: false, message: 'Database is not configured.' };
+  const f = promoFields(input);
+  if (!f.ok) return f;
+  const db = createSupabaseAdminClient();
+  const { error } = await db.from('promo_codes').update(f.fields).eq('id', id);
+  if (error) {
+    return {
+      ok: false,
+      message: error.message.includes('duplicate') ? `${f.code} already exists.` : error.message,
+    };
+  }
+  revalidatePath('/portal/admin/billing');
+  return { ok: true, message: `${f.code} saved.` };
+}
+
+/**
+ * Delete a code nobody has used. A used code is part of the orders that
+ * redeemed it, so it can only be disabled.
+ */
+export async function deletePromoAction(id: string): Promise<{ ok: boolean; message: string }> {
+  if (!(await adminOnly())) return { ok: false, message: 'Not authorised.' };
+  if (!supabaseAdminConfigured()) return { ok: false, message: 'Database is not configured.' };
+  const db = createSupabaseAdminClient();
+  const { data, error } = await db
+    .from('promo_codes')
+    .delete()
+    .eq('id', id)
+    .eq('redeemed_count', 0)
+    .select('id');
+  if (error) return { ok: false, message: error.message };
+  if (!data?.length) return { ok: false, message: 'This code has been used, so it can only be disabled.' };
+  revalidatePath('/portal/admin/billing');
+  return { ok: true, message: 'Code deleted.' };
 }

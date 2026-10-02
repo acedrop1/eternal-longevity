@@ -67,6 +67,7 @@ export type Database = {
           expires_at: string | null;
           active: boolean;
           note: string | null;
+          includes_shipping: boolean;
           created_by: string | null;
           created_at: string;
         };
@@ -80,6 +81,7 @@ export type Database = {
           expires_at?: string | null;
           active?: boolean;
           note?: string | null;
+          includes_shipping?: boolean;
           created_by?: string | null;
           created_at?: string;
         };
@@ -93,6 +95,7 @@ export type Database = {
           expires_at?: string | null;
           active?: boolean;
           note?: string | null;
+          includes_shipping?: boolean;
           created_by?: string | null;
           created_at?: string;
         };

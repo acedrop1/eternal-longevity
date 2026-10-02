@@ -327,13 +327,37 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state, stripe_payment_intent_id',
+      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state, stripe_payment_intent_id, promo_code',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
 
   if (!order) return { ok: false, error: 'not_found' };
   if (order.paid_confirmed_at) return { ok: true, charged: false };
+
+  /*
+   * A code that covers the items and the shipping leaves nothing to charge,
+   * and Stripe refuses $0. Settle it here with the same claim the webhook
+   * makes, so it goes to the pharmacy like any paid order.
+   */
+  if ((order.total_cents ?? 0) === 0 && order.promo_code) {
+    const { data: claimed } = await db
+      .from('orders')
+      .update({ paid_confirmed_at: new Date().toISOString(), pay_token: null, pay_token_expires: null })
+      .eq('id', order.id)
+      .is('paid_confirmed_at', null)
+      .select('id');
+    if (!claimed?.length) return { ok: true, charged: false };
+    await db.from('orders').update({ status: 'paid' }).eq('id', order.id).in('status', AWAITING_PAYMENT);
+    await db.from('order_updates').insert({
+      order_id: order.id,
+      label: 'Order confirmed',
+      body: `Covered in full by code ${order.promo_code}. Nothing was charged.`,
+      author: 'System',
+      author_role: 'system',
+    });
+    return { ok: true, charged: true };
+  }
 
   const stripe = getStripe();
 

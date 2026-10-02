@@ -385,8 +385,11 @@ export function CheckoutFlow({
   // Prescription drugs carry no sales tax in NJ, NY, PA or MI; the server sets it too.
   const tax = 0;
   const discount = promo?.ok ? (promo.discountCents ?? 0) / 100 : 0;
-  // The promo comes off the items only, never shipping (lib/shipping orderTotalCents).
-  const total = Math.max(0, subtotal - discount) + shippingCost + tax;
+  // The promo comes off the items only, and off shipping only when the code
+  // waives it (lib/shipping orderTotalCents).
+  const freeShipping = Boolean(promo?.ok && promo.includesShipping);
+  const shippingPrice = freeShipping ? 'Free' : `$${shippingCost}`;
+  const total = Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax;
 
   async function applyPromo() {
     if (!promoInput.trim() || promoBusy) return;
@@ -813,7 +816,7 @@ export function CheckoutFlow({
                   <SummaryRow label="Subtotal" value={`$${subtotal}`} />
                   <SummaryRow
                     label="Shipping"
-                    value={`$${shippingCost}`}
+                    value={shippingPrice}
                   />
                   {promo?.ok && (
                     <SummaryRow
@@ -1253,7 +1256,7 @@ export function CheckoutFlow({
             isComplete={completed.method}
             summary={
               completed.method
-                ? `${shippingLabels} · $${shippingCost}`
+                ? `${shippingLabels} · ${shippingPrice}`
                 : ''
             }
             disabled={!completed.shipping}
@@ -1294,7 +1297,7 @@ export function CheckoutFlow({
                       </span>
                     </span>
                     <span className="flex-shrink-0 text-[15px] font-semibold text-ink tabular-nums">
-                      {`+$${shippingCost}`}
+                      {freeShipping ? 'Free' : `+$${shippingCost}`}
                     </span>
                   </button>
                 );

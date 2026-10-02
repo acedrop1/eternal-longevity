@@ -387,7 +387,8 @@ async function sendOrderConfirmation(
       orderNumber: order.order_number,
       total: order.total_cents ?? 0,
       shipping: order.shipping_cents ?? 0,
-      discount: Math.min(order.discount_cents ?? 0, order.subtotal_cents ?? 0),
+      // Up to items + shipping: a free-shipping code records the waived shipping here.
+      discount: Math.min(order.discount_cents ?? 0, (order.subtotal_cents ?? 0) + (order.shipping_cents ?? 0)),
       items: (items ?? []).map((i) => ({
         name: i.product_name,
         qty: i.quantity ?? 1,

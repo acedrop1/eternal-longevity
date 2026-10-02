@@ -386,11 +386,13 @@ export async function placeOrderAction(input: {
    */
   let cartDiscountCents = 0;
   let appliedCode: string | null = null;
+  let freeShipping = false;
   if (input.promoCode) {
     const check = await checkPromoAction(input.promoCode, cartSubtotalCents);
-    if (check.ok && check.discountCents) {
-      cartDiscountCents = check.discountCents;
+    if (check.ok && (check.discountCents || check.includesShipping)) {
+      cartDiscountCents = check.discountCents ?? 0;
       appliedCode = check.code ?? null;
+      freeShipping = Boolean(check.includesShipping);
     }
   }
 
@@ -436,8 +438,10 @@ export async function placeOrderAction(input: {
     const subtotalCents = lineSubtotal(line);
     const shippingCents = shippingPriceFor(live.get(line.productId)) * 100;
     const taxCents = share(cartTaxCents, i);
-    const discountCents = share(cartDiscountCents, i);
-    const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents, discountCents });
+    const itemDiscountCents = share(cartDiscountCents, i);
+    const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents, discountCents: itemDiscountCents, freeShipping });
+    // Waived shipping is recorded as discount, so subtotal + shipping - discount = total.
+    const discountCents = itemDiscountCents + (freeShipping ? shippingCents : 0);
 
     /*
      * One number per order, and a multi-product cart is several orders — each
@@ -497,7 +501,7 @@ export async function placeOrderAction(input: {
     created.push(orderNumber);
     bookedTotalCents += totalCents;
     bookedShippingCents += shippingCents;
-    bookedDiscountCents += Math.min(discountCents, subtotalCents);
+    bookedDiscountCents += Math.min(itemDiscountCents, subtotalCents) + (freeShipping ? shippingCents : 0);
   }
 
   // ponytail: a code claimed for a basket that then failed to insert stays

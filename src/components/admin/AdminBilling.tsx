@@ -12,8 +12,10 @@ import {
 } from '@/lib/admin-billing-actions';
 import {
   createPromoAction,
+  deletePromoAction,
   listPromosAction,
   togglePromoAction,
+  updatePromoAction,
   type PromoCode,
 } from '@/lib/promo-db';
 import { cn } from '@/lib/utils';
@@ -203,11 +205,14 @@ export function AdminBilling({
 
 function PromoPanel() {
   const [codes, setCodes] = useState<PromoCode[]>([]);
+  // The code being edited; null = the form creates a new one.
+  const [editing, setEditing] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [kind, setKind] = useState<'percent' | 'fixed'>('percent');
   const [value, setValue] = useState('');
   const [maxRedemptions, setMax] = useState('');
   const [expiresAt, setExpires] = useState('');
+  const [includesShipping, setIncludesShipping] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AdminBillingResult | null>(null);
 
@@ -216,24 +221,44 @@ function PromoPanel() {
   }, []);
   useEffect(load, [load]);
 
+  function reset() {
+    setEditing(null);
+    setCode('');
+    setKind('percent');
+    setValue('');
+    setMax('');
+    setExpires('');
+    setIncludesShipping(false);
+  }
+
+  function edit(c: PromoCode) {
+    setEditing(c.id);
+    setCode(c.code);
+    setKind(c.kind);
+    setValue(c.kind === 'percent' ? String(c.value) : (c.value / 100).toFixed(2));
+    setMax(c.maxRedemptions === null ? '' : String(c.maxRedemptions));
+    setExpires(c.expiresAt ? c.expiresAt.slice(0, 10) : '');
+    setIncludesShipping(c.includesShipping);
+    setResult(null);
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setResult(null);
     try {
-      const r = await createPromoAction({
+      const input = {
         code,
         kind,
         value: Number(value) || 0,
         maxRedemptions: maxRedemptions ? Number(maxRedemptions) : undefined,
         expiresAt: expiresAt || undefined,
-      });
+        includesShipping,
+      };
+      const r = editing ? await updatePromoAction(editing, input) : await createPromoAction(input);
       setResult(r);
       if (r.ok) {
-        setCode('');
-        setValue('');
-        setMax('');
-        setExpires('');
+        reset();
         load();
       }
     } catch {
@@ -248,6 +273,13 @@ function PromoPanel() {
     load();
   }
 
+  async function remove(c: PromoCode) {
+    if (!window.confirm(`Delete ${c.code}? This cannot be undone.`)) return;
+    setResult(await deletePromoAction(c.id));
+    if (editing === c.id) reset();
+    load();
+  }
+
   return (
     <Panel
       eyebrow="Promotions"
@@ -255,6 +287,11 @@ function PromoPanel() {
       description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
     >
       <form onSubmit={onSubmit} className="space-y-4">
+        {editing && (
+          <p className="text-[13px] font-medium text-ink">
+            Editing {codes.find((c) => c.id === editing)?.code}. Orders already placed keep their discount.
+          </p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="promo-code" className={labelClass}>
@@ -320,7 +357,27 @@ function PromoPanel() {
             />
           </div>
         </div>
-        <SubmitButton busy={busy} label="Create code" />
+        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-ink">
+          <input
+            type="checkbox"
+            checked={includesShipping}
+            onChange={(e) => setIncludesShipping(e.target.checked)}
+            className="h-4 w-4 accent-ink"
+          />
+          Free shipping too
+        </label>
+        <div className="flex items-center gap-3">
+          <SubmitButton busy={busy} label={editing ? 'Save changes' : 'Create code'} />
+          {editing && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-[14px] font-medium text-ink/60 hover:text-ink"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
       <ResultBanner result={result} />
 
@@ -334,7 +391,10 @@ function PromoPanel() {
             return (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-inner border border-ink/10 bg-white px-4 py-3"
+                className={cn(
+                  'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-inner border bg-white px-4 py-3',
+                  editing === c.id ? 'border-ink/40' : 'border-ink/10',
+                )}
               >
                 <span className="text-[13px] text-ink">
                   {c.code}
@@ -343,6 +403,7 @@ function PromoPanel() {
                   {c.kind === 'percent'
                     ? `${c.value}% off`
                     : `${money(c.value)} off`}
+                  {c.includesShipping ? ' + free shipping' : ''}
                 </span>
                 <span className="text-[12px] tabular-nums text-ink/60">
                   {c.redeemedCount}
@@ -350,18 +411,36 @@ function PromoPanel() {
                   {expired ? ' · expired' : ''}
                   {spent && !expired ? ' · spent' : ''}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => toggle(c.id, !c.active)}
-                  className={cn(
-                    'ml-auto flex-none rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
-                    c.active
-                      ? 'border-emerald-600/25 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                      : 'border-ink/10 text-ink/60 hover:text-ink',
+                <div className="ml-auto flex flex-none items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => edit(c)}
+                    className="rounded-full border border-ink/10 px-3 py-1 text-[12px] font-medium text-ink/70 transition-colors hover:text-ink"
+                  >
+                    Edit
+                  </button>
+                  {c.redeemedCount === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(c)}
+                      className="rounded-full border border-ink/10 px-3 py-1 text-[12px] font-medium text-red-700/80 transition-colors hover:text-red-700"
+                    >
+                      Delete
+                    </button>
                   )}
-                >
-                  {c.active ? 'Active' : 'Off'}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => toggle(c.id, !c.active)}
+                    className={cn(
+                      'rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
+                      c.active
+                        ? 'border-emerald-600/25 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                        : 'border-ink/10 text-ink/60 hover:text-ink',
+                    )}
+                  >
+                    {c.active ? 'Active' : 'Off'}
+                  </button>
+                </div>
               </div>
             );
           })}
