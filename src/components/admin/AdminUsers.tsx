@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Role } from '@/lib/auth';
 import type { AccountStatus } from '@/lib/database.types';
@@ -12,6 +12,28 @@ import {
   type AdminUserResult,
 } from '@/lib/admin-users-actions';
 import { cn } from '@/lib/utils';
+import { useOrders } from '@/components/orders/OrdersProvider';
+import {
+  AdminPageHeader,
+  Chevron,
+  IndexFooter,
+  IndexTabs,
+  IndexToolbar,
+  StatusBadge,
+  detailCell,
+  detailRow,
+  fromControl,
+  headerButton,
+  indexCard,
+  row as rowClass,
+  table,
+  tbody,
+  td,
+  th,
+  thead,
+  toolbarSelect,
+  type BadgeTone,
+} from '@/components/admin/IndexTable';
 
 export interface AdminUserRow {
   id: string;
@@ -22,52 +44,81 @@ export interface AdminUserRow {
   joinedAt: string;
 }
 
-const ROLE_BADGE: Record<Role, string> = {
-  member: 'border-butter-deep/70 bg-butter-soft text-ink/85',
-  doctor: 'border-sky-600/25 bg-sky-50 text-sky-800',
-  pharmacy: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
-  admin: 'border-ink/25 bg-ink/10 text-ink/85',
+const STATUS_BADGE: Record<AccountStatus, [string, BadgeTone]> = {
+  active: ['Active', 'success'],
+  suspended: ['Suspended', 'attention'],
+  deactivated: ['Deactivated', 'neutral'],
 };
 
-const STATUS_BADGE: Record<AccountStatus, string> = {
-  active: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
-  suspended: 'border-amber-600/25 bg-amber-50 text-amber-800',
-  deactivated: 'border-ink/10 bg-milk text-ink/60',
+const ROLE_LABEL: Record<Role, string> = {
+  member: 'Member',
+  doctor: 'Doctor',
+  pharmacy: 'Pharmacy',
+  admin: 'Admin',
 };
 
 const inputClass =
   'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
 
-const FILTERS: { label: string; role: Role | 'all' }[] = [
-  { label: 'All', role: 'all' },
-  { label: 'Members', role: 'member' },
-  { label: 'Doctors', role: 'doctor' },
-  { label: 'Pharmacies', role: 'pharmacy' },
-  { label: 'Admins', role: 'admin' },
+type Tab = 'all' | 'members' | 'staff' | 'suspended' | 'deactivated';
+
+const TAB_TEST: Record<Tab, (u: AdminUserRow) => boolean> = {
+  all: () => true,
+  members: (u) => u.role === 'member',
+  staff: (u) => u.role !== 'member',
+  suspended: (u) => u.status === 'suspended',
+  deactivated: (u) => u.status === 'deactivated',
+};
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'members', label: 'Members' },
+  { key: 'staff', label: 'Staff' },
+  { key: 'suspended', label: 'Suspended' },
+  { key: 'deactivated', label: 'Deactivated' },
 ];
 
 export function AdminUsers({
   users,
   live,
+  sample = false,
 }: {
   users: AdminUserRow[];
   live: boolean;
+  /** Dev-only fixture rows are showing. */
+  sample?: boolean;
 }) {
   const [rows, setRows] = useState(users);
-  const [filter, setFilter] = useState<Role | 'all'>('all');
+  const [tab, setTab] = useState<Tab>('all');
+  const [role, setRole] = useState<Role | 'all'>('all');
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  // Orders per member, from the orders the portal already loaded.
+  const { orders } = useOrders();
+  const orderCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const o of orders) if (o.userId) m.set(o.userId, (m.get(o.userId) ?? 0) + 1);
+    return m;
+  }, [orders]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rows.filter((u) => {
-      if (filter !== 'all' && u.role !== filter) return false;
+    // Rows arrive newest first.
+    const list = rows.filter((u) => {
+      if (!TAB_TEST[tab](u)) return false;
+      if (role !== 'all' && u.role !== role) return false;
       if (!q) return true;
       return (
         u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
       );
     });
-  }, [rows, filter, query]);
+    if (sort === 'oldest') list.reverse();
+    if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
+    return list;
+  }, [rows, tab, role, sort, query]);
 
   function patchRole(id: string, role: Role) {
     setRows((curr) => curr.map((u) => (u.id === id ? { ...u, role } : u)));
@@ -79,35 +130,26 @@ export function AdminUsers({
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {!live && (
-        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Demo directory. Adding and suspending users goes live once Supabase
-          is connected.
-        </div>
-      )}
+  const memberCount = rows.filter((u) => u.role === 'member').length;
 
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <input
-            aria-label="Search users by name or email"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email…"
-            className="w-full rounded-inner bg-white px-5 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => setAdding((v) => !v)}
-          className="flex-shrink-0 rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85"
-        >
-          {adding ? 'Close' : '+ Add user'}
-        </button>
-      </div>
+  return (
+    <div className="space-y-5">
+      <AdminPageHeader
+        title="Members"
+        subtitle={`${rows.length} people · ${memberCount} members. Members, doctors, the pharmacy and admins.`}
+        actions={
+          <button type="button" onClick={() => setAdding((v) => !v)} className={headerButton}>
+            {adding ? 'Close' : 'Add user'}
+          </button>
+        }
+      />
+
+      {!live && (
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          {sample ? 'Sample data (dev only). ' : 'Demo directory. '}
+          Adding and suspending users goes live once Supabase is connected.
+        </p>
+      )}
 
       {adding && (
         <AddUserPanel
@@ -116,62 +158,67 @@ export function AdminUsers({
         />
       )}
 
-      {/* Role filter */}
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-        {FILTERS.map((f) => (
-          <button
-            key={f.role}
-            type="button"
-            onClick={() => setFilter(f.role)}
-            className={cn(
-              'flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-all',
-              filter === f.role
-                ? 'border-ink bg-ink text-white'
-                : 'border-ink/10 bg-white text-ink/70 hover:border-ink/25 hover:text-ink',
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <div className={indexCard}>
+        <IndexTabs
+          label="User filter"
+          tabs={TABS.map((t) => ({ ...t, count: t.key === 'all' ? undefined : rows.filter(TAB_TEST[t.key]).length }))}
+          value={tab}
+          onChange={setTab}
+        />
+        <IndexToolbar query={query} onQuery={setQuery} placeholder="Search by name or email">
+          <select aria-label="Role" value={role} onChange={(e) => setRole(e.target.value as Role | 'all')} className={toolbarSelect}>
+            <option value="all">All roles</option>
+            <option value="member">Members</option>
+            <option value="doctor">Doctors</option>
+            <option value="pharmacy">Pharmacies</option>
+            <option value="admin">Admins</option>
+          </select>
+          <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className={toolbarSelect}>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </IndexToolbar>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-shell bg-milk">
-        <div className="max-h-[75vh] overflow-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-milk">
-              <tr className="border-b border-ink/10 text-left text-[12px] text-ink/60">
-                <th className="px-4 py-3 font-normal md:px-6">User</th>
-                <th className="hidden px-4 py-3 font-normal md:table-cell md:px-6">
-                  Role
-                </th>
-                <th className="hidden px-4 py-3 font-normal md:table-cell md:px-6">
-                  Joined
-                </th>
-                <th className="px-4 py-3 font-normal md:px-6">Status</th>
-                <th className="px-4 py-3 text-right font-normal md:px-6">
-                  Actions
-                </th>
+        <div className="md:overflow-x-auto">
+        <table className={table}>
+          <thead className={thead}>
+            <tr>
+              <th className={th}>Name</th>
+              <th className={th}>Email</th>
+              <th className={th}>Role</th>
+              <th className={th}>Status</th>
+              <th className={cn(th, 'text-right')}>Orders</th>
+              <th className={th}>Joined</th>
+              <th className={th}>
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className={tbody}>
+            {visible.length === 0 ? (
+              <tr className="block md:table-row">
+                <td colSpan={7} className="block px-4 py-10 text-center text-[13px] text-ink/55 md:table-cell">
+                  No users match.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {visible.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-10 text-center text-sm text-ink/55"
-                  >
-                    No users match.
-                  </td>
-                </tr>
-              ) : (
-                visible.map((u) => (
-                  <UserRow key={u.id} user={u} onStatus={patchStatus} onRole={patchRole} />
-                ))
-              )}
-            </tbody>
-          </table>
+            ) : (
+              visible.map((u) => (
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  orders={u.role === 'member' ? orderCount.get(u.id) ?? 0 : null}
+                  open={openId === u.id}
+                  onToggle={() => setOpenId((id) => (id === u.id ? null : u.id))}
+                  onStatus={patchStatus}
+                  onRole={patchRole}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
         </div>
+        <IndexFooter shown={visible.length} total={rows.length} noun="users" />
       </div>
     </div>
   );
@@ -181,10 +228,16 @@ export function AdminUsers({
 
 function UserRow({
   user,
+  orders,
+  open,
+  onToggle,
   onStatus,
   onRole,
 }: {
   user: AdminUserRow;
+  orders: number | null;
+  open: boolean;
+  onToggle: () => void;
   onStatus: (id: string, status: AccountStatus) => void;
   onRole: (id: string, role: Role) => void;
 }) {
@@ -218,119 +271,146 @@ function UserRow({
     }
   }
 
+  const [statusLabel, statusTone] = STATUS_BADGE[user.status];
+
   return (
-    <tr className="border-t border-ink/10 align-middle first:border-t-0">
-      <td className="px-4 py-4 md:px-6">
-        {user.role === 'member' ? (
-          <Link
-            href={`/portal/admin/members/${user.id}`}
-            className="text-ink underline decoration-transparent underline-offset-[3px] transition-colors hover:decoration-ink/40"
+    <Fragment>
+      <tr
+        className={cn(rowClass, open && 'bg-milk/70')}
+        onClick={(e) => {
+          if (!fromControl(e.target)) onToggle();
+        }}
+      >
+        <td className={cn(td, 'order-1 min-w-0 font-medium text-ink')}>
+          <div className="truncate md:max-w-[220px]">
+          {user.role === 'member' ? (
+            <Link
+              href={`/portal/admin/members/${user.id}`}
+              className="underline decoration-transparent underline-offset-[3px] transition-colors hover:decoration-ink/40"
+            >
+              {user.name}
+            </Link>
+          ) : (
+            user.name
+          )}
+          </div>
+        </td>
+        <td className={cn(td, 'order-3 min-w-0 basis-full text-ink/65')}>
+          <div className="truncate md:max-w-[260px]">{user.email}</div>
+        </td>
+        <td className={cn(td, 'order-4 text-[12px] text-ink/65 md:text-[13px] md:text-ink/80')}>{ROLE_LABEL[user.role]}</td>
+        <td className={cn(td, 'order-2 ml-auto md:ml-0')}>
+          <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+        </td>
+        <td className={cn(td, 'hidden tabular-nums text-ink/80 md:text-right')}>
+          {orders ?? <span className="text-ink/35">—</span>}
+        </td>
+        <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/55 md:text-[13px] md:text-ink/65')}>
+          <span className="md:hidden">· Joined </span>
+          {user.joinedAt}
+        </td>
+        <td className={cn(td, 'absolute right-2 top-2 md:static md:w-10 md:pl-0 md:text-right')}>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={open}
+            aria-label={`${open ? 'Hide' : 'Show'} actions for ${user.name}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/50 hover:bg-ink/[0.06] hover:text-ink"
           >
-            {user.name}
-          </Link>
-        ) : (
-          <span className="text-ink">{user.name}</span>
-        )}
-        <div className="max-w-[220px] truncate text-xs text-ink/55">
-          {user.email}
-        </div>
-      </td>
-      <td className="hidden px-4 py-4 md:table-cell md:px-6">
-        <span
-          className={cn(
-            'inline-flex rounded-full border px-2 py-0.5 text-[12px]',
-            ROLE_BADGE[user.role],
-          )}
-        >
-          {user.role}
-        </span>
-      </td>
-      <td className="hidden whitespace-nowrap px-4 py-4 text-[12px] tabular-nums text-ink/65 md:table-cell md:px-6">
-        {user.joinedAt}
-      </td>
-      <td className="px-4 py-4 md:px-6">
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px]',
-            STATUS_BADGE[user.status],
-          )}
-        >
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-          {user.status}
-        </span>
-        {error && <p className="mt-1 text-[12px] text-red-700">{error}</p>}
-      </td>
-      <td className="px-4 py-4 text-right md:px-6">
-        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
-          {/* Role had no control anywhere in the app — adminSetUserRole existed
-              and nothing called it, so the only way to make someone a doctor
-              was editing the database by hand. */}
-          <select
-            aria-label={`Role for ${user.name}`}
-            value={user.role}
-            disabled={busy}
-            onChange={async (e) => {
-              const next = e.target.value as Role;
-              if (next === user.role) return;
-              if (
-                !window.confirm(
-                  `Change ${user.name} from ${user.role} to ${next}? This changes what they can see and do.`,
-                )
-              ) {
-                return;
-              }
-              setBusy(true);
-              setError(null);
-              const res = await adminSetUserRole({ userId: user.id, role: next });
-              if (!res.ok) setError(res.message);
-              else onRole(user.id, next);
-              setBusy(false);
-            }}
-            className="rounded-full border border-ink/10 bg-white px-2.5 py-1 text-[12px] text-ink/80 focus:outline-none focus:ring-ink/30 disabled:opacity-40"
-          >
-            <option value="member">member</option>
-            <option value="doctor">doctor</option>
-            <option value="admin">admin</option>
-          </select>
+            <Chevron open={open} />
+          </button>
+        </td>
+      </tr>
+      {(open || error) && (
+        <tr className={detailRow}>
+          <td colSpan={7} className={detailCell}>
+            {error && <p className="mb-3 text-[13px] text-red-700">{error}</p>}
+            {open && (
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Role had no control anywhere in the app — adminSetUserRole existed
+                    and nothing called it, so the only way to make someone a doctor
+                    was editing the database by hand. */}
+                <label className="flex items-center gap-2 text-[12px] text-ink/60">
+                  Role
+                  <select
+                    aria-label={`Role for ${user.name}`}
+                    value={user.role}
+                    disabled={busy}
+                    onChange={async (e) => {
+                      const next = e.target.value as Role;
+                      if (next === user.role) return;
+                      if (
+                        !window.confirm(
+                          `Change ${user.name} from ${user.role} to ${next}? This changes what they can see and do.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      setBusy(true);
+                      setError(null);
+                      const res = await adminSetUserRole({ userId: user.id, role: next });
+                      if (!res.ok) setError(res.message);
+                      else onRole(user.id, next);
+                      setBusy(false);
+                    }}
+                    className="min-h-[40px] rounded-full border border-ink/10 bg-white px-3 text-[16px] text-ink/80 focus:outline-none focus:ring-2 focus:ring-ink/30 disabled:opacity-40 md:min-h-[32px] md:text-[13px]"
+                  >
+                    <option value="member">member</option>
+                    <option value="doctor">doctor</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
 
-          <ActionButton
-            busy={busy}
-            label="Send password email"
-            onClick={async () => {
-              setBusy(true);
-              setError(null);
-              const res = await adminSendPasswordEmail({ userId: user.id });
-              setError(res.ok ? null : res.message);
-              if (res.ok) window.alert(res.message);
-              setBusy(false);
-            }}
-          />
+                <ActionButton
+                  busy={busy}
+                  label="Send password email"
+                  onClick={async () => {
+                    setBusy(true);
+                    setError(null);
+                    const res = await adminSendPasswordEmail({ userId: user.id });
+                    setError(res.ok ? null : res.message);
+                    if (res.ok) window.alert(res.message);
+                    setBusy(false);
+                  }}
+                />
 
-          {user.status !== 'active' && (
-            <ActionButton
-              busy={busy}
-              label="Reactivate"
-              onClick={() => setStatus('active')}
-            />
-          )}
-          {user.status === 'active' && (
-            <ActionButton
-              busy={busy}
-              label="Suspend"
-              onClick={() => setStatus('suspended')}
-            />
-          )}
-          {user.status !== 'deactivated' && (
-            <ActionButton
-              busy={busy}
-              label="Deactivate"
-              tone="danger"
-              onClick={() => setStatus('deactivated')}
-            />
-          )}
-        </div>
-      </td>
-    </tr>
+                {user.status !== 'active' && (
+                  <ActionButton
+                    busy={busy}
+                    label="Reactivate"
+                    onClick={() => setStatus('active')}
+                  />
+                )}
+                {user.status === 'active' && (
+                  <ActionButton
+                    busy={busy}
+                    label="Suspend"
+                    onClick={() => setStatus('suspended')}
+                  />
+                )}
+                {user.status !== 'deactivated' && (
+                  <ActionButton
+                    busy={busy}
+                    label="Deactivate"
+                    tone="danger"
+                    onClick={() => setStatus('deactivated')}
+                  />
+                )}
+
+                {user.role === 'member' && (
+                  <Link
+                    href={`/portal/admin/members/${user.id}`}
+                    className="ml-auto text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                  >
+                    Open member record
+                  </Link>
+                )}
+              </div>
+            )}
+          </td>
+        </tr>
+      )}
+    </Fragment>
   );
 }
 
@@ -351,9 +431,9 @@ function ActionButton({
       disabled={busy}
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-50',
+        'min-h-[40px] rounded-full border px-3.5 text-[13px] font-medium transition-colors disabled:opacity-50 md:min-h-[32px]',
         tone === 'danger'
-          ? 'ml-2 border-red-600/20 bg-red-50 text-red-700 hover:bg-red-100'
+          ? 'border-red-600/20 bg-red-50 text-red-700 hover:bg-red-100'
           : 'border-ink/10 bg-white text-ink/80 hover:border-ink/25 hover:text-ink',
       )}
     >
@@ -428,11 +508,9 @@ function AddUserPanel({
   return (
     <form
       onSubmit={submit}
-      className="rounded-shell bg-milk p-5 md:p-6"
+      className={cn(indexCard, 'p-5')}
     >
-      <div className="mb-4 text-[13px] font-medium text-ink/55">
-        Add a user
-      </div>
+      <h2 className="mb-4 text-[14px] font-semibold text-ink">Add a user</h2>
       <div className="grid gap-3 sm:grid-cols-3">
         <input
           aria-label="New user full name"

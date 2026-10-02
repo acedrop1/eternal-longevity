@@ -7,6 +7,7 @@ import {
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
 import { cn } from '@/lib/utils';
+import { StatusBadge, indexCard } from '@/components/admin/IndexTable';
 
 export interface ReadyRxView {
   /** 'prescription' = a freshly signed Rx; 'draft' = an auto-generated refill. */
@@ -18,47 +19,34 @@ export interface ReadyRxView {
 
 
 
+/**
+ * Signed prescriptions that never joined the board (for example from before
+ * it existed). Paid orders join the board by themselves.
+ */
 export function AdminFulfillment({
   readyPrescriptions,
-  live,
 }: {
   readyPrescriptions: ReadyRxView[];
-  live: boolean;
 }) {
   return (
-    <div className="space-y-6">
-      {!live && (
-        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Demo data. Real prescriptions and orders flow through once Supabase is
-          connected.
-        </div>
-      )}
-
-      {/* Ready to submit */}
-      <section className="rounded-shell bg-milk p-6 md:p-7">
-        <div className="mb-1 text-[13px] font-medium text-ink/55">
-          Ready to submit
-        </div>
-        <h2 className="mb-1 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-          Signed prescriptions
+    <section className={indexCard}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-ink/10 px-4 py-3">
+        <h2 className="text-[14px] font-semibold text-ink">
+          Signed prescriptions not on the board{' '}
+          <span className="font-normal tabular-nums text-ink/45">{readyPrescriptions.length}</span>
         </h2>
-        <p className="mb-5 text-sm text-ink/55 leading-relaxed">
-          Signed prescriptions that never joined the board, for example from before it existed. Paid orders join the board by themselves; add one here only if it is missing.
-        </p>
-        {readyPrescriptions.length === 0 ? (
-          <p className="text-sm text-ink/55">
-            Nothing waiting. Newly signed prescriptions appear here.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {readyPrescriptions.map((rx) => (
-              <RxRow key={rx.id} rx={rx} />
-            ))}
-          </div>
-        )}
-      </section>
-
-    </div>
+        <p className="text-[12px] text-ink/55">Add one only if it is missing from the list above.</p>
+      </div>
+      {readyPrescriptions.length === 0 ? (
+        <p className="px-4 py-3 text-[13px] text-ink/55">Nothing waiting.</p>
+      ) : (
+        <ul className="divide-y divide-ink/10">
+          {readyPrescriptions.map((rx) => (
+            <RxRow key={rx.id} rx={rx} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -85,25 +73,21 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
   const done = result?.ok === true;
 
   return (
-    <div className="rounded-inner border border-ink/10 bg-white p-4">
+    <li className="px-4 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-medium text-ink">
+          <p className="flex items-center gap-2 text-[13px] font-medium text-ink">
             {rx.patientName}
-            {rx.kind === 'draft' && (
-              <span className="rounded-full border border-sky-600/25 bg-sky-50 px-2 py-0.5 text-[12px] font-medium text-sky-800">
-                Refill
-              </span>
-            )}
+            {rx.kind === 'draft' && <StatusBadge tone="info">Refill</StatusBadge>}
           </p>
-          <p className="text-xs text-ink/55">{rx.protocolName}</p>
+          <p className="text-[12px] text-ink/55">{rx.protocolName}</p>
         </div>
         <button
           type="button"
           disabled={busy || done}
           onClick={submit}
           className={cn(
-            'flex-shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors',
+            'min-h-[40px] flex-shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors md:min-h-[32px]',
             done
               ? 'bg-milk text-ink/60'
               : 'bg-ink text-white hover:bg-ink/85 disabled:opacity-50',
@@ -122,7 +106,7 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
           {result.message}
         </p>
       )}
-    </div>
+    </li>
   );
 }
 

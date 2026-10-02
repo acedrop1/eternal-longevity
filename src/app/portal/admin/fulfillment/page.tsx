@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { AdminLiveOrders } from '@/components/admin/AdminLiveOrders';
 import { AdminFulfillment, type ReadyRxView } from '@/components/admin/AdminFulfillment';
 import { FulfillmentBoard } from '@/components/fulfillment/FulfillmentBoard';
 import { loadFulfillmentBoard, type BoardRow } from '@/lib/fulfillment-core';
@@ -11,6 +10,8 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { AdminPageHeader } from '@/components/admin/IndexTable';
+import type { Order } from '@/lib/orders';
 
 export const metadata: Metadata = {
   title: 'Fulfillment',
@@ -97,34 +98,37 @@ export default async function AdminFulfillmentPage() {
     }
   }
 
+  // Dev only: sample rows so the index can be designed without Supabase.
+  // NODE_ENV is inlined at build, so production never loads the fixture.
+  let sampleOrders: Order[] | undefined;
+  if (process.env.NODE_ENV === 'development' && !live) {
+    const sample = await import('@/components/admin/dev-sample');
+    board = sample.SAMPLE_BOARD;
+    ready = sample.SAMPLE_READY;
+    sampleOrders = sample.SAMPLE_ORDERS;
+  }
+
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
-          Orders
+      <AdminPageHeader
+        title="Orders"
+        subtitle="Place each paid order with the pharmacy and mark it here. The prescriber sees the same list; patients are emailed at each step."
+      />
+
+      {!live && (
+        <p className="mt-4 rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          {sampleOrders ? 'Sample data (dev only). ' : 'Demo data. '}
+          Real prescriptions and orders flow through once Supabase is connected.
         </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
-        >
-          Every order, and where it is.
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          Every paid order, new or refill, lands in <b>To place</b>. Place it
-          in the pharmacy portal and mark it placed; Dr. Elder sees the
-          same board, so whoever places it first marks it. Then add tracking
-          and mark it delivered, and the patient is emailed at each step.
-        </p>
+      )}
+
+      <div className="mt-5">
+        <FulfillmentBoard rows={board} admin sampleOrders={sampleOrders} />
       </div>
 
-      <div className="mt-10">
-        <FulfillmentBoard rows={board} />
+      <div className="mt-6">
+        <AdminFulfillment readyPrescriptions={ready} />
       </div>
-
-      <div className="mt-12">
-        <AdminLiveOrders />
-      </div>
-
-      <AdminFulfillment readyPrescriptions={ready} live={live} />
     </PortalShell>
   );
 }

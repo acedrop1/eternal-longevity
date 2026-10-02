@@ -59,27 +59,17 @@ export default async function AdminUsersPage() {
     }
   }
 
-  const memberCount = users.filter((u) => u.role === 'member').length;
+  // Dev only: sample rows so the index can be designed without Supabase.
+  // NODE_ENV is inlined at build, so production never loads the fixture.
+  let sample = false;
+  if (process.env.NODE_ENV === 'development' && !live) {
+    users = (await import('@/components/admin/dev-sample')).SAMPLE_USERS;
+    sample = true;
+  }
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
-          Users · {users.length} total · {memberCount} members
-        </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
-        >
-          People & access.
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          Everyone with an account: members, doctors, the pharmacy, admins.
-          Add new users, and suspend or deactivate any account. Click a
-          member to see their full record.
-        </p>
-      </div>
-
-      <AdminUsers users={users} live={live} />
+      <AdminUsers users={users} live={live} sample={sample} />
     </PortalShell>
   );
 }

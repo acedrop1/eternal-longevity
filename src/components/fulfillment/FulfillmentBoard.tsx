@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { Fragment, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   markDeliveredAction,
@@ -10,188 +11,460 @@ import {
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
-import { SectionTitle, StatusChip, btnPrimary, btnSecondary, inset, panel, type Tone } from '@/components/portal/ui';
+import { STATUS_LABEL, type Order } from '@/lib/orders';
+import { useOrders } from '@/components/orders/OrdersProvider';
+import { CancelOrder, LIVE_ORDER_STATUSES, attentionFor } from '@/components/admin/AdminLiveOrders';
+import {
+  Chevron,
+  IndexFooter,
+  IndexTabs,
+  IndexToolbar,
+  StatusBadge,
+  detailCell,
+  detailRow,
+  fromControl,
+  indexCard,
+  row as rowClass,
+  shortDate,
+  table,
+  tbody,
+  td,
+  th,
+  thead,
+  toolbarSelect,
+  type BadgeTone,
+} from '@/components/admin/IndexTable';
+import { btnPrimary, btnSecondary, inset, sentenceCase } from '@/components/portal/ui';
 import { cn } from '@/lib/utils';
 
 /**
- * The orders board admin and the prescriber share. Every paid order, first
+ * The orders index admin and the prescriber share. Every paid order, first
  * cycle or refill, lands in "To place" until someone places it on the
  * pharmacy's platform and marks it here; then tracking, then delivery. Both
  * portals see the same rows, and whoever marks a step first owns it.
+ *
+ * With `admin`, the live orders (OrdersProvider) join in: totals, payment,
+ * anything needing attention, the cancel action, and orders still with the
+ * prescriber that have not reached the board yet.
  */
 
 const CARRIERS = ['UPS', 'FedEx', 'USPS', 'DHL'];
 
-const GROUPS: {
-  key: string;
-  statuses: BoardRow['status'][];
-  title: string;
-  note: string;
-  /** Flag a row once it has waited this many days. */
-  lateAfter: number;
-}[] = [
-  {
-    key: 'place',
-    statuses: ['draft', 'submitted'],
-    title: 'To place',
-    note: 'Paid and approved. Orders with a pharmacy SKU are sent automatically. Place any others in the pharmacy portal, then mark them placed.',
+type Stage = 'review' | 'place' | 'placed' | 'shipped' | 'delivered' | 'other';
+type Tab = 'all' | Exclude<Stage, 'other'> | 'issues';
+
+const STAGE: Record<BoardRow['status'], Stage> = {
+  draft: 'place',
+  submitted: 'place',
+  accepted: 'placed',
+  shipped: 'shipped',
+  delivered: 'delivered',
+  canceled: 'other',
+};
+
+/** Per stage: when a row counts as late, and the one-line instruction for that tab. */
+const STAGE_INFO: Record<Stage, { lateAfter: number; note: string }> = {
+  review: { lateAfter: Infinity, note: 'With the prescriber. They join To place once signed and paid.' },
+  place: {
     lateAfter: 1,
+    note: 'Paid and approved. Orders with a pharmacy SKU are sent automatically. Place any others in the pharmacy portal, then mark them placed.',
   },
-  {
-    key: 'track',
-    statuses: ['accepted'],
-    title: 'Placed · waiting for tracking',
-    note: 'Add the tracking number when the pharmacy ships it. The patient is emailed automatically.',
+  placed: {
     lateAfter: 3,
+    note: 'Add the tracking number when the pharmacy ships it. The patient is emailed automatically.',
   },
-  {
-    key: 'transit',
-    statuses: ['shipped'],
-    title: 'Shipped · in transit',
-    note: 'Mark delivered once the carrier shows it arrived. The patient is emailed.',
-    lateAfter: 7,
-  },
-  {
-    key: 'done',
-    statuses: ['delivered'],
-    title: 'Delivered · last 14 days',
-    note: '',
-    lateAfter: Infinity,
-  },
-];
+  shipped: { lateAfter: 7, note: 'Mark delivered once the carrier shows it arrived. The patient is emailed.' },
+  delivered: { lateAfter: Infinity, note: 'Delivered in the last 14 days.' },
+  other: { lateAfter: Infinity, note: '' },
+};
 
-export function FulfillmentBoard({ rows }: { rows: BoardRow[] }) {
-  return (
-    <div className="space-y-10">
-      {GROUPS.map((g) => {
-        const list = rows.filter((r) => g.statuses.includes(r.status));
-        if (g.key === 'done' && list.length === 0) return null;
-        return (
-          <section key={g.key}>
-            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-              <SectionTitle>
-                {g.title} <span className="text-[13px] text-ink/50">{list.length}</span>
-              </SectionTitle>
-              {g.note && <p className="text-[14px] text-ink/60">{g.note}</p>}
-            </div>
-            {list.length === 0 ? (
-              <p className={cn(panel, 'px-5 py-6 text-[14px] text-ink/60')}>Nothing here.</p>
-            ) : (
-              <ul className="space-y-3">
-                {list.map((r) => (
-                  <BoardCard key={r.id} row={r} late={r.ageDays >= g.lateAfter} />
-                ))}
-              </ul>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-const STATUS: Record<BoardRow['status'], [string, Tone]> = {
-  draft: ['To place', 'warn'],
-  submitted: ['To place', 'warn'],
+const STATUS: Record<BoardRow['status'], [string, BadgeTone]> = {
+  draft: ['To place', 'attention'],
+  submitted: ['To place', 'attention'],
   accepted: ['Placed', 'info'],
-  shipped: ['Shipped', 'gold'],
-  delivered: ['Delivered', 'success'],
-  canceled: ['Canceled', 'muted'],
+  shipped: ['Shipped', 'success'],
+  delivered: ['Delivered', 'neutral'],
+  canceled: ['Canceled', 'neutral'],
 };
 
 /** The pharmacy API's status words (and our own: SENDING, ERROR, MANUAL, DRY_RUN). */
-const PHARMACY: Record<string, [string, Tone]> = {
+const PHARMACY: Record<string, [string, BadgeTone]> = {
   SENDING: ['Sending to pharmacy', 'info'],
   COMPOUNDING: ['Compounding', 'info'],
   QA_PENDING: ['Pharmacy QA', 'info'],
-  SHIPPED: ['Shipped by pharmacy', 'gold'],
-  IN_TRANSIT: ['In transit', 'gold'],
-  OUT_FOR_DELIVERY: ['Out for delivery', 'gold'],
-  DELIVERED: ['Delivered', 'success'],
-  HOLD: ['Pharmacy hold', 'error'],
-  EXCEPTION: ['Carrier exception', 'error'],
-  CANCELLED: ['Pharmacy cancelled', 'error'],
-  ERROR: ['Pharmacy error', 'error'],
-  MANUAL: ['Place by hand', 'warn'],
-  DRY_RUN: ['Dry run · not sent', 'warn'],
+  SHIPPED: ['Shipped by pharmacy', 'success'],
+  IN_TRANSIT: ['In transit', 'success'],
+  OUT_FOR_DELIVERY: ['Out for delivery', 'success'],
+  DELIVERED: ['Delivered', 'neutral'],
+  HOLD: ['Pharmacy hold', 'critical'],
+  EXCEPTION: ['Carrier exception', 'critical'],
+  CANCELLED: ['Pharmacy cancelled', 'critical'],
+  ERROR: ['Pharmacy error', 'critical'],
+  MANUAL: ['Place by hand', 'attention'],
+  DRY_RUN: ['Dry run · not sent', 'attention'],
 };
 const RETRYABLE = ['ERROR', 'MANUAL', 'DRY_RUN'];
+
+/** Anything the pharmacy says before verification (AWAITING_VERIFICATION…) reads as sent. */
+const pharmacyBadge = (p: NonNullable<BoardRow['pharmacy']>): [string, BadgeTone] =>
+  PHARMACY[p.status] ?? ['Sent to pharmacy', 'info'];
 
 function trackingHref(carrier: string | null, n: string): string | null {
   return /fedex/i.test(carrier ?? '') ? `https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}` : null;
 }
 
-function PharmacyLine({ row }: { row: BoardRow }) {
-  const p = row.pharmacy;
-  if (!p) return null;
-  // Anything else the pharmacy says before verification (AWAITING_VERIFICATION…) reads as sent.
-  const [label, tone] = PHARMACY[p.status] ?? ['Sent to pharmacy', 'info'];
-  const note = p.reason ?? p.error;
+const displayRef = (n: string) => (/^\d+$/.test(n) ? `#${n}` : n.toUpperCase());
+
+interface IndexRow {
+  key: string;
+  board?: BoardRow;
+  order?: Order;
+  stage: Stage;
+  ref: string;
+  date: number;
+  customer: string;
+  items: string[];
+  refill: boolean;
+  attention: string | null;
+  late: boolean;
+  issue: boolean;
+}
+
+function paymentOf(row: IndexRow): [string, BadgeTone] | null {
+  const o = row.order;
+  if (!o) return null;
+  if (row.attention && /charge failed/i.test(row.attention)) return ['Payment failed', 'critical'];
+  // Billing starts at the prescriber's sign-off.
+  if (o.paidAt || ['signed', 'paid', 'compounding', 'shipped', 'delivered'].includes(o.status)) return ['Paid', 'neutral'];
+  if (o.status === 'assigned' || o.status === 'pending-admin') return ['Pending', 'attention'];
+  return null;
+}
+
+function buildRows(board: BoardRow[], orders: Order[]): IndexRow[] {
+  const byNumber = new Map(orders.map((o) => [o.id, o]));
+  const onBoard = new Set<string>();
+  const out: IndexRow[] = board.map((b) => {
+    const order = b.orderNumber ? byNumber.get(b.orderNumber) : undefined;
+    if (b.orderNumber) onBoard.add(b.orderNumber);
+    const stage = STAGE[b.status];
+    const attention = order && LIVE_ORDER_STATUSES.includes(order.status) ? attentionFor(order) : null;
+    const late = b.ageDays >= STAGE_INFO[stage].lateAfter;
+    return {
+      key: b.id,
+      board: b,
+      order,
+      stage,
+      ref: displayRef(b.orderNumber ?? b.orderRef),
+      date: new Date(b.createdAt).getTime(),
+      customer: b.patientName,
+      items: b.items,
+      refill: !!b.cycleLabel?.startsWith('Refill'),
+      attention,
+      late,
+      issue: late || !!attention || (!!b.pharmacy && pharmacyBadge(b.pharmacy)[1] === 'critical'),
+    };
+  });
+  // Orders still in motion that have not reached the board (most often: with the prescriber).
+  for (const o of orders) {
+    if (onBoard.has(o.id) || !LIVE_ORDER_STATUSES.includes(o.status)) continue;
+    const attention = attentionFor(o);
+    out.push({
+      key: `order-${o.id}`,
+      order: o,
+      stage: o.status === 'assigned' ? 'review' : 'other',
+      ref: displayRef(o.id),
+      date: o.placedAt,
+      customer: o.memberName,
+      items: o.lines.map((l) => l.productName),
+      refill: false,
+      attention,
+      late: false,
+      issue: !!attention,
+    });
+  }
+  return out;
+}
+
+export function FulfillmentBoard({
+  rows,
+  admin = false,
+  sampleOrders,
+}: {
+  rows: BoardRow[];
+  /** Join the live orders in (totals, payment, cancel, orders with the prescriber). */
+  admin?: boolean;
+  /** Dev-only fixture in place of the provider's orders. */
+  sampleOrders?: Order[];
+}) {
+  const { orders: liveOrders } = useOrders();
+  const orders = admin ? sampleOrders ?? liveOrders : [];
+  const all = useMemo(() => buildRows(rows, orders), [rows, orders]);
+
+  const [tab, setTab] = useState<Tab>('all');
+  const [query, setQuery] = useState('');
+  const [kind, setKind] = useState<'all' | 'new' | 'refill'>('all');
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
+  const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const count = (t: Tab) => all.filter((r) => inTab(r, t)).length;
+  const tabs: { key: Tab; label: string; count?: number }[] = [
+    { key: 'all', label: 'All' },
+    ...(admin ? [{ key: 'review' as const, label: 'With prescriber', count: count('review') }] : []),
+    { key: 'place', label: 'To place', count: count('place') },
+    { key: 'placed', label: 'Placed', count: count('placed') },
+    { key: 'shipped', label: 'Shipped', count: count('shipped') },
+    { key: 'delivered', label: 'Delivered', count: count('delivered') },
+    { key: 'issues', label: 'Issues', count: count('issues') },
+  ];
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return all
+      .filter((r) => inTab(r, tab))
+      .filter((r) => kind === 'all' || (kind === 'refill') === r.refill)
+      .filter(
+        (r) =>
+          !q ||
+          [r.ref, r.customer, r.items.join(' '), r.board?.trackingNumber, r.board?.pharmacy?.orderId, r.order?.memberEmail]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .includes(q),
+      )
+      .sort((a, b) => (sort === 'newest' ? b.date - a.date : a.date - b.date));
+  }, [all, tab, kind, query, sort]);
+
+  const cols = admin ? 10 : 8;
+  const note = tab !== 'all' && tab !== 'issues' ? STAGE_INFO[tab].note : '';
+
   return (
-    <div className="mt-2 space-y-1">
-      <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink/60">
-        <StatusChip tone={tone}>{label}</StatusChip>
-        {p.orderId && <span>Pharmacy order {p.orderId}</span>}
+    <div className={indexCard}>
+      <IndexTabs label="Order status" tabs={tabs} value={tab} onChange={setTab} />
+      <IndexToolbar query={query} onQuery={setQuery} placeholder="Search orders, customers, tracking">
+        <select aria-label="Order type" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className={toolbarSelect}>
+          <option value="all">All types</option>
+          <option value="new">New orders</option>
+          <option value="refill">Refills</option>
+        </select>
+        <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className={toolbarSelect}>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </IndexToolbar>
+      {note && <p className="border-b border-ink/10 px-4 py-2 text-[12px] text-ink/55">{note}</p>}
+
+      <div className="md:overflow-x-auto">
+      <table className={table}>
+        <thead className={thead}>
+          <tr>
+            <th className={th}>Order</th>
+            <th className={th}>Date</th>
+            <th className={th}>Customer</th>
+            <th className={th}>Items</th>
+            {admin && <th className={cn(th, 'text-right')}>Total</th>}
+            {admin && <th className={th}>Payment</th>}
+            <th className={th}>Fulfillment</th>
+            <th className={th}>Pharmacy</th>
+            <th className={th}>Tracking</th>
+            <th className={th}>
+              <span className="sr-only">Details</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody className={tbody}>
+          {visible.length === 0 ? (
+            <tr className="block md:table-row">
+              <td colSpan={cols} className="block px-4 py-10 text-center text-[13px] text-ink/55 md:table-cell">
+                {all.length === 0 ? 'No orders yet. Paid orders appear here.' : 'No orders match.'}
+              </td>
+            </tr>
+          ) : (
+            visible.map((r) => (
+              <OrderRow
+                key={r.key}
+                row={r}
+                admin={admin}
+                cols={cols}
+                open={openKey === r.key}
+                onToggle={() => setOpenKey((k) => (k === r.key ? null : r.key))}
+              />
+            ))
+          )}
+        </tbody>
+      </table>
       </div>
-      {note && (
-        <p className={cn('text-[13px]', tone === 'error' ? 'text-red-800' : 'text-ink/70')}>{note}</p>
-      )}
+      <IndexFooter shown={visible.length} total={all.length} noun="orders" />
     </div>
   );
 }
 
-function BoardCard({ row, late }: { row: BoardRow; late: boolean }) {
-  const [label, tone] = STATUS[row.status];
-  const refill = row.cycleLabel?.startsWith('Refill');
-  const details: [string, string][] = [
-    ['Patient', row.patientName],
-    ['Date of birth', row.patientDob ?? '—'],
-    ['Phone', row.phone ?? '—'],
-    ['Ship to', row.address || '—'],
-    ['Items', row.items.join('; ') || '—'],
-    ['Plan', row.cycleLabel ?? '—'],
-    ['Prescriber', row.prescriber ? `${row.prescriber}${row.npi ? ` · NPI ${row.npi}` : ''}` : '—'],
-  ];
+function inTab(r: IndexRow, t: Tab): boolean {
+  return t === 'all' || (t === 'issues' ? r.issue : r.stage === t);
+}
+
+function OrderRow({
+  row,
+  admin,
+  cols,
+  open,
+  onToggle,
+}: {
+  row: IndexRow;
+  admin: boolean;
+  cols: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const b = row.board;
+  const o = row.order;
+  const status: [string, BadgeTone] | null = b
+    ? STATUS[b.status]
+    : o
+      ? [sentenceCase(STATUS_LABEL[o.status] ?? o.status), o.status === 'assigned' ? 'info' : 'neutral']
+      : null;
+  const pharmacy = b?.pharmacy ? pharmacyBadge(b.pharmacy) : null;
+  const payment = paymentOf(row);
+  const trackingNumber = b?.trackingNumber ?? o?.tracking ?? null;
+  const trackingCarrier = b?.trackingCarrier ?? o?.carrier ?? null;
+  const href = trackingNumber ? trackingHref(trackingCarrier, trackingNumber) : null;
 
   return (
-    <li className={cn(panel, 'p-4 md:p-5')}>
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[16px] font-medium text-ink">{row.patientName}</span>
-            <StatusChip tone={tone}>{label}</StatusChip>
-            <StatusChip tone={refill ? 'gold' : 'neutral'}>{refill ? 'Refill' : 'New order'}</StatusChip>
-            {late && <StatusChip tone="error">Waiting {row.ageDays} days</StatusChip>}
+    <Fragment>
+      <tr
+        className={cn(rowClass, open && 'bg-milk/70')}
+        onClick={(e) => {
+          if (!fromControl(e.target)) onToggle();
+        }}
+      >
+        <td className={cn(td, 'order-1 whitespace-nowrap font-medium text-ink')}>
+          {row.ref}
+          {row.refill && <span className="ml-1.5 text-[12px] font-normal text-ink/45">Refill</span>}
+        </td>
+        <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[12px] text-ink/60 md:text-[13px]')}>
+          {shortDate(row.date)}
+          {row.late && b && (
+            <span className="ml-1 font-medium text-red-700" title={`Waiting ${b.ageDays} days`}>
+              · {b.ageDays}d<span className="sr-only"> waiting</span>
+            </span>
+          )}
+        </td>
+        <td className={cn(td, 'order-2 min-w-0 text-ink')}>
+          <div className="truncate md:max-w-[160px]">
+          {admin && o?.userId ? (
+            <Link
+              href={`/portal/admin/members/${o.userId}`}
+              className="underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40"
+            >
+              {row.customer}
+            </Link>
+          ) : (
+            row.customer
+          )}
           </div>
-          <p className="mt-1.5 text-[15px] text-ink/80">{row.items.join(' · ') || 'Care program'}</p>
-          <p className="mt-1 text-[12px] text-ink/55">
-            {row.orderRef} · {row.address.split(' · ').slice(-2).join(' · ')}
-          </p>
-          {row.notes && <p className="mt-1 text-[12px] text-ink/55">{row.notes}</p>}
-          {row.trackingNumber && (
-            <p className="mt-1 text-[12px] text-ink/70">
-              {row.trackingCarrier}{' '}
-              {trackingHref(row.trackingCarrier, row.trackingNumber) ? (
+        </td>
+        <td className={cn(td, 'order-4 min-w-0 basis-full text-ink/65')}>
+          <div className="truncate md:max-w-[170px]">{row.items.join(' · ') || 'Care program'}</div>
+        </td>
+        {admin && (
+          <td className={cn(td, 'order-3 ml-auto whitespace-nowrap tabular-nums text-ink md:text-right')}>
+            {o ? `$${o.total}` : <span className="hidden text-ink/35 md:inline">—</span>}
+          </td>
+        )}
+        {admin && (
+          <td className={cn(td, 'order-5', !payment && 'hidden')}>
+            {payment ? <StatusBadge tone={payment[1]}>{payment[0]}</StatusBadge> : <span className="text-ink/35">—</span>}
+          </td>
+        )}
+        <td className={cn(td, 'order-5')}>
+          {status && <StatusBadge tone={status[1]}>{status[0]}</StatusBadge>}
+        </td>
+        <td className={cn(td, 'order-5', !pharmacy && 'hidden')}>
+          {pharmacy ? <StatusBadge tone={pharmacy[1]}>{pharmacy[0]}</StatusBadge> : <span className="text-ink/35">—</span>}
+        </td>
+        <td className={cn(td, 'order-6 whitespace-nowrap text-[12px] text-ink/70', !trackingNumber && 'hidden')}>
+          {trackingNumber ? (
+            <div className="truncate md:max-w-[110px]">
+              {trackingCarrier}{' '}
+              {href ? (
                 <a
-                  href={trackingHref(row.trackingCarrier, row.trackingNumber)!}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
                 >
-                  {row.trackingNumber}
+                  {trackingNumber}
                 </a>
               ) : (
-                row.trackingNumber
+                trackingNumber
               )}
-            </p>
+            </div>
+          ) : (
+            <span className="text-ink/35">—</span>
           )}
-          <PharmacyLine row={row} />
+        </td>
+        <td className={cn(td, 'absolute right-2 top-2 md:static md:w-10 md:pl-0 md:text-right')}>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={open}
+            aria-label={`${open ? 'Hide' : 'Show'} details for ${row.ref}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/50 hover:bg-ink/[0.06] hover:text-ink"
+          >
+            <Chevron open={open} />
+          </button>
+        </td>
+      </tr>
+      {open && (
+        <tr className={detailRow}>
+          <td colSpan={cols} className={detailCell}>
+            <Detail row={row} admin={admin} />
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+}
 
-          <details className="mt-3 group">
-            <summary className="cursor-pointer select-none text-[13px] text-ink/70 hover:text-ink">
-              Details for the pharmacy
-            </summary>
-            <dl className={cn(inset, 'mt-2 divide-y divide-ink/10 text-[14px]')}>
+function Detail({ row, admin }: { row: IndexRow; admin: boolean }) {
+  const b = row.board;
+  const o = row.order;
+  const details: [string, string][] = b
+    ? [
+        ['Patient', b.patientName],
+        ['Date of birth', b.patientDob ?? '—'],
+        ['Phone', b.phone ?? '—'],
+        ['Ship to', b.address || '—'],
+        ['Items', b.items.join('; ') || '—'],
+        ['Plan', b.cycleLabel ?? '—'],
+        ['Prescriber', b.prescriber ? `${b.prescriber}${b.npi ? ` · NPI ${b.npi}` : ''}` : '—'],
+      ]
+    : [];
+
+  return (
+    <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+      <div className="min-w-0 flex-1 space-y-3">
+        {row.attention && (
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900">
+            {row.attention}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink/60">
+          <StatusBadge tone={row.refill ? 'attention' : 'neutral'}>{row.refill ? 'Refill' : 'New order'}</StatusBadge>
+          {row.late && b && <StatusBadge tone="critical">Waiting {b.ageDays} days</StatusBadge>}
+          {b && <span>{b.orderRef}</span>}
+          {b?.pharmacy?.orderId && <span>· Pharmacy order {b.pharmacy.orderId}</span>}
+        </div>
+        {b?.pharmacy && (b.pharmacy.reason ?? b.pharmacy.error) && (
+          <p className={cn('text-[13px]', pharmacyBadge(b.pharmacy)[1] === 'critical' ? 'text-red-800' : 'text-ink/70')}>
+            {b.pharmacy.reason ?? b.pharmacy.error}
+          </p>
+        )}
+        {b?.notes && <p className="text-[13px] text-ink/60">{b.notes}</p>}
+
+        {b ? (
+          <div>
+            <p className="mb-1.5 text-[12px] font-medium text-ink/55">Details for the pharmacy</p>
+            <dl className={cn(inset, 'divide-y divide-ink/10 text-[13px]')}>
               {details.map(([k, v]) => (
                 <div key={k} className="flex gap-4 px-3 py-2">
                   <dt className="w-28 flex-none text-[12px] text-ink/55">{k}</dt>
@@ -200,14 +473,31 @@ function BoardCard({ row, late }: { row: BoardRow; late: boolean }) {
               ))}
             </dl>
             <CopyButton text={details.map(([k, v]) => `${k}: ${v}`).join('\n')} />
-          </details>
-        </div>
+          </div>
+        ) : (
+          o && (
+            <p className="text-[13px] text-ink/70">
+              {o.lines.map((l) => `${l.productName} · ${l.cadenceLabel}`).join('; ')} · ${o.total}. Not on the
+              board yet; it joins To place once signed and paid.
+            </p>
+          )
+        )}
 
-        <div className="w-full flex-none md:w-[320px]">
-          <Actions row={row} />
-        </div>
+        {admin && o?.userId && (
+          <Link
+            href={`/portal/admin/members/${o.userId}`}
+            className="inline-block text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+          >
+            Open member record
+          </Link>
+        )}
       </div>
-    </li>
+
+      <div className="w-full flex-none space-y-3 md:w-[320px]">
+        {b && <Actions row={b} />}
+        {admin && o && <CancelOrder order={o} />}
+      </div>
+    </div>
   );
 }
 
