@@ -99,6 +99,9 @@ export async function getOnboardingSteps(
       title: 'Add your shipping address',
       collects: ['Street address, city, state and ZIP — collected at checkout'],
       done: hasShipping,
+      // Pick up where they left off: their plan is in the cart (an empty cart lands on the shop).
+      href: hasShipping ? undefined : '/checkout',
+      action: 'Continue to checkout',
     },
     // Hair and skin: photos after checkout, before the prescriber can decide.
     ...(media?.needsPhotos
