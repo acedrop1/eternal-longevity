@@ -427,7 +427,9 @@ export function CheckoutFlow({
   // waives it (lib/shipping orderTotalCents).
   const freeShipping = Boolean(promo?.ok && promo.includesShipping);
   const shippingPrice = freeShipping ? 'Free' : `$${shippingCost}`;
-  const total = Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax;
+  // Rounded to cents: a percent discount leaves float dust (0.9899999…).
+  const total = Math.round((Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax) * 100) / 100;
+  const totalText = Number.isInteger(total) ? String(total) : total.toFixed(2);
 
   // A discount is priced on the basket it was applied to: re-price it when a plan or line changes.
   useEffect(() => {
@@ -791,7 +793,7 @@ export function CheckoutFlow({
                 </span>
                 <span className="flex flex-shrink-0 items-center gap-2">
                   <span className="text-[16px] font-semibold text-ink tabular-nums">
-                    ${total}
+                    ${totalText}
                   </span>
                   <svg
                     width="14"
@@ -970,7 +972,7 @@ export function CheckoutFlow({
                   <div className="my-2 h-px bg-ink/10" />
                   <SummaryRow
                     label="Total if approved"
-                    value={`$${total}`}
+                    value={`$${totalText}`}
                     emphasis
                   />
                 </div>
@@ -1466,7 +1468,7 @@ export function CheckoutFlow({
                 ) : (
                   <CheckoutCardStep
                     publishableKey={stripePublishableKey}
-                    amountLabel={`$${total}`}
+                    amountLabel={`$${totalText}`}
                     amountCents={Math.round(total * 100)}
                     saved={cardSaved}
                     onSaved={() => setCardSaved(true)}
@@ -1478,7 +1480,7 @@ export function CheckoutFlow({
             <div className="mt-4 flex items-baseline justify-between border-t border-ink/10 pt-4">
               <span className="text-[15px] text-ink/60">Total if approved</span>
               <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
-                ${total}
+                ${totalText}
               </span>
             </div>
 
@@ -1525,7 +1527,7 @@ export function CheckoutFlow({
               />
               <span>
                 If my prescriber approves, I authorize {SITE_NAME} to charge the
-                card I saved ${total} for this order. After that:
+                card I saved ${totalText} for this order. After that:
                 {lines.map((l) => {
                   const n = monthsPerCycle(l.cadence);
                   return (

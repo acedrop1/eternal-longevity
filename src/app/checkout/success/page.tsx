@@ -58,7 +58,7 @@ export default async function CheckoutSuccessPage() {
               text: legacyVisit
                 ? 'Complete your clinical visit so your prescriber can review.'
                 : media.photos
-                  ? 'Add your photos so your prescriber can review.'
+                  ? 'Dr. Elder asked for a few photos. Add them from your phone so he can finish your review.'
                   : 'Your prescriber reviews your answers.',
             },
             { n: '02', text: 'If approved, your prescription goes to the pharmacy and your card is charged.' },

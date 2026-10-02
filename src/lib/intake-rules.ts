@@ -237,11 +237,13 @@ export function outstandingMedia(a: Record<string, unknown>): Step[] {
   return MEDIA_STEPS.filter(({ step, category }) => {
     if (!cats.has(category) || !stepVisible(step, a)) return false;
     const f = step.fields[0];
-    return f.type === 'photo-upload' ? !fieldComplete(f, a[f.id]) : !a.mediaCompletedAt && !(Array.isArray(a[f.id]) && (a[f.id] as unknown[]).length);
+    // Photos are asked for only when the prescriber requests them (photosRequested).
+    if (f.type === 'photo-upload') return a.photosRequested === true && !fieldComplete(f, a[f.id]);
+    return !a.mediaCompletedAt && !(Array.isArray(a[f.id]) && (a[f.id] as unknown[]).length);
   }).map(({ step }) => step);
 }
 
-/** Hair/skin photos still owed: the doctor queue's "Photos pending". */
+/** Hair/skin photos the prescriber asked for and hasn't got yet: the doctor queue's "Photos pending". */
 export const photosPending = (a: Record<string, unknown>) =>
   outstandingMedia(a).some((s) => s.fields.some((f) => f.type === 'photo-upload'));
 

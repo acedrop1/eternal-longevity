@@ -81,9 +81,9 @@ export function memberNextStep(input: {
   }
   if (photosOwed) {
     return {
-      eyebrow: 'Next step',
-      title: 'Add your photos',
-      body: 'Two or three quick photos from your phone. Dr. Elder reviews your order once they are in.',
+      eyebrow: 'From Dr. Elder',
+      title: 'Dr. Elder asked for a few photos',
+      body: 'Two or three quick photos from your phone help him finish your review. Only your care team sees them.',
       cta: { label: 'Add photos', href: '/portal/visit' },
     };
   }

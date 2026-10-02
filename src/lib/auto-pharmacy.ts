@@ -195,7 +195,25 @@ export async function autoSubmitToPharmacy(
    */
   if (rxhereConfigured()) {
     const sent = await sendToPharmacyApi(order.order_number);
-    if (sent.sent) return { ok: true, submitted: true };
+    if (sent.sent) {
+      // The team hears about every paid order, not only the ones to place by hand.
+      try {
+        await sendEmail({
+          to: SUPPORT_EMAIL,
+          subject: `Order ${orderLabel(order.order_number)} paid and sent to the pharmacy`,
+          html: noticeEmail({
+            eyebrow: 'Paid order',
+            heading: 'Paid and sent to the pharmacy',
+            body: 'This order went to the pharmacy automatically. Nothing to place by hand; tracking arrives on its own.',
+            rows: [['Order', orderLabel(order.order_number)]],
+            cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
+          }),
+        });
+      } catch {
+        // The order is with the pharmacy either way.
+      }
+      return { ok: true, submitted: true };
+    }
   }
 
   /*

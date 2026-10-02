@@ -13,7 +13,8 @@ import {
   type CategorySection,
   type ThreadStatus,
 } from '@/lib/prescriber-view';
-import { photosPending } from '@/lib/intake-rules';
+import { intakeProductIds, photosPending } from '@/lib/intake-rules';
+import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 
 export interface ReviewLine {
   label: string;
@@ -37,8 +38,10 @@ export interface PatientReview {
   contact: ReviewLine[];
   /** Per-category questions (hair, skin, ...), with signed photo/lab URLs. */
   categories: CategorySection[];
-  /** Hair/skin case whose required photos haven't been added in the portal yet. */
+  /** Photos the prescriber asked for that haven't been added in the portal yet. */
   photosPending: boolean;
+  /** A hair or skin case he hasn't asked photos for yet: offer "Request photos". */
+  photosRequestable: boolean;
 }
 
 const SEX: Record<string, string> = {
@@ -229,6 +232,9 @@ function buildReview(input: {
     submittedAt: input.submittedAt ? formatDate(input.submittedAt) : '—',
     categories: categoryAnswers(a),
     photosPending: photosPending(a),
+    photosRequestable:
+      a.photosRequested !== true &&
+      intakeProductIds(a).some((id) => ['hair', 'skin'].includes(PRODUCT_CATEGORY[id])),
     safety: [
       {
         label: 'Active cancer, or treated in the last 5 years',

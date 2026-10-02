@@ -361,7 +361,6 @@ export async function renewSubscription(
       off_session: true,
       confirm: true,
       description: `Refill — order ${orderNumber}`,
-      receipt_email: profile.email,
       shipping: addr.line1
         ? {
             name: addr.fullName || profile.full_name || 'Member',

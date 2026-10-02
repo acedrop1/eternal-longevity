@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import { requestInfoFromPatientAction } from '@/lib/orders-db';
+import { requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import type { PatientReview } from '@/lib/clinical-review';
@@ -231,7 +231,7 @@ function DoctorQueueRow({
   // The sig, prefilled with the directions he approved for this product.
   const [directions, setDirections] = useState(defaultSig);
   const [signError, setSignError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask'>(null);
+  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask' | 'photos'>(null);
 
   return (
     <article className="rounded-shell bg-milk p-5 md:p-6">
@@ -320,6 +320,26 @@ function DoctorQueueRow({
           >
             Ask for more information
           </button>
+          {/* Photos are never required up front; he asks when he needs them. */}
+          {review?.photosRequestable && (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={async () => {
+                if (busy) return;
+                setBusy('photos');
+                try {
+                  if ((await requestPhotosAction(order.id)).ok) router.refresh();
+                } finally {
+                  setBusy(null);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
+            >
+              {busy === 'photos' && <Spinner />}
+              {busy === 'photos' ? 'Requesting…' : 'Request photos'}
+            </button>
+          )}
           <button
             type="button"
             disabled={busy !== null}

@@ -88,30 +88,50 @@ const INK = '#111111';
 const MUTED = '#55565A';
 const MILK = '#F4F4F2';
 const BUTTER = '#FFEC9F';
+const BUTTER_SOFT = '#FFF8DC';
 const HAIRLINE = '#E3E3E1';
-const H1 = `margin:0 0 14px;color:${INK};font-family:${FONT};font-size:27px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;`;
-const EYEBROW = `margin:0 0 10px;color:${MUTED};font-size:12px;letter-spacing:0.12em;font-weight:600;`;
+const H1 = `margin:0 0 14px;color:${INK};font-family:${FONT};font-size:28px;line-height:1.18;font-weight:600;letter-spacing:-0.02em;`;
+const EYEBROW = `margin:0 0 12px;color:${MUTED};font-size:12px;letter-spacing:0.12em;font-weight:600;`;
 const PANEL = `background:${MILK};border-radius:18px;`;
+const P = 'margin:0 0 18px;';
+const NOTE = `margin:18px 0 0;color:${MUTED};font-size:13px;line-height:1.55;`;
+
+/** The "what happens next" line: one sentence on a butter-soft card. Pass HTML; escape anything dynamic. */
+function nextStep(html: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 24px;"><tr><td bgcolor="${BUTTER_SOFT}" style="background:${BUTTER_SOFT};border-radius:18px;padding:16px 20px;font-family:${FONT};color:${INK};font-size:14px;line-height:1.55;">
+    <div style="margin:0 0 4px;color:${MUTED};font-size:11px;letter-spacing:0.12em;font-weight:600;">WHAT HAPPENS NEXT</div>${html}
+  </td></tr></table>`;
+}
 
 /**
- * Wrap body content in a minimal branded shell. Reminder and marketing email
- * passes `unsubscribeUrl`, which adds the opt-out line to the footer.
+ * Wrap body content in the branded shell: the butter logo on an ink band (it
+ * reads in light and dark clients alike), a white card, the legal footer.
+ * Reminder and marketing email passes `unsubscribeUrl`, which adds the
+ * opt-out line; `preheader` is the inbox preview text.
  */
-export function shell(body: string, opts?: { unsubscribeUrl?: string }): string {
-  return `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body style="margin:0;background:${MILK};padding:0;font-family:${FONT};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MILK};"><tr><td align="center" style="padding:40px 16px;">
+export function shell(
+  body: string,
+  opts?: { unsubscribeUrl?: string; preheader?: string },
+): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="color-scheme" content="light" /><meta name="supported-color-schemes" content="light" /><title>Eternal Longevity</title></head><body style="margin:0;background:${MILK};padding:0;font-family:${FONT};">
+  ${
+    opts?.preheader
+      ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${MILK};font-size:1px;line-height:1px;">${escapeHtml(opts.preheader)}</div>`
+      : ''
+  }
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${MILK}" style="background:${MILK};"><tr><td align="center" style="padding:32px 12px 40px;">
     <!--[if mso]><table role="presentation" width="560" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:28px;">
-      <tr><td style="padding:36px 36px 8px;font-family:${FONT};color:${INK};">
-        <!-- The real logo; its alt text reads as the wordmark when images are blocked. -->
-        <img src="${SITE_URL}/brand/email-logo.png" width="160" height="53" alt="eternal longevity" style="display:block;border:0;outline:none;width:160px;height:auto;font-size:24px;font-weight:600;color:#111111;" />
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" style="max-width:560px;background:#FFFFFF;border-radius:28px;">
+      <tr><td bgcolor="${INK}" style="background:${INK};border-radius:28px 28px 0 0;padding:30px 36px 28px;font-family:${FONT};">
+        <!-- Butter logo on ink. Alt text stands in as the wordmark when images are blocked. -->
+        <a href="${SITE_URL}" style="text-decoration:none;"><img src="${SITE_URL}/brand/email-logo-butter.png" width="150" height="50" alt="eternal longevity" style="display:block;border:0;outline:none;width:150px;height:auto;font-family:${FONT};font-size:22px;font-weight:600;color:${BUTTER};" /></a>
       </td></tr>
-      <tr><td style="padding:24px 36px 36px;font-family:${FONT};color:${INK};font-size:15px;line-height:1.6;">
+      <tr><td style="padding:40px 36px 40px;font-family:${FONT};color:${INK};font-size:15px;line-height:1.6;">
         ${body}
       </td></tr>
     </table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-      <tr><td style="padding:20px 36px 0;font-family:${FONT};color:${MUTED};font-size:12px;line-height:1.5;">
+      <tr><td style="padding:24px 36px 0;font-family:${FONT};color:${MUTED};font-size:12px;line-height:1.6;">
         Prescribed by a licensed physician. Dispensed by a licensed U.S. pharmacy.<br />
         This message may contain confidential information intended only for the
         named recipient.<br />
@@ -167,9 +187,12 @@ export function noticeEmail(input: {
   /** Plain text, like every other field here. */
   body?: string;
   rows?: [string, string][];
+  /** Plain text: the one "what happens next" line, on a butter-soft card. */
+  next?: string;
   cta?: { label: string; href: string };
   footnote?: string;
   unsubscribeUrl?: string;
+  preheader?: string;
 }): string {
   return shell(
     `<div style="${EYEBROW}">${escapeHtml(
@@ -178,15 +201,12 @@ export function noticeEmail(input: {
      <h1 style="${H1}">${escapeHtml(
        input.heading,
      )}</h1>
-     ${input.body ? `<p style="margin:0 0 16px;">${text(input.body)}</p>` : ''}
+     ${input.body ? `<p style="${P}">${text(input.body)}</p>` : ''}
      ${input.rows?.length ? dataRows(input.rows) : ''}
+     ${input.next ? nextStep(text(input.next)) : ''}
      ${input.cta ? `<div style="margin:24px 0 0;">${button(input.cta.label, input.cta.href)}</div>` : ''}
-     ${
-       input.footnote
-         ? `<p style="margin:18px 0 0;color:${MUTED};font-size:13px;">${text(input.footnote)}</p>`
-         : ''
-     }`,
-    { unsubscribeUrl: input.unsubscribeUrl },
+     ${input.footnote ? `<p style="${NOTE}">${text(input.footnote)}</p>` : ''}`,
+    { unsubscribeUrl: input.unsubscribeUrl, preheader: input.preheader },
   );
 }
 
@@ -198,18 +218,19 @@ export function shippedEmail(input: {
   tracking: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Your ${orderRef(input.orderRef)} has shipped`,
+    subject: `It’s on its way: ${orderRef(input.orderRef)} has shipped 📦`,
     html: shell(
       `<div style="${EYEBROW}">ON ITS WAY</div>
-       <h1 style="${H1}">${escapeHtml(`Good news, ${input.firstName} — your order has shipped.`)}</h1>
+       <h1 style="${H1}">${escapeHtml(`It’s on its way, ${input.firstName}.`)}</h1>
+       <p style="${P}">Your order has left the pharmacy. Here&rsquo;s everything you need to follow it home.</p>
        ${dataRows([
          ['Order', input.orderRef],
          ['Carrier', input.carrier],
          ['Tracking', input.tracking],
        ])}
        <div style="margin:24px 0 0;">${button('Track your package', trackingUrl(input.carrier, input.tracking))}</div>
-       <p style="margin:18px 0 0;">Every update on your order is in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>.</p>
-       <p style="margin:18px 0 0;color:${MUTED};font-size:13px;">Store it as the label directs. Temperature-sensitive medications ship cold-chain — if yours says to refrigerate, do so on arrival.</p>`,
+       <p style="${NOTE}">Store it as the label directs. Temperature-sensitive medications ship cold-chain, so if yours says to refrigerate, do so on arrival. Every update is in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>.</p>`,
+      { preheader: 'Your tracking number is inside.' },
     ),
   };
 }
@@ -220,13 +241,15 @@ export function deliveredEmail(input: {
   orderRef: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Your ${orderRef(input.orderRef)} has been delivered`,
+    subject: `It’s here: ${orderRef(input.orderRef)} has been delivered`,
     html: noticeEmail({
       eyebrow: 'Delivered',
-      heading: `${input.firstName}, your order has arrived.`,
+      heading: `It’s here, ${input.firstName}.`,
+      body: 'Your order was delivered. Store it as the label directs, and refrigerate on arrival if it says to.',
       rows: [['Order', input.orderRef]],
-      body: 'Store it as the label directs — refrigerate on arrival if it says to. Questions about dosing go to your prescriber through the portal.',
+      next: 'Questions about dosing? Message your prescriber through your portal, any time.',
       cta: { label: 'Open your portal', href: `${SITE_URL}/portal/orders` },
+      preheader: 'Store it as the label directs.',
     }),
   };
 }
@@ -269,13 +292,15 @@ export function renewalFailedMemberEmail(input: {
 }): { subject: string; html: string } {
   return {
     // No drug name: a member's inbox is not always only theirs to read.
-    subject: 'Action needed: your refill payment didn’t go through',
+    subject: 'Your refill payment didn’t go through',
     html: noticeEmail({
-      eyebrow: 'Payment issue',
-      heading: `${input.firstName}, we couldn’t charge your card for your refill.`,
-      body: 'Your plan is paused, so nothing will ship until your card is updated. Update it in your account and tap Restart my plan, and we’ll charge the refill to that card within a day.',
+      eyebrow: 'Quick fix',
+      heading: `${input.firstName}, your refill payment didn’t go through.`,
+      body: 'It happens. We couldn’t charge your card for your refill, so your plan is paused and nothing will ship until your card is updated.',
+      next: 'Update your card in your account and tap Restart my plan. We’ll charge the refill to that card within a day.',
       cta: { label: 'Update your card', href: `${SITE_URL}/portal/account` },
       footnote: 'If you meant to stop, you don’t need to do anything.',
+      preheader: 'Your plan is paused until your card is updated.',
     }),
   };
 }
@@ -331,29 +356,25 @@ export function intakeConfirmationEmail(firstName: string): {
   html: string;
 } {
   return {
-    subject: 'Your account is ready — Eternal Longevity',
+    subject: 'Welcome to Eternal Longevity. Your account is ready',
     html: shell(
       `<div style="${EYEBROW}">WELCOME</div>
-       <h1 style="${H1}">Hi ${escapeHtml(
-         firstName,
-       )}, your account is ready.</h1>
-       <p>Welcome to Eternal Longevity. Your portal is where everything lives:
-       messages with your care team, your treatment details, refills and order
-       tracking.</p>
-       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:18px 0;">
-         <tr><td style="padding:18px 20px;color:${INK};font-size:14px;line-height:1.6;">
+       <h1 style="${H1}">Welcome in, ${escapeHtml(firstName)}.</h1>
+       <p style="${P}">Your account is ready. Your portal is home base: messages with
+       your care team, your treatment details, refills and order tracking.</p>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BUTTER_SOFT}" style="background:${BUTTER_SOFT};border-radius:18px;margin:4px 0 24px;">
+         <tr><td style="padding:20px 22px;color:${INK};font-size:14px;line-height:1.6;">
            <div style="${EYEBROW}">WHAT HAPPENS NEXT</div>
-           <p style="margin:0 0 10px;"><strong style="color:${INK};">1. Finish checkout.</strong><br/>
-           Your card is saved, not charged. You're only charged if a licensed physician approves your treatment.</p>
-           <p style="margin:0 0 10px;"><strong style="color:${INK};">2. Add anything your physician needs.</strong><br/>
+           <p style="margin:0 0 12px;"><strong style="color:${INK};">1. Finish checkout.</strong><br/>
+           Your card is saved, not charged. You&rsquo;re only charged if a licensed physician approves your treatment.</p>
+           <p style="margin:0 0 12px;"><strong style="color:${INK};">2. Add anything your physician needs.</strong><br/>
            Some treatments need a couple of photos. If yours does, your portal will show it.</p>
            <p style="margin:0;"><strong style="color:${INK};">3. Your treatment ships discreetly.</strong><br/>
            Tracking is added to your order the moment it leaves the pharmacy.</p>
          </td></tr>
        </table>
-       <div style="margin:18px 0 6px;">
-         ${button('Go to my portal', `${SITE_URL}/portal`)}
-       </div>`,
+       ${button('Go to my portal', `${SITE_URL}/portal`)}`,
+      { preheader: 'Your card is saved, not charged, until a physician approves.' },
     ),
   };
 }
@@ -364,16 +385,14 @@ export function passwordResetEmail(link: string): {
   html: string;
 } {
   return {
-    subject: 'Reset your password — Eternal Longevity',
+    subject: 'Reset your Eternal Longevity password',
     html: shell(
-      `<h1 style="${H1}">Reset your password.</h1>
-       <p>We received a request to reset the password on your Eternal Longevity
-       account. The link below is valid for one hour and can be used once.</p>
-       <div style="margin:20px 0;">
-         ${button('Choose a new password', link)}
-       </div>
-       <p style="color:${MUTED};font-size:13px;">If you didn't request this, you
-       can safely ignore this email — your password won't change.</p>`,
+      `<h1 style="${H1}">Let&rsquo;s get you back in.</h1>
+       <p style="${P}">We got a request to reset the password on your Eternal Longevity
+       account. The button below works for one hour and can be used once.</p>
+       ${button('Choose a new password', link)}
+       <p style="${NOTE}">Didn&rsquo;t ask for this? You can safely ignore this email.
+       Your password won&rsquo;t change.</p>`,
     ),
   };
 }
@@ -408,16 +427,16 @@ export function shipmentEmail(
   tracking: string,
 ): { subject: string; html: string } {
   return {
-    subject: `Your ${orderRef(orderNumber)} has shipped`,
+    subject: `It’s on its way: ${orderRef(orderNumber)} has shipped 📦`,
     html: shell(
-      `<h1 style="${H1}">On its way, ${escapeHtml(
-        firstName,
-      )}.</h1>
-       <p>Order <strong style="color:${INK};">${escapeHtml(
-         orderNumber,
-       )}</strong> shipped via ${escapeHtml(carrier)}.</p>
-       <p><strong style="color:${INK};">Tracking:</strong> ${escapeHtml(tracking)}</p>
-       <p>Store it as the label directs — refrigerate on arrival if it says to.</p>`,
+      `<div style="${EYEBROW}">ON ITS WAY</div>
+       <h1 style="${H1}">It&rsquo;s on its way, ${escapeHtml(firstName)}.</h1>
+       ${dataRows([
+         ['Order', orderNumber],
+         ['Carrier', carrier],
+         ['Tracking', tracking],
+       ])}
+       <p style="${NOTE}">Store it as the label directs, and refrigerate on arrival if it says to.</p>`,
     ),
   };
 }
@@ -437,7 +456,7 @@ export function welcomeEmail(input: {
   const firstName = input.fullName.trim().split(/\s+/)[0] || 'there';
   const intro: Record<string, string> = {
     member:
-      'Your account is ready. Sign in any time to view your protocol, track orders, and manage your subscription.',
+      'Your account is ready. Set a password and you can sign in any time to see your protocol, track orders and manage your subscription.',
     doctor:
       'Your clinical account is ready. Sign in to review approved intakes and sign or decline prescriptions.',
     pharmacy:
@@ -448,15 +467,12 @@ export function welcomeEmail(input: {
   return {
     subject: 'Your Eternal Longevity account is ready',
     html: shell(
-      `<h1 style="${H1}">Welcome, ${escapeHtml(
-        firstName,
-      )}.</h1>
-       <p>${intro[input.role] ?? intro.member}</p>
+      `<div style="${EYEBROW}">WELCOME</div>
+       <h1 style="${H1}">Welcome, ${escapeHtml(firstName)}.</h1>
+       <p style="${P}">${intro[input.role] ?? intro.member}</p>
        ${dataRows([['Sign-in email', input.email]])}
-       <div style="margin:18px 0;">
-         ${button('Set your password', input.setPasswordUrl)}
-       </div>
-       <p style="color:${MUTED};font-size:13px;">The link works once and expires soon. If it has, use &ldquo;Forgot password&rdquo; on the sign-in page to get a fresh one.</p>`,
+       <div style="margin:24px 0 0;">${button('Set your password', input.setPasswordUrl)}</div>
+       <p style="${NOTE}">The link works once and expires soon. If it has, use &ldquo;Forgot password&rdquo; on the sign-in page to get a fresh one.</p>`,
     ),
   };
 }
@@ -495,13 +511,13 @@ export function orderConfirmationEmail(input: {
     moneyRow('Shipping', input.shipping) +
     (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
-    subject: `Order confirmed — ${orderRef(input.orderNumber)}`,
+    subject: `You’re all set: ${orderRef(input.orderNumber)} is confirmed`,
     html: shell(
-      `<h1 style="${H1}">Your order is confirmed.</h1>
-       <p style="margin:0 0 18px;">Thanks ${escapeHtml(
-         input.firstName,
-       )} — we've received your order. It goes to our partner 503A pharmacy for compounding, and you'll get tracking as soon as it ships.</p>
-       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:8px 0 18px;">
+      `<div style="${EYEBROW}">ORDER CONFIRMED</div>
+       <h1 style="${H1}">You&rsquo;re all set, ${escapeHtml(input.firstName)}.</h1>
+       <p style="${P}">Payment went through and your order is headed to our partner pharmacy, where it&rsquo;s prepared just for you.</p>
+       ${nextStep('We&rsquo;ll email your tracking number the moment it ships.')}
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          ${rows}
          <tr>
            <td style="padding:14px 20px;color:${MUTED};font-size:13px;">Total</td>
@@ -510,9 +526,11 @@ export function orderConfirmationEmail(input: {
            ).toFixed(2)}</td>
          </tr>
        </table>
-       <p style="color:${MUTED};font-size:13px;">Order reference <strong style="color:${INK};">${escapeHtml(
+       ${button('View your order', `${SITE_URL}/portal/orders`)}
+       <p style="${NOTE}">Order reference <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
-       )}</strong>. See the details in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>, or just reply to this email.</p>`,
+       )}</strong>. Questions? Just reply to this email.</p>`,
+      { preheader: 'Payment received. Tracking comes the moment it ships.' },
     ),
   };
 }
@@ -528,7 +546,7 @@ export function orderConfirmationEmail(input: {
  * (which ignores padding and radius on links) still shows a solid button; everywhere else it's a pill.
  */
 function button(label: string, href: string): string {
-  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;"><tr><td align="center" bgcolor="${BUTTER}" style="background:${BUTTER};border-radius:999px;padding:14px 26px;"><a href="${escapeHtml(
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;"><tr><td align="center" bgcolor="${BUTTER}" style="background:${BUTTER};border-radius:999px;padding:15px 28px;"><a href="${escapeHtml(
     href,
   )}" style="color:${INK};text-decoration:none;font-family:${FONT};font-weight:600;font-size:15px;line-height:1;display:inline-block;">${escapeHtml(
     label,
@@ -545,25 +563,21 @@ export function refundedEmail(input: {
 }): { subject: string; html: string } {
   const amt = `$${(input.amount / 100).toFixed(2)}`;
   return {
-    subject: `Refund issued — ${orderRef(input.orderNumber)}`,
+    subject: `Your refund is on its way: ${orderRef(input.orderNumber)}`,
     html: shell(
-      `<h1 style="${H1}">We have refunded ${escapeHtml(
-        amt,
-      )}.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(
-         input.firstName,
-       )} — we have issued ${
+      `<div style="${EYEBROW}">REFUND ISSUED</div>
+       <h1 style="${H1}">We&rsquo;ve refunded ${escapeHtml(amt)}.</h1>
+       <p style="${P}">Hi ${escapeHtml(input.firstName)}, we&rsquo;ve issued ${
          input.full ? 'a full refund' : `a partial refund of ${escapeHtml(amt)}`
        } on order ${escapeHtml(input.orderNumber)}.</p>
        ${
          input.reason
-           ? `<p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(
-               input.reason,
-             )}</p>`
+           ? `<p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>`
            : ''
        }
-       <p style="margin:0 0 18px;">It goes back to the card you paid with. Banks usually post it within 5–10 business days — it is out of our hands once Stripe sends it.</p>
+       ${nextStep('It goes back to the card you paid with. Banks usually post it within 5&ndash;10 business days; it&rsquo;s out of our hands once Stripe sends it.')}
        <p style="margin:0;">Questions? Just reply to this email.</p>`,
+      { preheader: 'It goes back to the card you paid with.' },
     ),
   };
 }
@@ -603,7 +617,7 @@ export function chargeFailedInternalEmail(input: {
   reason: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Charge failed on a SIGNED order — ${orderRef(input.orderNumber)}`,
+    subject: `Charge failed on a signed order — ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="${H1}">A signed prescription did not get paid.</h1>
        <p style="margin:0 0 18px;">The prescriber approved <strong style="color:${INK};">${escapeHtml(
@@ -643,13 +657,13 @@ export function abandonedCartEmail(input: {
   return {
     subject: 'Still thinking it over?',
     html: shell(
-      `<h1 style="${H1}">You left something in your cart.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(
-         input.firstName,
-       )} — your cart${count > 1 ? ` (${count} items)` : ''} is still saved in your portal.</p>
-       <p style="margin:0 0 22px;">Placing the order does not charge you. A licensed prescriber reviews it first, and only if they approve do we send a secure link to pay.</p>
+      `<h1 style="${H1}">Your cart&rsquo;s right where you left it.</h1>
+       <p style="${P}">Hi ${escapeHtml(input.firstName)}, your cart${
+         count > 1 ? ` (${count} items)` : ''
+       } is still saved in your portal.</p>
+       ${nextStep('Placing the order doesn&rsquo;t charge you. A licensed prescriber reviews it first, and only if they approve do we send a secure link to pay.')}
        ${button('Pick up where you left off', input.cartUrl)}
-       <p style="margin:22px 0 0;color:${MUTED};font-size:12px;">Do not want reminders like this? Turn them off under Notifications in your account.</p>`,
+       <p style="${NOTE}font-size:12px;">Don&rsquo;t want reminders like this? Turn them off under Notifications in your account.</p>`,
       { unsubscribeUrl: input.unsubscribeUrl },
     ),
   };
@@ -666,15 +680,13 @@ export function unfinishedVisitEmail(input: {
   visitUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: 'Your visit is one step from a prescriber',
+    subject: 'You’re one step from a prescriber',
     html: shell(
-      `<h1 style="${H1}">Your visit is not finished yet.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(
-         input.firstName,
-       )} — your account is set up, but a prescriber cannot review anything until the medical questions are answered. It is four short screens and takes about a minute.</p>
-       <p style="margin:0 0 22px;">Nothing is charged for completing it, and nothing is charged unless a prescriber approves your treatment.</p>
+      `<h1 style="${H1}">Almost there, ${escapeHtml(input.firstName)}.</h1>
+       <p style="${P}">Your account is set up, but a prescriber can&rsquo;t review anything until the medical questions are answered. It&rsquo;s four short screens and takes about a minute.</p>
+       ${nextStep('Nothing is charged for completing it, and nothing is charged unless a prescriber approves your treatment.')}
        ${button('Finish your visit', input.visitUrl)}
-       <p style="margin:22px 0 0;color:${MUTED};font-size:12px;">If you have changed your mind, you can ignore this — we will not send another.</p>`,
+       <p style="${NOTE}font-size:12px;">Changed your mind? You can ignore this. We won&rsquo;t send another.</p>`,
     ),
   };
 }
@@ -697,12 +709,12 @@ export function intakeNeedsInfoEmail(input: {
   return {
     subject: 'One more thing before your review',
     html: shell(
-      `<h1 style="${H1}">We need a little more from you.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — before Dr. Elder can review your visit, our team needs one more detail.${
+      `<h1 style="${H1}">Just one more thing, ${escapeHtml(input.firstName)}.</h1>
+       <p style="${P}">Before Dr. Elder can review your visit, our team needs one more detail.${
          input.inThread ? ' Your question is waiting in your messages, so it stays private.' : ''
        }</p>
-       ${input.inThread ? '' : `<p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.note)}</p>`}
-       <p style="margin:0 0 18px;">Nothing has been charged and nothing is waiting on you other than this.</p>
+       ${input.inThread ? '' : `<p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.note)}</p>`}
+       ${nextStep('Nothing has been charged, and nothing is waiting on you other than this.')}
        ${button(input.inThread ? 'Read and reply' : 'Open your portal', input.portalUrl)}`,
     ),
   };
@@ -742,9 +754,9 @@ export function intakeClosedByTeamEmail(input: {
     subject: 'About your Eternal Longevity visit',
     html: shell(
       `<h1 style="${H1}">We can&rsquo;t take this visit forward.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — our team has closed your visit before it reached a prescriber. This is not a medical decision and no prescriber has reviewed your information.</p>
-       <p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">You have not been charged anything.</strong> If you think this is a mistake, reply to this email and we will take another look.</p>`,
+       <p style="${P}">Hi ${escapeHtml(input.firstName)}, our team has closed your visit before it reached a prescriber. This is not a medical decision and no prescriber has reviewed your information.</p>
+       <p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>
+       <p style="margin:0;"><strong style="color:${INK};">You haven&rsquo;t been charged anything.</strong> If you think this is a mistake, just reply to this email and we&rsquo;ll take another look.</p>`,
     ),
   };
 }
@@ -758,10 +770,11 @@ export function planNeedsReviewEmail(input: {
   return {
     subject: 'Your plan needs a quick review',
     html: shell(
-      `<h1 style="${H1}">Time for a check-in.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescription has reached the end of its term, so your plan is paused until your prescriber reviews it again.</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">You have not been charged</strong> and nothing has shipped. Confirm nothing has changed in your health (it takes a couple of minutes, and we skip what we already have), and it goes straight back to him.</p>
+      `<h1 style="${H1}">Time for a quick check-in, ${escapeHtml(input.firstName)}.</h1>
+       <p style="${P}">Your prescription has reached the end of its term, so your plan is paused until your prescriber reviews it again. <strong style="color:${INK};">You haven&rsquo;t been charged</strong> and nothing has shipped.</p>
+       ${nextStep('Confirm nothing has changed in your health (it takes a couple of minutes, and we skip what we already have), and it goes straight back to him.')}
        ${button('Confirm and continue', input.portalUrl)}`,
+      { preheader: 'Your plan is paused until your prescriber reviews it again.' },
     ),
   };
 }
@@ -794,7 +807,7 @@ export function adminComposedEmail(input: {
     html: shell(
       `<p style="margin:0 0 16px;">Hi ${escapeHtml(input.firstName)},</p>
        ${paragraphs}
-       <p style="margin:24px 0 0;color:${MUTED};font-size:13px;">— The Eternal Longevity team</p>`,
+       <p style="margin:24px 0 0;">Warmly,<br/><strong style="color:${INK};">The Eternal Longevity team</strong></p>`,
     ),
   };
 }
@@ -808,10 +821,10 @@ export function prescriberQuestionEmail(input: {
   return {
     subject: 'Your prescriber has a question',
     html: shell(
-      `<h1 style="${H1}">One question before your review.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(input.firstName)} — your prescriber has read your visit and needs one more thing from you before deciding.</p>
-       <p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.question)}</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">Nothing has been charged</strong> and your order is still open. Reply in your portal and it goes straight back to him.</p>
+      `<h1 style="${H1}">Quick question, ${escapeHtml(input.firstName)}.</h1>
+       <p style="${P}">Your prescriber has read your visit and needs one more thing from you before deciding.</p>
+       <p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.question)}</p>
+       ${nextStep('<strong>Nothing has been charged</strong> and your order is still open. Reply in your portal and it goes straight back to him.')}
        ${button('Answer in your portal', input.portalUrl)}`,
     ),
   };
@@ -824,15 +837,15 @@ export function declinedEmail(input: {
   return {
     subject: 'About your Eternal Longevity visit',
     html: shell(
-      `<h1 style="${H1}">Your prescriber could not approve this treatment.</h1>
-       <p style="margin:0 0 18px;">Thanks ${escapeHtml(input.firstName)}. A licensed prescriber reviewed your visit and decided this treatment is not appropriate for you right now. That is a clinical decision, and it is made to keep you safe.</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">You have not been charged anything.</strong> There is no payment link and no order to cancel.</p>
+      `<h1 style="${H1}">Your prescriber couldn&rsquo;t approve this treatment.</h1>
+       <p style="${P}">Thanks for your visit, ${escapeHtml(input.firstName)}. A licensed prescriber reviewed it and decided this treatment isn&rsquo;t appropriate for you right now. That&rsquo;s a clinical decision, and it&rsquo;s made to keep you safe.</p>
+       <p style="${P}"><strong style="color:${INK};">You haven&rsquo;t been charged anything.</strong> There&rsquo;s no payment link and no order to cancel.</p>
        ${
          input.reason
-           ? `<p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>`
+           ? `<p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>`
            : ''
        }
-       <p style="margin:0 0 18px;">If you would like to talk it through, reply to this email or message us from your portal. We would also encourage you to raise it with your own physician.</p>`,
+       <p style="margin:0;">Want to talk it through? Reply to this email or message us from your portal. We&rsquo;d also encourage you to raise it with your own physician.</p>`,
     ),
   };
 }
@@ -856,19 +869,15 @@ export function orderCancelledByTeamEmail(input: {
     subject: `We cancelled ${orderRef(input.orderNumber)}`,
     html: shell(
       `<h1 style="${H1}">We&rsquo;ve cancelled this order.</h1>
-       <p style="margin:0 0 18px;">Hi ${escapeHtml(
-         input.firstName,
-       )} — our team cancelled ${escapeHtml(
+       <p style="${P}">Hi ${escapeHtml(input.firstName)}, our team cancelled ${escapeHtml(
          orderRef(input.orderNumber),
        )}. This is not a medical decision and no prescriber has reviewed it.</p>
-       <p style="margin:0 0 18px;padding:16px 18px;${PANEL}">${escapeHtml(
-         input.reason,
-       )}</p>
-       <p style="margin:0 0 18px;"><strong style="color:${INK};">${
+       <p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>
+       <p style="margin:0;"><strong style="color:${INK};">${
          input.refunded
            ? 'Anything you were charged has been refunded in full.'
-           : 'You have not been charged anything.'
-       }</strong> If you think this is a mistake, reply to this email and we will take another look.</p>`,
+           : 'You haven&rsquo;t been charged anything.'
+       }</strong> If you think this is a mistake, just reply to this email and we&rsquo;ll take another look.</p>`,
     ),
   };
 }
@@ -898,13 +907,13 @@ export function orderReceivedEmail(input: {
     moneyRow('Shipping', input.shipping) +
     (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
-    subject: `We received your order — ${orderRef(input.orderNumber)}`,
+    subject: `We’ve got your order: ${orderRef(input.orderNumber)}`,
     html: shell(
-      `<h1 style="${H1}">Your order is in. Nothing charged yet.</h1>
-       <p style="margin:0 0 18px;">Thanks ${escapeHtml(
-         input.firstName,
-       )}. Your prescriber is reviewing your visit now. <strong style="color:${INK};">You have not been charged</strong> — if your treatment is approved we'll email you a receipt, and if it isn't, you pay nothing.</p>
-       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:8px 0 18px;">
+      `<div style="${EYEBROW}">ORDER RECEIVED</div>
+       <h1 style="${H1}">Thanks, ${escapeHtml(input.firstName)}. Your order is in.</h1>
+       <p style="${P}">Your prescriber is reviewing your visit now. <strong style="color:${INK};">You haven&rsquo;t been charged.</strong></p>
+       ${nextStep('If your treatment is approved, we&rsquo;ll email you a receipt. If it isn&rsquo;t, you pay nothing.')}
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          ${rows}
          <tr>
            <td style="padding:14px 20px;color:${MUTED};font-size:13px;">Total if approved</td>
@@ -913,9 +922,11 @@ export function orderReceivedEmail(input: {
            ).toFixed(2)}</td>
          </tr>
        </table>
-       <p style="color:${MUTED};font-size:13px;">Order reference <strong style="color:${INK};">${escapeHtml(
+       ${button('View your order', `${SITE_URL}/portal/orders`)}
+       <p style="${NOTE}">Order reference <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
-       )}</strong>. See the details in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>, or just reply to this email.</p>`,
+       )}</strong>. Questions? Just reply to this email.</p>`,
+      { preheader: 'Your prescriber is reviewing it now. Nothing charged yet.' },
     ),
   };
 }
@@ -934,14 +945,11 @@ export function approvedPayNowEmail(input: {
   payUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Approved — your card needs a second look · ${orderRef(input.orderNumber)}`,
+    subject: `You’re approved. One quick step on payment (${orderRef(input.orderNumber)})`,
     html: shell(
       `<div style="${EYEBROW}">PRESCRIBER APPROVED</div>
-       <h1 style="${H1}">Hi ${escapeHtml(
-         input.firstName,
-       )}, your treatment was approved.</h1>
-       <p style="margin:0 0 18px;">Your prescriber reviewed your visit and approved your treatment. We tried the card you saved at checkout and it didn&rsquo;t go through &mdash; often an expiry date or a bank hold, rather than anything wrong on your end.</p>
-       <p style="margin:0 0 18px;">Pay below and your prescription goes straight to the pharmacy for compounding.</p>
+       <h1 style="${H1}">Good news, ${escapeHtml(input.firstName)}. You&rsquo;re approved.</h1>
+       <p style="${P}">Your prescriber reviewed your visit and approved your treatment. We tried the card you saved at checkout and it didn&rsquo;t go through. Often that&rsquo;s an expiry date or a bank hold, not anything wrong on your end.</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          <tr><td style="padding:18px 20px;color:${INK};font-size:14px;">
            <span style="color:${MUTED};font-size:13px;">Amount due</span><br/>
@@ -950,12 +958,12 @@ export function approvedPayNowEmail(input: {
            ).toFixed(2)}</span>
          </td></tr>
        </table>
-       <div style="margin:0 0 18px;">
-         ${button('Complete payment', input.payUrl)}
-       </div>
-       <p style="color:${MUTED};font-size:13px;">This link is unique to order <strong style="color:${INK};">${escapeHtml(
+       ${nextStep('Pay below and your prescription goes straight to the pharmacy to be prepared.')}
+       ${button('Complete payment', input.payUrl)}
+       <p style="${NOTE}">This link is unique to order <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
-       )}</strong> and expires in 7 days. Don't forward it.</p>`,
+       )}</strong> and expires in 7 days. Please don&rsquo;t forward it.</p>`,
+      { preheader: 'Your card didn’t go through. Pay below and it goes to the pharmacy.' },
     ),
   };
 }
@@ -1121,12 +1129,13 @@ export function checkinEmail(input: {
   return {
     subject: 'How’s it going?',
     html: shell(
-      `<h1 style="${H1}">How’s it going, ${escapeHtml(input.firstName)}?</h1>
-       <p style="margin:0 0 20px;">It’s been about a month with your treatment. On a scale of 1 to 5, how are you finding it?</p>
+      `<div style="${EYEBROW}">ONE-MONTH CHECK-IN</div>
+       <h1 style="${H1}">How’s it going, ${escapeHtml(input.firstName)}?</h1>
+       <p style="margin:0 0 20px;">It’s been about a month with your treatment. On a scale of 1 to 5, how are you finding it? One tap is all it takes.</p>
        <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>${cells}</tr></table>
        <p style="margin:10px 0 0;color:${MUTED};font-size:12px;">1 = not well &nbsp;·&nbsp; 5 = very well</p>
-       <p style="margin:22px 0 0;">Anything on your mind about dosing or side effects? Message your prescriber through the portal, any time.</p>
-       <p style="margin:22px 0 0;color:${MUTED};font-size:12px;">Don’t want check-ins? Turn them off under Notifications in your account, or reply to this email and we’ll stop.</p>`,
+       <p style="margin:24px 0 0;">Anything on your mind about dosing or side effects? Message your prescriber through the portal, any time.</p>
+       <p style="${NOTE}font-size:12px;">Don’t want check-ins? Turn them off under Notifications in your account, or reply to this email and we’ll stop.</p>`,
     ),
   };
 }
@@ -1183,7 +1192,7 @@ export function followupEmail(input: {
   /** Pay stage only. */
   order?: { number: string; totalCents: number; expires: string };
 }): { subject: string; html: string } {
-  const hi = input.firstName ? `Hi ${input.firstName}` : 'Hi there';
+  const hi = input.firstName ? `Hi ${input.firstName},` : 'Hi there,';
   const help = `Questions? Reply to this email or write to ${SUPPORT_EMAIL}.`;
   const step = Math.max(0, input.step);
   const u = input.unsubscribeUrl;
@@ -1196,7 +1205,8 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Your assessment',
           heading: 'Pick up where you left off.',
-          body: `${hi} — you started your assessment with us. It takes a few minutes to finish, and a licensed physician reviews it once you do.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} you started your assessment with us. It takes a few minutes to finish, and a licensed physician reviews it once you do.`,
+          next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1206,12 +1216,13 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'How it works',
           heading: 'Three steps, all online.',
+          body: `${hi} here’s what happens after you finish your assessment.`,
           rows: [
             ['1 · Assessment', 'A few minutes of questions about your health and goals.'],
             ['2 · Physician review', 'A licensed physician reviews it and decides whether treatment is right for you.'],
             ['3 · Delivery', 'If approved, your treatment ships from a licensed U.S. pharmacy, tracked.'],
           ],
-          body: `${hi} — here is what happens after you finish your assessment. ${NOTHING_CHARGED}`,
+          next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1221,7 +1232,8 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Last reminder',
           heading: 'Your assessment is still waiting.',
-          body: `${hi} — whenever you are ready, you can finish in a few minutes. This is the last reminder we will send about it.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} whenever you’re ready, you can finish in a few minutes. This is the last reminder we’ll send about it.`,
+          next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1238,7 +1250,8 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Your plan',
           heading: 'Your plan is ready.',
-          body: `${hi} — your assessment is complete and your plan is waiting in your cart. Place your order and a licensed physician will review it.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} your assessment is complete and your plan is waiting in your cart.`,
+          next: `Place your order and a licensed physician will review it. ${NOTHING_CHARGED}`,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1248,7 +1261,8 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Your plan',
           heading: 'One step from your physician review.',
-          body: `${hi} — once you place your order, a licensed physician reviews your assessment and decides whether treatment is right for you. If approved, it ships from a licensed pharmacy, tracked.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} once you place your order, a licensed physician reviews your assessment and decides whether treatment is right for you. If approved, it ships from a licensed pharmacy, tracked.`,
+          next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1258,7 +1272,8 @@ export function followupEmail(input: {
         html: noticeEmail({
           eyebrow: 'Last reminder',
           heading: 'Your plan is still in your cart.',
-          body: `${hi} — your plan is saved whenever you are ready. This is the last reminder we will send about it.\n\n${NOTHING_CHARGED}`,
+          body: `${hi} your plan is saved whenever you’re ready. This is the last reminder we’ll send about it.`,
+          next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,
         }),
@@ -1273,17 +1288,17 @@ export function followupEmail(input: {
       {
         subject: 'Add your photos so your physician can review',
         heading: 'One step left: your photos.',
-        lead: `${hi} — thanks for your order. Your physician needs a few photos before they can review your treatment. It takes about two minutes from your phone.`,
+        lead: `${hi} thanks for your order. Your physician needs a few photos before they can review your treatment. It takes about two minutes from your phone.`,
       },
       {
         subject: 'Your physician is waiting on your photos',
         heading: 'Your review is waiting on your photos.',
-        lead: `${hi} — your order is in, but your physician cannot start the review until your photos are added.`,
+        lead: `${hi} your order is in, but your physician can’t start the review until your photos are added.`,
       },
       {
         subject: 'Reminder: add your photos to finish your review',
         heading: 'Your photos are still needed.',
-        lead: `${hi} — your order is on hold until your photos are added. Once they are in, your physician can review it.`,
+        lead: `${hi} your order is on hold until your photos are added. Once they’re in, your physician can review it.`,
       },
     ];
     const s = steps[Math.min(step, steps.length - 1)];
@@ -1292,7 +1307,8 @@ export function followupEmail(input: {
       html: noticeEmail({
         eyebrow: 'Your order',
         heading: s.heading,
-        body: `${s.lead}\n\n${NOTHING_CHARGED}`,
+        body: s.lead,
+        next: NOTHING_CHARGED,
         cta,
         footnote: help,
       }),
@@ -1313,19 +1329,20 @@ export function followupEmail(input: {
   return {
     subject: last
       ? 'Reminder: your payment link expires soon'
-      : 'Reminder: complete payment for your approved treatment',
+      : 'You’re approved. Complete payment to get it moving',
     html: noticeEmail({
       eyebrow: 'Physician approved',
-      heading: last ? 'Your payment link expires soon.' : 'Your treatment is approved.',
-      body: `${hi} — your physician approved your treatment, but payment has not gone through yet. Complete it below and your prescription goes straight to the pharmacy. This secure link expires ${expires}.`,
+      heading: last ? 'Your payment link expires soon.' : 'Good news: you’re approved.',
+      body: `${hi} your physician approved your treatment, but payment hasn’t gone through yet.`,
       rows: o
         ? [
             ['Order', orderRef(o.number)],
             ['Amount due', `$${(o.totalCents / 100).toFixed(2)}`],
           ]
         : undefined,
+      next: `Complete payment below and your prescription goes straight to the pharmacy. This secure link expires ${expires}.`,
       cta: { label: 'Complete payment', href: input.url },
-      footnote: `This link is unique to your order — please don’t forward it. ${help}`,
+      footnote: `This link is unique to your order, so please don’t forward it. ${help}`,
     }),
   };
 }

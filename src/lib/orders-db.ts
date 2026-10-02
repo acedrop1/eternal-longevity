@@ -14,6 +14,7 @@
  * the service-role client after we have checked the caller's role ourselves.
  */
 
+import type { Json } from '@/lib/database.types';
 import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
@@ -696,6 +697,68 @@ export async function requestInfoFromPatientAction(
       });
     } catch {
       // The message is in their portal either way.
+    }
+  }
+
+  revalidatePortal();
+  return { ok: true };
+}
+
+/**
+ * The prescriber asks for photos (hair, skin). Photos are never required up
+ * front; this flags the member's newest intake so the portal asks for them
+ * (Add your photos, /portal/visit), and tells the member in their thread with
+ * him and by email. The order stays with him until he decides.
+ */
+export async function requestPhotosAction(orderNumber: string): Promise<ActionResult> {
+  const { user, error } = await requireRole(['doctor']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const id = await orderIdFor(orderNumber);
+  if (!id) return { ok: false, error: 'not_found' };
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select('user_id, member_name, member_email')
+    .eq('id', id)
+    .maybeSingle();
+  if (!order?.user_id) return { ok: false, error: 'no_patient' };
+
+  const { data: intake } = await db
+    .from('intake_submissions')
+    .select('id, answers')
+    .eq('user_id', order.user_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!intake) return { ok: false, error: 'no_intake' };
+  const answers = (intake.answers && typeof intake.answers === 'object' && !Array.isArray(intake.answers)
+    ? intake.answers
+    : {}) as Record<string, unknown>;
+  await db
+    .from('intake_submissions')
+    .update({ answers: { ...answers, photosRequested: true } as unknown as Json })
+    .eq('id', intake.id);
+
+  const text = 'Could you add a few photos so I can finish your review? It takes about two minutes on your phone, and only your care team sees them.';
+  await db.from('messages').insert({
+    thread_user_id: order.user_id,
+    sender_id: user.id,
+    channel: 'doctor',
+    body: `${text} Add them here: ${SITE_URL}/portal/visit`,
+  });
+  await appendUpdate(id, user.name, 'physician', 'Your prescriber asked for photos', text);
+
+  if (order.member_email) {
+    const msg = prescriberQuestionEmail({
+      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
+      question: text,
+      portalUrl: `${SITE_URL}/portal/visit`,
+    });
+    try {
+      await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
+    } catch {
+      // The request is in their portal either way.
     }
   }
 

@@ -278,7 +278,6 @@ export async function createPayIntentAction(token: string): Promise<{
     currency: 'usd',
     customer: customerId,
     shipping,
-    receipt_email: order.member_email ?? undefined,
     // Neutral naming — peptide names never reach the card statement or
     // dispute record. No statement_descriptor_suffix: the account carries no
     // shortened descriptor, so a suffix would be dropped and the charge would
@@ -458,7 +457,6 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
       off_session: true,
       confirm: true,
       description: `Care program — order ${order.order_number}`,
-      receipt_email: order.member_email,
       shipping: addr.line1
         ? {
             name: addr.fullName || order.member_name || 'Member',
