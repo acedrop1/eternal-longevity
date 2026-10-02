@@ -685,7 +685,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Commonly run alongside NAD+',
     ],
     whatsIncluded: [
-      'Compounded Glutathione (200 mg/mL, 5 mL vials), enough to last until your next shipment',
+      'Compounded Glutathione (200 mg/mL, 10 mL vials), enough to last until your next shipment',
       'Reconstitution kit',
       'Insulin syringes + alcohol prep pads',
       'Ongoing messaging with your prescriber',
@@ -1022,7 +1022,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'More than a century of medical use',
     ],
     whatsIncluded: [
-      '30 capsules of compounded Methylene Blue 25 mg',
+      '30 capsules of compounded Methylene Blue 10 mg',
       'Ongoing messaging with your prescriber',
     ],
     delivery: 'oral',
