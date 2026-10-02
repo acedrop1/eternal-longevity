@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useOrders } from '@/components/orders/OrdersProvider';
+import { useRouter } from 'next/navigation';
+import { denyOrderAction } from '@/lib/orders-db';
+import { LIVE_ORDER_STATUSES, paymentState } from '@/lib/order-health';
 import type { Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 
@@ -16,15 +18,16 @@ import { cn } from '@/lib/utils';
  * touched in two days showed up nowhere at all.
  */
 
-/** Order statuses that are still in motion. 'paid' is a legacy database value. */
-export const LIVE_ORDER_STATUSES: string[] = ['assigned', 'signed', 'paid', 'compounding', 'shipped'];
+export { LIVE_ORDER_STATUSES };
 
 /** Anything about an order that someone non-clinical has to deal with. */
 export function attentionFor(order: Order): string | null {
   const notes = (order.updates ?? []).map((u) => `${u.note} ${u.author}`);
-  if (notes.some((n) => /charge failed/i.test(n))) {
-    return 'Charge failed — member sent a pay link';
+  if (order.status === 'pending-admin') {
+    return 'Never reached the prescriber. The release at checkout failed; it is retried hourly.';
   }
+  const payment = paymentState(order);
+  if (payment === 'failed') return 'Charge failed — member sent a pay link';
   if (notes.some((n) => /missing NPI/i.test(n))) {
     return 'Held before the pharmacy — prescriber has no NPI';
   }
@@ -35,6 +38,7 @@ export function attentionFor(order: Order): string | null {
   ) {
     return 'Waiting on the prescriber for over a day';
   }
+  if (payment === 'awaiting') return 'Approved, awaiting payment';
   return null;
 }
 
@@ -46,15 +50,27 @@ export function attentionFor(order: Order): string | null {
  * explanation is the thing that generates the phone call.
  */
 export function CancelOrder({ order }: { order: Order }) {
-  const { denyAdmin } = useOrders();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // What the cancel left for a person to do (refund failed, cancel in the pharmacy portal).
+  const [followUp, setFollowUp] = useState<string | null>(null);
 
   // Only orders still in motion, and never once the package has left.
   const cancellable =
     LIVE_ORDER_STATUSES.includes(order.status) && !['shipped', 'delivered'].includes(order.status);
+  if (followUp) {
+    return (
+      <div role="alert" className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900">
+        {followUp}{' '}
+        <button type="button" onClick={() => router.refresh()} className="font-semibold underline underline-offset-[3px]">
+          Got it
+        </button>
+      </div>
+    );
+  }
   if (!cancellable) return null;
 
   if (!open) {
@@ -77,7 +93,7 @@ export function CancelOrder({ order }: { order: Order }) {
       <div className="mb-2 text-[13px] font-medium text-red-700">
         Why are you cancelling?
       </div>
-      <p className="mb-3 text-xs leading-relaxed text-ink/55">
+      <p className="mb-3 text-xs leading-relaxed text-ink/65">
         The member is emailed this sentence and anything charged is refunded
         in full. It is not recorded as a clinical decision.
       </p>
@@ -90,7 +106,7 @@ export function CancelOrder({ order }: { order: Order }) {
         }}
         rows={3}
         placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
-        className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-red-500/40"
+        className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-red-500/40"
       />
       {error && (
         <p className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
@@ -106,10 +122,17 @@ export function CancelOrder({ order }: { order: Order }) {
             setBusy(true);
             setError(null);
             try {
-              const res = await denyAdmin(order.id, reason.trim());
+              const res = await denyOrderAction(order.id, reason.trim());
               if (res.ok) {
                 setOpen(false);
                 setReason('');
+                const todo = [
+                  res.refundError && `Cancelled, but the refund failed (${res.refundError}). Refund it from Stripe.`,
+                  res.cancelByHand && 'This order was placed with the pharmacy by hand. Cancel it in the pharmacy portal now.',
+                ].filter(Boolean);
+                // Refreshing drops the row, so a to-do is shown first and refreshes on "Got it".
+                if (todo.length) setFollowUp(todo.join(' '));
+                else router.refresh();
               } else {
                 setError(
                   'Could not cancel this order. Nothing was refunded or sent.',
@@ -123,7 +146,7 @@ export function CancelOrder({ order }: { order: Order }) {
             'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
             reason.trim() && !busy
               ? 'bg-red-700 text-white hover:bg-red-800'
-              : 'bg-ink/10 text-ink/55',
+              : 'bg-ink/10 text-ink/65',
           )}
         >
           {busy ? 'Cancelling…' : 'Cancel and refund'}

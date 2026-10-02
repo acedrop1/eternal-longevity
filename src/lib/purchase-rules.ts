@@ -40,11 +40,10 @@ export function heldProducts(
  */
 export function intakeCovers(answers: Record<string, unknown>, productId: string): boolean {
   if (!Object.prototype.hasOwnProperty.call(PRODUCT_CATEGORY, productId)) return true;
-  const ids = [
-    ...intakeProductIds(answers),
-    ...(Array.isArray(answers.visitProductIds) ? answers.visitProductIds : []),
-  ];
-  return ids.includes(productId);
+  // Only server-written ids count. visitProductIds is what the browser said it
+  // showed, so it never covers anything; a visit records what it asked in
+  // assessedProductIds.
+  return intakeProductIds(answers).includes(productId);
 }
 
 /**

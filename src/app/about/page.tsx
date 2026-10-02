@@ -29,22 +29,22 @@ const VALUES = [
   },
   {
     title: 'Transparency over polish',
-    body: "We publish what we know, and what we don't. If a peptide has thin human data, we say so. If we're unsure, we hold it back.",
+    body: "We publish what we know, and what we don't. If the evidence for a treatment is thin, we say so. If we're unsure, we hold it back.",
   },
   {
-    title: 'Formulation is the product',
+    title: 'A licensed pharmacy behind every order',
     body: "Every preparation is compounded by a licensed 503A pharmacy against a prescription written for one person. Each batch is tested by the pharmacy as required for its preparation type; we share your lot's certificate of analysis on request.",
   },
   {
     title: 'Long horizon, slow medicine',
-    body: 'We don’t do crash protocols. Refills ship on the same prescription until it expires, on a schedule you can change, pause or cancel, with the prescriber reachable throughout.',
+    body: 'We don’t chase quick fixes. Refills ship on the same prescription until it expires, on a schedule you can change, pause or cancel, with the prescriber reachable throughout.',
   },
 ];
 
 const RECORD = [
   { k: 'Business', v: `${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}` },
   { k: 'Prescriber of record', v: `Dr. Bader Elder, DO · licensed in ${SERVICE_AREA_SHORT}` },
-  { k: 'Pharmacy', v: 'MedShiftRx, a state-licensed 503A compounding pharmacy' },
+  { k: 'Pharmacy', v: 'A state-licensed 503A compounding pharmacy (named on your prescription label)' },
   { k: 'Who we serve', v: `${SERVICE_AREA} residents, 18 and older` },
   { k: 'Prescription', v: 'Required. You are charged only if the physician approves.' },
 ];
@@ -62,10 +62,10 @@ export default function AboutPage() {
           <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)] lg:gap-16">
             <div className="lg:pb-6">
               <h1 className="text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[80px]">
-                Peptides deserved a better front door.
+                Good care, without the waiting room.
               </h1>
               <p className="mt-6 max-w-[560px] text-[16px] leading-relaxed text-ink-soft md:text-[18px]">
-                Not gray-market vials shipped from somewhere unmarked. Not a wellness brand with a checkout button. Every
+                A physician-led telehealth practice for hair, skin, sexual health, hormones and longevity. Every
                 prescription decision is made by Dr. Elder, and a licensed 503A pharmacy is behind every order.
               </p>
               <Link
@@ -112,12 +112,12 @@ export default function AboutPage() {
               <h2 className={H2}>The middle was missing.</h2>
               <div className="mt-6 max-w-[560px] space-y-4 text-[16px] leading-relaxed text-ink-soft">
                 <p>
-                  Look at the peptide landscape and you find two extremes. On one side, clinics priced for people with a
-                  private banker.
+                  Look at online wellness care and you often find two extremes. On one side, concierge clinics priced
+                  for very few people.
                 </p>
                 <p>
-                  On the other, the underground: pseudonymous suppliers, no testing, no paper trail. The people who most
-                  wanted quality were getting it the worst.
+                  On the other, quick-checkout brands where it&rsquo;s hard to tell who the doctor is or where the
+                  medication comes from.
                 </p>
                 <p>
                   Eternal Longevity is built for that gap. A licensed pharmacy. A named prescriber. Prices published
@@ -186,7 +186,7 @@ export default function AboutPage() {
             <dl className="border-t border-ink/10">
               {RECORD.map((r) => (
                 <div key={r.k} className="grid gap-1 border-b border-ink/10 py-5 md:grid-cols-[minmax(0,2fr)_minmax(0,5fr)] md:gap-6">
-                  <dt className="text-[13px] font-medium text-ink/55 md:pt-0.5">{r.k}</dt>
+                  <dt className="text-[13px] font-medium text-ink/65 md:pt-0.5">{r.k}</dt>
                   <dd className="text-[16px] leading-relaxed text-ink">{r.v}</dd>
                 </div>
               ))}

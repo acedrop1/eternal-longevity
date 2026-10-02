@@ -206,7 +206,7 @@ function FilePick({
           <span className="block truncate text-[15px] font-medium text-ink">
             {file ? file.name : `Upload the ${title.toLowerCase()}`}
           </span>
-          <span className="block text-[13px] text-ink/55">
+          <span className="block text-[13px] text-ink/65">
             {file ? 'Tap to replace' : 'PDF or image, up to 10 MB'}
           </span>
         </span>

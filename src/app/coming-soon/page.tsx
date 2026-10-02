@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
+import { SITE_LOCKED } from '@/lib/site-lock';
 import { Wordmark } from '@/components/nav/Wordmark';
 import { SERVICE_AREA_SHORT } from '@/lib/site';
 import { TeamAccess, WaitlistForm } from './ComingSoonForms';
@@ -12,6 +14,8 @@ export const metadata: Metadata = {
 
 /** Pre-launch page: the only public page while the site is locked (see lib/site-lock.ts). */
 export default function ComingSoonPage() {
+  // Only reachable while the pre-launch lock is on; after launch it's a dead end.
+  if (!SITE_LOCKED) redirect('/');
   return (
     <main className="bg-white p-3 md:p-5">
       <div className="relative h-[calc(100svh-24px)] min-h-[600px] overflow-hidden rounded-shell bg-milk md:h-[calc(100svh-40px)]">

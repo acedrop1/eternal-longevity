@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/cron-auth';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -28,15 +29,9 @@ export const maxDuration = 60;
 /** Ceiling per run, so one bad query cannot mail the whole table. */
 const MAX_PER_RUN = 100;
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  // No secret means nobody gets in, not everybody.
-  if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
-}
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!supabaseAdminConfigured() || !emailConfigured()) {

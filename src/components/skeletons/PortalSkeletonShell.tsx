@@ -24,7 +24,7 @@ export function PortalSkeletonShell({
           <div className="flex h-14 items-center gap-3 px-3 md:px-4">
             <div className="flex items-center gap-2.5 px-1">
               <Wordmark href={null} className="text-[26px] text-[#F2D060] md:text-[30px]" />
-              <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">Portal</span>
+              <span className="hidden text-[13px] font-medium text-ink/65 sm:inline">Portal</span>
             </div>
             {/* role chip + log out placeholders */}
             <span className="ml-auto h-7 w-20 animate-pulse rounded-full bg-ink/[0.06]" />

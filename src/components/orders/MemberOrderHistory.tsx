@@ -48,7 +48,7 @@ export function MemberOrderHistory({
                   <span className="font-medium text-[14px] text-ink">
                     {order.ref}
                   </span>
-                  <span className="text-[13px] font-medium tabular-nums text-ink/55">
+                  <span className="text-[13px] font-medium tabular-nums text-ink/65">
                     {order.placedAt}
                   </span>
                 </div>
@@ -73,7 +73,7 @@ export function MemberOrderHistory({
 
               {order.trackingNumber && (
                 <div className={`${inset} mt-4 px-4 py-3`}>
-                  <div className="font-medium text-[12px] text-ink/55">
+                  <div className="font-medium text-[12px] text-ink/65">
                     Tracking
                   </div>
                   <p className="mt-0.5 break-all font-medium text-[14px] text-ink">

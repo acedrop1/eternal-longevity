@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -7,10 +8,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Accessibility Statement',
-  description: 'Our commitment to WCAG 2.1 Level AA, known gaps, and how to tell us about a barrier.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/accessibility',
+  'Accessibility Statement',
+  'Our commitment to WCAG 2.1 Level AA, known gaps, and how to tell us about a barrier.',
+);
 
 export default function AccessibilityPage() {
   return (

@@ -1,46 +1,50 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Mono, Geist, Instrument_Sans, Mulish } from 'next/font/google';
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
+import { Geist } from 'next/font/google';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_LEGAL_NAME,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+} from '@/lib/site';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import './globals.css';
 import { CatalogProvider } from '@/components/catalog/CatalogProvider';
 import { getLiveProducts, toShopProduct } from '@/lib/catalog';
 
-// Mulish loads via next/font as the dev fallback for Proxima Nova.
-// Once the licensed Proxima Nova .woff2 files are dropped into /public/fonts/,
-// the @font-face rules in globals.css take precedence (the CSS variable order
-// in tailwind.config.ts puts --font-proxima first).
-const mulish = Mulish({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-mulish',
-  display: 'swap',
-});
-
-// Hero + announcement typography (David pattern). David sets headlines in a
-// condensed serif; we never use serifs, so this is Instrument Sans pulled in
-// on its width axis and set condensed. DM Mono carries the typewriter pills.
-const display = Instrument_Sans({
-  subsets: ['latin'],
-  axes: ['wdth'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
-// Redesign: Geist carries the whole brand (UI and headlines), Apple-clean and
-// tight at display sizes.
+// Geist carries the whole brand (UI and headlines). The Mulish, Instrument
+// Sans and DM Mono loaders were dropped: tailwind's display/mono stacks point
+// at Geist, so they were preloaded on every page and never rendered.
 const geist = Geist({
   subsets: ['latin'],
   variable: '--font-geist',
   display: 'swap',
 });
 
-const mono = DM_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-mono',
-  display: 'swap',
-});
+// '825 Riverview Dr, Floor 2, Totowa, NJ 07512' → schema.org PostalAddress.
+const addr = BUSINESS_ADDRESS.split(', ');
+const [region, postalCode] = addr.at(-1)!.split(' ');
+const ORG_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalBusiness',
+  name: SITE_NAME,
+  legalName: BUSINESS_LEGAL_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon.png`,
+  description: SITE_DESCRIPTION,
+  email: SUPPORT_EMAIL,
+  telephone: SUPPORT_PHONE,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: addr.slice(0, -2).join(', '),
+    addressLocality: addr.at(-2),
+    addressRegion: region,
+    postalCode,
+    addressCountry: 'US',
+  },
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -52,9 +56,12 @@ export const metadata: Metadata = {
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME }],
   keywords: [
-    'peptides',
-    'NAD+',
+    'telehealth',
     'longevity',
+    'hair',
+    'skin',
+    'sexual health',
+    'hormones',
     '503A pharmacy',
   ],
   // SVG for browsers that take it, PNGs (app/icon.png, app/apple-icon.png) for the rest and iOS.
@@ -101,14 +108,31 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // Live catalogue (Admin → Products), handed to client components once.
-  const products = (await getLiveProducts()).map(toShopProduct);
+  // Slimmed: client consumers (cart, checkout lines, menus, rails, FAQ prices)
+  // read only ids, names, images, pricing, storage and category. The long PDP
+  // copy is server-rendered by the product page itself, so it's emptied here
+  // instead of being serialised into every page's payload.
+  const products = (await getLiveProducts()).map((p) => ({
+    ...toShopProduct(p),
+    shortDescription: '',
+    longDescription: '',
+    bestFor: '',
+    benefits: [],
+    whatsIncluded: [],
+    gallery: [],
+    sideEffects: [],
+    contraindications: [],
+  }));
 
   return (
-    <html lang="en" className={`${geist.variable} ${mulish.variable} ${display.variable} ${mono.variable}`}>
+    // --font-mulish stays in tailwind's sans stack; an undefined var() there
+    // would invalidate the whole font-family, so it's pinned to system-ui.
+    <html lang="en" className={geist.variable} style={{ '--font-mulish': 'system-ui' } as React.CSSProperties}>
       {/* suppressHydrationWarning silences the harmless mismatch caused by
           browser extensions (ColorZilla, Grammarly, etc.) that inject
           attributes into <body> before React hydrates. */}
       <body suppressHydrationWarning>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD).replace(/</g, '\\u003c') }} />
         <SmoothScroll />
         <CatalogProvider products={products}>{children}</CatalogProvider>
       </body>

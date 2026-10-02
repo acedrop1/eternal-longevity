@@ -51,7 +51,7 @@ export function PasswordField({
         onClick={() => setShown((v) => !v)}
         aria-label={shown ? 'Hide password' : 'Show password'}
         aria-pressed={shown}
-        className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-ink/50 transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
+        className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full text-ink/60 transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
       >
         {shown ? (
           <svg

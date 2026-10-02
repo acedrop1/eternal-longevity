@@ -61,7 +61,8 @@ export function BuyBar({
   ctaHref?: string;
   ctaLabel?: string;
   onAddToCart?: () => void;
-  onChangePlan: () => void;
+  /** Omit when there is no plan to pick (the CTA goes to an existing order or plan). */
+  onChangePlan?: () => void;
 }) {
   const ctaCls =
     'shrink-0 rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-butter-deep md:px-5 md:py-3 md:text-[14px]';
@@ -90,13 +91,15 @@ export function BuyBar({
               <span className="hidden sm:inline">{active.label} · </span>
               <span className="tabular-nums font-medium text-ink">${active.perMonth}/mo</span>
             </span>
-            <button
-              type="button"
-              onClick={onChangePlan}
-              className="shrink-0 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
-            >
-              Change
-            </button>
+            {onChangePlan && (
+              <button
+                type="button"
+                onClick={onChangePlan}
+                className="shrink-0 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
+              >
+                Change
+              </button>
+            )}
           </p>
         </div>
 
@@ -112,4 +115,15 @@ export function BuyBar({
       </div>
     </div>
   );
+}
+
+/**
+ * The CTA's real target. The assessment link carries the plan picked here
+ * (&plan=), which the wizard preselects. Anything else (an order, a plan the
+ * member already has) has no plan to pick.
+ */
+export function ctaTarget(ctaHref: string | undefined, tier: string): { href?: string; pickPlan: boolean } {
+  if (!ctaHref) return { pickPlan: true };
+  if (!ctaHref.startsWith('/start')) return { href: ctaHref, pickPlan: false };
+  return { href: `${ctaHref}${ctaHref.includes('?') ? '&' : '?'}plan=${encodeURIComponent(tier)}`, pickPlan: true };
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import { AuthShell, AuthLabel, authErrorClass } from '@/components/auth/AuthShell';
@@ -8,7 +9,8 @@ import { supabaseConfigured } from '@/lib/env';
 import { safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
-  title: 'Set a new password',
+  ...pageMeta('/auth/reset', 'Set a new password', 'Choose a new password for your Eternal Longevity account.'),
+  robots: { index: false },
 };
 
 interface ResetPageProps {
@@ -16,9 +18,9 @@ interface ResetPageProps {
 }
 
 /**
- * Reached after clicking the reset link in an email. The /auth/callback route
- * has already exchanged the recovery code for a session, so the user is
- * authenticated here and can set a new password.
+ * Reached from a reset link: /auth/continue (or /auth/callback) has verified
+ * it, signed the user in and set the one-use recovery flag that
+ * updatePasswordAction requires.
  */
 export default async function ResetPasswordPage({
   searchParams,

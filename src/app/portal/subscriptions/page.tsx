@@ -10,6 +10,7 @@ import { getSession, loginUrl } from '@/lib/auth-server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
 import { getLiveProducts } from '@/lib/catalog';
+import { paymentsOwed } from '@/lib/refills';
 import { MEMBER_NAV, PageHeader, SectionTitle, btnPrimary, panel } from '@/components/portal/ui';
 
 export const metadata: Metadata = {
@@ -29,6 +30,10 @@ async function loadSubscriptions(userId: string): Promise<Subscription[]> {
   if (error || !data) return [];
 
   const live = new Map((await getLiveProducts()).map((p) => [p.id, p]));
+  // Plans paused by a declined refill read as that, not as a pause the member chose.
+  const declined = new Set(
+    (await paymentsOwed(userId).catch(() => [])).filter((o) => o.refill).map((o) => o.productId),
+  );
   return data.map((r) => {
     const product = live.get(r.product_id);
     return {
@@ -48,6 +53,7 @@ async function loadSubscriptions(userId: string): Promise<Subscription[]> {
       status: r.status === 'pending_review' ? 'pending-review' : r.status,
       image: product?.image ?? '/images/9.jpg',
       swatch: product?.swatch ?? '#1a1a1a',
+      declined: r.status === 'paused' && declined.has(String(r.product_id)),
     } as Subscription;
   });
 }
@@ -70,7 +76,7 @@ export default async function SubscriptionsPage() {
           title="Manage your subscriptions."
           intro="Pause between cycles, skip a single cycle, or cancel any time before the next cycle is confirmed. No mid-cycle billing."
         />
-        <p className="mt-3 text-[13px] font-medium tabular-nums text-ink/55">
+        <p className="mt-3 text-[13px] font-medium tabular-nums text-ink/65">
           {activeCount} active
         </p>
       </div>
@@ -83,10 +89,10 @@ export default async function SubscriptionsPage() {
         <section className={`${panel} p-5 md:p-8`}>
           <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <SectionTitle className="mb-2">Add another peptide</SectionTitle>
+              <SectionTitle className="mb-2">Add another treatment</SectionTitle>
               <p className="max-w-xl text-[15px] leading-relaxed text-ink/65">
-                Browse the catalog and subscribe to anything that fits your
-                protocol. Every addition goes back to the prescriber first.
+                Browse our treatments and add one that fits your goals. Every
+                addition goes to your prescriber first.
               </p>
             </div>
             <Link href="/shop" className={`${btnPrimary} self-start md:self-auto`}>

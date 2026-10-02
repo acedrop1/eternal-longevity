@@ -92,8 +92,8 @@ export function Search({ onPhoto }: { onPhoto: boolean }) {
         onClick={(e) => e.target === ref.current && close()}
         className="mx-auto mb-auto mt-3 w-[calc(100%-24px)] max-w-[760px] rounded-shell bg-white/90 p-3 text-ink shadow-[0_30px_80px_-30px_rgba(17,17,17,0.45)] ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150 backdrop:bg-ink/25 backdrop:backdrop-blur-sm md:mt-4 md:p-4"
       >
-        <div className="flex items-center gap-2 rounded-inner bg-milk pl-4 pr-1.5 focus-within:ring-1 focus-within:ring-ink/20">
-          <SearchIcon className="h-[18px] w-[18px] shrink-0 text-ink/50" strokeWidth={1.8} aria-hidden />
+        <div className="flex items-center gap-2 rounded-inner bg-milk pl-4 pr-1.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ink/60">
+          <SearchIcon className="h-[18px] w-[18px] shrink-0 text-ink/60" strokeWidth={1.8} aria-hidden />
           <input
             autoFocus
             type="search"
@@ -101,7 +101,7 @@ export function Search({ onPhoto }: { onPhoto: boolean }) {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search treatments…"
             aria-label="Search treatments"
-            className="h-12 min-w-0 flex-1 bg-transparent text-[16px] placeholder:text-ink/40 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="h-12 min-w-0 flex-1 bg-transparent text-[16px] placeholder:text-ink/55 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           <button type="button" onClick={close} aria-label="Close search" className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-white">
             <X className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
@@ -111,7 +111,7 @@ export function Search({ onPhoto }: { onPhoto: boolean }) {
         <div className="mt-3 max-h-[min(60vh,560px)] overflow-y-auto" aria-live="polite">
           {!q.trim() ? (
             <>
-              <p className="px-1 pb-2 text-[13px] font-medium text-ink/55">Browse by category</p>
+              <p className="px-1 pb-2 text-[13px] font-medium text-ink/65">Browse by category</p>
               <div className="flex flex-wrap gap-2">
                 {categories.map((c) => (
                   <Link key={c.slug} href={`/treatments/${c.slug}`} onClick={() => pathname === `/treatments/${c.slug}` && close()} className="rounded-full bg-milk px-4 py-2 text-[14px] font-semibold transition-colors hover:bg-butter">
@@ -122,7 +122,7 @@ export function Search({ onPhoto }: { onPhoto: boolean }) {
             </>
           ) : results.length ? (
             <>
-              <p className="px-1 pb-2 text-[13px] font-medium text-ink/55">
+              <p className="px-1 pb-2 text-[13px] font-medium text-ink/65">
                 {results.length} {results.length === 1 ? 'treatment' : 'treatments'}
               </p>
               <div className="grid gap-2 md:grid-cols-2">

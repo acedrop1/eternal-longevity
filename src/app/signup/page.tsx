@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import {
@@ -13,8 +14,8 @@ import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 
 export const metadata: Metadata = {
-  title: 'Create account',
-  description: 'Create your Eternal Longevity account.',
+  ...pageMeta('/signup', 'Create account', 'Create your Eternal Longevity account to start an assessment and track your care.'),
+  robots: { index: false },
 };
 
 interface SignupPageProps {
@@ -124,7 +125,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           Create account →
         </SubmitButton>
 
-        <p className="text-[13px] leading-relaxed text-ink/55">
+        <p className="text-[13px] leading-relaxed text-ink/65">
           Creating an account doesn&apos;t place an order. Every protocol is
           compounded by a licensed 503A pharmacy against a prescription written
           for you.

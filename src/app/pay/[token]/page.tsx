@@ -83,7 +83,7 @@ export default async function PayPage({ params }: PayPageProps) {
               </p>
 
               <div className="rounded-shell bg-milk p-6 md:p-8">
-                <p className="mb-4 text-[13px] font-medium text-ink/55">
+                <p className="mb-4 text-[13px] font-medium text-ink/65">
                   Order {order.orderNumber}
                 </p>
                 <ul className="mb-4 space-y-1.5">
@@ -155,7 +155,7 @@ export default async function PayPage({ params }: PayPageProps) {
 
               {/* What happens next — sets the expectation that stops "where is my order" disputes. */}
               <div className="mt-3 rounded-shell bg-milk p-6 md:p-8">
-                <p className="mb-5 text-[13px] font-medium text-ink/55">
+                <p className="mb-5 text-[13px] font-medium text-ink/65">
                   What happens next
                 </p>
                 <ol className="grid gap-4 sm:grid-cols-3">
@@ -177,13 +177,13 @@ export default async function PayPage({ params }: PayPageProps) {
                 </ol>
               </div>
 
-              <p className="mt-6 text-[13px] leading-relaxed text-ink/55">
+              <p className="mt-6 text-[13px] leading-relaxed text-ink/65">
                 Your prescriber has already approved this order, so nothing here
                 is charged on spec. Future cycles are billed only after each one
                 is approved; a cycle that isn&apos;t approved is never charged.
                 Cancel anytime from your account.
               </p>
-              <p className="mt-3 text-[12px] text-ink/50">
+              <p className="mt-3 text-[12px] text-ink/60">
                 This link is unique to your order and expires in seven days.
               </p>
             </>

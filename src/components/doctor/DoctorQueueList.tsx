@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import { requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
+import { addOrderNoteAction, requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
+import { waited } from '@/lib/order-health';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import type { PatientReview } from '@/lib/clinical-review';
@@ -36,7 +37,8 @@ export function DoctorQueueList({
     useOrders();
 
   // One medical director handles every case — no per-physician routing.
-  const allQueue = clinicalQueue();
+  // Oldest first: the case that has waited longest is the one to sign next.
+  const allQueue = [...clinicalQueue()].sort((a, b) => a.placedAt - b.placedAt);
   const isWaiting = (o: Order) => threads[o.userId ?? '']?.state === 'waiting';
   const waitingCount = allQueue.filter(isWaiting).length;
   const queue = filter === 'waiting' ? allQueue.filter(isWaiting) : allQueue;
@@ -138,12 +140,12 @@ export function DoctorQueueList({
         {active.length === 0 ? (
           <EmptySection
             title="Nothing to manage"
-            body="Cases you've signed appear here so you can mark compounding, add tracking, and confirm delivery."
+            body="Cases you've signed appear here until they are delivered. Placing, tracking and delivery are marked on Orders."
           />
         ) : (
           <div className="space-y-3">
             {active.map((o) => (
-              <ActiveCaseRow key={o.id} order={o} doctorName={doctorName} />
+              <ActiveCaseRow key={o.id} order={o} />
             ))}
           </div>
         )}
@@ -180,14 +182,14 @@ function SectionHeader({
   return (
     <div className="mb-4 flex items-end justify-between">
       <div>
-        <p className="text-[13px] font-medium text-ink/55">
+        <p className="text-[13px] font-medium text-ink/65">
           {eyebrow}
         </p>
         <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
           {title}
         </h2>
       </div>
-      <span className="text-[13px] text-ink/55">
+      <span className="text-[13px] text-ink/65">
         {count} {count === 1 ? 'case' : 'cases'}
       </span>
     </div>
@@ -200,7 +202,7 @@ function EmptySection({ title, body }: { title: string; body: string }) {
       <h3 className="mb-1 text-[17px] font-semibold tracking-[-0.02em] text-ink">
         {title}
       </h3>
-      <p className="text-xs text-ink/55 leading-relaxed max-w-md mx-auto">
+      <p className="text-xs text-ink/65 leading-relaxed max-w-md mx-auto">
         {body}
       </p>
     </div>
@@ -231,7 +233,11 @@ function DoctorQueueRow({
   // The sig, prefilled with the directions he approved for this product.
   const [directions, setDirections] = useState(defaultSig);
   const [signError, setSignError] = useState<string | null>(null);
+  // Starts from the server's view, and opens if the ten minutes ran out while he read.
+  const [needPassword, setNeedPassword] = useState(!signWindowOpen);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask' | 'photos'>(null);
+  const hoursWaiting = Math.max(0, Math.floor((Date.now() - order.placedAt) / 3_600_000));
 
   return (
     <article className="rounded-shell bg-milk p-5 md:p-6">
@@ -252,12 +258,16 @@ function DoctorQueueRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/65">
               <span className="text-ink/80">
                 {orderRef(order.id)}
               </span>
               <span>·</span>
               <span>{order.state}</span>
+              <span>·</span>
+              <span className={cn(hoursWaiting >= 24 && 'font-medium text-red-700')}>
+                waiting {waited(hoursWaiting)}
+              </span>
             </div>
             <h2 className="text-base md:text-[20px] font-semibold tracking-[-0.03em] text-ink">
               {order.memberName}
@@ -270,7 +280,7 @@ function DoctorQueueRow({
 
             {order.adminNote && (
               <div className="mt-3 rounded-inner border border-ink/10 bg-white p-3">
-                <div className="text-[12px] text-ink/55 mb-1">
+                <div className="text-[12px] text-ink/65 mb-1">
                   Admin note
                 </div>
                 <p className="text-xs text-ink/85 leading-relaxed">
@@ -297,6 +307,12 @@ function DoctorQueueRow({
       </div>
 
       {review && <ReviewPanel review={review} order={order} />}
+
+      {actionError && open === null && (
+        <p role="alert" className="mt-5 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+          {actionError}
+        </p>
+      )}
 
       {open === null && (
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
@@ -328,8 +344,13 @@ function DoctorQueueRow({
               onClick={async () => {
                 if (busy) return;
                 setBusy('photos');
+                setActionError(null);
                 try {
-                  if ((await requestPhotosAction(order.id)).ok) router.refresh();
+                  const res = await requestPhotosAction(order.id);
+                  if (res.ok) router.refresh();
+                  else setActionError(actionErrorText(res.error));
+                } catch {
+                  setActionError(actionErrorText());
                 } finally {
                   setBusy(null);
                 }
@@ -369,7 +390,7 @@ function DoctorQueueRow({
           >
             Directions
           </label>
-          <p className="mb-2 text-xs leading-relaxed text-ink/55">
+          <p className="mb-2 text-xs leading-relaxed text-ink/65">
             Printed on the label. The pharmacist verifies the compound against
             them, and every refill on this prescription ships with them.
           </p>
@@ -384,17 +405,17 @@ function DoctorQueueRow({
             maxLength={1000}
             required
             placeholder="e.g. Inject 0.25 mL (50 mg) subcutaneously twice weekly."
-            className="mb-4 w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+            className="mb-4 w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
           />
 
-          {signWindowOpen ? (
-            <p className="text-xs leading-relaxed text-ink/55">
+          {!needPassword ? (
+            <p className="text-xs leading-relaxed text-ink/65">
               Your password is still good for a few more minutes, so you are not
               asked again for this one.
             </p>
           ) : (
             <>
-              <p className="mb-4 text-xs leading-relaxed text-ink/55">
+              <p className="mb-4 text-xs leading-relaxed text-ink/65">
                 Your password is required again here. A session left open is not
                 evidence that you are the one signing. It then holds for ten
                 minutes, so a morning&apos;s queue is one password.
@@ -415,7 +436,7 @@ function DoctorQueueRow({
                   setPassword(e.target.value);
                   setSignError(null);
                 }}
-                className="w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+                className="w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
               />
             </>
           )}
@@ -429,9 +450,9 @@ function DoctorQueueRow({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={(!password && !signWindowOpen) || !directions.trim() || busy !== null}
+              disabled={(!password && needPassword) || !directions.trim() || busy !== null}
               onClick={async () => {
-                if ((!password && !signWindowOpen) || !directions.trim() || busy) return;
+                if ((!password && needPassword) || !directions.trim() || busy) return;
                 setBusy('sign');
                 setSignError(null);
                 try {
@@ -442,11 +463,16 @@ function DoctorQueueRow({
                   } else {
                     setSignError(
                       res.error === 'bad_password'
-                        ? 'That password is not right. Nothing was signed or charged.'
+                        ? needPassword
+                          ? 'That password is not right. Nothing was signed or charged.'
+                          : 'Your ten minutes ran out. Enter your password to sign. Nothing was signed or charged.'
                         : res.error === 'no_directions'
                           ? 'Add the directions. Nothing was signed or charged.'
-                          : 'Could not sign. Nothing was charged — try again.',
+                          : res.error === 'product_unavailable'
+                            ? 'This product was pulled from sale; ask admin. Nothing was signed or charged.'
+                            : 'Could not sign. Nothing was charged — try again.',
                     );
+                    if (res.error === 'bad_password') setNeedPassword(true);
                   }
                 } finally {
                   setBusy(null);
@@ -475,11 +501,16 @@ function DoctorQueueRow({
 
       {open === 'ask' && (
         <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
-          <div className="mb-2 text-[13px] font-medium text-ink/55">
+          <div className="mb-2 text-[13px] font-medium text-ink/65">
             What do you need from them?
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-ink/55">
-            Goes to their portal thread with you and emails them. The order
+          {actionError && (
+            <p role="alert" className="mb-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+              {actionError}
+            </p>
+          )}
+          <p className="mb-3 text-xs leading-relaxed text-ink/65">
+            Goes to their portal thread with you, and they are emailed that a message is waiting. The order
             stays here, nothing is charged, and their reply comes back to you.
           </p>
           <textarea
@@ -487,7 +518,7 @@ function DoctorQueueRow({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="What dose of tadalafil are you on, and how long have you been taking it?"
-            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -496,6 +527,7 @@ function DoctorQueueRow({
               onClick={async () => {
                 if (!note.trim() || busy) return;
                 setBusy('ask');
+                setActionError(null);
                 try {
                   const res = await requestInfoFromPatientAction(
                     order.id,
@@ -505,7 +537,11 @@ function DoctorQueueRow({
                     setOpen(null);
                     setNote('');
                     router.refresh();
+                  } else {
+                    setActionError(actionErrorText(res.error));
                   }
+                } catch {
+                  setActionError(actionErrorText());
                 } finally {
                   setBusy(null);
                 }
@@ -534,16 +570,17 @@ function DoctorQueueRow({
           <div className="mb-3 text-[13px] font-semibold text-red-700">
             Reason for clinical decline
           </div>
-          <p className="mb-3 text-xs leading-relaxed text-ink/55">
-            Write this to the patient — they are emailed it word for word, and
-            it goes on their chart. Anything charged is refunded in full.
+          <p className="mb-3 text-xs leading-relaxed text-ink/65">
+            Write this to the patient. It goes to their portal thread with you
+            and on their chart; the email only tells them a message is waiting.
+            Anything charged is refunded in full.
           </p>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="Your blood pressure readings are too high for this treatment to be safe. Please see your primary physician, and we can revisit this once it is controlled."
-            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-red-500/40"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-red-500/40"
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -563,7 +600,7 @@ function DoctorQueueRow({
                 'inline-flex items-center gap-2 rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
                 note.trim() && !busy
                   ? 'bg-red-700 text-white hover:bg-red-800'
-                  : 'bg-ink/10 text-ink/55',
+                  : 'bg-ink/10 text-ink/65',
               )}
             >
               {busy === 'decline' && <Spinner />}
@@ -594,7 +631,7 @@ function Metric({
 }) {
   return (
     <div className={cn('rounded-shell p-4', tone === 'accent' ? 'bg-butter-soft' : 'bg-milk')}>
-      <div className="mb-1.5 text-[13px] font-medium text-ink/55">
+      <div className="mb-1.5 text-[13px] font-medium text-ink/65">
         {label}
       </div>
       <div
@@ -611,23 +648,37 @@ function Metric({
 }
 
 // ============================================================================
-// Active case row — post-sign progression
+// Active case row: signed and not yet delivered. Read-only on status:
+// placing, tracking and delivery are marked on Orders, which checks payment.
 // ============================================================================
 
-function ActiveCaseRow({
-  order,
-  doctorName,
-}: {
-  order: Order;
-  doctorName: string;
-}) {
-  const { markCompounding, markShipped, markDelivered, addUpdate } =
-    useOrders();
-  const [open, setOpen] = useState<null | 'tracking' | 'note'>(null);
+function ActiveCaseRow({ order }: { order: Order }) {
+  const router = useRouter();
+  const [writing, setWriting] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
-  const [tracking, setTracking] = useState(order.tracking ?? '');
-  const [carrier, setCarrier] = useState(order.carrier ?? 'FedEx');
   const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const post = async () => {
+    if (!note.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await addOrderNoteAction(order.id, note.trim());
+      if (res.ok) {
+        setWriting(false);
+        setNote('');
+        router.refresh();
+      } else {
+        setError(actionErrorText(res.error));
+      }
+    } catch {
+      setError(actionErrorText());
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <article className="rounded-shell bg-milk p-5 md:p-6">
@@ -648,7 +699,7 @@ function ActiveCaseRow({
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink/65">
               <span className="text-ink/80">
                 {orderRef(order.id)}
               </span>
@@ -677,39 +728,11 @@ function ActiveCaseRow({
         </div>
       </div>
 
-      {/* Action buttons — visible status-progression */}
-      {open === null && (
+      {!writing && (
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
-          {order.status === 'signed' && (
-            <button
-              type="button"
-              onClick={() => markCompounding(order.id, doctorName)}
-              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
-            >
-              Mark compounding
-            </button>
-          )}
-          {(order.status === 'signed' || order.status === 'compounding') && (
-            <button
-              type="button"
-              onClick={() => setOpen('tracking')}
-              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
-            >
-              Add tracking &amp; ship
-            </button>
-          )}
-          {order.status === 'shipped' && (
-            <button
-              type="button"
-              onClick={() => markDelivered(order.id, doctorName)}
-              className="rounded-full bg-ink text-white px-5 py-2 text-[13px] font-semibold hover:bg-ink/85 transition-colors"
-            >
-              Mark delivered
-            </button>
-          )}
           <button
             type="button"
-            onClick={() => setOpen('note')}
+            onClick={() => setWriting(true)}
             className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
           >
             Add update
@@ -717,137 +740,56 @@ function ActiveCaseRow({
           <button
             type="button"
             onClick={() => setShowTimeline((v) => !v)}
-            className="ml-auto text-[12px] text-ink/55 hover:text-ink transition-colors"
+            className="ml-auto text-[12px] text-ink/65 hover:text-ink transition-colors"
           >
             {showTimeline ? 'Hide timeline ↑' : 'Timeline ↓'}
           </button>
         </div>
       )}
 
-      {/* Add tracking panel */}
-      {open === 'tracking' && (
+      {writing && (
         <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
-          <div className="mb-3 text-[13px] font-medium text-ink/55">
-            Shipment details
-          </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
-                Carrier
-              </label>
-              <select
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                className="w-full appearance-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 focus:outline-none focus:ring-ink/30"
-              >
-                <option value="FedEx">FedEx</option>
-                <option value="UPS">UPS</option>
-                <option value="USPS">USPS</option>
-                <option value="DHL">DHL</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
-                Tracking number
-              </label>
-              <input
-                aria-label="Tracking number"
-                type="text"
-                value={tracking}
-                onChange={(e) => setTracking(e.target.value)}
-                placeholder="1Z A99 7W2 03 8329 7104"
-                className="w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
-              />
-            </div>
-          </div>
-          <div className="mt-3">
-            <label className="mb-1.5 block text-[13px] font-medium text-ink/70">
-              Message to member (optional)
-            </label>
-            <textarea
-              rows={2}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Anything the member should know about this shipment…"
-              className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (!tracking.trim()) return;
-                markShipped(
-                  order.id,
-                  doctorName,
-                  tracking.trim(),
-                  carrier,
-                  note.trim() || undefined,
-                );
-                setOpen(null);
-                setNote('');
-              }}
-              disabled={!tracking.trim()}
-              className={cn(
-                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
-                tracking.trim()
-                  ? 'bg-ink text-white hover:bg-ink/85'
-                  : 'bg-ink/10 text-ink/55',
-              )}
-            >
-              Save &amp; mark shipped
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(null);
-                setNote('');
-              }}
-              className="rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Add free-form note panel */}
-      {open === 'note' && (
-        <div className="mt-5 rounded-inner border border-ink/10 bg-white p-4 md:p-5">
-          <div className="mb-3 text-[13px] font-medium text-ink/55">
+          <div className="mb-3 text-[13px] font-medium text-ink/65">
             Update for member + care team
           </div>
           <textarea
             rows={3}
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            maxLength={2000}
+            onChange={(e) => {
+              setNote(e.target.value);
+              setError(null);
+            }}
             placeholder="e.g. Pharmacy delayed by a day — shipment moves to Friday."
-            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+            className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
           />
+          {error && (
+            <p role="alert" className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+              {error}
+            </p>
+          )}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                if (!note.trim()) return;
-                addUpdate(order.id, doctorName, 'physician', note.trim());
-                setOpen(null);
-                setNote('');
-              }}
-              disabled={!note.trim()}
+              onClick={post}
+              disabled={!note.trim() || busy}
               className={cn(
-                'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
-                note.trim()
+                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
+                note.trim() && !busy
                   ? 'bg-ink text-white hover:bg-ink/85'
-                  : 'bg-ink/10 text-ink/55',
+                  : 'bg-ink/10 text-ink/65',
               )}
             >
-              Post update
+              {busy && <Spinner />}
+              {busy ? 'Posting…' : 'Post update'}
             </button>
             <button
               type="button"
+              disabled={busy}
               onClick={() => {
-                setOpen(null);
+                setWriting(false);
                 setNote('');
+                setError(null);
               }}
               className="rounded-full bg-milk px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
             >
@@ -860,7 +802,7 @@ function ActiveCaseRow({
       {/* Timeline (collapsible) */}
       {showTimeline && order.updates && order.updates.length > 0 && (
         <div className="mt-5 border-t border-ink/10 pt-5">
-          <div className="mb-3 text-[13px] font-medium text-ink/55">
+          <div className="mb-3 text-[13px] font-medium text-ink/65">
             Case timeline
           </div>
           <Timeline updates={order.updates} />
@@ -870,17 +812,26 @@ function ActiveCaseRow({
   );
 }
 
+/** What a failed ask, photo request or note says. Nothing was sent when this shows. */
+function actionErrorText(error?: string): string {
+  if (error === 'no_patient') return 'This order has no patient account to message. Nothing was sent.';
+  if (error === 'no_intake') return 'No intake on file to attach photos to. Nothing was sent.';
+  if (error === 'not_authorized') return 'Your session has ended. Sign in again. Nothing was sent.';
+  if (error === 'too_long') return 'That is too long. Shorten it and try again.';
+  return 'Could not send that. Nothing was sent — try again.';
+}
+
 function RecentCaseRow({ order }: { order: Order }) {
   return (
     <div className="flex items-center gap-4 rounded-shell bg-milk p-4">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-ink truncate">
           {order.memberName}{' '}
-          <span className="text-ink/55 font-normal">
+          <span className="text-ink/65 font-normal">
             · {order.state}
           </span>
         </div>
-        <div className="text-xs text-ink/55 mt-0.5">
+        <div className="text-xs text-ink/65 mt-0.5">
           {order.lines.map((l) => l.productName).join(' + ')}
         </div>
       </div>
@@ -910,7 +861,7 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
           key={u.id}
           className="rounded-inner border border-ink/10 bg-white p-3"
         >
-          <div className="mb-1 flex items-center justify-between gap-2 text-[12px] text-ink/55">
+          <div className="mb-1 flex items-center justify-between gap-2 text-[12px] text-ink/65">
             <span className="text-ink/85">
               {u.author} · {u.role}
             </span>
@@ -1121,7 +1072,7 @@ function Strip({ items }: { items: [string, string][] }) {
     <div className="flex flex-wrap gap-x-7 gap-y-2.5 border-t border-ink/10 px-4 py-3">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="text-[12px] text-ink/55">
+          <div className="text-[12px] text-ink/65">
             {label}
           </div>
           <div className="mt-0.5 text-sm font-semibold text-ink">
@@ -1142,7 +1093,7 @@ function Group({
 }) {
   return (
     <div className="border-t border-ink/10 px-4 py-3">
-      <div className="mb-2 text-[13px] font-medium text-ink/55">
+      <div className="mb-2 text-[13px] font-medium text-ink/65">
         {title}
       </div>
       {children}
@@ -1249,7 +1200,7 @@ function Money({
 function Cell({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-inner border border-ink/10 bg-white px-3 py-2">
-      <div className="text-[12px] text-ink/55">
+      <div className="text-[12px] text-ink/65">
         {label}
       </div>
       <div className="mt-0.5 text-[13px] font-semibold text-ink/90">

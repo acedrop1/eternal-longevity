@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
@@ -16,11 +17,11 @@ import {
 import { ArrowDot, Aura, GLASS } from '@/components/home/HomeSections';
 import { cn } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'Compliance',
-  description:
-    'How Eternal Longevity operates: licensed prescriber, MedShiftRx 503A compounding pharmacy, age and state restrictions, and certificates of analysis.',
-};
+export const metadata: Metadata = pageMeta(
+  '/compliance',
+  'Compliance',
+  'How Eternal Longevity operates: licensed prescriber, state-licensed 503A compounding pharmacy, age and state restrictions, and certificates of analysis.',
+);
 
 /**
  * Public compliance page.
@@ -51,7 +52,7 @@ function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
   { label: 'NPI', value: p.npi || '—' },
   {
     label: 'Dispensing pharmacy',
-    value: 'MedShiftRx, a state-licensed 503A compounding pharmacy that dispenses and ships prescriptions',
+    value: 'A state-licensed 503A compounding pharmacy that dispenses and ships prescriptions (named on your prescription label)',
   },
   { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
   { label: 'Minimum age', value: '18+' },
@@ -73,7 +74,7 @@ const CONTROLS: { title: string; body: string }[] = [
   },
   {
     title: 'Licensed fulfilment',
-    body: 'We do not hold or ship inventory. Prescriptions are dispensed by MedShiftRx, a state-licensed 503A compounding pharmacy, and shipped directly to the patient. Temperature-sensitive medications ship cold-chain.',
+    body: 'We do not hold or ship inventory. Prescriptions are dispensed by a state-licensed 503A compounding pharmacy (named on your prescription label) and shipped directly to the patient. Temperature-sensitive medications ship cold-chain.',
   },
   {
     title: 'Direct seller',
@@ -118,7 +119,7 @@ export default async function CompliancePage() {
                   key={f.label}
                   className="border-b border-ink/10 py-4 last:border-b-0 sm:grid sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-6 md:py-5"
                 >
-                  <dt className="text-[13px] font-medium text-ink/55 sm:pt-0.5">{f.label}</dt>
+                  <dt className="text-[13px] font-medium text-ink/65 sm:pt-0.5">{f.label}</dt>
                   <dd className="mt-1 break-words text-[16px] text-ink sm:mt-0">{f.value}</dd>
                 </div>
               ))}
@@ -155,7 +156,7 @@ export default async function CompliancePage() {
           <div className="relative overflow-hidden rounded-shell bg-butter-soft px-5 py-12 md:px-12 md:py-20">
             <Aura mix="bloom" className="opacity-70" />
             <div className="relative">
-              <p className="text-[13px] font-medium text-ink/55">Certificates of analysis</p>
+              <p className="text-[13px] font-medium text-ink/65">Certificates of analysis</p>
               <h2 className="mt-4 max-w-[860px] text-[36px] font-semibold leading-[1] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]">
                 Batch testing, with the paperwork on request.
               </h2>

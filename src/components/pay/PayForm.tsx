@@ -124,7 +124,7 @@ function CardFields({
         {submitting ? 'Processing…' : `Pay ${amountLabel} — Start treatment`}
       </button>
 
-      <p className="mt-3 text-center text-[12px] text-ink/55">
+      <p className="mt-3 text-center text-[12px] text-ink/65">
         Secured by Stripe. Your card details never touch our servers.
       </p>
     </form>
@@ -174,7 +174,7 @@ export function PayForm({
 
   if (!clientSecret) {
     return (
-      <div className="flex items-center gap-3 text-[13px] font-medium text-ink/55">
+      <div className="flex items-center gap-3 text-[13px] font-medium text-ink/65">
         <span
           aria-hidden
           className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/15 border-t-ink"

@@ -42,7 +42,8 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
    * Five attempts are enforced per code, but a wrong code issues a fresh one —
    * so without a ceiling here the six-digit space is walkable.
    */
-  if (!(await allow('mfa', LIMITS.mfa))) {
+  // Per IP and per account: rotating IPs does not buy one account more guesses.
+  if (!(await allow('mfa', LIMITS.mfa)) || !(await allow('mfa', LIMITS.mfa, user.id))) {
     redirect('/login/verify?error=throttled');
   }
 
@@ -92,12 +93,13 @@ export async function verifyMfaAction(formData: FormData): Promise<void> {
 export async function resendMfaAction(): Promise<void> {
   const user = await getSessionBeforeMfa();
   if (!user) redirect('/login');
-  if (!(await allow('mfa', LIMITS.mfa))) {
+  if (!(await allow('mfa', LIMITS.mfa)) || !(await allow('mfa', LIMITS.mfa, user.id))) {
     redirect('/login/verify?error=throttled');
   }
   if (!mfaConfigured()) redirect('/login/verify?error=unavailable');
-  await issueCode(user.id, user.email, user.name);
-  redirect('/login/verify?sent=1');
+  // False when the hourly cap is reached (or the mail failed): don't claim it was sent.
+  const sent = await issueCode(user.id, user.email, user.name);
+  redirect(sent ? '/login/verify?sent=1' : '/login/verify?error=throttled');
 }
 
 export async function mfaMessageFor(key: string | undefined): Promise<string | null> {

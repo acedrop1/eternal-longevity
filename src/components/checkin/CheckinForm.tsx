@@ -120,7 +120,7 @@ export function CheckinForm({
         onChange={(e) => setComment(e.target.value)}
         maxLength={2000}
         rows={4}
-        className="w-full rounded-inner bg-white px-4 py-3.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+        className="w-full rounded-inner bg-white px-4 py-3.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
       />
 
       {error && (
@@ -137,7 +137,7 @@ export function CheckinForm({
         {pending ? 'Sending…' : 'Submit'}
         <ArrowDot />
       </button>
-      <p className="mt-4 text-[13px] leading-relaxed text-ink/55">
+      <p className="mt-4 text-[13px] leading-relaxed text-ink/65">
         Questions about dosing or side effects go to your prescriber through
         your portal messages.
       </p>

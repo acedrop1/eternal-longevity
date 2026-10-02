@@ -124,17 +124,17 @@ export async function reviewsForOrders(
    */
   const { data: past } = await db
     .from('orders')
-    .select('user_id, status, paid_at')
+    .select('user_id, status, paid_confirmed_at')
     .in('user_id', userIds as string[])
     .in('status', ['signed', 'paid', 'compounding', 'shipped', 'delivered'])
-    .order('paid_at', { ascending: false });
+    .order('paid_confirmed_at', { ascending: false });
 
   const history = new Map<string, { count: number; last: string | null }>();
   for (const row of past ?? []) {
     if (!row.user_id) continue;
     const seen = history.get(row.user_id);
     if (seen) seen.count += 1;
-    else history.set(row.user_id, { count: 1, last: row.paid_at });
+    else history.set(row.user_id, { count: 1, last: row.paid_confirmed_at });
   }
   const { data: intakes } = await db
     .from('intake_submissions')

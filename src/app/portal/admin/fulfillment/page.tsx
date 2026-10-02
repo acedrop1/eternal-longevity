@@ -38,7 +38,7 @@ export default async function AdminFulfillmentPage() {
       const [{ data: rxs }, { data: orders }] = await Promise.all([
         db
           .from('prescriptions')
-          .select('id, protocol_name, user_id')
+          .select('id, protocol_name, user_id, order_id, orders(paid_confirmed_at)')
           .eq('status', 'signed'),
         db
           .from('fulfillment_orders')
@@ -67,7 +67,13 @@ export default async function AdminFulfillmentPage() {
           .map((o) => o.prescription_id)
           .filter((id): id is string => Boolean(id)),
       );
-      const pending = (rxs ?? []).filter((r) => !orderedRxIds.has(r.id));
+      // An order's prescription is offered only once that order is paid; an
+      // unpaid one joins the board by itself when the payment lands.
+      const paid = (r: { order_id: string | null; orders: unknown }) => {
+        const o = (Array.isArray(r.orders) ? r.orders[0] : r.orders) as { paid_confirmed_at: string | null } | null;
+        return !r.order_id || Boolean(o?.paid_confirmed_at);
+      };
+      const pending = (rxs ?? []).filter((r) => !orderedRxIds.has(r.id) && paid(r));
 
       // Resolve patient names for pending prescriptions.
       const userIds = [...new Set(pending.map((r) => r.user_id).filter(Boolean))];

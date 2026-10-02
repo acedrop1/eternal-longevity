@@ -37,7 +37,9 @@ interface OrdersAPI {
   recentClinicalCases: (limit?: number) => Order[];
   pendingAdminOrders: () => Order[];
   /** Live: resolves once the server has accepted (priced, geofenced, intake-checked) the order. */
-  placeOrder: (order: Omit<Order, 'id' | 'placedAt' | 'status'>) => Promise<{ ok: boolean; error?: string }>;
+  placeOrder: (
+    order: Omit<Order, 'id' | 'placedAt' | 'status'>,
+  ) => Promise<{ ok: boolean; error?: string; orderNumber?: string; productId?: string }>;
   /** Admin approves an order, releasing it to the physician for sign-off. */
   approve: (id: string, note?: string) => void;
   denyAdmin: (
@@ -207,7 +209,7 @@ export function OrdersProvider({
       };
       if (!live) {
         setOrders((curr) => [order, ...curr]);
-        return { ok: true };
+        return { ok: true, orderNumber: order.id };
       }
       try {
         const res = await placeOrderAction({

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
@@ -6,12 +7,14 @@ import { Footer } from '@/components/sections/Footer';
 import { FAQBrowser } from '@/components/faq/FAQBrowser';
 import { ArrowDot, Aura, GLASS, Swipe } from '@/components/home/HomeSections';
 import { cn } from '@/lib/utils';
+import { FAQS, withPrices } from '@/lib/faq';
+import { getLiveProducts, toShopProduct } from '@/lib/catalog';
 
-export const metadata: Metadata = {
-  title: 'Questions, Answered',
-  description:
-    'How Eternal Longevity works. Eligibility, treatments, pricing, and safety questions answered.',
-};
+export const metadata: Metadata = pageMeta(
+  '/faq',
+  'Questions, Answered',
+  'How Eternal Longevity works. Eligibility, treatments, pricing, and safety questions answered.',
+);
 
 const QUICK_LINKS = [
   {
@@ -39,11 +42,18 @@ const QUICK_LINKS = [
 
 const H2 = 'text-[36px] font-semibold leading-[1] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]';
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const faqs = withPrices(FAQS, (await getLiveProducts()).map(toShopProduct));
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  };
   return (
     <>
       <Header categoryStrip />
       <main className="bg-white">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
         {/* Questions */}
         <section className="relative overflow-hidden px-5 pb-16 pt-44 md:px-10 md:pb-24 md:pt-52">
           <Aura mix="dusk" className="opacity-60" />

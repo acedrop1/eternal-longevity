@@ -1,5 +1,6 @@
 import { getPrescriber } from '@/lib/prescriber';
 import { NextRequest, NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/cron-auth';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -7,11 +8,13 @@ import {
 import type { Database } from '@/lib/database.types';
 import {
   SUPPORT_EMAIL,
-  dailyReportEmail,
   emailConfigured,
+  noticeEmail,
   sendEmail,
-  type DailyReportStats,
 } from '@/lib/email';
+import { formatMoney } from '@/lib/format';
+import { paidRevenue } from '@/lib/revenue';
+import { SITE_URL } from '@/lib/site';
 
 /**
  * Daily operations report, emailed to the support inbox.
@@ -24,14 +27,6 @@ import {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  // No secret means nobody gets in, not everybody. Aggregate revenue and order
-  // counts are not public, and an open endpoint that emails on demand is a
-  // free way to burn the sending reputation.
-  if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
-}
 
 type AdminClient = ReturnType<typeof createSupabaseAdminClient>;
 /** Table names the typed Supabase client accepts. */
@@ -60,7 +55,7 @@ async function countSince(
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!supabaseAdminConfigured()) {
@@ -77,7 +72,6 @@ export async function GET(req: NextRequest) {
     orders,
     prescriptionsSigned,
     shipmentsSent,
-    pendingIntakes,
     pendingFulfillment,
   ] = await Promise.all([
     countSince(db, 'profiles', 'created_at', since),
@@ -91,58 +85,46 @@ export async function GET(req: NextRequest) {
       column: 'status',
       value: 'shipped',
     }),
-    countSince(db, 'intake_submissions', 'created_at', '1970-01-01', {
-      column: 'status',
-      value: 'submitted',
-    }),
-    // 'draft' = created from a signed Rx but not yet sent to the pharmacy.
+    // 'submitted' = paid and on the board, not yet placed with the pharmacy.
     countSince(db, 'fulfillment_orders', 'created_at', '1970-01-01', {
       column: 'status',
       value: 'submitted',
     }),
   ]);
 
-  // What still needs a person: placed but no tracking yet, stuck in transit,
-  // and tomorrow's refills (they land on the board after the renewal run).
+  // What still needs a person: with the prescriber, approved but unpaid,
+  // placed but no tracking yet, stuck in transit, and tomorrow's refills
+  // (they land on the board after the renewal run).
   const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
   const threeDaysAgo = new Date(now.getTime() - 3 * 86400_000).toISOString();
   const tomorrow = new Date(now.getTime() + 86400_000).toISOString().slice(0, 10);
-  const [awaitingTracking, trackingLate, refillsTomorrow, pausedPlans] = await Promise.all([
-    count(db.from('fulfillment_orders').select('*', { count: 'exact', head: true }).eq('status', 'accepted')),
-    count(
-      db
-        .from('fulfillment_orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'accepted')
-        .lte('updated_at', threeDaysAgo),
-    ),
-    count(
-      db
-        .from('subscriptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active')
-        .lte('next_billing_date', tomorrow),
-    ),
-    count(db.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'paused')),
-  ]);
+  const head = { count: 'exact', head: true } as const;
+  const [awaitingPrescriber, approvedUnpaid, awaitingTracking, trackingLate, refillsTomorrow, pausedPlans] =
+    await Promise.all([
+      count(db.from('orders').select('*', head).eq('status', 'assigned')),
+      count(db.from('orders').select('*', head).eq('status', 'signed').is('paid_confirmed_at', null)),
+      count(db.from('fulfillment_orders').select('*', head).eq('status', 'accepted')),
+      count(
+        db
+          .from('fulfillment_orders')
+          .select('*', head)
+          .eq('status', 'accepted')
+          .lte('updated_at', threeDaysAgo),
+      ),
+      count(
+        db
+          .from('subscriptions')
+          .select('*', head)
+          .eq('status', 'active')
+          .lte('next_billing_date', tomorrow),
+      ),
+      count(db.from('subscriptions').select('*', head).eq('status', 'paused')),
+    ]);
 
-  // Revenue: sum paid orders in the window.
-  let revenueCents = 0;
-  const { data: paid, error: paidErr } = await db
-    .from('orders')
-    .select('total_cents')
-    .gte('created_at', since)
-    .eq('status', 'paid');
-  if (paidErr) {
-    console.error('[daily-report] revenue query failed:', paidErr.message);
-  } else {
-    revenueCents = (paid ?? []).reduce(
-      (sum, o) => sum + (Number(o.total_cents) || 0),
-      0,
-    );
-  }
+  // Revenue: money that landed in the window, the same definition Billing uses.
+  const revenueCents = (await paidRevenue(db, since)).cents;
 
-  const stats: DailyReportStats = {
+  const stats = {
     dateLabel: now.toLocaleDateString('en-US', {
       weekday: 'long',
       day: 'numeric',
@@ -156,7 +138,8 @@ export async function GET(req: NextRequest) {
     revenueCents,
     prescriptionsSigned,
     shipmentsSent,
-    pendingIntakes,
+    awaitingPrescriber,
+    approvedUnpaid,
     pendingFulfillment,
     awaitingTracking,
     trackingLate,
@@ -170,7 +153,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'email_not_configured', stats });
   }
 
-  const mail = dailyReportEmail(stats);
+  const mail = {
+    subject: `Daily report — ${stats.dateLabel} · ${orders} orders, ${signups} signups`,
+    html: noticeEmail({
+      eyebrow: 'Daily report',
+      heading: stats.dateLabel,
+      rows: [
+        ['Orders', String(orders)],
+        ['Revenue (payments landed)', formatMoney(revenueCents)],
+        ['New signups', String(signups)],
+        ['Intakes', String(intakes)],
+        ['Rx signed', String(prescriptionsSigned)],
+        ['Shipments', String(shipmentsSent)],
+        ['Awaiting prescriber', String(awaitingPrescriber)],
+        ['Approved, unpaid', String(approvedUnpaid)],
+        ['Orders to place', String(pendingFulfillment)],
+        ['Placed, waiting for tracking', `${awaitingTracking}${trackingLate ? ` (${trackingLate} for 3+ days)` : ''}`],
+        ['Refills charging by tomorrow', String(refillsTomorrow)],
+        ['Plans paused (card failed or no card)', String(pausedPlans)],
+      ],
+      cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
+    }),
+  };
   // The prescriber shares the orders board, so he gets the summary too.
   const prescriber = await getPrescriber().catch(() => null);
   const results = await Promise.all(

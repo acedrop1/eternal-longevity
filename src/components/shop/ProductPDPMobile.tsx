@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cadenceTiersForProduct, defaultTier, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
 import { useCart } from '@/components/cart/CartProvider';
-import { BuyBar, useCtaOffscreen } from './BuyBar';
+import { BuyBar, ctaTarget, useCtaOffscreen } from './BuyBar';
 import { billedEvery, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine } from './pdpParts';
 import { shippingPriceFor } from '@/lib/shipping';
 
@@ -48,6 +48,7 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
   };
 
   const handleAddToCart = () => addItem(product.id, selectedTier);
+  const { href, pickPlan } = ctaTarget(ctaHref, selectedTier);
 
   return (
     <div className="text-ink md:hidden">
@@ -64,7 +65,9 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
 
       <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[36px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance]">{product.name}</h1>
+          {/* The desktop variant (ProductPDP) carries the page's one <h1>. This one is a level-1
+              heading only to assistive tech, which sees just the variant that is displayed. */}
+          <p role="heading" aria-level={1} className="text-[36px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance]">{product.name}</p>
           <p className="mt-1.5 text-[14px] text-ink-soft">{product.tagline}</p>
         </div>
         <div className="shrink-0 text-right tabular-nums">
@@ -73,21 +76,23 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
             {active.key !== 'once' && <span className="text-[14px] text-ink-soft">/mo</span>}
           </p>
           <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
-          <span className="mt-1 block text-[11px] text-ink/55">+ ${shippingPriceFor(product)} shipping</span>
+          <span className="mt-1 block text-[11px] text-ink/65">+ ${shippingPriceFor(product)} shipping</span>
         </div>
       </div>
 
       {/* Full width under the name and price, not squeezed beside the price. */}
       <p className="mt-3 text-[15px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
-      <div ref={planRef} className="mt-5 scroll-mt-40">
-        <PlanSegments tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} pulse={pulse} />
-      </div>
+      {pickPlan && (
+        <div ref={planRef} className="mt-5 scroll-mt-40">
+          <PlanSegments tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} pulse={pulse} />
+        </div>
+      )}
 
       <div ref={ctaRef} className="mt-3">
-        {ctaHref ? (
+        {href ? (
           <Link
-            href={ctaHref}
+            href={href}
             className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
             {ctaLabel}
@@ -101,16 +106,16 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
             Add to Cart. ${active.total}
           </button>
         )}
-        <p className="mt-2.5 text-center text-[12px] text-ink/55 tabular-nums">
+        {pickPlan && <p className="mt-2.5 text-center text-[12px] text-ink/65 tabular-nums">
           {active.key === 'once'
             ? `One-time · $${active.total} · ${shippingLine(product)} · no subscription`
             : `Billed $${active.total} ${billedEvery(active)} · ${shippingLine(product)} · cancel anytime`}
-        </p>
+        </p>}
       </div>
 
       {/* Below the fold: what the chosen plan includes, then the rest. */}
       <div className="mt-10 rounded-shell bg-milk p-5">
-        <p className="text-[13px] font-medium text-ink/55">Compounded by a licensed 503A pharmacy</p>
+        <p className="text-[13px] font-medium text-ink/65">Compounded by a licensed 503A pharmacy</p>
         <p className="mt-4 text-[15px] font-semibold tracking-[-0.01em]">{active.label} plan includes</p>
         <ul className="mt-3 space-y-2">
           {active.breakdown.map((line) => (
@@ -142,10 +147,10 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
         product={product}
         active={active}
         visible={showBar}
-        ctaHref={ctaHref}
+        ctaHref={href}
         ctaLabel={ctaLabel}
         onAddToCart={handleAddToCart}
-        onChangePlan={scrollToPlan}
+        onChangePlan={pickPlan ? scrollToPlan : undefined}
       />
     </div>
   );

@@ -186,7 +186,10 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         const steps: { label: string; at: string }[] = [
           { label: 'Placed', at: fmtDateTime(o.created_at) },
         ];
-        if (o.paid_at) steps.push({ label: 'Approved by prescriber', at: fmtDateTime(o.paid_at) });
+        // Signing no longer writes paid_at; the timeline entry is the record (paid_at for older orders).
+        const approvedAt =
+          (updates ?? []).find((u) => u.order_id === o.id && u.label === 'Order approved')?.created_at ?? o.paid_at;
+        if (approvedAt) steps.push({ label: 'Approved by prescriber', at: fmtDateTime(approvedAt) });
         if (o.paid_confirmed_at) steps.push({ label: 'Payment cleared', at: fmtDateTime(o.paid_confirmed_at) });
         if (ful?.submitted_at) steps.push({ label: 'Sent to pharmacy', at: fmtDateTime(ful.submitted_at) });
         if (ful?.shipped_at) steps.push({ label: 'Shipped', at: fmtDateTime(ful.shipped_at) });
@@ -272,7 +275,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
     <PortalShell user={user} nav={ADMIN_NAV}>
       <Link
         href="/portal/admin/members"
-        className="mb-6 inline-flex items-center gap-1.5 text-[12px] text-ink/55 transition-colors hover:text-ink"
+        className="mb-6 inline-flex items-center gap-1.5 text-[12px] text-ink/65 transition-colors hover:text-ink"
       >
         <span aria-hidden>←</span> All users
       </Link>
@@ -340,7 +343,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       {s.status}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-ink/55">
+                  <p className="mt-1 text-xs text-ink/65">
                     {s.cadence} · ${s.perCycle} per cycle
                   </p>
                 </li>
@@ -435,7 +438,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
         <Section title="Activity">
           {detail.timeline.length === 0 ? (
-            <p className="text-sm text-ink/55">
+            <p className="text-sm text-ink/65">
               Nothing yet. Applying, ordering, prescriber decisions, charges and
               shipments all appear here.
             </p>
@@ -457,7 +460,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       </span>
                     </div>
                     {t.body && (
-                      <p className="mt-0.5 text-xs leading-relaxed text-ink/55">
+                      <p className="mt-0.5 text-xs leading-relaxed text-ink/65">
                         {t.body}
                       </p>
                     )}
@@ -502,7 +505,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
               <RecordGroup title="History" lines={detail.review.history} />
               {detail.review.categories.length > 0 && (
                 <div>
-                  <div className="mb-1.5 text-[13px] font-medium text-ink/55">
+                  <div className="mb-1.5 text-[13px] font-medium text-ink/65">
                     Category answers
                   </div>
                   <CategoryAnswers sections={detail.review.categories} />
@@ -536,7 +539,7 @@ function Section({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between border-b border-ink/10 py-2.5 text-sm last:border-0">
-      <span className="text-ink/55">{label}</span>
+      <span className="text-ink/65">{label}</span>
       <span className="text-ink/90">{value}</span>
     </div>
   );
@@ -551,7 +554,7 @@ function RecordGroup({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[13px] font-medium text-ink/55">
+      <div className="mb-1.5 text-[13px] font-medium text-ink/65">
         {title}
       </div>
       <div className="grid gap-x-8 md:grid-cols-2">

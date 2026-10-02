@@ -74,7 +74,7 @@ export default async function PublicProductPage({ params }: PageProps) {
       {/* --pdp-sticky-top: the buy column sticks just under the fixed header + product strip (134px). */}
       <main className="bg-white text-ink" style={{ '--pdp-sticky-top': '158px', '--pdp-fit': '284px' } as React.CSSProperties}>
         <section className="px-5 pb-16 pt-44 md:px-10 md:pb-24 md:pt-52">
-          <nav aria-label="Breadcrumb" className="mb-6 hidden items-center gap-2 text-[13px] font-medium text-ink/55 md:flex">
+          <nav aria-label="Breadcrumb" className="mb-6 hidden items-center gap-2 text-[13px] font-medium text-ink/65 md:flex">
             <Link href="/shop" className="transition-colors hover:text-ink">
               Shop
             </Link>

@@ -57,7 +57,7 @@ export const btnSmall =
   'inline-flex min-h-[44px] items-center justify-center whitespace-nowrap rounded-full px-3.5 text-[13px] font-medium ring-1 transition-colors disabled:opacity-40 md:min-h-[32px]';
 
 export const field =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 transition-shadow focus:outline-none focus:ring-2 focus:ring-ink/30';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 transition-shadow focus:outline-none focus:ring-2 focus:ring-ink/30';
 export const fieldLabel = 'mb-2 block text-[13px] font-medium text-ink/70';
 export const errorBox =
   'rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-600/15';
@@ -91,7 +91,7 @@ const TONE: Record<Tone, { chip: string; dot: string }> = {
   warn: { chip: 'bg-amber-50 text-amber-900', dot: 'bg-amber-500' },
   info: { chip: 'bg-sky-50 text-sky-900', dot: 'bg-sky-600' },
   error: { chip: 'bg-red-50 text-red-800', dot: 'bg-red-600' },
-  muted: { chip: 'bg-ink/[0.04] text-ink/55', dot: 'bg-ink/25' },
+  muted: { chip: 'bg-ink/[0.04] text-ink/65', dot: 'bg-ink/25' },
 };
 
 export function StatusChip({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {

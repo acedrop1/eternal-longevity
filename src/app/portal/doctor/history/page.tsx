@@ -42,7 +42,10 @@ async function loadSignedRx(): Promise<SignedRx[]> {
     patient: o.memberName || o.memberEmail,
     state: o.state,
     protocol: o.lines.map((l) => l.productName).join(' + ') || '—',
-    signedAt: new Date(o.paidAt ?? o.placedAt).toLocaleString('en-US', {
+    // When he signed (or declined), from the timeline; paidAt is when the money landed.
+    signedAt: new Date(
+      o.updates?.find((u) => u.statusChange === 'signed' || u.statusChange === 'declined-clinical')?.at ?? o.placedAt,
+    ).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -71,7 +74,7 @@ export default async function DoctorHistoryPage() {
       nav={DOCTOR_NAV}
     >
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           My signed Rx · {signed.length} total
         </p>
         <h1
@@ -89,7 +92,7 @@ export default async function DoctorHistoryPage() {
           <h2 className="mb-1 text-[17px] font-semibold tracking-[-0.02em] text-ink">
             Nothing signed yet
           </h2>
-          <p className="mx-auto max-w-md text-xs leading-relaxed text-ink/55">
+          <p className="mx-auto max-w-md text-xs leading-relaxed text-ink/65">
             Prescriptions you approve or decline are logged here permanently.
           </p>
         </div>
@@ -120,7 +123,7 @@ export default async function DoctorHistoryPage() {
                     </td>
                     <td className="px-4 md:px-6 py-4">
                       <div className="text-ink">{r.patient}</div>
-                      <div className="text-xs text-ink/55">{r.state}</div>
+                      <div className="text-xs text-ink/65">{r.state}</div>
                     </td>
                     <td className="px-4 md:px-6 py-4 text-ink/85">
                       {r.protocol}

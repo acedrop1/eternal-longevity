@@ -320,6 +320,10 @@ export const STEPS: Step[] = [
           { value: 'na', label: 'N/A' },
         ],
         knockoutOn: { values: ['yes'], key: 'pregnant' },
+        // Not asked of men. Cond has no "not", so list everything else, including
+        // no answer at all ('undefined'): the portal visit carries no sex, and
+        // there it must still be asked.
+        showIf: { field: 'sex', values: ['f', 'intersex', 'undefined', 'null', ''] },
       },
       {
         id: 'organ',

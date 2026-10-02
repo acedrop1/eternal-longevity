@@ -135,16 +135,16 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
-          <div className="mb-1 text-[13px] font-medium text-ink/55">
+          <div className="mb-1 text-[13px] font-medium text-ink/65">
             Patient
           </div>
           <p className="text-sm font-medium text-ink">
             {order.patientName}
           </p>
           {order.patientDob && (
-            <p className="text-xs text-ink/55">DOB {order.patientDob}</p>
+            <p className="text-xs text-ink/65">DOB {order.patientDob}</p>
           )}
-          <div className="mt-3 mb-1 text-[13px] font-medium text-ink/55">
+          <div className="mt-3 mb-1 text-[13px] font-medium text-ink/65">
             Ship to
           </div>
           {order.address ? (
@@ -160,14 +160,14 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
         </div>
 
         <div>
-          <div className="mb-1 text-[13px] font-medium text-ink/55">
+          <div className="mb-1 text-[13px] font-medium text-ink/65">
             Prescription
           </div>
           <ul className="space-y-1">
             {order.items.map((it, i) => (
               <li key={i} className="text-sm text-ink/85">
                 {it.product ?? it.name ?? 'Item'}
-                <span className="text-ink/55">
+                <span className="text-ink/65">
                   {' '}
                   {it.strength ?? it.dose ?? ''} {it.size ?? ''}
                   {it.quantity ? ` ×${it.quantity}` : ''}
@@ -176,7 +176,7 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
             ))}
           </ul>
           {order.prescriberName && (
-            <p className="mt-3 text-xs text-ink/55">
+            <p className="mt-3 text-xs text-ink/65">
               Prescriber: {order.prescriberName}
               {order.prescriberNpi ? ` · NPI ${order.prescriberNpi}` : ''}
             </p>
@@ -226,7 +226,7 @@ function OrderCard({ order }: { order: PharmacyOrderView }) {
                 onChange={(e) => setTracking(e.target.value)}
                 placeholder="1Z…"
                 required
-                className="w-full rounded-inner bg-white px-4 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+                className="w-full rounded-inner bg-white px-4 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
               />
             </div>
             <button

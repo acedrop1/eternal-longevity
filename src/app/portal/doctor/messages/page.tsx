@@ -35,7 +35,7 @@ export default async function DoctorMessagesPage() {
       {/* Same eyebrow colour and heading scale as Queue, Profile and Signed Rx
           — this page used to run a size larger in a different accent. */}
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Member messages
         </p>
         <h1

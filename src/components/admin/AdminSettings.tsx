@@ -17,13 +17,13 @@ export interface ServiceStatus {
 
 export interface AdminSettingsProps {
   services: ServiceStatus[];
-  notifications: { careTeam: string; pharmacy: string; fromEmail: string };
+  notifications: { careTeam: string; fromEmail: string };
   prescriber: PrescriberRecord;
   clinic: { name: string; siteUrl: string };
 }
 
 const inputClass =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 
 export function AdminSettings({
   services,
@@ -62,7 +62,7 @@ export function AdminSettings({
                 <div className="text-sm font-medium text-ink">
                   {s.name}
                 </div>
-                <div className="mt-0.5 truncate text-xs text-ink/55">
+                <div className="mt-0.5 truncate text-xs text-ink/65">
                   {s.detail}
                 </div>
               </div>
@@ -98,7 +98,6 @@ export function AdminSettings({
       >
         <div className="space-y-2">
           <ReadRow label="Care team inbox" value={notifications.careTeam} />
-          <ReadRow label="Pharmacy inbox" value={notifications.pharmacy} />
           <ReadRow label="Outbound sender" value={notifications.fromEmail} />
         </div>
       </Card>
@@ -130,7 +129,7 @@ function Card({
       <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
         {title}
       </h2>
-      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/55">
+      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/65">
         {subtitle}
       </p>
       {children}

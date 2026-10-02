@@ -80,7 +80,7 @@ export default async function PharmacyPortalPage() {
       nav={[{ label: 'Orders', href: '/portal/pharmacy' }]}
     >
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Fulfillment queue
         </p>
         <h1

@@ -515,7 +515,9 @@ export function orderConfirmationEmail(input: {
     html: shell(
       `<div style="${EYEBROW}">ORDER CONFIRMED</div>
        <h1 style="${H1}">You&rsquo;re all set, ${escapeHtml(input.firstName)}.</h1>
-       <p style="${P}">Payment went through and your order is headed to our partner pharmacy, where it&rsquo;s prepared just for you.</p>
+       <p style="${P}">${
+         input.total > 0 ? 'Payment went through and your' : 'Your code covered this one in full, so nothing was charged. Your'
+       } order is headed to our partner pharmacy, where it&rsquo;s prepared just for you.</p>
        ${nextStep('We&rsquo;ll email your tracking number the moment it ships.')}
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          ${rows}
@@ -530,7 +532,7 @@ export function orderConfirmationEmail(input: {
        <p style="${NOTE}">Order reference <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
        )}</strong>. Questions? Just reply to this email.</p>`,
-      { preheader: 'Payment received. Tracking comes the moment it ships.' },
+      { preheader: input.total > 0 ? 'Payment received. Tracking comes the moment it ships.' : 'Order confirmed. Tracking comes the moment it ships.' },
     ),
   };
 }
@@ -768,12 +770,12 @@ export function planNeedsReviewEmail(input: {
   portalUrl: string;
 }): { subject: string; html: string } {
   return {
-    subject: 'Your plan needs a quick review',
+    subject: 'Your plan is ready to renew',
     html: shell(
-      `<h1 style="${H1}">Time for a quick check-in, ${escapeHtml(input.firstName)}.</h1>
+      `<h1 style="${H1}">Time to renew, ${escapeHtml(input.firstName)}.</h1>
        <p style="${P}">Your prescription has reached the end of its term, so your plan is paused until your prescriber reviews it again. <strong style="color:${INK};">You haven&rsquo;t been charged</strong> and nothing has shipped.</p>
-       ${nextStep('Confirm nothing has changed in your health (it takes a couple of minutes, and we skip what we already have), and it goes straight back to him.')}
-       ${button('Confirm and continue', input.portalUrl)}`,
+       ${nextStep('Answer a few questions and place your renewal. We skip what we already have, and it goes to him for review. You&rsquo;re charged only if he approves.')}
+       ${button('Start your renewal', input.portalUrl)}`,
       { preheader: 'Your plan is paused until your prescriber reviews it again.' },
     ),
   };

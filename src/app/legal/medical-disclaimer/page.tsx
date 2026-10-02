@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -7,10 +8,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Medical Disclaimer',
-  description: 'What our clinical relationship with you covers, what it does not, and why this is not a substitute for your own doctor.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/medical-disclaimer',
+  'Medical Disclaimer',
+  'What our clinical relationship with you covers, what it does not, and why this is not a substitute for your own doctor.',
+);
 
 export default function MedicalDisclaimerPage() {
   return (
@@ -23,7 +25,7 @@ export default function MedicalDisclaimerPage() {
           heading: `Who Provides Your Care`,
           paragraphs: [
             `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, DO, an osteopathic physician licensed to practise medicine and surgery in ${SERVICE_AREA}, who makes every prescription decision and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
-            `A physician–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by MedShiftRx, an independently owned, state-licensed 503A compounding pharmacy.`,
+            `A physician–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by an independently owned, state-licensed 503A compounding pharmacy, named on your prescription label.`,
           ],
         },
         {

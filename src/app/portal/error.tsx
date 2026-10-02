@@ -45,7 +45,7 @@ export default function PortalError({
           <div className="flex h-14 items-center gap-2.5 px-3 md:px-4">
             <Link href="/portal" className="flex min-h-[44px] items-center gap-2.5 rounded-full px-1 transition-opacity hover:opacity-80">
               <Wordmark href={null} className="text-[26px] text-[#F2D060] md:text-[30px]" />
-              <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">Portal</span>
+              <span className="hidden text-[13px] font-medium text-ink/65 sm:inline">Portal</span>
             </Link>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function PortalError({
               Message us
             </Link>
           </div>
-          {error?.digest && <p className="mt-8 text-[13px] text-ink/40">Error ID: {error.digest}</p>}
+          {error?.digest && <p className="mt-8 text-[13px] text-ink/55">Error ID: {error.digest}</p>}
         </div>
       </main>
     </div>

@@ -81,7 +81,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
           />
           <span>
             Remember this device for 30 days
-            <span className="mt-0.5 block text-[13px] text-ink/55">
+            <span className="mt-0.5 block text-[13px] text-ink/65">
               Skips the code on this browser. Your password is still required
               every time.
             </span>
@@ -100,7 +100,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
         </button>
       </form>
 
-      <p className="mt-8 text-[13px] leading-relaxed text-ink/55">
+      <p className="mt-8 text-[13px] leading-relaxed text-ink/65">
         Staff accounts reach other people&apos;s records, so they need a second
         factor. Members sign in with a password alone.
       </p>

@@ -10,6 +10,7 @@ import { knownAnswerIds } from '@/lib/intake-rules';
 import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { getAssessmentDraft } from '@/lib/assessment-drafts';
 import { heldProductsFor } from '@/lib/held-products';
+import { intakeCovers } from '@/lib/purchase-rules';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
@@ -22,7 +23,7 @@ export const metadata: Metadata = pageMeta(
 );
 
 interface StartPageProps {
-  searchParams: Promise<{ product?: string; category?: string }>;
+  searchParams: Promise<{ product?: string; category?: string; plan?: string; renew?: string }>;
 }
 
 /**
@@ -33,7 +34,7 @@ interface StartPageProps {
 export default async function StartPage({ searchParams }: StartPageProps) {
   // Visitors arriving from a storefront card land here with ?product=<slug>:
   // a live product, or a listed draft (LIST_DRAFTS) so it isn't silently dropped.
-  const { product: slug, category: cat } = await searchParams;
+  const { product: slug, category: cat, plan, renew } = await searchParams;
   const live = slug ? await getLiveProduct(slug) : null;
   const item = !live && LIST_DRAFTS ? ALL_ITEMS.find((x) => x.item.slug === slug)?.item : undefined;
   const draft = item?.live ? await getCatalogProduct(item.live) : null;
@@ -57,7 +58,11 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             swatch: p.swatch,
             contraindications: p.contraindications,
             tiers,
-            defaultCadence: defaultTier(tiers).key,
+            // The plan picked on the product page (?plan=) comes preselected.
+            defaultCadence:
+              p.id === requested?.id && tiers.some((t) => t.key === plan)
+                ? (plan as (typeof tiers)[number]['key'])
+                : defaultTier(tiers).key,
             shipping: shippingPriceFor(p),
           },
         ];
@@ -82,6 +87,8 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const saved = isMember ? await getAssessmentDraft(entry) : null;
   // Already ordered, or already on a plan: no second assessment, no second order.
   const held = isMember && requested ? (await heldProductsFor(user.id)).get(requested.id) : undefined;
+  // Already assessed for this product: straight to choosing a plan. A renewal (?renew=) still re-asks.
+  const assessed = Boolean(isMember && requested && !renew && state === 'submitted' && intakeCovers(onFile, requested.id));
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -118,6 +125,22 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             {held === 'plan' ? 'Manage your plan' : 'View your order'}
           </Link>
         </div>
+      ) : assessed && requested ? (
+        <div className="mx-auto max-w-[640px] px-5 pb-20 pt-24 text-center md:pt-32">
+          <h1 className="mb-4 text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] md:text-[40px]">
+            You&rsquo;re already assessed for {requested.name}.
+          </h1>
+          <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
+            No need to answer the questions again. Choose your plan and check out, and Dr. Elder reviews your order. You&rsquo;re
+            charged only if he approves.
+          </p>
+          <Link
+            href={`/shop/${encodeURIComponent(requested.id)}`}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
+          >
+            Choose your plan
+          </Link>
+        </div>
       ) : (
         <IntakeWizard
           product={
@@ -134,6 +157,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           offers={offers}
           member={member}
           draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
+          renewal={Boolean(renew && requested && isMember)}
         />
       )}
     </main>

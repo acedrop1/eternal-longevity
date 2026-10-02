@@ -21,6 +21,8 @@ import { SITE_URL } from '@/lib/site';
 import {
   approvedPayNowEmail,
   chargeFailedInternalEmail,
+  emailConfigured,
+  orderConfirmationEmail,
   sendEmail,
   SUPPORT_EMAIL,
 } from '@/lib/email';
@@ -108,7 +110,7 @@ export async function issuePayLink(
 export async function payPathForMember(
   userId: string,
   orderNumber: string,
-): Promise<{ path?: string; error?: 'not_configured' | 'not_found' | 'not_payable' | 'refill' }> {
+): Promise<{ path?: string; error?: 'not_configured' | 'not_found' | 'paid' | 'closed' | 'not_payable' | 'refill' }> {
   if (!supabaseAdminConfigured()) return { error: 'not_configured' };
   const db = createSupabaseAdminClient();
   const { data: order } = await db
@@ -118,9 +120,8 @@ export async function payPathForMember(
     .eq('user_id', userId)
     .maybeSingle();
   if (!order) return { error: 'not_found' };
-  if (order.paid_confirmed_at || !AWAITING_PAYMENT.includes(order.status)) {
-    return { error: 'not_payable' };
-  }
+  if (order.paid_confirmed_at) return { error: 'paid' };
+  if (!AWAITING_PAYMENT.includes(order.status)) return { error: 'closed' };
   const { data: failed } = await db
     .from('order_updates')
     .select('id')
@@ -360,6 +361,46 @@ export async function defaultCardSummary(
   }
 }
 
+/**
+ * The order confirmation for an order a code covered in full. Mirrors the
+ * Stripe webhook's sendOrderConfirmation, looked up by order id. Never throws:
+ * the order is confirmed whether or not the email goes.
+ */
+async function sendCompedConfirmation(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  orderId: string,
+): Promise<void> {
+  if (!emailConfigured()) return;
+  try {
+    const { data: order } = await db
+      .from('orders')
+      .select('order_number, total_cents, shipping_cents, discount_cents, subtotal_cents, user_id')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (!order) return;
+    const [{ data: profile }, { data: items }] = await Promise.all([
+      db.from('profiles').select('email, full_name').eq('id', order.user_id).maybeSingle(),
+      db.from('order_items').select('product_name, quantity, unit_price_cents').eq('order_id', orderId),
+    ]);
+    if (!profile?.email) return;
+    const mail = orderConfirmationEmail({
+      firstName: (profile.full_name || '').split(' ')[0] || 'there',
+      orderNumber: order.order_number,
+      total: order.total_cents ?? 0,
+      shipping: order.shipping_cents ?? 0,
+      discount: Math.min(order.discount_cents ?? 0, (order.subtotal_cents ?? 0) + (order.shipping_cents ?? 0)),
+      items: (items ?? []).map((i) => ({
+        name: i.product_name,
+        qty: i.quantity ?? 1,
+        amount: (i.unit_price_cents ?? 0) * (i.quantity ?? 1),
+      })),
+    });
+    await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
+  } catch (err) {
+    console.error('[pay-on-approval] comped confirmation email failed:', err);
+  }
+}
+
 export async function chargeOnApproval(orderNumber: string): Promise<{
   ok: boolean;
   charged?: boolean;
@@ -402,6 +443,8 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
       author: 'System',
       author_role: 'system',
     });
+    // No Stripe payment, so no webhook to send the confirmation: send it here.
+    await sendCompedConfirmation(db, order.id);
     return { ok: true, charged: true };
   }
 

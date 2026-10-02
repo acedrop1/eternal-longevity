@@ -89,7 +89,7 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
 
               {related.length > 0 && (
                 <div className="mt-16 max-w-[68ch] rounded-shell bg-milk p-3 md:p-4">
-                  <h2 className="px-3 pb-2 pt-2 text-[13px] font-medium text-ink/55">Related documents</h2>
+                  <h2 className="px-3 pb-2 pt-2 text-[13px] font-medium text-ink/65">Related documents</h2>
                   <ul className="space-y-1">
                     {related.map((r) => (
                       <li key={r.href}>
@@ -106,7 +106,7 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
                 </div>
               )}
 
-              <p className="mt-10 max-w-[68ch] text-[13px] leading-relaxed text-ink/55">
+              <p className="mt-10 max-w-[68ch] text-[13px] leading-relaxed text-ink/65">
                 Questions about this document? Email{' '}
                 <a href="mailto:support@etlongevity.com" className={`text-ink ${link}`}>
                   support@etlongevity.com

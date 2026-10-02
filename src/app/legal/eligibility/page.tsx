@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -8,10 +9,11 @@ import {
   SERVICE_AREA_OR,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Patient Eligibility',
-  description: 'Completing an intake is not approval, and paying is not approval. What qualifying actually depends on.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/eligibility',
+  'Patient Eligibility',
+  'Completing an intake is not approval, and paying is not approval. What qualifying actually depends on.',
+);
 
 export default function EligibilityPage() {
   return (
@@ -48,7 +50,7 @@ export default function EligibilityPage() {
             `Be 18 years of age or older.`,
             `Be physically located in ${SERVICE_AREA_OR}, with a shipping address in that same state. Orders shipping anywhere else are rejected at checkout.`,
             `Not be pregnant, planning pregnancy, or breastfeeding.`,
-            `Have no active or prior malignancy, unless specifically cleared by your own physician.`,
+            `Have no active cancer, and no cancer treatment in the last 5 years.`,
             `Provide a complete and honest medical history, including every medication and supplement you take.`,
           ],
         },

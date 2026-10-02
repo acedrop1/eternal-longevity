@@ -9,10 +9,10 @@ import { loadCart } from '@/lib/profile-db';
 import { memberNextStep } from '@/lib/member-next-step';
 import { listOrders } from '@/lib/orders-db';
 import { listOpenCheckinsForUser } from '@/lib/checkins-db';
-import { STATUS_LABEL } from '@/lib/orders';
+import { memberStatusLabel, STATUS_TONE } from '@/lib/orders';
 import { listMyMessages } from '@/lib/messages-db';
 import { threadStatuses } from '@/lib/prescriber-view';
-import { MEMBER_NAV, PageHeader, StatusChip, panel, sentenceCase } from '@/components/portal/ui';
+import { MEMBER_NAV, PageHeader, StatusChip, panel } from '@/components/portal/ui';
 import { listAssessmentDrafts } from '@/lib/assessment-drafts';
 import { getAnyShopProduct } from '@/lib/shopProducts';
 import { CATEGORY_LABEL } from '@/lib/intake-categories';
@@ -80,19 +80,26 @@ export default async function MemberPortalPage() {
     needsInfo,
   });
   const latest = orders[0] ?? null;
+  /*
+   * An unfinished assessment stands in for "get started" and "choose your
+   * plan" (continuing it is that step). Anything urgent (payment, the
+   * prescriber, needs-info, a decision) still shows, above the draft.
+   */
+  const step =
+    next && unfinished && (next.eyebrow === 'Get started' || next.title.endsWith('assessment is complete')) ? null : next;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
 
   const tiles = [
     {
       href: '/shop',
       title: 'Shop',
-      body: 'Browse the peptide catalog.',
+      body: 'Browse our treatments.',
     },
     {
       href: '/portal/orders',
       title: 'Orders',
       body: latest
-        ? `Latest: ${sentenceCase(STATUS_LABEL[latest.status] ?? latest.status)}`
+        ? `Latest: ${memberStatusLabel(latest)}`
         : 'No orders yet.',
     },
     {
@@ -107,7 +114,7 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit || preview || media.photos || unfinished || next
+          pendingVisit || preview || media.photos || unfinished || step
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
@@ -140,6 +147,30 @@ export default async function MemberPortalPage() {
         </section>
       )}
 
+      {/* One next step, named for the product it is about. Urgent ones sit
+          above an unfinished assessment; see `step`. */}
+      {step && (
+        <section
+          aria-labelledby="next-step"
+          className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
+        >
+          <p className="mb-1 text-[13px] font-medium text-ink/60">{step.eyebrow}</p>
+          <h2
+            id="next-step"
+            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
+          >
+            {step.title}
+          </h2>
+          <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">{step.body}</p>
+          <Link
+            href={step.cta.href}
+            className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
+          >
+            {step.cta.label}
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+          </Link>
+        </section>
+      )}
       {/* An assessment they started and left: the first thing to offer back. */}
       {unfinished && (
         <section
@@ -181,30 +212,6 @@ export default async function MemberPortalPage() {
         </section>
       )}
 
-      {/* One next step, named for the product it is about. Shown only when
-          there is no unfinished assessment to continue (that card is the step). */}
-      {next && !unfinished && (
-        <section
-          aria-labelledby="next-step"
-          className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
-        >
-          <p className="mb-1 text-[13px] font-medium text-ink/60">{next.eyebrow}</p>
-          <h2
-            id="next-step"
-            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
-          >
-            {next.title}
-          </h2>
-          <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">{next.body}</p>
-          <Link
-            href={next.cta.href}
-            className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
-          >
-            {next.cta.label}
-            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
-          </Link>
-        </section>
-      )}
       {/* Latest order, one line */}
       {latest && (
         <Link
@@ -212,15 +219,13 @@ export default async function MemberPortalPage() {
           className={`${panel} flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-milk-deep md:px-6 md:py-5`}
         >
           <div className="min-w-0">
-            <p className="mb-1 text-[13px] font-medium text-ink/55">Latest order</p>
+            <p className="mb-1 text-[13px] font-medium text-ink/65">Latest order</p>
             <p className="truncate text-[15px] text-ink">
               {latest.lines.map((l) => l.productName).join(', ')}
             </p>
           </div>
           <span className="flex-none">
-            <StatusChip tone="gold">
-              {sentenceCase(STATUS_LABEL[latest.status] ?? latest.status)}
-            </StatusChip>
+            <StatusChip tone={STATUS_TONE[latest.status] ?? 'neutral'}>{memberStatusLabel(latest)}</StatusChip>
           </span>
         </Link>
       )}
@@ -228,7 +233,7 @@ export default async function MemberPortalPage() {
       {/* 30-day check-in, only while one is open. Same flow as the email. */}
       {checkin && (
         <div className={`${panel} px-5 py-4 md:px-6 md:py-5`}>
-          <p className="mb-1 text-[13px] font-medium text-ink/55">Check-in</p>
+          <p className="mb-1 text-[13px] font-medium text-ink/65">Check-in</p>
           <p className="text-[15px] text-ink">
             How’s it going with your treatment? 1 = not well, 5 = very well.
           </p>
@@ -269,7 +274,7 @@ export default async function MemberPortalPage() {
         ))}
       </div>
 
-      <p className="text-[14px] text-ink/55">
+      <p className="text-[14px] text-ink/65">
         Need anything?{' '}
         <Link
           href="/portal/messages"

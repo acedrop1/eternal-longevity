@@ -13,6 +13,7 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { monthlyRecurringCents, paidRevenue } from '@/lib/revenue';
 
 export const metadata: Metadata = {
   title: 'Billing',
@@ -40,8 +41,6 @@ function fmtWhen(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const REVENUE_STATUSES = ['paid', 'compounding', 'shipped', 'delivered'];
-
 export default async function AdminBillingPage() {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
@@ -53,7 +52,7 @@ export default async function AdminBillingPage() {
   if (supabaseAdminConfigured()) {
     try {
       const db = createSupabaseAdminClient();
-      const [{ data: profiles }, { data: subs }, { data: orders }] =
+      const [{ data: profiles }, { data: subs }, { data: orders }, paid] =
         await Promise.all([
           db
             .from('profiles')
@@ -61,12 +60,14 @@ export default async function AdminBillingPage() {
             .eq('role', 'member')
             .order('created_at', { ascending: false })
             .limit(500),
-          db.from('subscriptions').select('status, per_cycle_cents'),
+          db.from('subscriptions').select('status, per_cycle_cents, cadence_label'),
           db
             .from('orders')
             .select('order_number, status, total_cents, created_at')
             .order('created_at', { ascending: false })
             .limit(100),
+          // One definition of revenue for Overview, Billing and the daily report.
+          paidRevenue(db),
         ]);
 
       if (profiles && profiles.length > 0) {
@@ -78,21 +79,11 @@ export default async function AdminBillingPage() {
       }
 
       const activeSubs = (subs ?? []).filter((s) => s.status === 'active');
-      const revenueOrders = (orders ?? []).filter((o) =>
-        REVENUE_STATUSES.includes(o.status),
-      );
-
       summary = {
         activeSubscriptions: activeSubs.length,
-        cycleRevenueCents: activeSubs.reduce(
-          (sum, s) => sum + (s.per_cycle_cents ?? 0),
-          0,
-        ),
-        paidOrders: revenueOrders.length,
-        lifetimeRevenueCents: revenueOrders.reduce(
-          (sum, o) => sum + (o.total_cents ?? 0),
-          0,
-        ),
+        cycleRevenueCents: monthlyRecurringCents(activeSubs),
+        paidOrders: paid.orders,
+        lifetimeRevenueCents: paid.cents,
         recent: (orders ?? []).slice(0, 6).map((o) => ({
           label: o.order_number,
           amountCents: o.total_cents ?? 0,
@@ -108,7 +99,7 @@ export default async function AdminBillingPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Billing
         </p>
         <h1

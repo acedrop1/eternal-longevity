@@ -18,13 +18,12 @@ import type { Json } from '@/lib/database.types';
 import { revalidatePath } from 'next/cache';
 import { refundDeclinedOrder } from '@/lib/order-payment';
 import { chargeOnApproval } from '@/lib/pay-on-approval';
-import { autoSubmitToPharmacy, withdrawFromPharmacy } from '@/lib/auto-pharmacy';
+import { alertCareTeam, autoSubmitToPharmacy, withdrawFromPharmacy } from '@/lib/auto-pharmacy';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import {
-  declinedEmail,
+  noticeEmail,
   orderCancelledByTeamEmail,
   orderReceivedEmail,
-  prescriberQuestionEmail,
   sendEmail,
 } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -52,6 +51,7 @@ import { releaseToDoctor } from '@/lib/release-to-doctor';
 import { canOrder, latestIntakeAnswers } from '@/lib/intake-status';
 import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
+import { claimCheckout, releaseCheckout } from '@/lib/order-lock';
 import { SITE_URL } from '@/lib/site';
 import { writePrescriptionForOrder } from '@/lib/refills';
 import { nextOrderNumber } from '@/lib/order-number';
@@ -127,7 +127,8 @@ function mapOrder(row: OrderRow): Order {
     assignedToPhysicianId: (row.assigned_physician_id as string) || undefined,
     adminNote: (row.admin_note as string) || undefined,
     physicianNote: (row.physician_note as string) || undefined,
-    paidAt: row.paid_at ? new Date(String(row.paid_at)).getTime() : undefined,
+    // Paid means the money landed (the webhook's paid_confirmed_at), never the signature.
+    paidAt: row.paid_confirmed_at ? new Date(String(row.paid_confirmed_at)).getTime() : undefined,
     firstChargeAmount: row.first_charge_cents
       ? centsToDollars(row.first_charge_cents)
       : undefined,
@@ -273,6 +274,23 @@ function revalidatePortal() {
   }
 }
 
+/**
+ * What a member is emailed when the prescriber writes to them. No clinical
+ * words in email: his text stays in the portal thread and the order timeline,
+ * and this only says where to read it.
+ */
+function prescriberMessageEmail(): { subject: string; html: string } {
+  return {
+    subject: 'You have a message from your prescriber',
+    html: noticeEmail({
+      eyebrow: 'Your care team',
+      heading: 'You have a message from your prescriber',
+      body: 'Sign in to read it and reply. We keep it in your portal rather than in email, for your privacy.',
+      cta: { label: 'Read it in your portal', href: `${SITE_URL}/portal/messages?thread=doctor` },
+    }),
+  };
+}
+
 /** Member places an order. Returns the new order number. */
 /**
  * Member places an order. Returns the first order number.
@@ -285,7 +303,23 @@ function revalidatePortal() {
  * writer read the cadence off the first line, so a monthly and a quarterly item
  * bought together produced one prescription with the wrong term.
  */
-export async function placeOrderAction(input: {
+export async function placeOrderAction(
+  input: Parameters<typeof placeOrder>[0],
+): ReturnType<typeof placeOrder> {
+  const { user, error } = await requireRole(['member']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  if (!supabaseAdminConfigured()) return placeOrder(input);
+  // A double submit must not become two orders for the same product.
+  const db = createSupabaseAdminClient();
+  if (!(await claimCheckout(db, user.id))) return { ok: false, error: 'order_in_progress' };
+  try {
+    return await placeOrder(input);
+  } finally {
+    await releaseCheckout(db, user.id);
+  }
+}
+
+async function placeOrder(input: {
   lines: OrderLine[];
   subtotal: number;
   total: number;
@@ -363,7 +397,8 @@ export async function placeOrderAction(input: {
   const ids = input.lines.map((l) => l.productId);
   if (new Set(ids).size !== ids.length) return { ok: false, error: 'duplicate_product' };
   const [held, answers] = await Promise.all([heldProductsFor(user.id), latestIntakeAnswers(user.id)]);
-  if (ids.some((id) => held.has(id))) return { ok: false, error: 'already_ordered' };
+  const heldId = ids.find((id) => held.has(id));
+  if (heldId) return { ok: false, error: 'already_ordered', productId: heldId };
   // Demo stores no intakes, so there is nothing to check against there.
   const unassessed = supabaseAdminConfigured() ? ids.find((id) => !intakeCovers(answers, id)) : undefined;
   if (unassessed) return { ok: false, error: 'not_assessed', productId: unassessed };
@@ -495,7 +530,7 @@ export async function placeOrderAction(input: {
       console.error('[orders-db] placeOrder:', insErr?.message);
       // Earlier lines already exist; report rather than pretend it all failed.
       if (created.length) break;
-      return { ok: false, error: insErr?.message ?? 'insert_failed' };
+      return { ok: false, error: 'insert_failed' };
     }
 
     await db.from('order_items').insert({
@@ -546,6 +581,14 @@ export async function placeOrderAction(input: {
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }
 
+  // A renewal: the plan that lapsed into review is replaced by this order (and the plan it starts).
+  await db
+    .from('subscriptions')
+    .update({ status: 'canceled' })
+    .eq('user_id', user.id)
+    .in('product_id', ids)
+    .eq('status', 'pending_review');
+
   // Each one goes to the prescriber as its own decision.
   for (const orderNumber of created) {
     await releaseToDoctor(orderNumber);
@@ -583,7 +626,7 @@ export async function approveOrderAction(
 export async function denyOrderAction(
   orderNumber: string,
   note: string,
-): Promise<ActionResult> {
+): Promise<ActionResult & { refunded?: boolean; refundError?: string; cancelByHand?: boolean }> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
   const id = await orderIdFor(orderNumber);
@@ -610,7 +653,7 @@ export async function denyOrderAction(
   await appendUpdate(id, user.name, 'admin', 'Cancelled', reason, 'denied-admin');
   await voidPlanForOrder(id);
   // Off the board, and cancelled at the pharmacy if it already went and hasn't shipped.
-  await withdrawFromPharmacy(orderNumber);
+  const { cancelByHand } = await withdrawFromPharmacy(orderNumber);
 
   // Whatever was charged goes back, described the way it actually happened.
   const refund = await refundDeclinedOrder(
@@ -633,7 +676,12 @@ export async function denyOrderAction(
   }
 
   revalidatePortal();
-  return { ok: true };
+  return {
+    ok: true,
+    refunded: refund.refunded === true,
+    refundError: refund.ok ? undefined : refund.error,
+    cancelByHand,
+  };
 }
 
 /** Physician signs. This is the moment billing starts. */
@@ -684,11 +732,7 @@ export async function requestInfoFromPatientAction(
   );
 
   if (order.member_email) {
-    const msg = prescriberQuestionEmail({
-      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
-      question: text,
-      portalUrl: `${SITE_URL}/portal/messages`,
-    });
+    const msg = prescriberMessageEmail();
     try {
       await sendEmail({
         to: order.member_email,
@@ -750,11 +794,7 @@ export async function requestPhotosAction(orderNumber: string): Promise<ActionRe
   await appendUpdate(id, user.name, 'physician', 'Your prescriber asked for photos', text);
 
   if (order.member_email) {
-    const msg = prescriberQuestionEmail({
-      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
-      question: text,
-      portalUrl: `${SITE_URL}/portal/visit`,
-    });
+    const msg = prescriberMessageEmail();
     try {
       await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
     } catch {
@@ -808,13 +848,20 @@ export async function signRxAction(
   ]);
   const liveIds = new Set(live.map((p) => p.id));
   if (!items?.length || items.some((i) => !liveIds.has(String(i.product_id)))) {
+    // He cannot fix this; admin can (put it back on sale, or cancel the order).
+    await alertCareTeam({
+      orderNumber,
+      eyebrow: 'Cannot sign',
+      heading: 'The prescriber cannot sign an order for a pulled product',
+      body: 'A product on this order is no longer live. Put it back on sale in Admin → Products, or cancel the order.',
+    });
     return { ok: false, error: 'product_unavailable' };
   }
 
   const moved = await moveOrder(id, ORDER_FROM.sign, {
     status: 'signed',
     physician_note: note ?? null,
-    paid_at: new Date().toISOString(),
+    // Not paid_at: signing is not payment. The webhook writes paid_confirmed_at.
     first_charge_cents: Math.round(firstChargeAmount * 100),
   });
   if (!moved) return { ok: false, error: 'order_moved_on' };
@@ -857,6 +904,31 @@ export async function signRxAction(
 
   const charge = await chargeOnApproval(orderNumber);
   if (charge.charged) await autoSubmitToPharmacy(orderNumber);
+  else if (!charge.ok || charge.error === 'no_card_on_file') {
+    /*
+     * A declined card already alerts the team and notes the timeline. No card
+     * at all, or a charge that never started, did neither: a signed order
+     * just sat unpaid. (The hourly sweep catches anything left after 48h.)
+     */
+    if (charge.error === 'no_card_on_file') {
+      await appendUpdate(
+        id,
+        'System',
+        'system',
+        'Charge failed after approval',
+        'No card on file. Member emailed a payment link. Will not ship until paid.',
+      );
+    }
+    await alertCareTeam({
+      orderNumber,
+      eyebrow: 'Unpaid',
+      heading: 'An approved order was not charged',
+      body:
+        charge.error === 'no_card_on_file'
+          ? 'There was no card on file. The member was emailed a payment link; it ships once they pay.'
+          : `The charge could not start (${charge.error ?? 'unknown'}). Collect payment before it ships.`,
+    });
+  }
 
   revalidatePortal();
   return { ok: true };
@@ -875,7 +947,7 @@ export async function declineClinicalAction(
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('member_name, member_email')
+    .select('user_id, member_name, member_email')
     .eq('id', id)
     .maybeSingle();
 
@@ -888,21 +960,26 @@ export async function declineClinicalAction(
   if (!moved) return { ok: false, error: 'order_moved_on' };
   await appendUpdate(id, user.name, 'physician', 'Declined', note, 'declined-clinical');
   await voidPlanForOrder(id);
+  // His words go to their thread with him, where they can reply; email only points there.
+  if (order?.user_id && note.trim()) {
+    await db.from('messages').insert({
+      thread_user_id: order.user_id,
+      sender_id: user.id,
+      channel: 'doctor',
+      body: note.trim(),
+    });
+  }
 
   // Refund in full, immediately. The checkout copy promises exactly this, and
   // a promise that waits on someone remembering to click refund is not one.
   await refundDeclinedOrder(orderNumber);
 
   /*
-   * His reason reached the order timeline and nowhere else, so the member was
-   * declined in silence unless they went looking in the portal. It is the one
-   * part of a decline they actually need.
+   * The member must hear about a decline, but his reason is clinical: it is in
+   * their portal thread and on the order, and the email says where.
    */
   if (order?.member_email) {
-    const msg = declinedEmail({
-      firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
-      reason: note,
-    });
+    const msg = prescriberMessageEmail();
     try {
       await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
     } catch {
@@ -910,6 +987,23 @@ export async function declineClinicalAction(
     }
   }
 
+  revalidatePortal();
+  return { ok: true };
+}
+
+/**
+ * A note on the order's timeline from the prescriber or admin ("Pharmacy
+ * delayed a day"). The member reads it on their order page.
+ */
+export async function addOrderNoteAction(orderNumber: string, note: string): Promise<ActionResult> {
+  const { user, error } = await requireRole(['doctor', 'admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const text = (note ?? '').trim();
+  if (!text) return { ok: false, error: 'empty' };
+  if (text.length > 2000) return { ok: false, error: 'too_long' };
+  const id = await orderIdFor(orderNumber);
+  if (!id) return { ok: false, error: 'not_found' };
+  await appendUpdate(id, user.name, user.role === 'doctor' ? 'physician' : 'admin', 'Update', text);
   revalidatePortal();
   return { ok: true };
 }

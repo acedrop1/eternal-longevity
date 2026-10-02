@@ -64,7 +64,7 @@ export function CartDrawer() {
         <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4 md:px-6">
           <div>
             <h2 className="text-[26px] font-semibold leading-none tracking-[-0.04em] text-ink">Your cart</h2>
-            <p className="mt-1.5 text-[13px] font-medium text-ink/55">
+            <p className="mt-1.5 text-[13px] font-medium text-ink/65">
               {itemCount === 0
                 ? 'Empty'
                 : `${itemCount} item${itemCount === 1 ? '' : 's'}`}
@@ -123,13 +123,13 @@ export function CartDrawer() {
                           >
                             {it.product.name}
                           </Link>
-                          <p className="mt-0.5 text-[12px] font-medium text-ink/55">
+                          <p className="mt-0.5 text-[12px] font-medium text-ink/65">
                             {it.cadenceLabel} billing
                           </p>
                           <p className="mt-1 text-[13px] tabular-nums text-ink-soft">
                             ${it.perMonth}/mo · ${it.total}/cycle
                           </p>
-                          <p className="mt-0.5 text-[12px] tabular-nums text-ink/55">
+                          <p className="mt-0.5 text-[12px] tabular-nums text-ink/65">
                             {shippingLabelFor(it.product)} ${shippingPriceFor(it.product)}
                           </p>
                         </div>
@@ -142,7 +142,7 @@ export function CartDrawer() {
                             onClick={() =>
                               removeItem(it.productId, it.cadence as Cadence)
                             }
-                            className="mt-1 text-[12px] font-medium text-ink/55 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
+                            className="mt-1 text-[12px] font-medium text-ink/65 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
                           >
                             Remove
                           </button>
@@ -225,7 +225,7 @@ function Row({
       />
       <span
         className={cn(
-          muted ? 'text-ink/55' : 'font-semibold text-ink',
+          muted ? 'text-ink/65' : 'font-semibold text-ink',
           'tabular-nums'
         )}
       >
@@ -238,7 +238,7 @@ function Row({
 function EmptyState({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="mb-5 grid h-14 w-14 place-items-center rounded-inner bg-milk text-ink/50">
+      <div className="mb-5 grid h-14 w-14 place-items-center rounded-inner bg-milk text-ink/60">
         <svg
           width="22"
           height="22"

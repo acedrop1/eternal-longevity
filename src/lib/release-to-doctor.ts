@@ -91,13 +91,22 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
    */
   const notes = addressNotes(order.shipping_address);
 
-  await db
+  // Conditional, so a retry racing checkout cannot release it twice, and
+  // checked: an order that silently stays pending-admin reaches nobody.
+  const { data: moved, error: moveErr } = await db
     .from('orders')
     .update({
       status: 'assigned',
       admin_note: notes.length ? notes.join(' ') : null,
     })
-    .eq('id', order.id);
+    .eq('id', order.id)
+    .eq('status', 'pending-admin')
+    .select('id');
+  if (moveErr) {
+    console.error('[release-to-doctor] update failed:', moveErr.message);
+    return { ok: false, error: moveErr.message };
+  }
+  if (!moved?.length) return { ok: true };
 
   await db.from('order_updates').insert({
     order_id: order.id,
@@ -105,6 +114,8 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
     body: notes.length ? notes.join(' ') : null,
     author: 'System',
     author_role: 'system',
+    // The stale-order sweep times the prescriber's wait from this entry.
+    status_change: 'assigned',
   });
 
   const memberName = order.member_name ?? 'A member';
@@ -127,14 +138,14 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
           ['Order', orderRef(order.order_number)],
           ['Member', memberName],
         ],
-        cta: { label: 'Open the admin queue', href: `${SITE_URL}/portal/admin/queue` },
+        cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
       }),
     });
   } catch {
     // The prescriber has already been paged; this copy is for visibility only.
   }
 
-  revalidatePath('/portal/admin/queue');
+  revalidatePath('/portal/admin/fulfillment');
   revalidatePath('/portal/doctor');
   return { ok: true };
 }
@@ -145,6 +156,30 @@ async function notifyDoctor(
   orderNumber: string,
   memberName: string,
 ): Promise<void> {
+  await pageDoctors(
+    db,
+    (firstName) =>
+      newVisitForDoctorEmail({
+        firstName,
+        memberName,
+        orderNumber,
+        queueUrl: `${SITE_URL}/portal/doctor`,
+      }),
+    // No patient name: SMS is not covered by a BAA.
+    `Eternal Longevity: a visit is ready for review, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
+  );
+}
+
+/**
+ * Email and text every active prescriber. Shared with the stale-order sweep,
+ * so a reminder reaches him the same way the first page did. Best effort:
+ * a failed notice never rolls back whatever triggered it.
+ */
+export async function pageDoctors(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  email: (firstName: string) => { subject: string; html: string },
+  sms: string,
+): Promise<void> {
   const { data: doctors } = await db
     .from('profiles')
     .select('full_name, email, phone')
@@ -154,27 +189,18 @@ async function notifyDoctor(
   for (const doc of doctors ?? []) {
     const firstName = (doc.full_name ?? '').trim().split(/\s+/)[0] || 'Doctor';
     if (doc.email) {
-      const msg = newVisitForDoctorEmail({
-        firstName,
-        memberName,
-        orderNumber,
-        queueUrl: `${SITE_URL}/portal/doctor`,
-      });
       try {
+        const msg = email(firstName);
         await sendEmail({ to: doc.email, subject: msg.subject, html: msg.html });
       } catch {
-        // A failed notification must not roll back the release.
+        // Best effort.
       }
     }
     if (doc.phone) {
       try {
-        await sendSms(
-          doc.phone,
-          // No patient name: SMS is not covered by a BAA.
-          `Eternal Longevity: a visit is ready for review, ${orderRef(orderNumber)}. ${SITE_URL}/portal/doctor`,
-        );
+        await sendSms(doc.phone, sms);
       } catch {
-        // Same: best effort.
+        // Same.
       }
     }
   }

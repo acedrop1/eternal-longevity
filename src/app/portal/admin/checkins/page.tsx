@@ -25,7 +25,7 @@ export default async function AdminCheckinsPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">Check-ins</p>
+        <p className="mb-2 text-[13px] font-medium text-ink/65">Check-ins</p>
         <h1 className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]">
           How members are finding it.
         </h1>
@@ -38,7 +38,7 @@ export default async function AdminCheckinsPage() {
 
       <section className="rounded-shell bg-milk p-6 md:p-8">
         {rows.length === 0 ? (
-          <p className="rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/55">
+          <p className="rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/65">
             No check-ins yet. The first go out 30 days after a delivery.
           </p>
         ) : (
@@ -68,7 +68,7 @@ export default async function AdminCheckinsPage() {
                       <td className="py-2.5 pr-4 text-ink/85">
                         {r.memberName}
                         {r.memberEmail && (
-                          <span className="block text-[12px] text-ink/55">{r.memberEmail}</span>
+                          <span className="block text-[12px] text-ink/65">{r.memberEmail}</span>
                         )}
                       </td>
                       <td className="py-2.5 pr-4 text-ink/85">{r.productName}</td>
@@ -85,7 +85,7 @@ export default async function AdminCheckinsPage() {
                         )}
                       </td>
                       <td className="max-w-[40ch] whitespace-pre-wrap py-2.5 text-ink/85">
-                        {r.comment || <span className="text-ink/40">—</span>}
+                        {r.comment || <span className="text-ink/55">—</span>}
                       </td>
                     </tr>
                   );

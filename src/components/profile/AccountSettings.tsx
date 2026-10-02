@@ -236,11 +236,11 @@ function Field({
         placeholder={placeholder}
         className={cn(
           field,
-          disabled && 'cursor-not-allowed bg-white/60 text-ink/55',
+          disabled && 'cursor-not-allowed bg-white/60 text-ink/65',
         )}
       />
       {hint && (
-        <p className="mt-1.5 text-[13px] text-ink/55">{hint}</p>
+        <p className="mt-1.5 text-[13px] text-ink/65">{hint}</p>
       )}
     </div>
   );
@@ -490,7 +490,7 @@ function ProfileSection({
           className={cn(
             'text-[13px] font-medium transition-opacity duration-300',
             dirty && status === 'idle'
-              ? 'text-ink/55 opacity-100'
+              ? 'text-ink/65 opacity-100'
               : 'opacity-0',
           )}
         >
@@ -667,7 +667,7 @@ function NotificationsSection({
                 <div className="text-[15px] font-medium text-ink">
                   {n.title}
                   {n.required && (
-                    <span className="ml-2 text-[12px] font-normal text-ink/50">
+                    <span className="ml-2 text-[12px] font-normal text-ink/60">
                       Required
                     </span>
                   )}
@@ -783,7 +783,7 @@ function PrivacySection({ userEmail }: { userEmail: string }) {
                 btnSmall,
                 'self-start px-4 sm:self-auto',
                 closedNote
-                  ? 'cursor-default text-ink/45 ring-ink/10'
+                  ? 'cursor-default text-ink/60 ring-ink/10'
                   : 'bg-white text-red-800 ring-red-700/30 hover:bg-red-50',
               )}
             >

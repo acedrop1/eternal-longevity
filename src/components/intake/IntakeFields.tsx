@@ -22,7 +22,7 @@ interface FieldRendererProps {
 
 // Same field treatment as the contact form. 16px text keeps iOS from zooming.
 const inputBase =
-  'w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
+  'w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/55 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
 
 // Choice cards. Selected takes a heavy ink ring on white plus a filled
 // indicator, so the selected state never rests on colour alone.
@@ -130,7 +130,7 @@ export function FieldRenderer({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] leading-snug md:text-[16px]">{opt.label}</span>
-                  {opt.hint && <span className="mt-0.5 block text-[13px] leading-snug text-ink/55">{opt.hint}</span>}
+                  {opt.hint && <span className="mt-0.5 block text-[13px] leading-snug text-ink/65">{opt.hint}</span>}
                 </span>
                 {opt.image && (
                   <span aria-hidden className="relative -my-2 -mr-2 h-14 w-14 flex-none overflow-hidden rounded-thumb bg-milk-deep">
@@ -234,7 +234,7 @@ export function FieldRenderer({
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={field.id === 'state' ? 'address-level1' : undefined}
-          className={cn(input, 'min-h-[52px] cursor-pointer', !value && 'text-ink/40')}
+          className={cn(input, 'min-h-[52px] cursor-pointer', !value && 'text-ink/55')}
         >
           <option value="" disabled>
             {field.placeholder ?? 'Choose one'}
@@ -337,7 +337,7 @@ export function FieldRenderer({
             onChange={(e) => onChange(Number(e.target.value))}
             className="w-full accent-ink"
           />
-          <div className="mt-2 flex items-center justify-between text-[13px] font-medium text-ink/55">
+          <div className="mt-2 flex items-center justify-between text-[13px] font-medium text-ink/65">
             <span>Poor</span>
             <span className="text-[16px] font-semibold tabular-nums text-ink">{num}</span>
             <span>Excellent</span>
@@ -373,7 +373,7 @@ export function FieldRenderer({
               >
                 {set ? `${Math.floor(inches / 12)}′ ${inches % 12}″` : '—'}
               </span>
-              <span className="mt-1 block text-[13px] font-medium text-ink/55">
+              <span className="mt-1 block text-[13px] font-medium text-ink/65">
                 {set ? `${Math.round(inches * 2.54)} cm` : 'Slide to set'}
               </span>
             </p>
@@ -399,7 +399,7 @@ export function FieldRenderer({
             className="el-range mt-5 w-full"
             style={{ ['--pct' as string]: `${set ? pct : 0}%` }}
           />
-          <div className="mt-2 flex justify-between text-[13px] font-medium text-ink/50">
+          <div className="mt-2 flex justify-between text-[13px] font-medium text-ink/60">
             <span>{`${Math.floor(min / 12)}′ ${min % 12}″`}</span>
             <span>{`${Math.floor(max / 12)}′ ${max % 12}″`}</span>
           </div>
@@ -484,7 +484,7 @@ export function FieldRenderer({
                 {allChecked ? 'Required items accepted' : 'Accept all required'}
               </span>
             </span>
-            <span className={cn('text-[13px] font-medium', allChecked ? 'text-ink/70' : 'text-ink/55')}>
+            <span className={cn('text-[13px] font-medium', allChecked ? 'text-ink/70' : 'text-ink/65')}>
               {allChecked ? 'Tap to clear' : 'Optional items stay your choice'}
             </span>
           </button>
@@ -509,7 +509,7 @@ export function FieldRenderer({
                 <span className="text-[14px] leading-relaxed text-ink md:text-[15px]">
                   {c.label}
                   {c.required && (
-                    <span className="ml-1.5 text-[12px] text-ink/50">
+                    <span className="ml-1.5 text-[12px] text-ink/60">
                       * <span className="sr-only">required</span>
                     </span>
                   )}
@@ -566,7 +566,7 @@ export function FieldRenderer({
                   key={r.id}
                   className={cn(
                     'flex items-center gap-2 text-[13px] transition-colors',
-                    idle ? 'text-ink/50' : met ? 'text-emerald-700' : 'text-red-700'
+                    idle ? 'text-ink/60' : met ? 'text-emerald-700' : 'text-red-700'
                   )}
                 >
                   <span
@@ -646,12 +646,12 @@ function UploadField({
       {hasFile ? (
         <>
           <div className="mb-1 max-w-full truncate text-[15px] font-semibold text-ink">{fileName}</div>
-          <div className="text-[13px] text-ink/55">Tap to replace</div>
+          <div className="text-[13px] text-ink/65">Tap to replace</div>
         </>
       ) : (
         <>
           <div className="mb-1 text-[15px] font-semibold text-ink">Tap to upload</div>
-          <div className="text-[13px] text-ink/55">PDF or image · up to 10MB</div>
+          <div className="text-[13px] text-ink/65">PDF or image · up to 10MB</div>
         </>
       )}
     </label>

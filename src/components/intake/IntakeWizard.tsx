@@ -39,6 +39,7 @@ import { assessmentSignInAction } from '@/lib/auth-actions';
 import { saveAssessmentDraftAction } from '@/lib/assessment-drafts';
 import { LEAD_CONSENT } from '@/lib/followups';
 import { cn } from '@/lib/utils';
+import { loginHref } from '@/lib/safe-next';
 
 type Answers = Record<string, unknown>;
 
@@ -171,6 +172,8 @@ interface IntakeWizardProps {
   member?: { known: string[]; prefill: Answers };
   /** Pre only, signed in: their unfinished run from this entry point, resumed where they left. */
   draft?: { answers: Answers; screen: string | null };
+  /** Pre only: renewing a plan whose prescription ran its term (/start?renew=). */
+  renewal?: boolean;
 }
 
 /** One id per visit session: the storage folder for its photos and files. */
@@ -189,8 +192,11 @@ export function IntakeWizard({
   offers,
   member,
   draft,
+  renewal = false,
 }: IntakeWizardProps = {}) {
   const compact = mode !== 'pre';
+  // The screen's heading is the page's H1 on /start; the portal page has its own.
+  const Heading = compact ? 'h2' : 'h1';
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', key: '' });
   const [answers, setAnswers] = useState<Answers>(() => ({ ...(member?.prefill ?? {}) }));
   /** The latest answers, for auto-advance timers and uploads that finish later. */
@@ -563,9 +569,9 @@ export function IntakeWizard({
           <div className="mb-6 inline-grid h-12 w-12 place-items-center rounded-full bg-milk text-ink">
             <CircleAlert aria-hidden className="h-6 w-6" strokeWidth={1.5} />
           </div>
-          <h2 className={cn(H2, 'mb-4')}>
+          <Heading className={cn(H2, 'mb-4')}>
             {msg.title}
-          </h2>
+          </Heading>
           <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">{msg.body}</p>
           {status.key === 'out_of_state' && (
             <ul aria-label="States we serve" className="mb-8 flex flex-wrap justify-center gap-2">
@@ -603,7 +609,7 @@ export function IntakeWizard({
           <div className="mb-6 inline-grid h-12 w-12 place-items-center rounded-full bg-butter text-ink">
             <Check aria-hidden className="h-6 w-6" strokeWidth={2.5} />
           </div>
-          <h2 className={cn(H2, 'mb-4')}>You&rsquo;re all set.</h2>
+          <Heading className={cn(H2, 'mb-4')}>You&rsquo;re all set.</Heading>
           <p className="text-[16px] leading-relaxed text-ink-soft">Taking you to checkout&hellip;</p>
         </div>
       </Shell>
@@ -626,9 +632,9 @@ export function IntakeWizard({
           <div className="mb-6 inline-grid h-12 w-12 place-items-center rounded-full bg-butter text-ink">
             <Check aria-hidden className="h-6 w-6" strokeWidth={2.5} />
           </div>
-          <h2 className={cn(H2, 'mb-4')}>{title}</h2>
+          <Heading className={cn(H2, 'mb-4')}>{title}</Heading>
           <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">{body}</p>
-          <Link href={mode === 'pre' ? '/login' : '/portal'} className={BTN_PRIMARY}>
+          <Link href={mode === 'pre' ? loginHref('/checkout') : '/portal'} className={BTN_PRIMARY}>
             {mode === 'pre' ? 'Log in to continue' : 'Back to your portal'}
           </Link>
         </div>
@@ -733,7 +739,7 @@ export function IntakeWizard({
                 'ml-auto inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition-[transform,background-color,color] md:min-h-[44px] md:flex-none',
                 ready && !isPending
                   ? 'bg-butter text-ink hover:-translate-y-0.5 hover:bg-butter-deep'
-                  : 'bg-ink/[0.06] text-ink/40',
+                  : 'bg-ink/[0.06] text-ink/55',
                 isPending && 'cursor-not-allowed',
               )}
             >
@@ -771,11 +777,16 @@ export function IntakeWizard({
           </button>
         </div>
       )}
+      {renewal && product && mode === 'pre' && (
+        <p role="note" className="mb-4 rounded-inner bg-milk px-4 py-3 text-[14px] leading-relaxed text-ink">
+          Renewing {product.name}. Answer a few questions and place your renewal. You&rsquo;re charged only if Dr. Elder approves.
+        </p>
+      )}
       {product && mode !== 'media' && (
         <p className="mb-4 flex w-fit max-w-full items-baseline gap-x-2 rounded-full bg-butter-soft px-3 py-1.5 ring-1 ring-butter-deep/40 md:mb-6 md:gap-x-3 md:px-4 md:py-2">
-          <span className="flex-none text-[12px] font-medium text-ink/55 md:text-[13px]">Starting</span>
+          <span className="flex-none text-[12px] font-medium text-ink/65 md:text-[13px]">Starting</span>
           <span className="truncate text-[14px] font-semibold text-ink md:text-[15px]">{product.name}</span>
-          <span className="hidden truncate text-[13px] text-ink/55 md:inline">{product.tagline}</span>
+          <span className="hidden truncate text-[13px] text-ink/65 md:inline">{product.tagline}</span>
         </p>
       )}
 
@@ -784,23 +795,23 @@ export function IntakeWizard({
           <div className="mb-6 inline-grid h-12 w-12 place-items-center rounded-full bg-butter text-ink">
             <Check aria-hidden className="h-6 w-6" strokeWidth={2.5} />
           </div>
-          <h2 className={cn(H2, 'mb-3')}>{step.heading}</h2>
+          <Heading className={cn(H2, 'mb-3')}>{step.heading}</Heading>
           {step.body && <p className="max-w-xl text-[16px] leading-relaxed text-ink-soft">{step.body}</p>}
         </div>
       ) : (
         <>
-          <p className="mb-3 text-[13px] font-medium text-ink/55">{sectionName(step.eyebrow)}</p>
+          <p className="mb-3 text-[13px] font-medium text-ink/65">{sectionName(step.eyebrow)}</p>
           {solo ? (
             <>
               {first && <p className="mb-2 max-w-xl text-[15px] leading-relaxed text-ink-soft">{step.heading}</p>}
-              <h2 className={cn(H2, detail.length ? 'mb-3' : 'mb-6')}>{question}</h2>
+              <Heading className={cn(H2, detail.length ? 'mb-3' : 'mb-6')}>{question}</Heading>
               {detail.length > 0 && (
                 <p className="mb-6 max-w-xl whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">{detail.join('\n\n')}</p>
               )}
             </>
           ) : (
             <>
-              <h2 className={cn(H2, 'mb-3')}>{step.heading}</h2>
+              <Heading className={cn(H2, 'mb-3')}>{step.heading}</Heading>
               {step.body && first ? (
                 <p className="mb-6 max-w-xl text-[16px] leading-relaxed text-ink-soft">{step.body}</p>
               ) : (
@@ -818,7 +829,7 @@ export function IntakeWizard({
             <li key={i} className="flex items-start gap-3">
               <span
                 aria-hidden
-                className="pt-0.5 text-[12px] font-medium tabular-nums text-ink/45"
+                className="pt-0.5 text-[12px] font-medium tabular-nums text-ink/60"
               >
                 {String(i + 1).padStart(2, '0')}
               </span>
@@ -900,7 +911,7 @@ export function IntakeWizard({
               </p>
             )}
             {step.isEmailCapture && f.type === 'email' && (
-              <p className="mt-2 text-[12px] leading-relaxed text-ink/55">
+              <p className="mt-2 text-[12px] leading-relaxed text-ink/65">
                 {LEAD_CONSENT.text}{' '}
                 <Link href="/legal/privacy" className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
                   Privacy Policy
@@ -911,13 +922,13 @@ export function IntakeWizard({
               <details className="mt-2">
                 <summary
                   id="sms-note"
-                  className="cursor-pointer list-none text-[12px] leading-relaxed text-ink/55 marker:hidden [&::-webkit-details-marker]:hidden"
+                  className="cursor-pointer list-none text-[12px] leading-relaxed text-ink/65 marker:hidden [&::-webkit-details-marker]:hidden"
                 >
                   By continuing you agree to receive calls and texts from us. Message
                   and data rates may apply. Reply STOP to opt out.{' '}
                   <span className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px]">Read in full</span>
                 </summary>
-                <p className="mt-2 text-[12px] leading-relaxed text-ink/55">{sms}</p>
+                <p className="mt-2 text-[12px] leading-relaxed text-ink/65">{sms}</p>
               </details>
             )}
           </div>
@@ -964,7 +975,9 @@ export function IntakeWizard({
         <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
           {saves
             ? 'We’ll save your details so you can pick up where you left off. Health answers are never saved on this device.'
-            : 'Your answers so far will be lost.'}
+            : member
+              ? 'We’ll save your answers. Pick up from your dashboard anytime.'
+              : 'Your answers so far will be lost.'}
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <button type="button" onClick={() => leaveRef.current?.close()} className={cn(BTN_PRIMARY, 'sm:flex-1')}>
@@ -1028,7 +1041,7 @@ function SignInToContinue({
     'text-[14px] text-ink-soft underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink';
   return (
     <form onSubmit={onSubmit} className="mx-auto max-w-md">
-      <h2 className={cn(H2, 'mb-3')}>Welcome back.</h2>
+      <h1 className={cn(H2, 'mb-3')}>Welcome back.</h1>
       <p className="mb-6 text-[16px] leading-relaxed text-ink-soft">
         You already have an account. Enter your password and we&rsquo;ll pick up right where you are. Your answers are kept.
       </p>
@@ -1052,7 +1065,7 @@ function SignInToContinue({
         onChange={(e) => setPassword(e.target.value)}
         aria-invalid={error === 'invalid'}
         aria-describedby={error ? 'continue-error' : undefined}
-        className="w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20"
+        className="w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/55 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20"
       />
       {error && (
         <p id="continue-error" role="alert" className="mt-2 text-[14px] text-red-700">
@@ -1137,7 +1150,7 @@ function Shell({
     return (
       <div onKeyDown={onKeyDown} className="relative mx-auto flex w-full max-w-2xl flex-col overflow-x-clip pb-0 pt-2 text-ink">
         <div className="mb-6 py-1">
-          <div className="mb-2.5 flex items-center justify-between text-[13px] font-medium tabular-nums text-ink/55">
+          <div className="mb-2.5 flex items-center justify-between text-[13px] font-medium tabular-nums text-ink/65">
             <span>{stepLabel ?? 'Complete'}</span>
             <span>{progressPct}%</span>
           </div>
@@ -1170,7 +1183,7 @@ function Shell({
             {/* Deeper than butter so the logo reads on white, as in the site header. */}
             <Wordmark href={null} className="text-[24px] text-[#F2D060] md:text-[28px]" />
           </button>
-          <span className="text-[13px] font-medium tabular-nums text-ink/55">{stepLabel}</span>
+          <span className="text-[13px] font-medium tabular-nums text-ink/65">{stepLabel}</span>
           <button
             type="button"
             onClick={() => onLeave?.()}

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AccountSettings } from '@/components/profile/AccountSettings';
-import { getSession } from '@/lib/auth-server';
+import { getSession, loginUrl } from '@/lib/auth-server';
 import { paymentsOwed, resumeAfterNewCard } from '@/lib/refills';
 import { MEMBER_NAV, PageHeader, btnPrimary } from '@/components/portal/ui';
 
@@ -15,33 +15,54 @@ const notice = 'rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6'
 const heading = 'text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]';
 const copy = 'mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft';
 
-/** Restart what a failed charge stopped, then land back here without the param, so a reload doesn't repeat it. */
+/**
+ * Restart what a failed charge stopped. A server action (POST) only, never a
+ * page load: it can charge the card, so a link or a returning redirect must
+ * not trigger it. Lands back here with what actually happened.
+ */
 async function restartAfterCard() {
   'use server';
   const user = await getSession();
-  if (!user || user.role !== 'member') redirect('/login');
+  if (!user || user.role !== 'member') redirect(await loginUrl());
   const r = await resumeAfterNewCard(user);
-  redirect(`/portal/account?card=saved&plans=${r.plans}&links=${r.payLinks}`);
+  const q = new URLSearchParams({ done: '1', plans: String(r.plans), paid: String(r.charged), links: String(r.payLinks) });
+  if (r.reason) q.set('why', r.reason);
+  redirect(`/portal/account?${q}`);
 }
 
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ card?: string; plans?: string; links?: string }>;
+  searchParams: Promise<{ card?: string; done?: string; plans?: string; paid?: string; links?: string; why?: string }>;
 }) {
   const user = await getSession();
-  if (!user) redirect('/login');
+  if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const { card, plans, links } = await searchParams;
-  // Back from Stripe's hosted card page (billing.ts): the card is saved.
-  if (card === 'added') await restartAfterCard();
+  // card=added: back from Stripe's hosted card page (billing.ts). Only says so; restarting is a button.
+  const { card, done, plans, paid, links, why } = await searchParams;
 
   const owed = await paymentsOwed(user.id).catch(() => []);
   const refills = owed.filter((o) => o.refill);
   const firstOrders = owed.filter((o) => !o.refill);
-  const restarted = Number(plans) > 0;
-  const linked = Number(links) > 0;
+  const added = card === 'added';
+  const result =
+    done !== '1'
+      ? null
+      : why === 'noCard'
+        ? { title: 'Add a card first.', body: 'We couldn’t find a card on your account. Add one below, then restart your plan.' }
+        : why === 'notPaused'
+          ? { title: 'Nothing to restart.', body: 'No plan is paused for a declined card, so nothing was charged.' }
+          : {
+              title: 'All set.',
+              body: [
+                Number(plans) > 0 && 'Your plan is back on. We’ll charge your refill to your card within a day and send it to the pharmacy.',
+                Number(paid) > 0 && 'Payment went through. Your order is on its way to the pharmacy.',
+                Number(links) > 0 && 'Your card didn’t go through for your approved order, so we’ve emailed you a secure link to finish paying.',
+              ]
+                .filter(Boolean)
+                .join(' '),
+            };
 
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
@@ -50,15 +71,14 @@ export default async function AccountPage({
         intro="Update your profile, payment methods, and notification preferences. Changes save instantly to your account."
       />
 
-      {card === 'saved' && (
+      {(result || added) && (
         <section role="status" className={notice}>
-          <h2 className={heading}>Your card is saved.</h2>
+          <h2 className={heading}>{result?.title ?? 'Your card is saved.'}</h2>
           <p className={copy}>
-            {restarted
-              ? 'Your plan is back on. We’ll charge your refill to your card within a day and send it to the pharmacy.'
-              : linked
-                ? 'We’ve emailed you a secure link to finish paying for your approved order.'
-                : 'It’s used for your next refill. Nothing else needs doing.'}
+            {result?.body ??
+              (owed.length
+                ? 'One more step: use it below to finish what’s waiting.'
+                : 'It’s used for your next refill. Nothing else needs doing.')}
           </p>
         </section>
       )}
@@ -87,14 +107,27 @@ export default async function AccountPage({
         <section key={o.orderNumber} className={notice}>
           <p className="mb-1 text-[13px] font-medium text-ink/60">Payment needed</p>
           <h2 className={heading}>Dr. Elder approved your {o.productName}</h2>
-          <p className={copy}>Complete payment and we’ll send it to the pharmacy.</p>
-          <Link
-            href={`/portal/orders/pay/${encodeURIComponent(o.orderNumber)}`}
-            prefetch={false}
-            className={`${btnPrimary} mt-4`}
-          >
-            Complete payment
-          </Link>
+          <p className={copy}>
+            {added
+              ? 'Pay with the card you just saved and we’ll send it to the pharmacy.'
+              : 'Complete payment and we’ll send it to the pharmacy.'}
+          </p>
+          {/* Just saved a card: charge it on an explicit press (POST). Otherwise the secure pay page. */}
+          {added ? (
+            <form action={restartAfterCard} className="mt-4">
+              <button type="submit" className={btnPrimary}>
+                Complete payment
+              </button>
+            </form>
+          ) : (
+            <Link
+              href={`/portal/orders/pay/${encodeURIComponent(o.orderNumber)}`}
+              prefetch={false}
+              className={`${btnPrimary} mt-4`}
+            >
+              Complete payment
+            </Link>
+          )}
         </section>
       ))}
 

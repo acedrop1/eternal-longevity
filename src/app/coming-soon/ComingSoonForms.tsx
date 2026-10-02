@@ -4,7 +4,7 @@ import { useActionState } from 'react';
 import { joinWaitlistAction, unlockAction, type FormState } from './actions';
 
 const INPUT =
-  'h-12 w-full min-w-0 rounded-full bg-white/90 px-5 text-[16px] text-ink placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-butter';
+  'h-12 w-full min-w-0 rounded-full bg-white/90 px-5 text-[16px] text-ink placeholder:text-ink/60 focus:outline-none focus:ring-2 focus:ring-butter';
 
 export function WaitlistForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(joinWaitlistAction, {});

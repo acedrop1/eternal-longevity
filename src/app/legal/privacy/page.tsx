@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -6,16 +7,17 @@ import {
   SUPPORT_EMAIL,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'How we collect, use, and protect your health and personal information.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/privacy',
+  'Privacy Policy',
+  'How we collect, use, and protect your health and personal information.',
+);
 
 export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      effective="September 2026"
+      effective="October 2026"
       lead="Your health information is sensitive. This policy explains what we collect, why, who we share it with, and your rights. Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) is a telehealth medical practice, and it also serves as our Notice of Privacy Practices."
       sections={[
         {
@@ -45,7 +47,7 @@ export default function PrivacyPage() {
             'We share information only as needed to provide the service, and only with parties bound to protect it:',
           ],
           bullets: [
-            'MedShiftRx, the licensed pharmacy that fills and ships your prescription.',
+            'The state-licensed pharmacy that fills and ships your prescription (named on your prescription label).',
             'Shipping carriers, for delivery.',
             'Stripe, to save your card and process payments.',
             'Google, whose Places service suggests addresses as you type your shipping address at checkout. It receives what you type in that field, not your health information.',
@@ -71,7 +73,7 @@ export default function PrivacyPage() {
         {
           heading: 'Cookies',
           paragraphs: [
-            'We use only strictly necessary cookies: to keep you signed in, keep your cart, and protect against forgery. We run no analytics, advertising pixels or third-party trackers. See our Cookie Notice.',
+            'We set only strictly necessary cookies: to keep you signed in and protect against forgery. Your cart and the contact details from an unfinished assessment are kept in your browser’s local storage, and a signed-in member’s unfinished assessment is saved to their account. At checkout, Stripe sets its own fraud-prevention cookies and Google Places suggests addresses. We run no analytics or advertising pixels. See our Cookie Notice.',
           ],
         },
         {

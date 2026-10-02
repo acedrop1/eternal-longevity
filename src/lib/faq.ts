@@ -149,7 +149,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How is the pharmacy quality controlled?',
-    a: "Each batch is tested by the pharmacy as required for its preparation type. That testing is the pharmacy's own, not an independent laboratory's. The pharmacy, MedShiftRx, is licensed and inspected by its state board of pharmacy, and we will share the certificate of analysis for your lot on request.",
+    a: "Each batch is tested by the pharmacy as required for its preparation type. That testing is the pharmacy's own, not an independent laboratory's. The pharmacy, a state-licensed 503A compounding pharmacy named on your prescription label, is inspected by its state board of pharmacy, and we will share the certificate of analysis for your lot on request.",
   },
   {
     category: 'Safety',

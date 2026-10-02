@@ -4,31 +4,30 @@ import { getLiveProducts } from '@/lib/catalog';
 import { listedCategories } from '@/lib/lineup';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   // getLiveProducts applies the NEVER_LIVE guard: no withheld or GLP-1 page is listed.
   const live = await getLiveProducts();
 
   const staticEntries: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${SITE_URL}/shop`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/shop`, changeFrequency: 'weekly', priority: 0.9 },
     // Only categories with something listed; empty ones are "coming soon" pages.
     ...listedCategories(live.map((p) => p.id)).filter((c) => c.items.length).map((c) => ({
       url: `${SITE_URL}/treatments/${c.slug}`,
-      lastModified: now,
+     
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     })),
     ...live.map((p) => ({
       url: `${SITE_URL}/shop/${p.id}`,
-      lastModified: now,
+      ...(p.updatedAt && { lastModified: p.updatedAt }),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     })),
-    { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
-    { url: `${SITE_URL}/start`, lastModified: now, changeFrequency: 'yearly', priority: 0.8 },
-    { url: `${SITE_URL}/compliance`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/faq`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5 },
+    { url: `${SITE_URL}/start`, changeFrequency: 'yearly', priority: 0.8 },
+    { url: `${SITE_URL}/compliance`, changeFrequency: 'monthly', priority: 0.5 },
     // A processor's reviewer follows the sitemap; a policy page that isn't in
     // it is a policy page they report as missing.
     ...[
@@ -49,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       'state-availability',
     ].map((slug) => ({
       url: `${SITE_URL}/legal/${slug}`,
-      lastModified: now,
+     
       changeFrequency: 'yearly' as const,
       priority: 0.2,
     })),

@@ -59,6 +59,12 @@ export async function advanceFulfillment(input: {
   carrier?: string;
   tracking?: string;
   note?: string;
+  /**
+   * The caller saw the charge succeed itself. The webhook writes
+   * paid_confirmed_at seconds later, and an order the pharmacy API already
+   * accepted must be recorded, not refused.
+   */
+  paymentConfirmed?: boolean;
 }): Promise<{ ok: boolean; message: string }> {
   const db = createSupabaseAdminClient();
   const { step } = input;
@@ -73,6 +79,28 @@ export async function advanceFulfillment(input: {
 
   const orderNumber =
     input.orderNumber ?? (row?.order_ref?.startsWith('FUL-') ? row.order_ref.slice(4) : null);
+
+  const { data: order } = orderNumber
+    ? await db
+        .from('orders')
+        .select('id, member_name, member_email, user_id, status, paid_confirmed_at')
+        .eq('order_number', orderNumber)
+        .maybeSingle()
+    : { data: null };
+
+  /*
+   * Nothing goes to the pharmacy, or out the door, unpaid. Every caller comes
+   * through here (the board, the prescriber's screen, the pharmacy API), so
+   * this is the one check that holds. A signature is not payment.
+   */
+  if (
+    order &&
+    !input.paymentConfirmed &&
+    !order.paid_confirmed_at &&
+    !['paid', 'compounding', 'shipped'].includes(order.status)
+  ) {
+    return { ok: false, message: 'This order is not paid yet. It moves once the payment lands.' };
+  }
 
   // --- The shipment row: conditional, so the second of two clicks is a no-op.
   if (row) {
@@ -108,11 +136,6 @@ export async function advanceFulfillment(input: {
 
   // --- The member's order and its timeline.
   if (orderNumber) {
-    const { data: order } = await db
-      .from('orders')
-      .select('id, member_name, member_email, user_id')
-      .eq('order_number', orderNumber)
-      .maybeSingle();
     if (order) {
       const orderPatch: { status: 'compounding' | 'shipped' | 'delivered'; tracking_carrier?: string; tracking_number?: string } =
         { status: ORDER_STATUS[step] };

@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
   BUSINESS_ADDRESS,
   SUPPORT_EMAIL,
-  SERVICE_AREA,
+  SERVICE_AREA_OR,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Cancellation Policy',
-  description: 'How to cancel a subscription or an order, what it costs, and when it takes effect.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/cancellation',
+  'Cancellation Policy',
+  'How to cancel a subscription or an order, what it costs, and when it takes effect.',
+);
 
 export default function CancellationPage() {
   return (
@@ -49,7 +51,7 @@ export default function CancellationPage() {
         {
           heading: `Closing Your Account`,
           paragraphs: [
-            `To close your account entirely rather than just cancel a subscription, email ${SUPPORT_EMAIL}. We retain medical records for the period required by the law of the state you were treated in (${SERVICE_AREA}) even after an account is closed — that retention is a legal obligation, not a choice.`,
+            `To close your account entirely rather than just cancel a subscription, email ${SUPPORT_EMAIL}. We retain medical records for the period required by the law of the state you were treated in (${SERVICE_AREA_OR}) even after an account is closed — that retention is a legal obligation, not a choice.`,
           ],
         },
         {

@@ -33,23 +33,43 @@ export async function getPendingCounts(
 
     if (role === 'admin') {
       // Applications get no badge: signing up is not a task for anyone.
-      const orders = await db
-        .from('fulfillment_orders')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['draft', 'submitted', 'accepted']);
-      return { '/portal/admin/fulfillment': orders.count ?? 0 };
+      const dayAgo = new Date(Date.now() - 86400_000).toISOString();
+      const [board, issues, support] = await Promise.all([
+        db
+          .from('fulfillment_orders')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['draft', 'submitted', 'accepted']),
+        // Orders board Issues that are not yet on the board: a failed release,
+        // approved but unpaid, or with the prescriber over a day.
+        db
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .or(
+            `status.eq.pending-admin,and(status.eq.signed,paid_confirmed_at.is.null),and(status.eq.assigned,created_at.lt.${dayAgo})`,
+          ),
+        awaitingReply(db, 'support'),
+      ]);
+      return {
+        '/portal/admin/fulfillment': (board.count ?? 0) + (issues.count ?? 0),
+        '/portal/admin/messages': support,
+      };
     }
 
     if (role === 'doctor') {
-      const { count } = await db
-        .from('prescriptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-      const toPlace = await db
-        .from('fulfillment_orders')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['draft', 'submitted']);
-      return { '/portal/doctor': count ?? 0, '/portal/doctor/fulfillment': toPlace.count ?? 0 };
+      // His queue is orders waiting on him; prescriptions are only written at signing.
+      const [queue, toPlace, threads] = await Promise.all([
+        db.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'assigned'),
+        db
+          .from('fulfillment_orders')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['draft', 'submitted']),
+        awaitingReply(db, 'doctor'),
+      ]);
+      return {
+        '/portal/doctor': queue.count ?? 0,
+        '/portal/doctor/fulfillment': toPlace.count ?? 0,
+        '/portal/doctor/messages': threads,
+      };
     }
 
     if (role === 'pharmacy') {
@@ -64,6 +84,28 @@ export async function getPendingCounts(
   } catch {
     return DEMO_COUNTS[role] ?? {};
   }
+}
+
+/**
+ * Threads on a channel where the member spoke last: waiting on a reply.
+ * Same rule as the inbox's "awaiting reply" (messages-db listMessageThreads).
+ */
+async function awaitingReply(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  channel: 'support' | 'doctor',
+): Promise<number> {
+  // ponytail: newest 500 messages, like the inbox; a thread quiet past that is not counted.
+  const { data } = await db
+    .from('messages')
+    .select('thread_user_id, sender_id')
+    .eq('channel', channel)
+    .order('created_at', { ascending: false })
+    .limit(500);
+  const latest = new Map<string, boolean>();
+  for (const m of data ?? []) {
+    if (!latest.has(m.thread_user_id)) latest.set(m.thread_user_id, m.sender_id === m.thread_user_id);
+  }
+  return [...latest.values()].filter(Boolean).length;
 }
 
 /** Attach badge counts to nav items by matching href. */

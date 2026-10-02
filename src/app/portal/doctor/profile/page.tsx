@@ -30,7 +30,7 @@ export default async function DoctorProfilePage() {
       nav={DOCTOR_NAV}
     >
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Physician profile
         </p>
         <h1
@@ -51,7 +51,7 @@ export default async function DoctorProfilePage() {
             <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               Your details
             </h2>
-            <p className="mb-5 text-sm leading-relaxed text-ink/55">
+            <p className="mb-5 text-sm leading-relaxed text-ink/65">
               Your name, credential, NPI and state licence. Correct anything
               that is wrong here — it prints on every prescription and on the
               published prescription policy.
@@ -63,7 +63,7 @@ export default async function DoctorProfilePage() {
             <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               Email
             </h2>
-            <p className="text-sm leading-relaxed text-ink/55">
+            <p className="text-sm leading-relaxed text-ink/65">
               {user.email} — where a new order reaches you. Email support to
               change it, so your sign-in and your notification address never
               drift apart.
@@ -74,7 +74,7 @@ export default async function DoctorProfilePage() {
             <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
               How you're notified
             </h2>
-            <p className="mb-5 text-sm leading-relaxed text-ink/55">
+            <p className="mb-5 text-sm leading-relaxed text-ink/65">
               Not settings — this is what the system does. Nothing here can be
               switched off, because nothing ships without your signature.
             </p>
@@ -98,7 +98,7 @@ export default async function DoctorProfilePage() {
         {/* === SIDEBAR === */}
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-shell bg-milk p-5">
-            <div className="mb-2 text-[13px] font-medium text-ink/55">
+            <div className="mb-2 text-[13px] font-medium text-ink/65">
               Support
             </div>
             <p className="text-sm text-ink/75 leading-relaxed">
@@ -129,7 +129,7 @@ function Fact({ title, body }: { title: string; body: string }) {
       />
       <div className="min-w-0">
         <div className="text-sm font-medium text-ink">{title}</div>
-        <p className="mt-0.5 text-xs leading-relaxed text-ink/55">
+        <p className="mt-0.5 text-xs leading-relaxed text-ink/65">
           {body}
         </p>
       </div>

@@ -53,7 +53,6 @@ export default async function AdminSettingsPage() {
 
   const notifications = {
     careTeam: process.env.CARE_TEAM_EMAIL || 'Not set',
-    pharmacy: process.env.PHARMACY_EMAIL || 'Not set',
     fromEmail: process.env.RESEND_FROM_EMAIL || 'Not set',
   };
 
@@ -62,7 +61,7 @@ export default async function AdminSettingsPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Settings
         </p>
         <h1

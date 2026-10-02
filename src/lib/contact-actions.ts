@@ -11,7 +11,7 @@ export interface ContactResult {
 
 const TOPIC_LABELS: Record<string, string> = {
   clinical: 'Support question (existing member)',
-  product: 'Question about a protocol',
+  product: 'Question about a treatment',
   eligibility: 'Eligibility / state availability',
   billing: 'Billing or order issue',
   press: 'Press / partnerships',

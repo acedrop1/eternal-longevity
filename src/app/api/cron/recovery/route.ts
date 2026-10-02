@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/cron-auth';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -67,16 +68,6 @@ type Followup = Candidate & {
   leadEmailsSent?: number;
 };
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  /*
-   * No secret means nobody gets in, not everybody. This fired real charges and
-   * real email on an unauthenticated POST whenever the variable was missing —
-   * which is exactly when you least want it to.
-   */
-  if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
-}
 
 function firstNameOf(full?: string | null, fallback = 'there'): string {
   const n = (full ?? '').trim().split(/\s+/)[0];
@@ -520,7 +511,7 @@ async function recoverVisits(
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!supabaseAdminConfigured() || !emailConfigured()) {

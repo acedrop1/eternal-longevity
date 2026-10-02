@@ -33,7 +33,7 @@ import { DEMO_USERS } from '@/lib/auth';
 import { deleteAssessmentDraft } from '@/lib/assessment-drafts';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from '@/lib/session-policy';
-import { SERVICE_AREA_OR } from '@/lib/site';
+import { SERVICE_AREA_OR, SITE_URL } from '@/lib/site';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -41,6 +41,7 @@ import {
 import {
   intakeConfirmationEmail,
   intakeReceivedTeamEmail,
+  noticeEmail,
   sendEmail,
   SUPPORT_EMAIL,
 } from '@/lib/email';
@@ -55,6 +56,7 @@ import {
   mediaPaths,
   outstandingMedia,
   ownMediaPath,
+  photosPending,
   pruneHidden,
   stepsProblem,
   visitProblem,
@@ -62,6 +64,9 @@ import {
 } from './intake-rules';
 import { visitProducts } from './visit-products';
 import { intakeStateFor, latestIntakeAnswers } from './intake-status';
+import { assessmentInput, visitInput } from './intake-input';
+import { loginHref } from './safe-next';
+import { sendSms } from '@/lib/sms';
 
 /**
  * Is there already an account on this address?
@@ -157,7 +162,7 @@ async function signIn(email: string, password: string): Promise<boolean> {
     // A fresh session starts fresh logoff clocks (as loginAction does).
     const store = await cookies();
     const now = String(Date.now());
-    const opts = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+    const opts = { httpOnly: true, sameSite: 'lax' as const, path: '/', secure: process.env.NODE_ENV === 'production' };
     store.set(ACTIVITY_COOKIE, now, opts);
     store.set(SESSION_START_COOKIE, now, opts);
     return true;
@@ -191,6 +196,8 @@ export async function submitIntakeAction(
   if (!answers || typeof answers !== 'object') {
     return { ok: false, error: 'Missing payload.' };
   }
+  // Which products are assessed, photo requests and uploads are the server's to set.
+  assessmentInput(answers);
   const email = answers.email;
   if (typeof email !== 'string' || !email.includes('@')) {
     return { ok: false, error: 'A valid email is required.' };
@@ -347,7 +354,7 @@ export async function submitIntakeAction(
   // Chosen plan into their cart, then signed in and on to checkout.
   if (userId) await saveChosenToCart(createSupabaseAdminClient(), userId, plan);
   const signedIn = userId ? await signIn(email.trim().toLowerCase(), account.password) : false;
-  return { ok: true, caseId, next: signedIn ? '/checkout' : '/login' };
+  return { ok: true, caseId, next: signedIn ? '/checkout' : loginHref('/checkout') };
 }
 
 /**
@@ -372,6 +379,7 @@ export async function submitMemberAssessmentAction(
   }
   delete answers.account;
   delete answers.email;
+  assessmentInput(answers);
 
   const onFile = await latestIntakeAnswers(user.id);
   const { ctx, live } = await assessmentFor(answers, knownAnswerIds(onFile));
@@ -522,7 +530,39 @@ async function submitMedia(
     .update({ answers: merged as unknown as Json })
     .eq('id', intake.id);
   if (error) return { ok: false, error: 'Could not save your photos. Try again.' };
+  // The prescriber asked for these and is waiting on them: tell him they are in.
+  if (answers.photosRequested === true && photosPending(answers) && !photosPending(merged)) {
+    await notifyPhotosArrived(db);
+  }
   return { ok: true, caseId: intake.case_id };
+}
+
+/** Email and text every active doctor that requested photos arrived. No PHI: no name, no case. */
+async function notifyPhotosArrived(db: ReturnType<typeof createSupabaseAdminClient>): Promise<void> {
+  const { data: doctors } = await db
+    .from('profiles')
+    .select('email, phone')
+    .eq('role', 'doctor')
+    .eq('account_status', 'active');
+  const url = `${SITE_URL}/portal/doctor`;
+  for (const doc of doctors ?? []) {
+    // Best effort: the photos are saved either way.
+    if (doc.email) {
+      await sendEmail({
+        to: doc.email,
+        subject: 'Photos you requested have arrived',
+        html: noticeEmail({
+          eyebrow: 'Photos received',
+          heading: 'A member sent the photos you asked for',
+          body: 'Their visit is back in your queue, ready to finish.',
+          cta: { label: 'Open your queue', href: url },
+        }),
+      }).catch(() => undefined);
+    }
+    if (doc.phone) {
+      await sendSms(doc.phone, `Eternal Longevity: photos you requested have arrived. ${url}`).catch(() => undefined);
+    }
+  }
 }
 
 /**
@@ -556,7 +596,7 @@ export async function submitVisitAction(
 
   const db = createSupabaseAdminClient();
   if (state === 'submitted') return submitMedia(db, user.id, visitAnswers);
-  let { data: intake } = await db
+  const { data: intake } = await db
     .from('intake_submissions')
     .select('id, case_id, answers')
     .eq('user_id', user.id)
@@ -566,44 +606,39 @@ export async function submitVisitAction(
     .maybeSingle();
 
   /*
-   * Not everyone arrives through /start. An account created by an admin, or
-   * one that reached the portal another way, has no open intake at all — and
-   * used to hit a dead end that left them unable to give the prescriber
-   * anything. Open one for them here instead.
+   * No open intake means no assessment: no state, age or consents on file.
+   * The visit page sends them to /start for that; a crafted call stops here
+   * rather than opening a blank intake that skips those checks.
    */
-  if (!intake) {
-    const { data: created, error: createErr } = await db
-      .from('intake_submissions')
-      .insert({
-        user_id: user.id,
-        email: user.email,
-        case_id: `case_${Math.random().toString(36).slice(2, 9)}`,
-        status: 'awaiting_visit',
-        answers: {} as unknown as Json,
-      })
-      .select('id, case_id, answers')
-      .single();
-    if (createErr || !created) {
-      return { ok: false, error: 'Could not start your visit. Try again.' };
-    }
-    intake = created;
-  }
-
-  const merged = {
-    ...((intake.answers ?? {}) as Record<string, unknown>),
-    ...visitAnswers,
-    visitCompletedAt: new Date().toISOString(),
-  };
+  if (!intake) return { ok: false, error: 'Please complete your assessment first.', next: '/start' };
 
   /*
    * Rebuild the visit's steps from what the server knows (open intake, orders,
    * cart) plus any products the wizard says it showed — extra ids only add
-   * questions. visitProblem drops hidden answers first, so a stale hidden
-   * answer can't trip a knockout; the missing-answer error waits until after
-   * the knockout check, so a crafted submit with a knockout is still declined.
+   * questions. Only answers to those questions are taken from the browser.
+   * visitProblem drops hidden answers first, so a stale hidden answer can't
+   * trip a knockout; the missing-answer error waits until after the knockout
+   * check, so a crafted submit with a knockout is still declined.
    */
   const extra = Array.isArray(visitAnswers.visitProductIds) ? visitAnswers.visitProductIds : [];
-  const steps = buildVisitSteps(await visitProducts(user.id, extra));
+  const products = await visitProducts(user.id, extra);
+  const steps = buildVisitSteps(products);
+  const onFile = (intake.answers ?? {}) as Record<string, unknown>;
+  const merged: Record<string, unknown> = {
+    ...onFile,
+    ...visitInput(visitAnswers, steps),
+    visitCompletedAt: new Date().toISOString(),
+  };
+  // What this visit asked about is what it covers; the server records it.
+  const asked = products.map((p) => p.id);
+  merged.assessedProductIds = asked;
+  if (!asked.includes(merged.requestedProductId as string) && products[0]) {
+    merged.requestedProductId = products[0].id;
+    merged.requestedProduct = products[0].name;
+  }
+  // The date of birth on the profile is the one that was checked; it wins.
+  const { data: profile } = await db.from('profiles').select('date_of_birth').eq('id', user.id).maybeSingle();
+  if (profile?.date_of_birth) merged.dob = profile.date_of_birth;
   const problem = visitProblem(steps, merged, user.id);
 
   // The wizard stops a knockout in the browser; this stops one sent without it.
@@ -616,6 +651,12 @@ export async function submitVisitAction(
     return { ok: false, knockout };
   }
   if (problem) return { ok: false, error: problem };
+  // The same gate as the assessment: state, ZIP, age and the acknowledgements.
+  const ineligible = eligibilityProblem(merged);
+  if (ineligible) return { ok: false, error: ineligible };
+  if (!consentsComplete(merged.consents)) {
+    return { ok: false, error: 'Please confirm the required acknowledgements.' };
+  }
   const { error } = await db
     .from('intake_submissions')
     .update({ answers: merged as unknown as Json, status: 'submitted' })

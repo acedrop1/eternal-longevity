@@ -14,6 +14,8 @@ import type { BoardRow } from '@/lib/fulfillment-core';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { CancelOrder, LIVE_ORDER_STATUSES, attentionFor } from '@/components/admin/AdminLiveOrders';
+import { paymentState, type PaymentState } from '@/lib/order-health';
+import { formatMoney } from '@/lib/format';
 import {
   Chevron,
   IndexFooter,
@@ -128,17 +130,31 @@ interface IndexRow {
   attention: string | null;
   late: boolean;
   issue: boolean;
+  /** Whole days it has waited at this stage. */
+  ageDays: number;
+  /** One line on why it is an issue, for the Issues tab. */
+  reason: string | null;
 }
 
+/** Paid is paid_confirmed_at and nothing else (lib/order-health). */
+const PAYMENT: Record<PaymentState, [string, BadgeTone]> = {
+  paid: ['Paid', 'neutral'],
+  pending: ['Pending', 'attention'],
+  awaiting: ['Awaiting payment', 'attention'],
+  failed: ['Payment failed', 'critical'],
+};
+
 function paymentOf(row: IndexRow): [string, BadgeTone] | null {
-  const o = row.order;
-  if (!o) return null;
-  if (row.attention && /charge failed/i.test(row.attention)) return ['Payment failed', 'critical'];
-  // Billing starts at the prescriber's sign-off.
-  if (o.paidAt || ['signed', 'paid', 'compounding', 'shipped', 'delivered'].includes(o.status)) return ['Paid', 'neutral'];
-  if (o.status === 'assigned' || o.status === 'pending-admin') return ['Pending', 'attention'];
-  return null;
+  const state = row.order ? paymentState(row.order) : null;
+  return state ? PAYMENT[state] : null;
 }
+
+const unpaid = (o?: Order) => {
+  const p = o ? paymentState(o) : null;
+  return p === 'awaiting' || p === 'failed';
+};
+
+const DAY = 86400_000;
 
 function buildRows(board: BoardRow[], orders: Order[]): IndexRow[] {
   const byNumber = new Map(orders.map((o) => [o.id, o]));
@@ -149,6 +165,7 @@ function buildRows(board: BoardRow[], orders: Order[]): IndexRow[] {
     const stage = STAGE[b.status];
     const attention = order && LIVE_ORDER_STATUSES.includes(order.status) ? attentionFor(order) : null;
     const late = b.ageDays >= STAGE_INFO[stage].lateAfter;
+    const critical = !!b.pharmacy && pharmacyBadge(b.pharmacy)[1] === 'critical';
     return {
       key: b.id,
       board: b,
@@ -161,7 +178,12 @@ function buildRows(board: BoardRow[], orders: Order[]): IndexRow[] {
       refill: !!b.cycleLabel?.startsWith('Refill'),
       attention,
       late,
-      issue: late || !!attention || (!!b.pharmacy && pharmacyBadge(b.pharmacy)[1] === 'critical'),
+      issue: late || !!attention || critical || unpaid(order),
+      ageDays: b.ageDays,
+      reason:
+        attention ??
+        (critical && b.pharmacy ? b.pharmacy.reason ?? b.pharmacy.error ?? pharmacyBadge(b.pharmacy)[0] : null) ??
+        (late ? `${STATUS[b.status][0]} for ${b.ageDays} days` : null),
     };
   });
   // Orders still in motion that have not reached the board (most often: with the prescriber).
@@ -179,7 +201,9 @@ function buildRows(board: BoardRow[], orders: Order[]): IndexRow[] {
       refill: false,
       attention,
       late: false,
-      issue: !!attention,
+      issue: !!attention || unpaid(o),
+      ageDays: Math.floor((Date.now() - o.placedAt) / DAY),
+      reason: attention,
     });
   }
   return out;
@@ -200,10 +224,16 @@ export function FulfillmentBoard({
   const orders = admin ? sampleOrders ?? liveOrders : [];
   const all = useMemo(() => buildRows(rows, orders), [rows, orders]);
 
-  const [tab, setTab] = useState<Tab>('all');
+  const [tab, setTabState] = useState<Tab>('all');
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | 'new' | 'refill'>('all');
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
+  // What is waiting is worked oldest first; everything else reads newest first.
+  const waitingTab = (t: Tab) => t === 'issues' || t === 'review';
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    setSort(waitingTab(t) ? 'oldest' : 'newest');
+  };
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const count = (t: Tab) => all.filter((r) => inTab(r, t)).length;
@@ -251,7 +281,7 @@ export function FulfillmentBoard({
           <option value="oldest">Oldest first</option>
         </select>
       </IndexToolbar>
-      {note && <p className="border-b border-ink/10 px-4 py-2 text-[12px] text-ink/55">{note}</p>}
+      {note && <p className="border-b border-ink/10 px-4 py-2 text-[12px] text-ink/65">{note}</p>}
 
       <div className="md:overflow-x-auto">
       <table className={table}>
@@ -274,7 +304,7 @@ export function FulfillmentBoard({
         <tbody className={tbody}>
           {visible.length === 0 ? (
             <tr className="block md:table-row">
-              <td colSpan={cols} className="block px-4 py-10 text-center text-[13px] text-ink/55 md:table-cell">
+              <td colSpan={cols} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
                 {all.length === 0 ? 'No orders yet. Paid orders appear here.' : 'No orders match.'}
               </td>
             </tr>
@@ -284,6 +314,7 @@ export function FulfillmentBoard({
                 key={r.key}
                 row={r}
                 admin={admin}
+                showAge={waitingTab(tab)}
                 cols={cols}
                 open={openKey === r.key}
                 onToggle={() => setOpenKey((k) => (k === r.key ? null : r.key))}
@@ -305,12 +336,14 @@ function inTab(r: IndexRow, t: Tab): boolean {
 function OrderRow({
   row,
   admin,
+  showAge,
   cols,
   open,
   onToggle,
 }: {
   row: IndexRow;
   admin: boolean;
+  showAge: boolean;
   cols: number;
   open: boolean;
   onToggle: () => void;
@@ -338,13 +371,16 @@ function OrderRow({
       >
         <td className={cn(td, 'order-1 whitespace-nowrap font-medium text-ink')}>
           {row.ref}
-          {row.refill && <span className="ml-1.5 text-[12px] font-normal text-ink/45">Refill</span>}
+          {row.refill && <span className="ml-1.5 text-[12px] font-normal text-ink/60">Refill</span>}
         </td>
         <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[12px] text-ink/60 md:text-[13px]')}>
           {shortDate(row.date)}
-          {row.late && b && (
-            <span className="ml-1 font-medium text-red-700" title={`Waiting ${b.ageDays} days`}>
-              · {b.ageDays}d<span className="sr-only"> waiting</span>
+          {(showAge || (row.late && b)) && (
+            <span
+              className={cn('ml-1 font-medium', row.late ? 'text-red-700' : 'text-ink/70')}
+              title={`Waiting ${row.ageDays} days`}
+            >
+              · {row.ageDays}d<span className="sr-only"> waiting</span>
             </span>
           )}
         </td>
@@ -361,13 +397,18 @@ function OrderRow({
             row.customer
           )}
           </div>
+          {showAge && row.reason && (
+            <div className="truncate text-[12px] text-amber-800 md:max-w-[220px]" title={row.reason}>
+              {row.reason}
+            </div>
+          )}
         </td>
         <td className={cn(td, 'order-4 min-w-0 basis-full text-ink/65')}>
           <div className="truncate md:max-w-[170px]">{row.items.join(' · ') || 'Care program'}</div>
         </td>
         {admin && (
           <td className={cn(td, 'order-3 ml-auto whitespace-nowrap tabular-nums text-ink md:text-right')}>
-            {o ? `$${o.total}` : <span className="hidden text-ink/35 md:inline">—</span>}
+            {o ? formatMoney(Math.round(o.total * 100)) : <span className="hidden text-ink/35 md:inline">—</span>}
           </td>
         )}
         {admin && (
@@ -408,7 +449,7 @@ function OrderRow({
             onClick={onToggle}
             aria-expanded={open}
             aria-label={`${open ? 'Hide' : 'Show'} details for ${row.ref}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/50 hover:bg-ink/[0.06] hover:text-ink"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/60 hover:bg-ink/[0.06] hover:text-ink"
           >
             <Chevron open={open} />
           </button>
@@ -463,11 +504,11 @@ function Detail({ row, admin }: { row: IndexRow; admin: boolean }) {
 
         {b ? (
           <div>
-            <p className="mb-1.5 text-[12px] font-medium text-ink/55">Details for the pharmacy</p>
+            <p className="mb-1.5 text-[12px] font-medium text-ink/65">Details for the pharmacy</p>
             <dl className={cn(inset, 'divide-y divide-ink/10 text-[13px]')}>
               {details.map(([k, v]) => (
                 <div key={k} className="flex gap-4 px-3 py-2">
-                  <dt className="w-28 flex-none text-[12px] text-ink/55">{k}</dt>
+                  <dt className="w-28 flex-none text-[12px] text-ink/65">{k}</dt>
                   <dd className="min-w-0 break-words text-ink">{v}</dd>
                 </div>
               ))}
@@ -477,7 +518,7 @@ function Detail({ row, admin }: { row: IndexRow; admin: boolean }) {
         ) : (
           o && (
             <p className="text-[13px] text-ink/70">
-              {o.lines.map((l) => `${l.productName} · ${l.cadenceLabel}`).join('; ')} · ${o.total}. Not on the
+              {o.lines.map((l) => `${l.productName} · ${l.cadenceLabel}`).join('; ')} · {formatMoney(Math.round(o.total * 100))}. Not on the
               board yet; it joins To place once signed and paid.
             </p>
           )
@@ -541,7 +582,7 @@ function Actions({ row }: { row: BoardRow }) {
     });
 
   const input =
-    'w-full rounded-inner bg-white px-3 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+    'w-full rounded-inner bg-white px-3 py-2.5 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 
   const canRetry =
     (row.status === 'submitted' || row.status === 'draft') &&

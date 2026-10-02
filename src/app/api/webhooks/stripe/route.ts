@@ -29,6 +29,7 @@ import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { AWAITING_PAYMENT, TERMINAL_ORDER } from '@/lib/order-rules';
 import { orderRef } from '@/lib/format';
 import { SITE_URL } from '@/lib/site';
+import { paymentMatchesOrder } from '@/lib/payment-match';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -136,7 +137,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
           typeof invoice.customer === 'string'
             ? invoice.customer
             : invoice.customer?.id;
-        if (customerId) await createRefillDraft(db, customerId);
+        if (customerId) await createRefillDraft(db, customerId, invoice.id ?? event.id);
       }
       break;
     }
@@ -163,7 +164,7 @@ async function recordPayment(db: Db, pi: Stripe.PaymentIntent): Promise<void> {
   const orderNumber = pi.metadata?.order_number;
   if (!orderId && !orderNumber) return; // not an order charge (admin one-off)
 
-  const cols = 'id, order_number, status, paid_confirmed_at, stripe_payment_intent_id';
+  const cols = 'id, order_number, status, paid_confirmed_at, stripe_payment_intent_id, total_cents';
   const find = () =>
     orderId
       ? db.from('orders').select(cols).eq('id', orderId).maybeSingle()
@@ -175,6 +176,9 @@ async function recordPayment(db: Db, pi: Stripe.PaymentIntent): Promise<void> {
     TERMINAL_ORDER.includes(order.status) ||
     (order.paid_confirmed_at !== null && order.stripe_payment_intent_id !== pi.id);
   if (stray) return refundStray(db, pi, order);
+
+  // Paid, but not this order's amount: never mark it paid on a wrong sum.
+  if (!paymentMatchesOrder(pi, order)) return alertMismatch(pi, order);
 
   /*
    * Claim the payment. Conditional on not yet being paid and not cancelled in
@@ -279,9 +283,38 @@ async function refundStray(
 }
 
 /**
- * A paid refill cycle -> a draft fulfillment order in the admin queue. The
- * admin reviews it, then submits it to the pharmacy.
+ * The money arrived but does not match the order. The order stays unpaid and
+ * nothing goes to the pharmacy; a person decides whether to refund or adjust.
+ * Returns normally, so Stripe does not keep redelivering it.
  */
+async function alertMismatch(
+  pi: Stripe.PaymentIntent,
+  order: { order_number: string; total_cents: number | null },
+): Promise<void> {
+  const money = (cents: number | null, cur = 'usd') => `${((cents ?? 0) / 100).toFixed(2)} ${cur.toUpperCase()}`;
+  console.error(`[stripe webhook] amount mismatch on ${orderRef(order.order_number)}: ${pi.id}`);
+  try {
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `Payment does not match its order · ${orderRef(order.order_number)}`,
+      html: noticeEmail({
+        eyebrow: 'Check payment',
+        heading: 'A payment did not match its order total',
+        body: 'The order was not marked paid and nothing was sent to the pharmacy. Refund or adjust it in Stripe and the admin queue.',
+        rows: [
+          ['Order', orderRef(order.order_number)],
+          ['Order total', money(order.total_cents)],
+          ['Charged', money(pi.amount, pi.currency)],
+          ['Payment', pi.id],
+        ],
+        cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin` },
+      }),
+    });
+  } catch {
+    // Logged above; the order stays unpaid either way.
+  }
+}
+
 /**
  * Every intent we create carries its order number in metadata. The charge code
  * writes the intent id onto the order only after Stripe answers, and this event
@@ -303,9 +336,15 @@ async function linkIntentToOrder(
     .is('paid_confirmed_at', null);
 }
 
+/**
+ * A paid refill cycle -> a draft fulfillment order in the admin queue. The
+ * admin reviews it, then submits it to the pharmacy. Keyed on the invoice, so
+ * a redelivered invoice.paid finds its draft already there and adds nothing.
+ */
 async function createRefillDraft(
   db: ReturnType<typeof createSupabaseAdminClient>,
   stripeCustomerId: string,
+  invoiceId: string,
 ): Promise<void> {
   const { data: profile } = await db
     .from('profiles')
@@ -343,8 +382,8 @@ async function createRefillDraft(
     prescriberNpi = doctor?.npi ?? null;
   }
 
-  await db.from('fulfillment_orders').insert({
-    order_ref: `FUL-${Date.now().toString(36).toUpperCase()}`,
+  await db.from('fulfillment_orders').upsert({
+    order_ref: `FUL-${invoiceId}`,
     user_id: profile.id,
     prescription_id: rx.id,
     status: 'draft',
@@ -355,7 +394,7 @@ async function createRefillDraft(
     prescriber_npi: prescriberNpi,
     items: rx.items,
     cycle_label: 'Refill cycle',
-  });
+  }, { onConflict: 'order_ref', ignoreDuplicates: true });
 }
 
 /**

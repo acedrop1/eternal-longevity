@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -7,10 +8,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Pharmacy Fulfillment',
-  description: 'Which pharmacy fills your prescription, how it is regulated, and how to verify its licence yourself.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/pharmacy-fulfillment',
+  'Pharmacy Fulfillment',
+  'Which pharmacy fills your prescription, how it is regulated, and how to verify its licence yourself.',
+);
 
 export default function PharmacyFulfillmentPage() {
   return (
@@ -22,7 +24,7 @@ export default function PharmacyFulfillmentPage() {
         {
           heading: `Who Fills Your Prescription`,
           paragraphs: [
-            `Prescriptions are dispensed and shipped by MedShiftRx, an independently owned, state-licensed 503A compounding pharmacy that we work with. The dispensing pharmacy’s name and address appear on your medication label and on the paperwork in your package.`,
+            `Prescriptions are dispensed and shipped by an independently owned, state-licensed 503A compounding pharmacy that we work with. The dispensing pharmacy’s name and address appear on your medication label and on the paperwork in your package.`,
             `We are not a pharmacy. We do not compound, hold, or handle medication at any point — it travels from the pharmacy to you.`,
           ],
         },

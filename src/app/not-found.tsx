@@ -6,6 +6,8 @@ import { ArrowDot, Aura } from '@/components/home/HomeSections';
 export const metadata = {
   title: 'Page not found',
   description: 'The page you are looking for does not exist.',
+  // Replaces the root layout's "index, follow" so the 404 sends one robots signal.
+  robots: { index: false, follow: true },
 };
 
 /** Branded 404: quiet, centred, two ways out. */

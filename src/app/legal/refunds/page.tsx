@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -8,10 +9,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Refund Policy',
-  description: 'When refunds are issued, when they are not, and how to request one.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/refunds',
+  'Refund Policy',
+  'When refunds are issued, when they are not, and how to request one.',
+);
 
 export default function RefundsPage() {
   return (

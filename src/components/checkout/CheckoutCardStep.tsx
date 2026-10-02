@@ -85,7 +85,7 @@ function CardCapture({
         {busy ? 'Saving…' : 'Save card and continue'}
       </button>
 
-      <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/55">
+      <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/65">
         <strong className="font-semibold text-ink">Nothing is charged now.</strong>{' '}
         If your prescriber approves your treatment, this card is charged{' '}
         {amountLabel}. If they decide it is not right for you, it never is.
@@ -167,7 +167,7 @@ export function CheckoutCardStep({
 
   if (!clientSecret) {
     return (
-      <div className="flex items-center gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] text-ink/55">
+      <div className="flex items-center gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] text-ink/65">
         <span
           aria-hidden
           className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/15 border-t-ink"

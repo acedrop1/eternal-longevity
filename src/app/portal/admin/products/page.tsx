@@ -66,7 +66,7 @@ export default async function AdminProductsPage() {
             <section key={g.status}>
               <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
                 <SectionTitle>
-                  {g.title} <span className="text-[13px] text-ink/50">{rows.length}</span>
+                  {g.title} <span className="text-[13px] text-ink/60">{rows.length}</span>
                 </SectionTitle>
                 <p className="text-[14px] text-ink/60">{g.note}</p>
               </div>
@@ -105,7 +105,7 @@ function ProductRow({ p, tone, label, hasSku }: { p: CatalogProduct; tone: Tone;
             {/* Set: orders go to the pharmacy automatically. Missing: placed by hand. */}
             <StatusChip tone={hasSku ? 'neutral' : 'muted'}>{hasSku ? 'Pharmacy SKU set' : 'No pharmacy SKU'}</StatusChip>
           </span>
-          <span className="mt-1 block truncate text-[12px] text-ink/55">
+          <span className="mt-1 block truncate text-[12px] text-ink/65">
             /{p.id} · {category}
             {p.edited && p.updatedAt && (
               <>
@@ -118,11 +118,11 @@ function ProductRow({ p, tone, label, hasSku }: { p: CatalogProduct; tone: Tone;
         </span>
         <span className="hidden flex-none text-right tabular-nums sm:block">
           <span className="block text-[15px] text-ink">${p.pricing.monthly}/mo</span>
-          <span className="block text-[12px] text-ink/55">
+          <span className="block text-[12px] text-ink/65">
             ${fromPrice(p.pricing)}/mo from
           </span>
         </span>
-        <span aria-hidden className="flex-none text-[13px] text-ink/40">
+        <span aria-hidden className="flex-none text-[13px] text-ink/55">
           Edit
         </span>
       </Link>

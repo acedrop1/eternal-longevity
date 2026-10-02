@@ -37,7 +37,7 @@ export interface BillingSummary {
 }
 
 const inputClass =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 
 const labelClass = 'mb-1.5 block text-[13px] font-medium text-ink/70';
 
@@ -92,7 +92,7 @@ export function AdminBilling({
           value={String(summary.activeSubscriptions)}
         />
         <Metric
-          label="Recurring / cycle"
+          label="MRR (active plans)"
           value={money(summary.cycleRevenueCents)}
           tone="accent"
         />
@@ -107,7 +107,7 @@ export function AdminBilling({
       {/* Recent activity */}
       {summary.recent.length > 0 && (
         <section className="rounded-shell bg-milk p-6">
-          <div className="mb-4 text-[13px] font-medium text-ink/55">
+          <div className="mb-4 text-[13px] font-medium text-ink/65">
             Recent activity
           </div>
           <ul className="divide-y divide-ink/10">
@@ -131,7 +131,7 @@ export function AdminBilling({
 
       {/* Bill a customer — search */}
       <section className="rounded-shell bg-milk p-6 md:p-7">
-        <div className="mb-1 text-[13px] font-medium text-ink/55">
+        <div className="mb-1 text-[13px] font-medium text-ink/65">
           Bill a customer
         </div>
         <h2 className="mb-4 text-[20px] font-semibold tracking-[-0.03em] text-ink">
@@ -176,7 +176,7 @@ export function AdminBilling({
                         <span className="text-sm font-medium text-ink">
                           {c.name}
                         </span>
-                        <span className="truncate text-xs text-ink/55">
+                        <span className="truncate text-xs text-ink/65">
                           {c.email}
                         </span>
                       </button>
@@ -464,7 +464,7 @@ function Metric({
 }) {
   return (
     <div className={cn('rounded-shell p-5', tone === 'accent' ? 'bg-butter-soft' : 'bg-milk')}>
-      <div className="mb-2 text-[13px] font-medium text-ink/55">
+      <div className="mb-2 text-[13px] font-medium text-ink/65">
         {label}
       </div>
       <div
@@ -493,13 +493,13 @@ function Panel({
 }) {
   return (
     <section className="rounded-shell bg-milk p-6 md:p-7">
-      <div className="mb-1 text-[13px] font-medium text-ink/55">
+      <div className="mb-1 text-[13px] font-medium text-ink/65">
         {eyebrow}
       </div>
       <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
         {title}
       </h3>
-      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/55">
+      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/65">
         {description}
       </p>
       {children}
@@ -828,7 +828,7 @@ function RefundPanel() {
             className={inputClass}
           />
           {isStripeId && (
-            <p className="mt-1.5 text-xs text-ink/55">
+            <p className="mt-1.5 text-xs text-ink/65">
               Refunding a raw Stripe payment — this will not appear on the
               member&apos;s order timeline.
             </p>

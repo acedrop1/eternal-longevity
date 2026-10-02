@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -6,13 +7,15 @@ import {
   SUPPORT_EMAIL,
   STATEMENT_DESCRIPTOR,
   SERVICE_AREA,
+  SERVICE_AREA_OR,
 } from '@/lib/site';
 import { SHIPPING_PRICE } from '@/lib/shipping';
 
-export const metadata: Metadata = {
-  title: 'Terms of Service',
-  description: 'The agreement that governs your use of Eternal Longevity.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/terms',
+  'Terms of Service',
+  'The agreement that governs your use of Eternal Longevity.',
+);
 
 export default function TermsPage() {
   return (
@@ -24,14 +27,14 @@ export default function TermsPage() {
         {
           heading: 'Eligibility & Account',
           paragraphs: [
-            `You must be at least 18 years old and located in ${SERVICE_AREA} to use our service. You are responsible for the accuracy of the information you provide and for the security of your account credentials.`,
+            `You must be at least 18 years old and located in ${SERVICE_AREA_OR} to use our service. You are responsible for the accuracy of the information you provide and for the security of your account credentials.`,
             'We may refuse or terminate service if information is materially incorrect, if continuing to fulfill your orders would be unsafe, or if your conduct violates these terms.',
           ],
         },
         {
           heading: 'Our Practice & Fulfillment',
           paragraphs: [
-            `Eternal Longevity is an asynchronous telehealth practice. Dr. Bader Elder, DO, a physician licensed in ${SERVICE_AREA}, reviews your intake and decides whether to prescribe. He may decline, or ask for more information first. Approved prescriptions are dispensed and shipped by MedShiftRx, a state-licensed 503A compounding pharmacy. Your use of the service is also governed by our Telehealth Informed Consent.`,
+            `Eternal Longevity is an asynchronous telehealth practice. Dr. Bader Elder, DO, a physician licensed in ${SERVICE_AREA}, reviews your intake and decides whether to prescribe. He may decline, or ask for more information first. Approved prescriptions are dispensed and shipped by a state-licensed 503A compounding pharmacy (named on your prescription label). Your use of the service is also governed by our Telehealth Informed Consent.`,
             'General information on our website, such as product descriptions and articles, is not medical advice for you. Care is limited to the treatments we offer and is not a substitute for a primary care provider; keep your own doctor informed of what you take.',
           ],
         },

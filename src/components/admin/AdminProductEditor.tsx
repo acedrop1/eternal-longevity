@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { DELIVERY_LABEL, SHOP_CATEGORIES, type DeliveryForm, type ShopCategory } from '@/lib/shopProducts';
 import type { ProductStatus } from '@/lib/catalog';
 import { saveProductAction, uploadProductImageAction, type ProductInput } from '@/lib/product-actions';
+import { productImpactAction } from '@/lib/product-impact-actions';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { SectionTitle, btnPrimary, btnSecondary, errorBox, field, fieldLabel, panel } from '@/components/portal/ui';
 
 /**
@@ -41,6 +43,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
   const [saving, startSave] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [confirm, confirmDialog] = useConfirm();
 
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => {
     setP((prev) => ({ ...prev, [k]: v }));
@@ -57,7 +60,20 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
   const sixMonthSave = p.pricing.monthly ? Math.round((1 - sixMonth / (p.pricing.monthly * 6)) * 100) : 0;
   const goingLive = p.status === 'live' && initial.status !== 'live';
 
-  const save = () =>
+  const save = async () => {
+    // Pulling a live product strands whatever is waiting on it: say how much first.
+    if (!p.isNew && initial.status === 'live' && p.status !== 'live') {
+      const impact = await productImpactAction(p.id).catch(() => null);
+      const ok = await confirm({
+        title: p.status === 'withheld' ? 'Withhold this live product?' : 'Move this live product to draft?',
+        body: impact
+          ? `${impact.waiting} ${impact.waiting === 1 ? 'order' : 'orders'} waiting on the prescriber, ${impact.plans} active ${impact.plans === 1 ? 'plan' : 'plans'}. The prescriber cannot sign an order for a product that is not live.`
+          : 'Orders waiting on the prescriber cannot be signed once it is off sale, and active plans on it will need attention. The counts could not be loaded.',
+        confirmLabel: 'Pull it from sale',
+        danger: true,
+      });
+      if (!ok) return;
+    }
     startSave(async () => {
       const res = await saveProductAction(p);
       setMessage({ ok: res.ok, text: res.message });
@@ -65,6 +81,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
       if (p.isNew && res.id) router.replace(`/portal/admin/products/${res.id}`);
       else router.refresh();
     });
+  };
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -80,6 +97,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+      {confirmDialog}
       {/* ---------- Fields ---------- */}
       <div className="order-2 space-y-8 lg:order-1">
         <h1
@@ -235,7 +253,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
               <input className={field} value={p.pharmacy.dosageForm} maxLength={120} onChange={(e) => setRx('dosageForm', e.target.value)} />
             </Field>
           </div>
-          <p className="mt-3 text-[12px] text-ink/50">
+          <p className="mt-3 text-[12px] text-ink/60">
             Name, strength, size and form are sent alongside the SKU so the pharmacist can check the order. Left empty, the built-in value is used.
           </p>
         </Section>
@@ -298,7 +316,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
               {p.image ? (
                 <Image src={p.image} alt="" fill sizes="300px" className="object-cover" />
               ) : (
-                <span className="grid h-full place-items-center text-[12px] text-ink/45">No photo yet</span>
+                <span className="grid h-full place-items-center text-[12px] text-ink/60">No photo yet</span>
               )}
             </div>
             <input
@@ -320,7 +338,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             >
               {uploading ? 'Uploading…' : p.image ? 'Replace photo' : 'Upload photo'}
             </button>
-            <p className="mt-2 text-[12px] text-ink/50">
+            <p className="mt-2 text-[12px] text-ink/60">
               {p.id ? 'JPG, PNG or WebP, 5 MB max. 3:4 portrait works best.' : 'Set the URL name first.'}
             </p>
           </div>
@@ -339,7 +357,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 View on site
               </Link>
             )}
-            {!canSave && <p className="text-[12px] text-ink/55">Connect Supabase to save changes.</p>}
+            {!canSave && <p className="text-[12px] text-ink/65">Connect Supabase to save changes.</p>}
           </div>
         </div>
       </aside>
@@ -352,7 +370,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
     <section className="border-t border-ink/10 pt-6">
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
         <SectionTitle>{title}</SectionTitle>
-        {note && <p className="text-[12px] text-ink/55">{note}</p>}
+        {note && <p className="text-[12px] text-ink/65">{note}</p>}
       </div>
       {children}
     </section>
@@ -364,7 +382,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <label className="block">
       <span className={fieldLabel}>{label}</span>
       {children}
-      {hint && <span className="mt-1.5 block text-[12px] text-ink/50">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-[12px] text-ink/60">{hint}</span>}
     </label>
   );
 }
@@ -372,7 +390,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function Money({ value, onChange }: { value: number; onChange: (v: string) => void }) {
   return (
     <span className="relative block">
-      <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] text-ink/50">
+      <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] text-ink/60">
         $
       </span>
       <input

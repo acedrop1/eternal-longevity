@@ -5,15 +5,35 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
 import { pendingMediaFor } from '@/lib/intake-status';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 
 export const metadata: Metadata = {
   title: 'Order confirmed',
 };
 
-export default async function CheckoutSuccessPage() {
+/** The order this confirmation is for, if it is this member's. Demo has no orders table: any ref will do. */
+async function ownsOrder(userId: string, ref: string | undefined): Promise<boolean> {
+  if (!ref) return false;
+  if (!supabaseAdminConfigured()) return true;
+  const { data } = await createSupabaseAdminClient()
+    .from('orders')
+    .select('id')
+    .eq('order_number', ref)
+    .eq('user_id', userId)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+export default async function CheckoutSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
+  // No order behind it (a bookmark, a typed URL): no "your order is in".
+  if (!(await ownsOrder(user.id, (await searchParams).ref))) redirect('/portal/orders');
 
   // A legacy open visit, or photos (hair, skin) still to add: either is the next step.
   const [legacyVisit, media] = await Promise.all([getPendingVisit(), pendingMediaFor(user.id)]);
@@ -39,7 +59,7 @@ export default async function CheckoutSuccessPage() {
           </svg>
         </div>
 
-        <p className="mb-3 text-[13px] font-medium text-ink/55">Order received</p>
+        <p className="mb-3 text-[13px] font-medium text-ink/65">Order received</p>
         <h1
           className="mb-4 text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]"
         >
@@ -68,7 +88,7 @@ export default async function CheckoutSuccessPage() {
               key={s.n}
               className="flex items-start gap-4 rounded-inner bg-white p-4"
             >
-              <span className="pt-0.5 text-[13px] font-medium tabular-nums text-ink/45">
+              <span className="pt-0.5 text-[13px] font-medium tabular-nums text-ink/60">
                 {s.n}
               </span>
               <span className="text-[15px] leading-relaxed text-ink">

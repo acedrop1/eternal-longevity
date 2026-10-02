@@ -14,7 +14,7 @@ import {
 } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
 import { useCart } from '@/components/cart/CartProvider';
-import { BuyBar, useCtaOffscreen } from './BuyBar';
+import { BuyBar, ctaTarget, useCtaOffscreen } from './BuyBar';
 import { Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage, shippingLine } from './pdpParts';
 
 interface ProductPDPProps {
@@ -51,6 +51,7 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
 
   const categoryLabel = SHOP_CATEGORIES.find((c) => c.key === product.category)?.label;
   const { addItem } = useCart();
+  const { href, pickPlan } = ctaTarget(ctaHref, selectedTier);
 
   return (
     <div className="space-y-16 text-ink md:space-y-24">
@@ -65,7 +66,7 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
         />
 
         <div className="md:sticky md:top-[var(--pdp-sticky-top,5rem)]">
-          <p className="flex items-center gap-2 text-[13px] font-medium text-ink/55">
+          <p className="flex items-center gap-2 text-[13px] font-medium text-ink/65">
             {categoryLabel}
             {product.popular && (
               <span className="rounded-full bg-butter px-2.5 py-0.5 text-[12px] font-semibold text-ink">Popular</span>
@@ -82,15 +83,17 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
             <PriceBlock product={product} active={active} />
           </div>
 
-          <div ref={planRef} className="mt-6 scroll-mt-48">
-            <PlanOptions tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} />
-          </div>
+          {pickPlan && (
+            <div ref={planRef} className="mt-6 scroll-mt-48">
+              <PlanOptions tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} />
+            </div>
+          )}
 
           {/* Members add to cart; public visitors start the assessment. */}
           <div ref={ctaRef} className="mt-6">
-            {ctaHref ? (
+            {href ? (
               <Link
-                href={ctaHref}
+                href={href}
                 className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
               >
                 {ctaLabel}
@@ -129,10 +132,10 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
         product={product}
         active={active}
         visible={showBar}
-        ctaHref={ctaHref}
+        ctaHref={href}
         ctaLabel={ctaLabel}
         onAddToCart={() => addItem(product.id, selectedTier)}
-        onChangePlan={() => planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+        onChangePlan={pickPlan ? () => planRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : undefined}
       />
     </div>
   );

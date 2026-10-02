@@ -268,6 +268,11 @@ export function CartProvider({
   return <CartContext.Provider value={api}>{children}</CartContext.Provider>;
 }
 
+/** The cart when a CartProvider is mounted above, else null (e.g. the public header on marketing pages). */
+export function useOptionalCart(): CartAPI | null {
+  return useContext(CartContext);
+}
+
 export function useCart(): CartAPI {
   const ctx = useContext(CartContext);
   if (!ctx) {

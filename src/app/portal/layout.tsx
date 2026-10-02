@@ -4,6 +4,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { OrdersProvider } from '@/components/orders/OrdersProvider';
 import { MemberProfileProvider } from '@/components/profile/MemberProfileProvider';
 import { listOrders, ordersDbConfigured } from '@/lib/orders-db';
+import { getSession } from '@/lib/auth-server';
 import { loadCart, loadProfile, profileDbConfigured } from '@/lib/profile-db';
 
 // Private: never indexed.
@@ -42,7 +43,8 @@ export default async function PortalLayout({
       >
         <CartProvider initialItems={cart.items} live={cart.supported}>
           {children}
-          <CartDrawer />
+          {/* Staff never shop: no cart drawer over the admin, doctor or pharmacy portals. */}
+          {(await getSession())?.role === 'member' && <CartDrawer />}
         </CartProvider>
       </MemberProfileProvider>
     </OrdersProvider>

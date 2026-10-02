@@ -15,7 +15,7 @@ export function LegalNav() {
     <nav aria-label="Legal documents" className="space-y-7 rounded-shell bg-milk p-4">
       {GROUPS.map((g) => (
         <div key={g.label}>
-          <p className="mb-2 px-3 pt-1 text-[13px] font-medium text-ink/55">{g.label}</p>
+          <p className="mb-2 px-3 pt-1 text-[13px] font-medium text-ink/65">{g.label}</p>
           <ul className="space-y-0.5">
             {g.links.map((l) => {
               const current = pathname === l.href;

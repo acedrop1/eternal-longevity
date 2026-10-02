@@ -134,7 +134,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
             >
               {/* Hims' category list; each opens into rhode-style product rows. */}
               <nav aria-label="Shop by category" className="px-3 pt-3">
-                <p className="px-2 pb-2 text-[13px] font-medium text-ink/50">Shop by category</p>
+                <p className="px-2 pb-2 text-[13px] font-medium text-ink/60">Shop by category</p>
                 {categories.map((c) => {
                   const expanded = openCat === c.slug;
                   return (
@@ -154,7 +154,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                         </span>
                         <ChevronDown
                           aria-hidden
-                          className={cn('h-5 w-5 shrink-0 text-ink/50 transition-transform duration-300', expanded && 'rotate-180')}
+                          className={cn('h-5 w-5 shrink-0 text-ink/60 transition-transform duration-300', expanded && 'rotate-180')}
                           strokeWidth={1.8}
                         />
                       </button>
@@ -180,7 +180,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
               {/* Top treatments: what's live, with the real product shots. */}
               {top.length > 0 && (
                 <div className="mt-3 bg-milk/60 py-4">
-                  <p className="px-5 pb-3 text-[13px] font-medium text-ink/50">Top treatments</p>
+                  <p className="px-5 pb-3 text-[13px] font-medium text-ink/60">Top treatments</p>
                   <div className="flex gap-2.5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {top.map((p) => (
                       <Link key={p.id} href={`/shop/${p.id}`} onClick={() => setOpen(false)} className="w-36 shrink-0">
@@ -197,7 +197,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
               )}
 
               <nav aria-label="Learn" className="flex flex-col px-5 pt-3">
-                <p className="pb-1 text-[13px] font-medium text-ink/50">Learn</p>
+                <p className="pb-1 text-[13px] font-medium text-ink/60">Learn</p>
                 {links
                   .filter((l) => l.href !== '/shop')
                   .map((link) => (
@@ -208,7 +208,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                       className="flex items-center justify-between border-b border-black/5 py-3 last:border-0"
                     >
                       <span className="text-[17px] font-medium tracking-[-0.02em]">{link.label}</span>
-                      <ArrowUpRight aria-hidden className="h-4 w-4 text-ink/40" strokeWidth={1.8} />
+                      <ArrowUpRight aria-hidden className="h-4 w-4 text-ink/55" strokeWidth={1.8} />
                     </Link>
                   ))}
               </nav>
@@ -228,7 +228,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                 >
                   {home ? 'My portal' : 'Log in'}
                 </Link>
-                <p className="mt-2 text-center text-[12px] text-ink/50">
+                <p className="mt-2 text-center text-[12px] text-ink/60">
                   {SERVICE_AREA_SHORT} only · Prescription required · 18+
                 </p>
               </div>

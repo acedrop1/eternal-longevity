@@ -332,7 +332,7 @@ export function FileUpload({ field, value, onChange, folder }: { field: Field; v
         >
           <FileText aria-hidden className="h-5 w-5 text-ink/70" strokeWidth={1.6} />
           {paths.length ? 'Add another file' : 'Add a file'}
-          <span className="font-normal text-ink/55">· PDF or image, up to 10 MB</span>
+          <span className="font-normal text-ink/65">· PDF or image, up to 10 MB</span>
         </button>
       )}
       <input

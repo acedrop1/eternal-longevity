@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -9,10 +10,11 @@ import {
 
 import { getPrescriber, PRESCRIBER_FALLBACK } from '@/lib/prescriber';
 
-export const metadata: Metadata = {
-  title: 'Prescription Policy',
-  description: 'A prescription is issued only after a licensed prescriber reviews your intake. Ordering and paying do not produce one.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/prescription-policy',
+  'Prescription Policy',
+  'A prescription is issued only after a licensed prescriber reviews your intake. Ordering and paying do not produce one.',
+);
 
 export default async function PrescriptionPolicyPage() {
   // Quoted from the prescriber row, so the page and the profile cannot drift.
@@ -57,7 +59,7 @@ export default async function PrescriptionPolicyPage() {
         {
           heading: `Who Prescribes`,
           paragraphs: [
-            `Prescriptions are written by ${prescriberName}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.npi ? ` (NPI ${prescriber.npi})` : ''}. They are dispensed by MedShiftRx, a state-licensed 503A compounding pharmacy. Our full prescriber and pharmacy details are on our Compliance page.`,
+            `Prescriptions are written by ${prescriberName}, licensed to practise medicine and surgery in ${SERVICE_AREA}${prescriber.npi ? ` (NPI ${prescriber.npi})` : ''}. They are dispensed by a state-licensed 503A compounding pharmacy, named on your prescription label. Our full prescriber and pharmacy details are on our Compliance page.`,
           ],
         },
         {

@@ -9,7 +9,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
@@ -18,6 +18,9 @@ import { SITE_URL } from '@/lib/site';
 import { shouldNotifyReply } from '@/lib/prescriber-view';
 
 export type MessageChannel = 'support' | 'doctor';
+
+/** Runtime check: the type does not survive the trip from the browser. */
+const isChannel = (c: unknown): c is MessageChannel => c === 'support' || c === 'doctor';
 
 export interface PortalMessage {
   id: string;
@@ -72,6 +75,8 @@ export async function listMyMessages(channel: MessageChannel): Promise<PortalMes
 export async function sendMessageAction(channel: MessageChannel, body: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'Not signed in.' };
+  if (!isChannel(channel)) return { ok: false, error: 'Unknown conversation.' };
+  if (typeof body !== 'string') return { ok: false, error: 'Type a message first.' };
   const text = body.trim();
   if (!text) return { ok: false, error: 'Type a message first.' };
   if (text.length > 4000) return { ok: false, error: 'Message is too long.' };
@@ -84,17 +89,18 @@ export async function sendMessageAction(channel: MessageChannel, body: string): 
     body: text,
   });
   if (error) return { ok: false, error: error.message };
-  if (channel === 'doctor') await notifyPrescriberOfReply(user.id);
+  await notifyStaffOfReply(user.id, channel);
   revalidatePath('/portal/messages');
   return { ok: true };
 }
 
 /**
- * Tell the prescriber a patient wrote on their doctor thread. At most one email
- * per thread per 15 minutes, worked out from the member's own message times
- * (no send log). No patient name or drug anywhere in the email.
+ * Tell whoever answers the thread that a member wrote: the prescriber for the
+ * doctor thread, the support inbox for support. At most one email per thread
+ * per 15 minutes, worked out from the member's own message times (no send
+ * log). No patient name or drug anywhere in the email.
  */
-async function notifyPrescriberOfReply(userId: string): Promise<void> {
+async function notifyStaffOfReply(userId: string, channel: MessageChannel): Promise<void> {
   try {
     const db = await createSupabaseServerClient();
     const { data } = await db
@@ -102,22 +108,26 @@ async function notifyPrescriberOfReply(userId: string): Promise<void> {
       .select('created_at')
       .eq('thread_user_id', userId)
       .eq('sender_id', userId)
-      .eq('channel', 'doctor')
+      .eq('channel', channel)
       .order('created_at', { ascending: false })
       // ponytail: replaying the last 50 is exact unless a burst runs longer.
       .limit(50);
     if (!shouldNotifyReply((data ?? []).map((m) => m.created_at))) return;
 
-    const prescriber = await getPrescriber().catch(() => null);
+    const doctor = channel === 'doctor';
+    const prescriber = doctor ? await getPrescriber().catch(() => null) : null;
     await sendEmail({
       to: prescriber?.email || SUPPORT_EMAIL,
-      subject: 'New patient reply',
+      subject: doctor ? 'New patient reply' : 'New member message',
       html: noticeEmail({
-        eyebrow: 'Patient messages',
-        heading: 'A patient replied.',
+        eyebrow: doctor ? 'Patient messages' : 'Support messages',
+        heading: doctor ? 'A patient replied.' : 'A member wrote to support.',
         // No name or details: email isn't where patient information goes.
         body: 'Open the portal to read it and reply.',
-        cta: { label: 'Open messages', href: `${SITE_URL}/portal/doctor/messages` },
+        cta: {
+          label: 'Open messages',
+          href: `${SITE_URL}/portal/${doctor ? 'doctor' : 'admin'}/messages`,
+        },
       }),
     });
   } catch {
@@ -135,6 +145,7 @@ async function notifyPrescriberOfReply(userId: string): Promise<void> {
 export async function listMessageThreads(channel: MessageChannel): Promise<MessageThread[]> {
   const user = await getSession();
   if (!user || (user.role !== 'doctor' && user.role !== 'admin')) return [];
+  if (!supabaseAdminConfigured()) return [];
 
   const db = createSupabaseAdminClient();
   const { data } = await db
@@ -206,6 +217,7 @@ export async function replyMessageAction(
   if (!user || (user.role !== 'doctor' && user.role !== 'admin')) {
     return { ok: false, error: 'Not authorized.' };
   }
+  if (!isChannel(channel)) return { ok: false, error: 'Unknown conversation.' };
   const text = body.trim();
   if (!text) return { ok: false, error: 'Type a message first.' };
   if (text.length > 4000) return { ok: false, error: 'Message is too long.' };
@@ -218,6 +230,26 @@ export async function replyMessageAction(
     body: text,
   });
   if (error) return { ok: false, error: error.message };
+
+  // The member hears there is something to read; what it says stays in the portal.
+  const { data: member } = await db.from('profiles').select('email').eq('id', userId).maybeSingle();
+  if (member?.email) {
+    try {
+      await sendEmail({
+        to: member.email,
+        subject: 'You have a new message from your care team',
+        html: noticeEmail({
+          eyebrow: 'Messages',
+          heading: 'You have a new message from your care team',
+          body: 'Sign in to read it and reply. We keep messages in your portal rather than in email, for your privacy.',
+          cta: { label: 'Read it in your portal', href: `${SITE_URL}/portal/messages?thread=${channel}` },
+        }),
+      });
+    } catch {
+      // The reply is saved either way.
+    }
+  }
+
   revalidatePath('/portal/doctor/messages');
   revalidatePath('/portal/admin/messages');
   return { ok: true };

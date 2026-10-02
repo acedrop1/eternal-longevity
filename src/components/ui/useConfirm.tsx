@@ -59,6 +59,8 @@ export function useConfirm(): [(ask: Ask) => Promise<boolean>, ReactNode] {
             {!ask.alert && (
               <button
                 type="button"
+                // A destructive question starts on the safe answer, so Enter does not refund or delete.
+                autoFocus={ask.danger}
                 onClick={() => done(false)}
                 className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-milk px-5 py-3 text-[14px] font-semibold text-ink transition-colors hover:bg-milk-deep sm:flex-1"
               >
@@ -67,7 +69,7 @@ export function useConfirm(): [(ask: Ask) => Promise<boolean>, ReactNode] {
             )}
             <button
               type="button"
-              autoFocus
+              autoFocus={!ask.danger || ask.alert}
               onClick={() => done(true)}
               className={cn(
                 'inline-flex min-h-[44px] items-center justify-center rounded-full px-5 py-3 text-[14px] font-semibold transition-colors sm:flex-1',

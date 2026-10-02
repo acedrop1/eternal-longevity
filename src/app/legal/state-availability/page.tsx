@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -8,10 +9,11 @@ import {
   SERVICE_AREA_OR,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'State Availability',
-  description: 'Where we can legally prescribe and ship, and why the list is short.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/state-availability',
+  'State Availability',
+  'Where we can legally prescribe and ship, and why the list is short.',
+);
 
 export default function StateAvailabilityPage() {
   return (
@@ -37,7 +39,7 @@ export default function StateAvailabilityPage() {
         {
           heading: `Enforced at Checkout, Not by Trust`,
           paragraphs: [
-            `The restriction is enforced in software. An order with a shipping address outside ${SERVICE_AREA} is rejected before it reaches a prescriber. We do not accept orders we cannot lawfully fill, and we will not ship to a forwarding address used to route around this.`,
+            `The restriction is enforced in software. An order with a shipping address outside ${SERVICE_AREA_OR} is rejected before it reaches a prescriber. We do not accept orders we cannot lawfully fill, and we will not ship to a forwarding address used to route around this.`,
           ],
         },
         {

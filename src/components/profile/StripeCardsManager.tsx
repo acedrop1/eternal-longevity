@@ -76,7 +76,7 @@ function AddCardForm({ onSaved }: { onSaved: () => void }) {
       >
         {busy ? 'Saving…' : 'Save card'}
       </button>
-      <p className="text-center text-[13px] text-ink/55">
+      <p className="text-center text-[13px] text-ink/65">
         Entered directly with Stripe. Card details never reach our servers.
       </p>
     </form>
@@ -125,7 +125,7 @@ export function StripeCardsManager({
     <div className="space-y-3">
       {confirmDialog}
       {loading && (
-        <p role="status" className="text-[15px] text-ink/55">Loading your cards…</p>
+        <p role="status" className="text-[15px] text-ink/65">Loading your cards…</p>
       )}
 
       {!loading && cards.length === 0 && !adding && (
@@ -146,7 +146,7 @@ export function StripeCardsManager({
           <span className="text-[15px] tabular-nums text-ink/80">
             •••• {c.last4}
           </span>
-          <span className="text-[13px] font-medium tabular-nums text-ink/55">
+          <span className="text-[13px] font-medium tabular-nums text-ink/65">
             {String(c.expMonth).padStart(2, '0')}/{String(c.expYear).slice(-2)}
           </span>
           {c.isDefault && (
@@ -233,7 +233,7 @@ export function StripeCardsManager({
       )}
 
       {adding && !clientSecret && (
-        <p role="status" className="text-[15px] text-ink/55">Opening secure form…</p>
+        <p role="status" className="text-[15px] text-ink/65">Opening secure form…</p>
       )}
     </div>
   );

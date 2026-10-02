@@ -33,12 +33,12 @@ export function AdminFulfillment({
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-ink/10 px-4 py-3">
         <h2 className="text-[14px] font-semibold text-ink">
           Signed prescriptions not on the board{' '}
-          <span className="font-normal tabular-nums text-ink/45">{readyPrescriptions.length}</span>
+          <span className="font-normal tabular-nums text-ink/60">{readyPrescriptions.length}</span>
         </h2>
-        <p className="text-[12px] text-ink/55">Add one only if it is missing from the list above.</p>
+        <p className="text-[12px] text-ink/65">Add one only if it is missing from the list above.</p>
       </div>
       {readyPrescriptions.length === 0 ? (
-        <p className="px-4 py-3 text-[13px] text-ink/55">Nothing waiting.</p>
+        <p className="px-4 py-3 text-[13px] text-ink/65">Nothing waiting.</p>
       ) : (
         <ul className="divide-y divide-ink/10">
           {readyPrescriptions.map((rx) => (
@@ -80,7 +80,7 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
             {rx.patientName}
             {rx.kind === 'draft' && <StatusBadge tone="info">Refill</StatusBadge>}
           </p>
-          <p className="text-[12px] text-ink/55">{rx.protocolName}</p>
+          <p className="text-[12px] text-ink/65">{rx.protocolName}</p>
         </div>
         <button
           type="button"

@@ -31,6 +31,7 @@ import {
   signTicket,
   trustValid,
 } from './mfa';
+import { markRecovery, takeRecovery } from './recovery';
 import { passwordValid } from './intakeSchema';
 import { LIMITS, allow } from './rate-limit';
 import { noteStaffSignIn } from './device-alert';
@@ -40,7 +41,7 @@ import { noteStaffSignIn } from './device-alert';
 async function stampNewSession(): Promise<void> {
   const store = await cookies();
   const now = String(Date.now());
-  const opts = { httpOnly: true, sameSite: 'lax' as const, path: '/' };
+  const opts = { httpOnly: true, sameSite: 'lax' as const, path: '/', secure: process.env.NODE_ENV === 'production' };
   store.set(ACTIVITY_COOKIE, now, opts);
   store.set(SESSION_START_COOKIE, now, opts);
 }
@@ -204,7 +205,7 @@ export async function signupAction(formData: FormData): Promise<void> {
     redirect('/signup?error=throttled');
   }
 
-  if (!email.includes('@') || password.length < 8) {
+  if (!email.includes('@') || !passwordValid(password)) {
     redirect('/signup?error=invalid');
   }
 
@@ -238,7 +239,8 @@ export async function logoutAction(): Promise<void> {
   } else {
     await clearSession();
   }
-  redirect('/login');
+  // Via a page that clears the assessment answers this browser kept.
+  redirect('/auth/signed-out');
 }
 
 /** Send a password-reset email. Form field: email. */
@@ -293,7 +295,32 @@ export async function requestPasswordResetAction(
   redirect(sentPath);
 }
 
-/** Set a new password. Form field: password. Requires a recovery session. */
+/**
+ * The button behind a recovery link (/auth/continue). Verifying on a POST
+ * rather than on the link's GET means a mail scanner cannot spend the token,
+ * and a page elsewhere cannot sign a visitor in to someone else's account by
+ * linking them here: a server action refuses cross-site posts. Recovery only;
+ * signup confirmation goes through /auth/callback.
+ */
+export async function confirmRecoveryAction(formData: FormData): Promise<void> {
+  const tokenHash = String(formData.get('token_hash') ?? '');
+  const next = safeNext(formData.get('next')) ?? '/auth/reset';
+  if (!supabaseConfigured || !tokenHash) redirect('/forgot-password?error=expired');
+  if (!(await allow('recovery', LIMITS.login))) redirect('/forgot-password?error=expired');
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
+  if (error || !data.user) redirect('/forgot-password?error=expired');
+  await markRecovery(data.user.id);
+  redirect(next);
+}
+
+/**
+ * Set a new password. Form field: password. Only straight after a recovery
+ * link (the flag confirmRecoveryAction sets), never on a session alone: a
+ * signed-in password change goes through changePasswordAction, which asks
+ * for the current one.
+ */
 export async function updatePasswordAction(
   formData: FormData,
 ): Promise<void> {
@@ -308,8 +335,16 @@ export async function updatePasswordAction(
   if (!passwordValid(password)) redirect(again('weak'));
 
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  // One use: the flag is spent whether or not the change goes through.
+  if (!authUser || !(await takeRecovery(authUser.id))) redirect(again('failed'));
+
   const { error } = await supabase.auth.updateUser({ password });
   if (error) redirect(again('failed'));
+  // Whoever else holds a session on this account (the reason for a reset, often) is out.
+  await supabase.auth.signOut({ scope: 'others' });
 
   /*
    * The recovery link is a fresh sign-in: restart the logoff clocks, or the

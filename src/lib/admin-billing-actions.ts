@@ -23,7 +23,8 @@ import {
 } from './supabase/admin';
 import { noticeEmail, refundedEmail, sendEmail } from './email';
 import { getStripe } from './stripe';
-import { intentBelongsTo } from './order-rules';
+import { ORDER_FROM, intentBelongsTo } from './order-rules';
+import { denyOrderAction } from './orders-db';
 
 export interface AdminBillingResult {
   ok: boolean;
@@ -257,7 +258,7 @@ export async function adminRefundOrder(input: {
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, total_cents, member_email, member_name, stripe_payment_intent_id, paid_confirmed_at',
+      'id, order_number, status, total_cents, member_email, member_name, stripe_payment_intent_id, paid_confirmed_at',
     )
     .eq('order_number', input.orderNumber.trim())
     .maybeSingle();
@@ -293,8 +294,40 @@ export async function adminRefundOrder(input: {
         message: 'The payment on file does not belong to this order. Refund it from Stripe directly.',
       };
     }
-    const { status } = await refundPayment(order.stripe_payment_intent_id, cents);
     const full = cents === undefined || cents === order.total_cents;
+
+    /*
+     * A full refund of an order that has not shipped is a cancellation. Left
+     * as a refund alone, the order stayed live: the board still offered it to
+     * place, the plan kept renewing, and the pharmacy could still ship it. The
+     * cancel path does all of it in one go (and refunds, so it is not done
+     * twice here). A partial refund leaves the order as it is.
+     */
+    if (full && ORDER_FROM.deny.includes(order.status)) {
+      const cancelled = await denyOrderAction(
+        order.order_number,
+        input.reason?.trim() || 'Refunded in full.',
+      );
+      if (cancelled.ok) {
+        revalidatePath('/portal/admin/fulfillment');
+        revalidatePath('/portal/orders');
+        if (cancelled.refundError) {
+          return {
+            ok: false,
+            message: `Cancelled ${order.order_number}, but the refund failed (${cancelled.refundError}). Refund it from Stripe.`,
+          };
+        }
+        return {
+          ok: true,
+          message: `Refunded in full and cancelled ${order.order_number}.${
+            cancelled.cancelByHand ? ' It was placed by hand: cancel it in the pharmacy portal too.' : ''
+          }`,
+        };
+      }
+      // It moved on (shipped meanwhile): refund it as a plain refund below.
+    }
+
+    const { status } = await refundPayment(order.stripe_payment_intent_id, cents);
 
     await db.from('order_updates').insert({
       order_id: order.id,

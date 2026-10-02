@@ -8,6 +8,7 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { monthlyRecurringCents } from '@/lib/revenue';
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -66,19 +67,8 @@ async function loadOverview(): Promise<Overview> {
           .limit(6),
       ]);
 
-    // Normalize each active subscription to a per-month figure.
-    const mrr = (subs.data ?? []).reduce((sum, s) => {
-      const cents = s.per_cycle_cents ?? 0;
-      const label = (s.cadence_label ?? '').toLowerCase();
-      const perMonth = label.includes('quarter')
-        ? cents / 3
-        : label.startsWith('6')
-          ? cents / 6
-          : label.includes('annual')
-            ? cents / 12
-            : cents;
-      return sum + perMonth;
-    }, 0);
+    // Same definition as Billing (lib/revenue).
+    const mrr = monthlyRecurringCents(subs.data ?? []);
 
     const intakeRows = intakes.data ?? [];
     const orderRows = orders.data ?? [];
@@ -135,7 +125,7 @@ export default async function AdminPortalPage() {
       nav={ADMIN_NAV}
     >
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Operations ·{' '}
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
@@ -155,7 +145,7 @@ export default async function AdminPortalPage() {
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {metrics.map((m) => (
           <div key={m.label} className="rounded-shell bg-milk p-5">
-            <p className="mb-2 text-[13px] font-medium text-ink/55">
+            <p className="mb-2 text-[13px] font-medium text-ink/65">
               {m.label}
             </p>
             <p className="text-[32px] font-semibold tracking-[-0.04em] text-ink tabular-nums">
@@ -167,7 +157,7 @@ export default async function AdminPortalPage() {
 
       {/* Pipeline */}
       <div className="mb-8 rounded-shell bg-milk p-6">
-        <p className="mb-1 text-[13px] font-medium text-ink/55">Pipeline</p>
+        <p className="mb-1 text-[13px] font-medium text-ink/65">Pipeline</p>
         <h2 className="mb-5 text-[22px] font-semibold tracking-[-0.03em] text-ink">
           Members in motion
         </h2>
@@ -197,7 +187,7 @@ export default async function AdminPortalPage() {
 
       {/* Activity */}
       <div className="rounded-shell bg-milk p-6">
-        <p className="mb-1 text-[13px] font-medium text-ink/55">Recent activity</p>
+        <p className="mb-1 text-[13px] font-medium text-ink/65">Recent activity</p>
         <h2 className="mb-5 text-[22px] font-semibold tracking-[-0.03em] text-ink">
           What just happened
         </h2>
@@ -209,7 +199,7 @@ export default async function AdminPortalPage() {
           <ul className="divide-y divide-ink/10">
             {o.activity.map((a, i) => (
               <li key={i} className="flex items-baseline gap-4 py-3">
-                <span className="w-28 flex-none text-[12px] text-ink/55 tabular-nums">
+                <span className="w-28 flex-none text-[12px] text-ink/65 tabular-nums">
                   {a.time}
                 </span>
                 <span className="text-sm text-ink/85">{a.action}</span>

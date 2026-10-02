@@ -59,7 +59,7 @@ const ROLE_LABEL: Record<Role, string> = {
 };
 
 const inputClass =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 
 type Tab = 'all' | 'members' | 'staff' | 'suspended' | 'deactivated';
 
@@ -201,7 +201,7 @@ export function AdminUsers({
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={7} className="block px-4 py-10 text-center text-[13px] text-ink/55 md:table-cell">
+                <td colSpan={7} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
                   No users match.
                 </td>
               </tr>
@@ -311,7 +311,7 @@ function UserRow({
         <td className={cn(td, 'hidden tabular-nums text-ink/80 md:text-right')}>
           {orders ?? <span className="text-ink/35">—</span>}
         </td>
-        <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/55 md:text-[13px] md:text-ink/65')}>
+        <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px] md:text-ink/65')}>
           <span className="md:hidden">· Joined </span>
           {user.joinedAt}
         </td>
@@ -321,7 +321,7 @@ function UserRow({
             onClick={onToggle}
             aria-expanded={open}
             aria-label={`${open ? 'Hide' : 'Show'} actions for ${user.name}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/50 hover:bg-ink/[0.06] hover:text-ink"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/60 hover:bg-ink/[0.06] hover:text-ink"
           >
             <Chevron open={open} />
           </button>
@@ -548,7 +548,7 @@ function AddUserPanel({
           <option value="admin">Admin</option>
         </select>
       </div>
-      <p className="mt-3 text-xs text-ink/55">
+      <p className="mt-3 text-xs text-ink/65">
         The account is created right away and the user gets a branded welcome
         email with a temporary password to change after signing in. If email
         delivery is not connected yet, the password appears here so you can
@@ -582,18 +582,18 @@ function AddUserPanel({
       )}
       {result?.tempPassword && (
         <div className="mt-3 rounded-inner border border-ink/10 bg-white p-4">
-          <div className="mb-2.5 text-[13px] font-medium text-ink/55">
+          <div className="mb-2.5 text-[13px] font-medium text-ink/65">
             Sign-in details
           </div>
           <dl className="space-y-2 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-ink/55">Email</dt>
+              <dt className="text-ink/65">Email</dt>
               <dd className="text-ink">
                 {result.createdEmail}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <dt className="text-ink/55">Temporary password</dt>
+              <dt className="text-ink/65">Temporary password</dt>
               <dd className="font-semibold text-ink">{result.tempPassword}</dd>
             </div>
           </dl>

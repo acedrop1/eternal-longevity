@@ -32,6 +32,8 @@ export interface Subscription {
   status: Status;
   image: string;
   swatch: string;
+  /** Paused because a refill's card was declined (a REFILL_CHARGE_FAILED order), not by the member. */
+  declined?: boolean;
 }
 
 type Status = 'active' | 'paused' | 'pending-review' | 'canceled';
@@ -116,6 +118,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
           const theme = STATUS_THEME[status] ?? STATUS_THEME.active;
           const isCancelled = status === 'canceled';
           const isPaused = status === 'paused';
+          const declined = isPaused && Boolean(s.declined);
           const pending = busy === s.id;
           const note = notice[s.id];
 
@@ -144,7 +147,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                   </div>
                   <div className="min-w-0">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <StatusChip tone={theme.tone}>{theme.label}</StatusChip>
+                      <StatusChip tone={declined ? 'error' : theme.tone}>{declined ? 'Payment failed' : theme.label}</StatusChip>
                     </div>
                     <h2
                       className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
@@ -154,11 +157,13 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                     <p className="mt-1 text-[15px] text-ink/65">
                       {s.cycleLabel} · {s.cadenceLabel}
                     </p>
-                    <p className="mt-1 text-[14px] tabular-nums text-ink/55">
+                    <p className="mt-1 text-[14px] tabular-nums text-ink/65">
                       {isCancelled
                         ? 'Cancelled. No further shipments will be sent.'
-                        : isPaused
-                          ? 'Paused. Click Resume to reactivate this protocol.'
+                        : declined
+                          ? 'Your card was declined, so this plan is paused. Update your card to restart it.'
+                          : isPaused
+                          ? 'Paused. Resume to restart this treatment.'
                           : `Next billing: ${s.nextBillingDate}`}
                     </p>
                   </div>
@@ -167,7 +172,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                 <div className="sm:flex-shrink-0 sm:text-right">
                   <div className="text-[20px] font-medium text-ink tabular-nums">
                     ${s.perMonth}
-                    <span className="text-[15px] font-normal text-ink/55">
+                    <span className="text-[15px] font-normal text-ink/65">
                       {/* What each renewal charges (per_cycle_cents), so per cycle rather than per month. */}
                       {{ monthly: '/mo', quarterly: '/3 mo', sixMonth: '/6 mo', annual: '/yr' }[planOf(s.cadenceLabel)]}
                     </span>
@@ -176,8 +181,15 @@ export function SubscriptionsManager({ subscriptions }: Props) {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
-                {/* Resume — only when paused */}
-                {isPaused && (
+                {/* Declined card: the fix is a working card, and the account page restarts the plan. */}
+                {declined && (
+                  <Link href="/portal/account" className={btnPrimary}>
+                    Update your card
+                  </Link>
+                )}
+
+                {/* Resume — only when the member paused it */}
+                {isPaused && !declined && (
                   <button
                     type="button"
                     disabled={pending}
@@ -205,7 +217,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                 {/* Billing plan — the one thing a member can change */}
                 {status === 'active' && (
                   <label className="flex min-h-[44px] items-center gap-2 rounded-full bg-white px-4 text-[13px] font-medium text-ink ring-1 ring-ink/10 md:min-h-[40px]">
-                    <span className="text-ink/55">Plan</span>
+                    <span className="text-ink/65">Plan</span>
                     <select
                       value={planOf(s.cadenceLabel)}
                       disabled={pending}
@@ -268,18 +280,18 @@ export function SubscriptionsManager({ subscriptions }: Props) {
                 )}
 
                 {/* Pending-review: the prescription ran its term. Renewing is
-                    a short assessment (what is on file is skipped), then a
-                    new order back to Dr. Elder. */}
+                    an assessment (what is on file is skipped), then a new
+                    order back to Dr. Elder, which closes this plan. */}
                 {status === 'pending-review' && (
                   <>
                     <p className="w-full text-[14px] leading-relaxed text-ink/60">
-                      Your prescription is up for renewal. Confirm nothing has changed and Dr. Elder takes another look. You won’t be charged unless he approves.
+                      Your prescription is up for renewal. Answer a few questions and place your renewal, and Dr. Elder takes another look. You won’t be charged unless he approves.
                     </p>
                     <Link
-                      href={`/start?product=${encodeURIComponent(s.productId)}`}
+                      href={`/start?product=${encodeURIComponent(s.productId)}&renew=${encodeURIComponent(s.id)}`}
                       className={btnPrimary}
                     >
-                      Confirm and continue
+                      Start your renewal
                     </Link>
                   </>
                 )}
@@ -326,7 +338,7 @@ export function SubscriptionsManager({ subscriptions }: Props) {
             </h3>
             <p className="mb-6 text-[15px] leading-relaxed text-ink/70">
               {confirm.kind === 'cancel'
-                ? "You won't be billed again. Your protocol stays on file — message your care team if you want to restart."
+                ? "You won't be billed again. Your treatment history stays on file. Message your care team if you want to restart."
                 : "You won't be charged or shipped for the next cycle. Billing automatically resumes on the cycle after."}
             </p>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

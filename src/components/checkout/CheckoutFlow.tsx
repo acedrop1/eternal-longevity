@@ -76,6 +76,8 @@ interface CheckoutFlowProps {
   stripePublishableKey?: string;
   /** The card on file ("Visa •••• 4242"), when there is one: the card step starts done. */
   savedCard?: string | null;
+  /** Cart products the member already has (lib/held-products): flagged up front, not at Place order. */
+  held?: Record<string, 'order' | 'plan'>;
 }
 
 // ============================================================================
@@ -159,6 +161,11 @@ function isCvcValid(cvc: string) {
 // Main flow
 // ============================================================================
 
+/** A code that only waives shipping ($0 off + free shipping) is just that. */
+function promoLabel(p: PromoCheck): string {
+  return !p.discountCents && p.includesShipping ? 'Free shipping' : (p.label ?? 'Your code');
+}
+
 /** What the member sees when the server turns an order down. */
 const ORDER_ERROR: Record<string, string> = {
   state_not_serviced: `We can only ship to ${SERVICE_AREA_OR} right now.`,
@@ -184,6 +191,7 @@ export function CheckoutFlow({
   googlePlacesKey,
   stripePublishableKey,
   savedCard,
+  held = {},
 }: CheckoutFlowProps) {
   const router = useRouter();
   const {
@@ -417,6 +425,17 @@ export function CheckoutFlow({
   );
 
   const subtotal = cartSubtotal;
+  const heldLines = lines.filter((l) => held[l.productId]);
+  // What each renewal charges: the plan and its shipping, at full price (a code is this order only).
+  const recurring = lines.filter((l) => l.cadence !== 'once');
+  const renewalNote =
+    recurring.length === 1
+      ? ` Renewals are $${recurring[0].total + recurring[0].shipping} every ${
+          monthsPerCycle(recurring[0].cadence) === 1 ? 'month' : `${monthsPerCycle(recurring[0].cadence)} months`
+        }.`
+      : recurring.length > 1
+        ? ' Renewals are at full price.'
+        : '';
   // Each item is its own order and shipment; the server prices it the same way.
   const shippingCost = lines.reduce((s, l) => s + l.shipping, 0);
   const shippingLabels = [...new Set(lines.map((l) => l.shippingLabel))].join(' · ');
@@ -508,7 +527,7 @@ export function CheckoutFlow({
   }
 
   async function handlePay() {
-    if (!termsAccepted || !chargesAccepted || !hasCart) return;
+    if (!termsAccepted || !chargesAccepted || !hasCart || heldLines.length) return;
     setPayError(null);
     if (stripePublishableKey && !cardSaved) return;
     if (!emailValid || !shippingValid || !methodValid) return;
@@ -596,13 +615,19 @@ export function CheckoutFlow({
     });
     if (!res.ok) {
       setIsPaying(false);
-      setPayError(ORDER_ERROR[res.error ?? ''] ?? ORDER_ERROR.default);
+      const heldName =
+        res.error === 'already_ordered' ? lines.find((l) => l.productId === res.productId)?.name : undefined;
+      setPayError(
+        heldName
+          ? `You already have ${heldName}, on a plan or on its way. Remove it to continue, or manage it in your portal.`
+          : (ORDER_ERROR[res.error ?? ''] ?? ORDER_ERROR.default),
+      );
       if (res.error === 'promo_unavailable') {
         setPromo(null);
         setPromoInput('');
       }
       // The server names the product whose questions are still to answer.
-      setNotAssessed(res.error === 'not_assessed' ? ((res as { productId?: string }).productId ?? null) : null);
+      setNotAssessed(res.error === 'not_assessed' ? (res.productId ?? null) : null);
       return;
     }
     placed.current = true;
@@ -615,7 +640,7 @@ export function CheckoutFlow({
     // Clear the cart and route to success
     startTransition(() => {
       clearCart();
-      router.push('/checkout/success');
+      router.push(res.orderNumber ? `/checkout/success?ref=${encodeURIComponent(res.orderNumber)}` : '/checkout/success');
     });
   }
 
@@ -726,7 +751,7 @@ export function CheckoutFlow({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="Eternal Longevity" className="h-6 w-auto" />
-          <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">
+          <span className="hidden text-[13px] font-medium text-ink/65 sm:inline">
             Checkout
           </span>
         </Link>
@@ -785,7 +810,7 @@ export function CheckoutFlow({
                     <span className="block text-[15px] font-semibold text-ink">
                       Order summary
                     </span>
-                    <span className="block text-[13px] text-ink/55">
+                    <span className="block text-[13px] text-ink/65">
                       {lines.length} item{lines.length === 1 ? '' : 's'} ·{' '}
                       {summaryExpanded ? 'Tap to collapse' : 'Tap to expand'}
                     </span>
@@ -805,7 +830,7 @@ export function CheckoutFlow({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className={cn(
-                      'text-ink/55 transition-transform duration-300',
+                      'text-ink/65 transition-transform duration-300',
                       summaryExpanded ? 'rotate-180' : ''
                     )}
                   >
@@ -827,7 +852,7 @@ export function CheckoutFlow({
                   <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-ink">
                     Order details
                   </h2>
-                  <span className="text-[13px] font-medium text-ink/55">
+                  <span className="text-[13px] font-medium text-ink/65">
                     {lines.length} item{lines.length === 1 ? '' : 's'}
                   </span>
                 </div>
@@ -870,12 +895,25 @@ export function CheckoutFlow({
                               {l.cadenceLabel}
                             </div>
                           )}
-                          <div className="mt-0.5 text-[13px] text-ink/55">
+                          <div className="mt-0.5 text-[13px] text-ink/65">
                             {l.sub} · Qty {l.qty}
                           </div>
-                          <div className="mt-0.5 text-[13px] text-ink/55">
+                          <div className="mt-0.5 text-[13px] text-ink/65">
                             {l.shippingLabel} ${l.shipping}
                           </div>
+                          {held[l.productId] && (
+                            <p className="mt-1.5 text-[13px] leading-snug text-red-700">
+                              {held[l.productId] === 'plan'
+                                ? 'Already on your plan. Remove it to continue.'
+                                : 'Already ordered and on its way. Remove it to continue.'}{' '}
+                              <Link
+                                href={held[l.productId] === 'plan' ? '/portal/subscriptions' : '/portal/orders'}
+                                className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                              >
+                                {held[l.productId] === 'plan' ? 'Manage your plan' : 'View your order'}
+                              </Link>
+                            </p>
+                          )}
                           {l.productId && l.cadence && (
                             <button
                               type="button"
@@ -885,7 +923,7 @@ export function CheckoutFlow({
                                   l.cadence as Cadence
                                 )
                               }
-                              className="mt-1.5 text-[13px] text-ink/55 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
+                              className="mt-1.5 text-[13px] text-ink/65 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700"
                             >
                               Remove
                             </button>
@@ -924,7 +962,7 @@ export function CheckoutFlow({
                     label="Shipping"
                     value={shippingPrice}
                   />
-                  {promo?.ok && (
+                  {promo?.ok && discount > 0 && (
                     <SummaryRow
                       label={`Discount · ${promo.code}`}
                       value={`-$${discount.toFixed(2)}`}
@@ -946,7 +984,7 @@ export function CheckoutFlow({
                         }
                       }}
                       placeholder="Promo code"
-                      className="min-w-0 flex-1 rounded-inner bg-white px-4 py-3 text-[16px] uppercase text-ink ring-1 ring-ink/10 placeholder:normal-case placeholder:text-ink/40 transition-shadow focus:outline-none focus:ring-2 focus:ring-ink/20"
+                      className="min-w-0 flex-1 rounded-inner bg-white px-4 py-3 text-[16px] uppercase text-ink ring-1 ring-ink/10 placeholder:normal-case placeholder:text-ink/55 transition-shadow focus:outline-none focus:ring-2 focus:ring-ink/20"
                     />
                     <button
                       type="button"
@@ -965,7 +1003,9 @@ export function CheckoutFlow({
                         promo.ok ? 'text-ink' : 'text-red-600',
                       )}
                     >
-                      {promo.ok ? `${promo.label} applied.` : promo.error}
+                      {promo.ok
+                        ? `${promoLabel(promo)} applied to this order.${renewalNote}`
+                        : promo.error}
                     </p>
                   )}
 
@@ -1023,7 +1063,7 @@ export function CheckoutFlow({
               placeholder="you@example.com"
               className={inputClass}
             />
-            <p className="mt-2 text-[13px] text-ink/55">
+            <p className="mt-2 text-[13px] text-ink/65">
               We&apos;ll send your receipt and shipping updates here.
             </p>
             <ContinueButton disabled={!emailValid} onClick={continueEmail}>
@@ -1093,7 +1133,7 @@ export function CheckoutFlow({
                         <span className="mt-0.5 block text-[15px] text-ink">
                           {a.fullName}
                         </span>
-                        <span className="mt-0.5 block text-[13px] text-ink/55">
+                        <span className="mt-0.5 block text-[13px] text-ink/65">
                           {formatAddressOneLine(a)}
                         </span>
                       </span>
@@ -1333,7 +1373,7 @@ export function CheckoutFlow({
                   placeholder="(555) 555-5555"
                   className={inputClass}
                 />
-                <p className="mt-2 text-[13px] text-ink/55">
+                <p className="mt-2 text-[13px] text-ink/65">
                   Used only for delivery updates and emergencies.
                 </p>
               </div>
@@ -1398,7 +1438,7 @@ export function CheckoutFlow({
                       <span className="block text-[15px] font-semibold text-ink">
                         {opt.label}
                       </span>
-                      <span className="mt-0.5 block text-[13px] text-ink/55">
+                      <span className="mt-0.5 block text-[13px] text-ink/65">
                         {shippingLabels}
                       </span>
                     </span>
@@ -1439,7 +1479,7 @@ export function CheckoutFlow({
                   clinical decision; a different product is. Saying so stops a
                   returning member expecting a review that will not happen, and
                   a plan member fearing one that will. */}
-              <p className="mt-2 text-[15px] leading-relaxed text-ink/55">
+              <p className="mt-2 text-[15px] leading-relaxed text-ink/65">
                 A plan keeps shipping on this prescription until it expires. A
                 different product is a new prescription, so it is reviewed
                 again.
@@ -1527,7 +1567,8 @@ export function CheckoutFlow({
               />
               <span>
                 If my prescriber approves, I authorize {SITE_NAME} to charge the
-                card I saved ${totalText} for this order. After that:
+                card I saved ${totalText} for this order.{' '}
+                {discount > 0 || freeShipping ? 'After that, renewals are at full price:' : 'After that:'}
                 {lines.map((l) => {
                   const n = monthsPerCycle(l.cadence);
                   return (
@@ -1553,7 +1594,7 @@ export function CheckoutFlow({
             <button
               type="button"
               onClick={handlePay}
-              disabled={isPaying || !termsAccepted || !chargesAccepted || !hasCart || (!!stripePublishableKey && !cardSaved)}
+              disabled={isPaying || !termsAccepted || !chargesAccepted || !hasCart || heldLines.length > 0 || (!!stripePublishableKey && !cardSaved)}
               className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-butter px-6 py-3.5 text-[16px] font-semibold text-ink transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-butter"
             >
               {isPaying && (
@@ -1564,6 +1605,12 @@ export function CheckoutFlow({
               )}
               {isPaying ? 'Placing order…' : 'Place order'}
             </button>
+            {heldLines.length > 0 && !payError && (
+              <p role="alert" className="mt-3 text-center text-[14px] text-red-600">
+                You already have {heldLines.map((l) => l.name).join(' and ')}. Remove{' '}
+                {heldLines.length === 1 ? 'it' : 'them'} from your order to continue.
+              </p>
+            )}
             {payError && (
               <p role="alert" className="mt-3 text-center text-[14px] text-red-600">
                 {payError}
@@ -1580,7 +1627,7 @@ export function CheckoutFlow({
                 )}
               </p>
             )}
-            <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/55">
+            <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/65">
               Placing an order costs nothing. You can pause or cancel between
               cycles at any time.
             </p>
@@ -1596,7 +1643,7 @@ export function CheckoutFlow({
 // ============================================================================
 
 const inputClass =
-  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/55 transition-[box-shadow,background-color] focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20';
 
 function FieldLabel({
   htmlFor,
@@ -1680,7 +1727,7 @@ function Section({
                 ? 'bg-butter text-ink'
                 : isOpen
                   ? 'bg-ink text-white'
-                  : 'bg-milk text-ink/55'
+                  : 'bg-milk text-ink/65'
             )}
           >
             {isComplete ? (
@@ -1705,7 +1752,7 @@ function Section({
               {title}
             </h3>
             {!isOpen && summary && (
-              <p className="mt-0.5 truncate text-[13px] text-ink/55">
+              <p className="mt-0.5 truncate text-[13px] text-ink/65">
                 {summary}
               </p>
             )}

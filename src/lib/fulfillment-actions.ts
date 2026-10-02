@@ -17,11 +17,9 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from './supabase/admin';
-import { pharmacyQueueEmail, sendEmail } from './email';
 import { advanceFulfillment } from './fulfillment-core';
-import { sendToPharmacyApi } from './auto-pharmacy';
+import { autoSubmitToPharmacy, sendToPharmacyApi } from './auto-pharmacy';
 import { revalidatePath } from 'next/cache';
-import { SITE_URL } from './site';
 
 export interface FulfillmentResult {
   ok: boolean;
@@ -55,10 +53,37 @@ export async function submitToPharmacy(
   try {
     const { data: rx } = await db
       .from('prescriptions')
-      .select('id, user_id, doctor_id, items')
+      .select('id, user_id, doctor_id, items, order_id')
       .eq('id', prescriptionId)
       .maybeSingle();
     if (!rx) return { ok: false, message: 'Prescription not found.' };
+
+    /*
+     * A prescription written for an order goes the way every paid order does:
+     * that order's own address, the FUL-<number> ref the board and the member's
+     * timeline link on, and the pharmacy API when it can take it. Only that
+     * order's payment counts, not some other order the member paid for.
+     */
+    if (rx.order_id) {
+      const { data: order } = await db
+        .from('orders')
+        .select('order_number, paid_confirmed_at')
+        .eq('id', rx.order_id)
+        .maybeSingle();
+      if (!order) return { ok: false, message: 'The order behind this prescription was not found.' };
+      if (!order.paid_confirmed_at) {
+        return { ok: false, message: 'This order is not paid. It joins the board by itself once payment lands.' };
+      }
+      const res = await autoSubmitToPharmacy(order.order_number, { prescriptionId: rx.id });
+      revalidatePath('/portal/admin/fulfillment');
+      if (!res.ok) return { ok: false, message: `Could not add it: ${res.error ?? 'unknown error'}.` };
+      return {
+        ok: true,
+        message: res.submitted ? `Order ${order.order_number} added to the board.` : 'Already on the board.',
+      };
+    }
+
+    // Older prescriptions with no order behind them (written off an intake).
 
     /*
      * Do not ship what has not been paid for.
@@ -129,14 +154,6 @@ export async function submitToPharmacy(
       return { ok: false, message: `Could not submit: ${error.message}` };
     }
 
-    // Notify the pharmacy — a log-in prompt only, no PHI in the email body.
-    if (process.env.PHARMACY_EMAIL) {
-      await sendEmail({
-        to: process.env.PHARMACY_EMAIL,
-        ...pharmacyQueueEmail(orderRef, `${SITE_URL}/portal/pharmacy`),
-      });
-    }
-
     return {
       ok: true,
       message: `Order ${orderRef} submitted to the pharmacy.`,
@@ -170,13 +187,6 @@ export async function submitDraftOrder(
   if (error) return { ok: false, message: error.message };
   if (!order) {
     return { ok: false, message: 'Order not found or already submitted.' };
-  }
-
-  if (process.env.PHARMACY_EMAIL) {
-    await sendEmail({
-      to: process.env.PHARMACY_EMAIL,
-      ...pharmacyQueueEmail(order.order_ref, `${SITE_URL}/portal/pharmacy`),
-    });
   }
 
   return {

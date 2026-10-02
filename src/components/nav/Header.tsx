@@ -9,6 +9,7 @@ import { Wordmark } from './Wordmark';
 import { MobileMenu } from './MobileMenu';
 import { Search } from './Search';
 import { ShopMenu } from './ShopMenu';
+import { CartButton } from '@/components/cart/CartButton';
 import { useListedCategories } from '@/components/lineup/Lineup';
 import { cn } from '@/lib/utils';
 
@@ -123,6 +124,15 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               </Link>
+            )}
+            {/* Members can buy from the shop: their cart sits next to My portal. */}
+            {home === '/portal' && (
+              <CartButton
+                className={cn(
+                  'relative grid h-10 w-10 place-items-center rounded-full transition-colors',
+                  onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 ring-1 ring-black/5 hover:bg-white'
+                )}
+              />
             )}
             {/* Signed in: straight back to the portal, not another assessment. */}
             <Link

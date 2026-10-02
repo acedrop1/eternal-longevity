@@ -19,6 +19,8 @@ import type { Role } from '@/lib/auth';
 export const MFA_COOKIE = 'el_mfa';
 export const CODE_TTL_MINUTES = 10;
 export const MAX_ATTEMPTS = 5;
+/** Codes one account can be sent in an hour, however they are asked for. */
+export const MAX_CODES_PER_HOUR = 10;
 /** Matches the absolute session ceiling, so the two expire together. */
 export const MFA_HOURS = 12;
 
@@ -114,6 +116,18 @@ export async function issueCode(
   if (!mfaConfigured()) return false;
   const db = createSupabaseAdminClient();
 
+  /*
+   * Each code is five more guesses, and the per-IP limit is per instance and
+   * per address. This cap is per account and in the database, so neither
+   * rotating IPs nor landing on a fresh instance buys more codes.
+   */
+  const { count } = await db
+    .from('mfa_codes')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', new Date(Date.now() - 3_600_000).toISOString());
+  if ((count ?? 0) >= MAX_CODES_PER_HOUR) return false;
+
   // randomInt is drawn from the CSPRNG; Math.random is not, and a predictable
   // second factor is not a second factor.
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
@@ -152,32 +166,55 @@ export async function checkCode(
   code: string,
 ): Promise<CheckResult> {
   if (!mfaConfigured()) return 'unavailable';
-  const db = createSupabaseAdminClient();
+  return checkCodeWith(createSupabaseAdminClient(), userId, hash(code.trim()));
+}
 
-  const { data: row } = await db
-    .from('mfa_codes')
-    .select('id, code_hash, expires_at, attempts, used_at')
-    .eq('user_id', userId)
-    .is('used_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+type MfaDb = Pick<ReturnType<typeof createSupabaseAdminClient>, 'from'>;
 
-  if (!row) return 'expired';
-  if (new Date(row.expires_at).getTime() < Date.now()) return 'expired';
-  if (row.attempts >= MAX_ATTEMPTS) return 'locked';
+/**
+ * The check itself, on any client (tests pass a fake). An attempt is claimed
+ * before the code is compared: a conditional update from the attempts count
+ * just read, guarded by attempts < MAX_ATTEMPTS. Requests racing on one row
+ * each need their own claim, so no more than MAX_ATTEMPTS comparisons are
+ * ever made against one code, however many arrive at once.
+ */
+export async function checkCodeWith(db: MfaDb, userId: string, codeHash: string): Promise<CheckResult> {
+  for (let tries = 0; tries < 3; tries++) {
+    const { data: row } = await db
+      .from('mfa_codes')
+      .select('id, code_hash, expires_at, attempts, used_at')
+      .eq('user_id', userId)
+      .is('used_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (hash(code.trim()) !== row.code_hash) {
-    await db
+    if (!row) return 'expired';
+    if (new Date(row.expires_at).getTime() < Date.now()) return 'expired';
+    if (row.attempts >= MAX_ATTEMPTS) return 'locked';
+
+    const { data: claimed } = await db
       .from('mfa_codes')
       .update({ attempts: row.attempts + 1 })
-      .eq('id', row.id);
-    return row.attempts + 1 >= MAX_ATTEMPTS ? 'locked' : 'wrong';
-  }
+      .eq('id', row.id)
+      .eq('attempts', row.attempts)
+      .lt('attempts', MAX_ATTEMPTS)
+      .is('used_at', null)
+      .select('id')
+      .maybeSingle();
+    if (!claimed) continue; // Another request took this attempt; read again.
 
-  await db
-    .from('mfa_codes')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', row.id);
-  return 'ok';
+    if (codeHash !== row.code_hash) return row.attempts + 1 >= MAX_ATTEMPTS ? 'locked' : 'wrong';
+
+    // Single use, also under a race: only one request marks it used.
+    const { data: used } = await db
+      .from('mfa_codes')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', row.id)
+      .is('used_at', null)
+      .select('id')
+      .maybeSingle();
+    return used ? 'ok' : 'expired';
+  }
+  return 'wrong';
 }

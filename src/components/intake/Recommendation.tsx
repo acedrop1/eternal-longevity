@@ -97,7 +97,7 @@ export function RecommendationPicker({
         <ProductRow p={chosen} />
       </div>
 
-      <p className="mb-3 mt-6 text-[13px] font-medium text-ink/55">Choose your plan</p>
+      <p className="mb-3 mt-6 text-[13px] font-medium text-ink/65">Choose your plan</p>
       <PlanOptions tiers={chosen.tiers} selected={cadence} onSelect={(key) => onChange({ productId: chosen.id, cadence: key })} />
       <p className="mt-2 text-[14px] tabular-nums text-ink-soft">+ ${chosen.shipping} shipping each shipment</p>
 
@@ -107,7 +107,7 @@ export function RecommendationPicker({
 
       {other && (
         <div className="mt-6 rounded-shell p-4 ring-1 ring-ink/10 md:p-5">
-          <p className="mb-3 text-[13px] font-medium text-ink/55">{other === alt ? 'Also a good fit' : 'Our first suggestion'}</p>
+          <p className="mb-3 text-[13px] font-medium text-ink/65">{other === alt ? 'Also a good fit' : 'Our first suggestion'}</p>
           <ProductRow p={other} size="sm" />
           {other === alt && rec?.reason && <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">{rec.reason}</p>}
           <button

@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { latestIntakeAnswers } from '@/lib/intake-status';
 import { loadCart } from '@/lib/profile-db';
 import { intakeCovers } from '@/lib/purchase-rules';
+import { heldProductsFor } from '@/lib/held-products';
 import { getAnyShopProduct } from '@/lib/shopProducts';
 
 export const metadata: Metadata = {
@@ -49,10 +50,17 @@ export default async function CheckoutPage() {
    * Every product in the cart needs its own questions answered before it can
    * be checked out, not just an assessment for something. Stop here, before an
    * address and a card, rather than at Place order (which enforces it too).
-   * Demo stores no intakes, so it skips this.
+   * Demo stores no intakes, so it skips this. Products they already have
+   * (an order on its way, a plan) are flagged on their lines up front too.
    */
+  let held: Record<string, 'order' | 'plan'> = {};
   if (supabaseAdminConfigured()) {
-    const [{ items }, answers] = await Promise.all([loadCart(), latestIntakeAnswers(user.id)]);
+    const [{ items }, answers, holding] = await Promise.all([
+      loadCart(),
+      latestIntakeAnswers(user.id),
+      heldProductsFor(user.id),
+    ]);
+    held = Object.fromEntries([...holding].filter(([id]) => items.some((i) => i.productId === id)));
     const owed = [...new Set(items.map((i) => i.productId))]
       .filter((id) => !intakeCovers(answers, id))
       .map((id) => ({ id, name: getAnyShopProduct(id)?.name ?? 'This treatment' }));
@@ -109,6 +117,7 @@ export default async function CheckoutPage() {
         defaultState={prefill.state}
         googlePlacesKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}
         savedCard={savedCard}
+        held={held}
         stripePublishableKey={
           (process.env.STRIPE_PUBLISHABLE_KEY ?? '').startsWith('pk_')
             ? (process.env.STRIPE_PUBLISHABLE_KEY as string)

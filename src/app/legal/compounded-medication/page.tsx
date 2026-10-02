@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -7,10 +8,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Compounded Medication Disclosure',
-  description: 'What compounded means, why these preparations are not FDA-approved, and what off-label prescribing is.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/compounded-medication',
+  'Compounded Medication Disclosure',
+  'What compounded means, why these preparations are not FDA-approved, and what off-label prescribing is.',
+);
 
 export default function CompoundedMedicationPage() {
   return (
@@ -23,7 +25,7 @@ export default function CompoundedMedicationPage() {
           heading: `What Compounding Is`,
           paragraphs: [
             `Compounding is the preparation of a medication by a licensed pharmacist to meet the needs of an individual patient, pursuant to a valid prescription written for that patient by a licensed prescriber. Nothing is made in advance and nothing is pulled off a shelf.`,
-            `Our preparations are made under section 503A of the Federal Food, Drug and Cosmetic Act by MedShiftRx, a 503A pharmacy that is licensed and inspected by its state board of pharmacy.`,
+            `Our preparations are made under section 503A of the Federal Food, Drug and Cosmetic Act by a state-licensed 503A compounding pharmacy (named on your prescription label), which is licensed and inspected by its state board of pharmacy.`,
           ],
         },
         {

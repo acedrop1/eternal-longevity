@@ -10,7 +10,7 @@ import { CREDENTIALS, type PrescriberRecord } from '@/lib/prescriberTypes';
 import { cn } from '@/lib/utils';
 
 const field =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30';
+  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 const label = 'mb-1.5 block text-[13px] font-medium text-ink/70';
 
 /**
@@ -213,7 +213,7 @@ export function PrescriberForm({
           className={cn(
             'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
             busy || !dirty
-              ? 'cursor-not-allowed bg-ink/10 text-ink/55'
+              ? 'cursor-not-allowed bg-ink/10 text-ink/65'
               : 'bg-ink text-white hover:bg-ink/85',
           )}
         >

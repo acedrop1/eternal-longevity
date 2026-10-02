@@ -76,7 +76,7 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-[13px] text-ink/55">
+      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-[13px] text-ink/65">
         <Link href="/portal/admin/products" className="transition-colors hover:text-ink">
           Products
         </Link>

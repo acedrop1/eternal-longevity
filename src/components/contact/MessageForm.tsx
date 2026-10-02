@@ -12,7 +12,7 @@ import { SUPPORT_EMAIL } from '@/lib/site';
  */
 const TOPICS = [
   { value: 'clinical', label: 'Support question (existing member)' },
-  { value: 'product', label: 'Question about a protocol' },
+  { value: 'product', label: 'Question about a treatment' },
   { value: 'eligibility', label: 'Eligibility / state availability' },
   { value: 'billing', label: 'Billing or order issue' },
   { value: 'press', label: 'Press / partnerships' },
@@ -20,7 +20,7 @@ const TOPICS = [
 ];
 
 const fieldClass =
-  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-shadow focus:bg-white focus:outline-none focus:ring-ink/20';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/55 transition-shadow focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/60';
 const labelClass = 'mb-2 block text-[13px] font-medium text-ink/70';
 
 export function MessageForm() {
@@ -113,7 +113,7 @@ export function MessageForm() {
           </select>
           <ChevronDown
             aria-hidden
-            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/55"
+            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/65"
             strokeWidth={1.75}
           />
         </div>
@@ -151,7 +151,7 @@ export function MessageForm() {
       )}
 
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-sm text-[13px] leading-relaxed text-ink/55">
+        <p className="max-w-sm text-[13px] leading-relaxed text-ink/65">
           Please don&apos;t share urgent medical concerns here. Call 911 or go to the nearest ER first.
         </p>
         <button

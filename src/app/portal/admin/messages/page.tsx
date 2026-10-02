@@ -33,7 +33,7 @@ export default async function AdminMessagesPage() {
       nav={ADMIN_NAV}
     >
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Member messages
         </p>
         <h1

@@ -53,7 +53,7 @@ export default async function DoctorPortalPage() {
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mb-2 text-[13px] font-medium text-ink/55">
+          <p className="mb-2 text-[13px] font-medium text-ink/65">
             Clinical queue
           </p>
           <h1

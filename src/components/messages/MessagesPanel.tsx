@@ -108,7 +108,7 @@ export function MessagesPanel({
                 />
                 {c.label}
               </span>
-              <span className="mt-0.5 block truncate font-medium text-[12px] text-ink/50">{c.hint}</span>
+              <span className="mt-0.5 block truncate font-medium text-[12px] text-ink/60">{c.hint}</span>
             </button>
           );
         })}
@@ -117,7 +117,7 @@ export function MessagesPanel({
       {/* thread */}
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {all.length === 0 && (
-          <p className="mx-auto max-w-sm pt-10 text-center text-[15px] leading-relaxed text-ink/55">
+          <p className="mx-auto max-w-sm pt-10 text-center text-[15px] leading-relaxed text-ink/65">
             {channel === 'doctor'
               ? 'Message your prescriber about your treatment. Replies usually come within one business day.'
               : 'Ask us anything about your order, billing or shipping.'}
@@ -135,13 +135,13 @@ export function MessagesPanel({
                 }`}
               >
                 {!mine && (
-                  <span className="mb-0.5 block font-medium text-[12px] text-ink/55">
+                  <span className="mb-0.5 block font-medium text-[12px] text-ink/65">
                     {channel === 'doctor' ? 'Doctor' : 'Support'}
                   </span>
                 )}
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
                 <span
-                  className={`mt-1 block font-medium text-[11px] tabular-nums ${mine ? 'text-white/60' : 'text-ink/45'}`}
+                  className={`mt-1 block font-medium text-[11px] tabular-nums ${mine ? 'text-white/60' : 'text-ink/60'}`}
                 >
                   {fmtTime(m.createdAt)}
                 </span>
@@ -177,7 +177,7 @@ export function MessagesPanel({
             aria-label={
               channel === 'doctor' ? 'Message your doctor' : 'Message support'
             }
-            className="min-w-0 flex-1 resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-ink/30"
+            className="min-w-0 flex-1 resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30"
           />
           <button
             onClick={send}

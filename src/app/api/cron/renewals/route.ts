@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/cron-auth';
 import {
   dueSubscriptionIds,
   renewSubscription,
   type RenewalOutcome,
 } from '@/lib/refills';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
+import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { orderRef } from '@/lib/format';
+import { SITE_URL } from '@/lib/site';
 
 /**
  * Ship and charge the plans that are due today.
@@ -25,19 +29,9 @@ const BATCH = 50;
 // Stop taking new charges with a minute of the 300s budget left.
 const TIME_BUDGET_MS = 240_000;
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  /*
-   * No secret means nobody gets in, not everybody. This fired real charges and
-   * real email on an unauthenticated POST whenever the variable was missing —
-   * which is exactly when you least want it to.
-   */
-  if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
-}
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!supabaseAdminConfigured()) {
@@ -79,6 +73,33 @@ export async function GET(req: NextRequest) {
     acc[o.result] = (acc[o.result] ?? 0) + 1;
     return acc;
   }, {});
+
+  /*
+   * Every renewal that did not charge, in one email. A failed card already
+   * alerts on its own; a plan paused for review or a renewal that threw did
+   * not, and nobody knew until the member asked where their refill was.
+   */
+  const problems = outcomes.filter((o) => o.result !== 'charged');
+  if (problems.length) {
+    try {
+      await sendEmail({
+        to: SUPPORT_EMAIL,
+        subject: `${problems.length} ${problems.length === 1 ? 'renewal' : 'renewals'} did not charge today`,
+        html: noticeEmail({
+          eyebrow: 'Renewals',
+          heading: `${problems.length} of ${outcomes.length} renewals need a look`,
+          body: 'Charged renewals are not listed. Plans needing review are paused until someone acts.',
+          rows: problems.map((o) => [
+            o.orderNumber ? orderRef(o.orderNumber) : `Plan ${o.subscriptionId.slice(0, 8)}`,
+            [o.result.replace(/_/g, ' '), o.detail].filter(Boolean).join(' · '),
+          ]),
+          cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
+        }),
+      });
+    } catch {
+      // The outcomes are in the response and on each order's timeline.
+    }
+  }
 
   return NextResponse.json({ due, ...tally, outcomes });
 }

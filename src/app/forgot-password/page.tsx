@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import {
@@ -13,7 +14,8 @@ import { supabaseConfigured } from '@/lib/env';
 import { loginHref, safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
-  title: 'Reset password',
+  ...pageMeta('/forgot-password', 'Reset password', 'Request a link to reset the password on your Eternal Longevity account.'),
+  robots: { index: false },
 };
 
 interface ForgotPageProps {

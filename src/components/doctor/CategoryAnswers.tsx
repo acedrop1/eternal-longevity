@@ -62,7 +62,7 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
                       <img src={p.url} alt="" className="aspect-square w-full bg-white object-cover" />
                     </a>
                   ) : (
-                    <div className="grid aspect-square w-full place-items-center rounded-thumb bg-white p-2 text-center text-[12px] text-ink/55 ring-1 ring-ink/10">
+                    <div className="grid aspect-square w-full place-items-center rounded-thumb bg-white p-2 text-center text-[12px] text-ink/65 ring-1 ring-ink/10">
                       Photo unavailable
                     </div>
                   )}
@@ -86,7 +86,7 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
                       {f.label}
                     </a>
                   ) : (
-                    <span className="text-ink/55">{f.label} (unavailable)</span>
+                    <span className="text-ink/65">{f.label} (unavailable)</span>
                   )}
                 </li>
               ))}

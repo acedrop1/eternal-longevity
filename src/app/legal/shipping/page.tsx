@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -8,11 +9,11 @@ import {
 } from '@/lib/site';
 import { SHIPPING_PRICE } from '@/lib/shipping';
 
-export const metadata: Metadata = {
-  title: 'Shipping & Delivery Policy',
-  description:
-    'How long orders take, how they ship, where we deliver, and what to do if a package is late, lost, or damaged.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/shipping',
+  'Shipping & Delivery Policy',
+  'How long orders take, how they ship, where we deliver, and what to do if a package is late, lost, or damaged.',
+);
 
 /**
  * Card processors want a fulfilment policy with real timeframes on the site

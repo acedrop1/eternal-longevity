@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
@@ -7,10 +8,11 @@ import {
   SERVICE_AREA,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Adverse Event Reporting',
-  description: 'How to report a side effect or reaction to us and to the FDA.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/adverse-events',
+  'Adverse Event Reporting',
+  'How to report a side effect or reaction to us and to the FDA.',
+);
 
 export default function AdverseEventsPage() {
   return (

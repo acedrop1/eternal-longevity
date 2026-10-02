@@ -51,6 +51,7 @@ export default async function AdminQueuePage() {
 
   const live = supabaseAdminConfigured();
   let intakes: IntakeRowView[] = [];
+  let failed = false;
 
   if (live) {
     try {
@@ -83,13 +84,14 @@ export default async function AdminQueuePage() {
       }
     } catch {
       intakes = [];
+      failed = true;
     }
   }
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Members · applications
         </p>
         <h1
@@ -107,7 +109,19 @@ export default async function AdminQueuePage() {
 
       {/* Intakes come from Supabase in live mode. Orders now do too, so the
           admin sees both queues rather than one or the other. */}
-      {live && <AdminIntakeQueue intakes={intakes} />}
+      <div className="mt-6">
+        {!live ? (
+          <p className="rounded-shell bg-milk p-8 text-center text-sm text-ink/60">
+            Applications appear here once Supabase is connected.
+          </p>
+        ) : failed ? (
+          <p role="alert" className="rounded-shell border border-red-600/20 bg-red-50 p-8 text-center text-sm text-red-700">
+            Applications could not be loaded. Refresh to try again.
+          </p>
+        ) : (
+          <AdminIntakeQueue intakes={intakes} />
+        )}
+      </div>
     </PortalShell>
   );
 }

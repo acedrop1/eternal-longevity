@@ -39,7 +39,7 @@ export default async function PublicShopPage() {
           <nav aria-label="Categories" className="mb-12 flex flex-wrap gap-2 md:mb-16">
             {categories.map((c) => (
               <a key={c.slug} href={`#${c.slug}`} className="rounded-full bg-milk px-4 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-butter">
-                {c.name} <span className="font-medium text-ink/50">{c.items.length}</span>
+                {c.name} <span className="font-medium text-ink/60">{c.items.length}</span>
               </a>
             ))}
           </nav>

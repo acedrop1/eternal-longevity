@@ -80,10 +80,11 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
     return (
       <div className="rounded-shell bg-milk p-10 text-center">
         <h2 className="mb-2 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-          Queue is clear
+          No open applications
         </h2>
-        <p className="text-sm text-ink/65">
-          No intakes are waiting for triage.
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-ink/65">
+          Members who finish the intake appear here. Nothing here needs you
+          before an order: the prescriber reviews each order under Orders.
         </p>
       </div>
     );
@@ -98,7 +99,7 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm leading-relaxed text-ink/55">
+      <p className="text-sm leading-relaxed text-ink/65">
         Nothing to action here. Everyone below can already shop; this is the
         record of who signed up and what they answered.
       </p>
@@ -125,12 +126,12 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search email or case"
           aria-label="Search applications"
-          className="ml-auto w-full rounded-inner bg-white px-4 py-2 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30 sm:w-56"
+          className="ml-auto w-full rounded-inner bg-white px-4 py-2 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30 sm:w-56"
         />
       </div>
 
       {shown.length === 0 && (
-        <p className="rounded-shell bg-milk p-8 text-center text-sm text-ink/55">
+        <p className="rounded-shell bg-milk p-8 text-center text-sm text-ink/65">
           Nothing matches that.
         </p>
       )}
@@ -180,7 +181,7 @@ function IntakeCard({
     <article className="rounded-shell bg-milk p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="mb-1 flex flex-wrap items-center gap-2 text-[12px] text-ink/55">
+          <div className="mb-1 flex flex-wrap items-center gap-2 text-[12px] text-ink/65">
             <span className="text-ink/80">
               {intake.caseId.toUpperCase()}
             </span>
@@ -192,7 +193,7 @@ function IntakeCard({
           </h2>
           {/* Whether they picked a product first or came through Apply Now
               changes what the prescriber is being asked to decide. */}
-          <p className="mt-1 text-xs text-ink/55">
+          <p className="mt-1 text-xs text-ink/65">
             {intake.source ? (
               <>
                 Started from{' '}
@@ -234,7 +235,7 @@ function IntakeCard({
           </button>
           {showAnswers && intake.categories.length > 0 && (
             <div className="mt-3 rounded-inner border border-ink/10 bg-white p-4">
-              <div className="mb-2 text-[13px] font-medium text-ink/55">Category answers</div>
+              <div className="mb-2 text-[13px] font-medium text-ink/65">Category answers</div>
               <CategoryAnswers sections={intake.categories} />
             </div>
           )}
@@ -245,7 +246,7 @@ function IntakeCard({
                   key={i}
                   className="flex items-start justify-between gap-4 border-b border-ink/10 pb-2 text-sm last:border-0 last:pb-0"
                 >
-                  <dt className="text-ink/55">{a.label}</dt>
+                  <dt className="text-ink/65">{a.label}</dt>
                   <dd className="max-w-[60%] text-right text-ink/90">
                     {a.value}
                   </dd>
@@ -330,7 +331,7 @@ function IntakeCard({
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="The patient will see this note…"
-              className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/40 focus:outline-none focus:ring-ink/30"
+              className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30"
             />
           )}
           <div className="mt-4 flex flex-wrap items-center gap-2">

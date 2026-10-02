@@ -234,7 +234,8 @@ export async function renewSubscription(
         productName: sub.product_name,
         // The renewal path: a signed-in member's assessment skips what is on
         // file, and a plan in review no longer blocks a new order for it.
-        portalUrl: `${SITE_URL}/start?product=${encodeURIComponent(String(sub.product_id))}`,
+        // ?renew= shows the renewal banner; placing the order closes this plan.
+        portalUrl: `${SITE_URL}/start?product=${encodeURIComponent(String(sub.product_id))}&renew=${encodeURIComponent(sub.id)}`,
       });
       try {
         await sendEmail({ to: who.email, subject: msg.subject, html: msg.html });
@@ -470,9 +471,21 @@ export async function paymentsOwed(userId: string): Promise<OwedPayment[]> {
   });
 }
 
+export interface ResumeResult {
+  /** Plans switched back on. */
+  plans: number;
+  /** Approved first orders charged to the card on file. */
+  charged: number;
+  /** Approved first orders that didn't charge, so a pay link went out. */
+  payLinks: number;
+  /** Why nothing happened, when nothing did: no card saved, or no plan paused by a failed charge. */
+  reason?: 'noCard' | 'notPaused';
+}
+
 /**
- * The member has saved a card: restart what a failed charge stopped. No
- * Stripe webhook needed, the account page calls this.
+ * The member has saved a card: restart what a failed charge stopped. Runs only
+ * from the account page's POST (a server action), never on a page load:
+ * it can charge the card.
  *
  * A failed refill is closed (it never took money) and its plan switched back
  * on, so the next renewals run, within a day, charges the card on file for
@@ -483,11 +496,11 @@ export async function resumeAfterNewCard(user: {
   id: string;
   email: string;
   name?: string;
-}): Promise<{ plans: number; payLinks: number }> {
-  const done = { plans: 0, payLinks: 0 };
-  if (!stripeConfigured()) return done;
+}): Promise<ResumeResult> {
+  const done: ResumeResult = { plans: 0, charged: 0, payLinks: 0 };
+  if (!stripeConfigured()) return { ...done, reason: 'notPaused' };
   const owed = await paymentsOwed(user.id);
-  if (!owed.length) return done;
+  if (!owed.length) return { ...done, reason: 'notPaused' };
 
   // Still no card: switching a plan back on would only fail again tomorrow.
   const card = owed.some((o) => o.refill)
@@ -504,8 +517,10 @@ export async function resumeAfterNewCard(user: {
        * the same as at approval. A decline there emails the pay link itself.
        */
       const charge = await chargeOnApproval(o.orderNumber);
-      if (charge.charged) await autoSubmitToPharmacy(o.orderNumber);
-      else if (charge.ok) done.payLinks++;
+      if (charge.charged) {
+        done.charged++;
+        await autoSubmitToPharmacy(o.orderNumber);
+      } else if (charge.ok) done.payLinks++;
       continue;
     }
     if (!card) continue;
@@ -535,7 +550,17 @@ export async function resumeAfterNewCard(user: {
       .select('id');
     done.plans += back?.length ?? 0;
   }
-  return done;
+  return { ...done, reason: resumeReason(done, owed.some((o) => o.refill), Boolean(card)) };
+}
+
+/** Why a restart did nothing, or undefined when something happened. Pure, for checks. */
+export function resumeReason(
+  done: Pick<ResumeResult, 'plans' | 'charged' | 'payLinks'>,
+  hadRefill: boolean,
+  hadCard: boolean,
+): ResumeResult['reason'] {
+  if (done.plans || done.charged || done.payLinks) return undefined;
+  return hadRefill && !hadCard ? 'noCard' : 'notPaused';
 }
 
 /** Subscriptions whose next cycle is due. */

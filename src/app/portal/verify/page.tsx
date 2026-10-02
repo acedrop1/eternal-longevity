@@ -25,7 +25,7 @@ export default async function VerifyIdPage() {
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[13px] font-medium text-ink/55">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[13px] font-medium text-ink/65">
         <Link href="/portal" className="transition-colors hover:text-ink">
           Dashboard
         </Link>

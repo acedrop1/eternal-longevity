@@ -7,10 +7,10 @@ import {
   getPhysicianName,
   isFailedRefill,
   memberNote,
-  statusLabel,
+  memberStatusLabel,
+  STATUS_TONE,
   trackingUrl,
   type Order,
-  type OrderStatus,
 } from '@/lib/orders';
 import {
   EmptyState,
@@ -19,36 +19,19 @@ import {
   btnSecondary,
   inset,
   panel,
-  sentenceCase,
-  type Tone,
 } from '@/components/portal/ui';
 import { orderRef } from '@/lib/format';
 
-// Same semantic colours as before, as dot + label chips.
-const STATUS_TONE: Record<OrderStatus, Tone> = {
-  pending: 'neutral',
-  'pending-admin': 'neutral',
-  'denied-admin': 'error',
-  assigned: 'gold',
-  // Waiting on the member: the one state they have to act on.
-  signed: 'warn',
-  paid: 'info',
-  'declined-clinical': 'error',
-  compounding: 'info',
-  shipped: 'gold',
-  delivered: 'muted',
-  canceled: 'muted',
-  refunded: 'muted',
-};
-
-/** Ended without shipping on a decision: nothing to reorder from here. */
-const NO_REORDER: string[] = ['denied-admin', 'declined-clinical'];
+/** Finished orders: the ones it makes sense to order again. In-flight ones are still coming. */
+const REORDERABLE: string[] = ['delivered', 'canceled', 'refunded'];
 
 interface MemberOrdersListProps {
   memberEmail: string;
+  /** Products on an active or paused plan: "Manage plan" instead of "Reorder". */
+  planProductIds?: string[];
 }
 
-export function MemberOrdersList({ memberEmail }: MemberOrdersListProps) {
+export function MemberOrdersList({ memberEmail, planProductIds = [] }: MemberOrdersListProps) {
   const { ordersByMember } = useOrders();
   const orders = ordersByMember(memberEmail);
 
@@ -70,13 +53,13 @@ export function MemberOrdersList({ memberEmail }: MemberOrdersListProps) {
   return (
     <div className="space-y-3">
       {orders.map((o) => (
-        <MemberOrderCard key={o.id} order={o} />
+        <MemberOrderCard key={o.id} order={o} onPlan={o.lines.some((l) => planProductIds.includes(l.productId))} />
       ))}
     </div>
   );
 }
 
-function MemberOrderCard({ order }: { order: Order }) {
+function MemberOrderCard({ order, onPlan }: { order: Order; onPlan: boolean }) {
   const placed = new Date(order.placedAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -106,7 +89,7 @@ function MemberOrderCard({ order }: { order: Order }) {
             </div>
           )}
           <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-x-2 text-[13px] font-medium tabular-nums text-ink/55">
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 text-[13px] font-medium tabular-nums text-ink/65">
               <span className="text-ink">{orderRef(order.id)}</span>
               <span aria-hidden>·</span>
               <span>Placed {placed}</span>
@@ -130,7 +113,7 @@ function MemberOrderCard({ order }: { order: Order }) {
         </div>
         <div className="flex items-center justify-between gap-3 sm:block sm:flex-shrink-0 sm:text-right">
           <StatusChip tone={STATUS_TONE[order.status] ?? 'neutral'}>
-            {sentenceCase(statusLabel(order.status))}
+            {memberStatusLabel(order)}
           </StatusChip>
           <div className="text-[17px] font-medium text-ink tabular-nums sm:mt-2">
             ${order.total}
@@ -160,7 +143,7 @@ function MemberOrderCard({ order }: { order: Order }) {
       {order.tracking && (
         <div className={`${inset} mt-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="min-w-0">
-            <div className="font-medium text-[12px] text-ink/55">
+            <div className="font-medium text-[12px] text-ink/65">
               {order.carrier ? `${order.carrier} · ` : ''}Tracking
             </div>
             <div className="mt-0.5 truncate font-medium text-[14px] text-ink">
@@ -193,7 +176,7 @@ function MemberOrderCard({ order }: { order: Order }) {
                   key={u.id}
                   className={`${inset} p-3`}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-2 font-medium text-[12px] text-ink/55">
+                  <div className="mb-1 flex items-center justify-between gap-2 font-medium text-[12px] text-ink/65">
                     <span className="text-ink/80">{u.author}</span>
                     <span className="tabular-nums">{relativeTime(u.at)}</span>
                   </div>
@@ -207,7 +190,11 @@ function MemberOrderCard({ order }: { order: Order }) {
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-5">
-        {productId && !NO_REORDER.includes(order.status) && (
+        {onPlan ? (
+          <Link href="/portal/subscriptions" className={btnSecondary}>
+            Manage plan
+          </Link>
+        ) : productId && REORDERABLE.includes(order.status) && (
           <Link
             href={`/shop/${encodeURIComponent(productId)}`}
             className={btnSecondary}

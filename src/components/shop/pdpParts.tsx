@@ -9,6 +9,7 @@ import {
   type ShopProduct,
 } from '@/lib/shopProducts';
 import { shippingPriceFor } from '@/lib/shipping';
+import { ALL_ITEMS } from '@/lib/lineup';
 import { FDA_DISCLAIMER, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPORT_HOURS } from '@/lib/site';
 
 /**
@@ -72,7 +73,7 @@ export const billedEvery = (t: CadenceTier) =>
 /** "$149/mo billed monthly" beside a longer plan's lower rate: a labelled comparison, not a strike-through sale price. */
 export function MonthlyRate({ product, active, className }: { product: ShopProduct; active: CadenceTier; className?: string }) {
   if (active.key === 'monthly' || active.key === 'once' || active.perMonth >= product.pricing.monthly) return null;
-  return <span className={cn('text-ink/50', className)}>vs ${product.pricing.monthly}/mo billed monthly</span>;
+  return <span className={cn('text-ink/60', className)}>vs ${product.pricing.monthly}/mo billed monthly</span>;
 }
 
 /** Storage and shipping for a product (see ShopProduct.storage). */
@@ -145,7 +146,7 @@ export function PlanSegments({
             <span className="text-[13px] font-medium">{t.label}</span>
             <span className="mt-0.5 text-[15px] font-semibold tabular-nums">
               ${t.perMonth}
-              {t.key !== 'once' && <span className={cn('text-[11px] font-normal', on ? 'text-white/70' : 'text-ink/55')}>/mo</span>}
+              {t.key !== 'once' && <span className={cn('text-[11px] font-normal', on ? 'text-white/70' : 'text-ink/65')}>/mo</span>}
             </span>
           </button>
         );
@@ -211,7 +212,7 @@ export function PlanOptions({
                   ${t.perMonth}
                   {t.key !== 'once' && <span className="text-[13px] font-normal text-ink-soft">/mo</span>}
                 </span>
-                <span className="block text-[12px] text-ink/55">
+                <span className="block text-[12px] text-ink/65">
                   {t.key === 'once' ? 'no subscription' : `$${t.total} billed`}
                 </span>
               </span>
@@ -237,7 +238,7 @@ export function PlanOptions({
 /** Compounded-medication disclosure. Sits with the claims, not only in the footer. */
 export function Disclosure() {
   return (
-    <p className="text-[12px] leading-relaxed text-ink/55">
+    <p className="text-[12px] leading-relaxed text-ink/65">
       Rx only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or
       quality. {FDA_DISCLAIMER} Prescribed only after review by a licensed prescriber. Individual results vary. Product images are for illustration;
       your medication ships in the compounding pharmacy&rsquo;s own labelled vial.{' '}
@@ -279,7 +280,7 @@ function Bullets({ items }: { items: string[] }) {
 function Spec({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-t border-ink/10 py-3 first:border-t-0 first:pt-0">
-      <dt className="text-[13px] font-medium text-ink/55">{label}</dt>
+      <dt className="text-[13px] font-medium text-ink/65">{label}</dt>
       <dd className="text-right text-ink">{value}</dd>
     </div>
   );
@@ -291,7 +292,10 @@ function Spec({ label, value }: { label: string; value: string }) {
  * `ordering` adds the member cart flow (the public page has <HowItWorks /> instead).
  */
 export function ProductDetails({ product, ordering = false }: { product: ShopProduct; ordering?: boolean }) {
-  const categoryLabel = SHOP_CATEGORIES.find((c) => c.key === product.category)?.label ?? product.category;
+  const categoryLabel =
+    ALL_ITEMS.find((x) => x.item.live === product.id)?.category.name ??
+    SHOP_CATEGORIES.find((c) => c.key === product.category)?.label ??
+    product.category;
   return (
     <div className="space-y-16 md:space-y-24">
       <section className="grid gap-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
@@ -333,7 +337,7 @@ export function ProductDetails({ product, ordering = false }: { product: ShopPro
                   ['Compounded and shipped', 'The pharmacy typically ships within a few business days of approval.'],
                 ].map(([t, b], i) => (
                   <li key={t} className="flex gap-3">
-                    <span className="pt-0.5 text-[13px] font-semibold tabular-nums text-ink/45">0{i + 1}</span>
+                    <span className="pt-0.5 text-[13px] font-semibold tabular-nums text-ink/60">0{i + 1}</span>
                     <span>
                       <span className="block font-medium text-ink">{t}</span>
                       {b}
@@ -374,7 +378,7 @@ export function ProductDetails({ product, ordering = false }: { product: ShopPro
             </p>
             <Bullets items={product.contraindications} />
           </Row>
-          <p className="max-w-2xl pt-3 text-[13px] leading-relaxed text-ink/55">
+          <p className="max-w-2xl pt-3 text-[13px] leading-relaxed text-ink/65">
             Not exhaustive and not medical advice. Talk to your own healthcare provider about your history and
             medications before starting.
           </p>

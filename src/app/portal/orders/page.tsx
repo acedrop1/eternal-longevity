@@ -38,18 +38,31 @@ function flattenItems(raw: unknown): { label: string; detail: string }[] {
   });
 }
 
-export default async function OrdersPage() {
+/** Back from a "Complete payment" link that couldn't open a pay page (orders/pay/[ref]). */
+const PAY_NOTICE: Record<string, string> = {
+  paid: 'That order is already paid. Nothing more to do.',
+  closed: 'That order is closed, so there’s nothing to pay. Its status is below.',
+  error: 'We couldn’t open the payment page just now. Please try again in a minute, or message us.',
+};
+
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pay?: string }>;
+}) {
+  const { pay } = await searchParams;
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const live = supabaseAdminConfigured();
   let orders: MemberOrderView[] = [];
+  let planProductIds: string[] = [];
 
   if (live) {
     try {
       const db = createSupabaseAdminClient();
-      const [{ data }, { data: placed }] = await Promise.all([
+      const [{ data }, { data: placed }, { data: plans }] = await Promise.all([
         db
           .from('fulfillment_orders')
           .select(
@@ -58,7 +71,9 @@ export default async function OrdersPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false }),
         db.from('orders').select('order_number').eq('user_id', user.id),
+        db.from('subscriptions').select('product_id').eq('user_id', user.id).in('status', ['active', 'paused']),
       ]);
+      planProductIds = (plans ?? []).map((p) => String(p.product_id));
       // FUL-<order number> is the pharmacy side of an order already listed
       // above it; only shipments with no order of their own show here.
       const listed = new Set((placed ?? []).map((o) => `FUL-${o.order_number}`));
@@ -87,7 +102,12 @@ export default async function OrdersPage() {
 
       {/* Two complementary views: the workflow orders the member placed, and
           the pharmacy shipment history from fulfillment_orders. */}
-      <MemberOrdersList memberEmail={user.email} />
+      {pay && PAY_NOTICE[pay] && (
+        <p role="status" className="rounded-inner bg-butter-soft px-4 py-3 text-[15px] text-ink ring-1 ring-butter-deep">
+          {PAY_NOTICE[pay]}
+        </p>
+      )}
+      <MemberOrdersList memberEmail={user.email} planProductIds={planProductIds} />
       {live && orders.length > 0 && <MemberOrderHistory orders={orders} />}
     </PortalShell>
   );

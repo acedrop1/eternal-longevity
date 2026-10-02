@@ -6,6 +6,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { noticeEmail, sendEmail } from '@/lib/email';
 import { SUPPORT_EMAIL } from '@/lib/site';
 import { passwordValid } from '@/lib/intakeSchema';
+import { LIMITS, allow } from '@/lib/rate-limit';
 
 export interface AccountResult {
   ok: boolean;
@@ -28,6 +29,10 @@ export async function changePasswordAction(input: {
   if (!user) return { ok: false, message: 'Please sign in again.' };
   if (!supabaseConfigured) {
     return { ok: false, message: 'Not available right now.' };
+  }
+  // The current-password check is a password oracle; limit it like sign-in.
+  if (!(await allow('password-change', LIMITS.login, user.id))) {
+    return { ok: false, message: 'Too many attempts. Please try again in a few minutes.' };
   }
   if (!passwordValid(input.next)) {
     return {

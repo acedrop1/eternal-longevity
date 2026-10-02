@@ -14,6 +14,8 @@
 import { getSession } from '@/lib/auth-server';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import type { Json } from '@/lib/database.types';
+import { draftEntryValid } from '@/lib/intake-input';
+import { LIMITS, allow } from '@/lib/rate-limit';
 
 export interface AssessmentDraft {
   entry: string;
@@ -24,7 +26,6 @@ export interface AssessmentDraft {
 }
 
 const KEEP_DAYS = 30;
-const ENTRY = /^[a-z0-9-]{1,40}$/;
 const MAX_BYTES = 64 * 1024;
 // Never kept: the password, and consents (confirmed fresh at submit).
 const SKIP = new Set(['account', 'password', 'consents']);
@@ -62,7 +63,8 @@ export async function saveAssessmentDraftAction(
   progress: number,
 ): Promise<void> {
   const userId = await memberId();
-  if (!userId || !ENTRY.test(entry) || !answers || typeof answers !== 'object') return;
+  if (!userId || !draftEntryValid(entry) || !answers || typeof answers !== 'object') return;
+  if (!(await allow('drafts', LIMITS.drafts, userId))) return;
   const kept = Object.fromEntries(Object.entries(answers).filter(([k]) => !SKIP.has(k)));
   if (JSON.stringify(kept).length > MAX_BYTES) return;
   const row = {
@@ -90,12 +92,18 @@ export async function saveAssessmentDraftAction(
     { onConflict: 'user_id,entry' },
   );
   if (error) console.error('[drafts] save failed:', error.message);
+  // Health answers are not kept past their use: drop this member's stale drafts.
+  await db
+    .from('assessment_drafts')
+    .delete()
+    .eq('user_id', userId)
+    .lt('updated_at', new Date(Date.now() - KEEP_DAYS * 864e5).toISOString());
 }
 
 /** The caller's draft for one entry point, if recent. */
 export async function getAssessmentDraft(entry: string): Promise<AssessmentDraft | null> {
   const userId = await memberId();
-  if (!userId || !ENTRY.test(entry)) return null;
+  if (!userId || !draftEntryValid(entry)) return null;
   if (!supabaseAdminConfigured()) {
     const d = demoDrafts.get(`${userId}:${entry}`);
     return d && fresh(d.updatedAt) ? d : null;
@@ -143,7 +151,7 @@ export async function listAssessmentDrafts(): Promise<AssessmentDraft[]> {
 /** Submitted: the draft for that entry point is done with. */
 export async function deleteAssessmentDraft(userId: string, entry: string): Promise<void> {
   // Called from the submit action with the session's own id; refuse anyone else's.
-  if ((await memberId()) !== userId || !ENTRY.test(entry)) return;
+  if ((await memberId()) !== userId || !draftEntryValid(entry)) return;
   if (!supabaseAdminConfigured()) {
     demoDrafts.delete(`${userId}:${entry}`);
     return;

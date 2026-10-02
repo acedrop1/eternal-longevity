@@ -91,6 +91,7 @@ export default function ContactPage() {
 
         {/* Mobile order: form, then details. Desktop: details left, form right. */}
         <section className="px-3 pb-16 md:px-5 md:pb-24">
+          <h2 className="sr-only">Ways to reach us</h2>
           <div className="relative overflow-hidden rounded-shell bg-milk p-3 md:p-5">
             <Aura mix="sunrise" className="opacity-70" />
             <div className="relative grid gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-5">
@@ -101,7 +102,7 @@ export default function ContactPage() {
               <dl className="grid content-start gap-3 sm:grid-cols-2 lg:order-1 lg:grid-cols-1">
                 {CONTACT_ROWS.map((row) => (
                   <div key={row.label} className={cn('rounded-inner p-5 md:p-6', GLASS)}>
-                    <dt className="text-[13px] font-medium text-ink/55">{row.label}</dt>
+                    <dt className="text-[13px] font-medium text-ink/65">{row.label}</dt>
                     <dd className="mt-2">
                       <div className="text-[17px] font-semibold tracking-[-0.015em] text-ink [overflow-wrap:anywhere]">{row.title}</div>
                       <div className="mt-1 max-w-md text-[15px] leading-relaxed text-ink-soft">{row.body}</div>

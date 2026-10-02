@@ -28,7 +28,7 @@ export function DemoCredentials() {
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-ink/10" />
-        <span className="text-[12px] font-medium text-ink/55">Demo logins · tap to fill</span>
+        <span className="text-[12px] font-medium text-ink/65">Demo logins · tap to fill</span>
         <span className="h-px flex-1 bg-ink/10" />
       </div>
 
@@ -46,11 +46,11 @@ export function DemoCredentials() {
             <span className="min-w-0 flex-1">
               <span className="block break-all text-[14px] font-semibold text-ink">
                 {u.email}
-                <span className="ml-2 font-normal text-ink/50">/ {u.password}</span>
+                <span className="ml-2 font-normal text-ink/60">/ {u.password}</span>
               </span>
               <span className="mt-0.5 block text-[13px] leading-snug text-ink-soft">{u.blurb}</span>
             </span>
-            <span aria-hidden className="mt-1 text-ink/40 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-ink">
+            <span aria-hidden className="mt-1 text-ink/55 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-ink">
               →
             </span>
           </button>

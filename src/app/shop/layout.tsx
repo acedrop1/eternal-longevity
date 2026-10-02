@@ -1,17 +1,26 @@
 import { CartProvider } from '@/components/cart/CartProvider';
+import { CartDrawer } from '@/components/cart/CartDrawer';
+import { loadCart } from '@/lib/profile-db';
 
 /**
  * Public storefront layout (/shop/*).
  *
- * Browse-only. Visitors can see products and pricing, but ordering runs
- * through the assessment — every CTA points at /start, and there is no cart
- * drawer here. CartProvider is still mounted because the shared PDP
- * components call useCart(); nothing on the public side ever adds to it.
+ * Visitors browse and start the assessment. A signed-in member who is
+ * assessed for a product subscribes right here, so the cart loads exactly as
+ * the portal's does: the member's saved server cart in live mode (the cart
+ * /checkout reads), localStorage in demo. Signed out, loadCart returns an
+ * empty unsupported cart and nothing is ever added.
  */
-export default function PublicShopLayout({
+export default async function PublicShopLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <CartProvider>{children}</CartProvider>;
+  const cart = await loadCart();
+  return (
+    <CartProvider initialItems={cart.items} live={cart.supported}>
+      {children}
+      <CartDrawer />
+    </CartProvider>
+  );
 }

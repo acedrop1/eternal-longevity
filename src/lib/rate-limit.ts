@@ -73,4 +73,6 @@ export const LIMITS = {
   promo: { max: 20, windowSeconds: 600 },
   /** Contact-form and intake spam. */
   form: { max: 10, windowSeconds: 900 },
+  /** Assessment autosave: debounced, so a minute of brisk answering stays well under. */
+  drafts: { max: 60, windowSeconds: 60 },
 } as const satisfies Record<string, Limit>;

@@ -42,7 +42,7 @@ export function ShopMenu({ open, onClose }: { open: boolean; onClose: () => void
             onClick={() => setTab(t.slug)}
             className={cn(
               'rounded-full px-4 py-2 text-[14px] font-semibold tracking-[-0.01em] transition-colors',
-              tab === t.slug ? 'bg-ink text-white' : 'text-ink/50 hover:text-ink'
+              tab === t.slug ? 'bg-ink text-white' : 'text-ink/60 hover:text-ink'
             )}
           >
             {t.name}

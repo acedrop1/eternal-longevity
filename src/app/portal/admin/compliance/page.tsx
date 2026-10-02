@@ -46,7 +46,7 @@ export default async function CompliancePage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/55">
+        <p className="mb-2 text-[13px] font-medium text-ink/65">
           Compliance &amp; audit
         </p>
         <h1
@@ -97,13 +97,13 @@ export default async function CompliancePage() {
         <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
           Audit trail
         </h2>
-        <p className="mb-5 text-sm leading-relaxed text-ink/55">
+        <p className="mb-5 text-sm leading-relaxed text-ink/65">
           Append-only. Nothing here can be edited or removed from inside the
           app.
         </p>
 
         {audit.length === 0 ? (
-          <p className="rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/55">
+          <p className="rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/65">
             Nothing recorded yet. Changes to the prescriber&apos;s name,
             credential, NPI or licence appear here, as does every staff
             sign-in from a new device.
@@ -128,12 +128,12 @@ export default async function CompliancePage() {
                     </td>
                     <td className="py-2.5 pr-4 text-ink/85">
                       {a.actor}
-                      <span className="ml-1.5 text-[12px] text-ink/55">
+                      <span className="ml-1.5 text-[12px] text-ink/65">
                         {a.role}
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 text-ink/85">{a.field}</td>
-                    <td className="py-2.5 pr-4 text-ink/50 line-through">
+                    <td className="py-2.5 pr-4 text-ink/60 line-through">
                       {a.from}
                     </td>
                     <td className="py-2.5 font-medium text-ink">

@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, FlaskConical, Plus, ShieldCheck, Sparkle, Stethoscope, Truck } from 'lucide-react';
 import { getLiveProducts, type CatalogProduct } from '@/lib/catalog';
@@ -96,14 +96,22 @@ const listed = async () => listedCategories((await getLiveProducts()).map((p) =>
  * One full-bleed photo with the copy over it. Desktop: copy bottom-left on the soft windows.
  * Phones: headline at the top, the buttons at the bottom over the products, so the screen is balanced.
  */
+const HERO_ALT = 'Kitchen counter with Eternal Longevity vials, for illustration';
+const HERO_MOBILE = getImageProps({ src: '/brand/hero-home-mobile.jpg', alt: HERO_ALT, fill: true, sizes: '100vw' }).props;
+const HERO_DESKTOP = getImageProps({ src: '/brand/hero-home.jpg', alt: HERO_ALT, fill: true, sizes: '100vw' }).props;
+
 export async function HomeHero() {
   const goals = (await listed()).filter((c) => c.items.length);
   return (
     <section className="bg-white px-3 pt-3 md:px-5 md:pt-4">
       <div className="relative mx-auto h-[calc(100svh-24px)] min-h-[640px] overflow-hidden rounded-shell bg-milk md:h-[calc(100svh-32px)] md:min-h-[680px]">
         {/* SoHo loft, morning: our vials on the island, her at the fridge, out of focus. */}
-        <Image src="/brand/hero-home-mobile.jpg" alt="Kitchen counter with Eternal Longevity vials, for illustration" fill priority sizes="100vw" className="object-cover object-[52%_100%] md:hidden" />
-        <Image src="/brand/hero-home.jpg" alt="Kitchen counter with Eternal Longevity vials, for illustration" fill priority sizes="100vw" className="hidden object-cover md:block" />
+        {/* One <picture>: each device downloads only its own crop (two priority <Image>s fetched both). */}
+        <picture>
+          <source media="(min-width: 768px)" srcSet={HERO_DESKTOP.srcSet ?? HERO_DESKTOP.src} sizes="100vw" />
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img {...HERO_MOBILE} loading="eager" fetchPriority="high" className="object-cover object-[52%_100%] md:object-center" />
+        </picture>
         <div aria-hidden className="absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-black/60 via-black/30 to-transparent md:hidden" />
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/60 via-black/25 to-transparent md:hidden" />
         <div aria-hidden className="absolute inset-0 hidden bg-gradient-to-r from-black/55 via-black/20 to-transparent md:block" />

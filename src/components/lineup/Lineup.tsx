@@ -65,7 +65,7 @@ export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: 
           {live ? item.badge && <Badge>{item.badge}</Badge> : <Badge>Coming soon</Badge>}
         </span>
         <span className="mt-0.5 block truncate text-[13px] text-ink-soft">{item.what}</span>
-        <span className="mt-1 block text-[12px] text-ink/50">
+        <span className="mt-1 block text-[12px] text-ink/60">
           {FORM_LABEL[item.form]}
           {live && ` · from $${fromPrice(live.pricing)}/mo`}
         </span>

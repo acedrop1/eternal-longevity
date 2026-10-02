@@ -495,6 +495,8 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
       actorRole: 'pharmacy',
       pharmacyRef: placed.orderId,
       note: 'Sent to our partner pharmacy. A pharmacist verifies your prescription before compounding starts.',
+      // Only paid orders reach the board, and the pharmacy has it now either way.
+      paymentConfirmed: true,
     });
     return { sent: true, message: `Sent to the pharmacy (order ${placed.orderId}).` };
   };
@@ -510,11 +512,13 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
 
 /**
  * Staff cancelled an order: take it off the board and, if it already went to
- * the pharmacy and hasn't shipped, cancel it there. A cancel the API refuses
- * is a person's job, so the care team is told to do it in the pharmacy portal.
+ * the pharmacy and hasn't shipped, cancel it there. A cancel the API refuses,
+ * or an order a person placed in the pharmacy portal by hand, is a person's
+ * job: the care team is told to cancel it there, and `cancelByHand` says so
+ * to whoever pressed cancel.
  */
-export async function withdrawFromPharmacy(orderNumber: string): Promise<void> {
-  if (!supabaseAdminConfigured()) return;
+export async function withdrawFromPharmacy(orderNumber: string): Promise<{ cancelByHand: boolean }> {
+  if (!supabaseAdminConfigured()) return { cancelByHand: false };
   const db = createSupabaseAdminClient();
   const [{ data: order }, { data: row }] = await Promise.all([
     db.from('orders').select('id, pharmacy_order_id, pharmacy_status').eq('order_number', orderNumber).maybeSingle(),
@@ -527,9 +531,28 @@ export async function withdrawFromPharmacy(orderNumber: string): Promise<void> {
       .eq('id', row.id)
       .in('status', ['draft', 'submitted', 'accepted']);
   }
-  if (!order?.pharmacy_order_id || !rxhereConfigured()) return;
-  if (row && ['shipped', 'delivered'].includes(row.status)) return;
-  if (order.pharmacy_status === 'CANCELLED') return;
+  if (row && ['shipped', 'delivered'].includes(row.status)) return { cancelByHand: false };
+  if (order?.pharmacy_status === 'CANCELLED') return { cancelByHand: false };
+
+  const byHand = async (body: string) => {
+    await alertCareTeam({
+      orderNumber,
+      eyebrow: 'Cancel by hand',
+      heading: 'Cancel an order in the pharmacy portal',
+      body,
+    });
+    return { cancelByHand: true };
+  };
+
+  // Placed in the pharmacy portal by a person: nothing here can reach it.
+  if (!order?.pharmacy_order_id) {
+    return row?.status === 'accepted'
+      ? byHand('This order was cancelled here after it was placed with the pharmacy by hand. Cancel it in the pharmacy portal before it ships.')
+      : { cancelByHand: false };
+  }
+  if (!rxhereConfigured()) {
+    return byHand(`This order was cancelled here, but the pharmacy API is not configured (pharmacy order ${order.pharmacy_order_id}). Cancel it in the pharmacy portal before it ships.`);
+  }
 
   const res = await cancelPharmacyOrder(orderNumber);
   if (res.ok && res.data.success !== false) {
@@ -544,12 +567,9 @@ export async function withdrawFromPharmacy(orderNumber: string): Promise<void> {
       author: 'System',
       author_role: 'system',
     });
-    return;
+    return { cancelByHand: false };
   }
-  await alertCareTeam({
-    orderNumber,
-    eyebrow: 'Cancel by hand',
-    heading: 'Cancel an order in the pharmacy portal',
-    body: `This order was cancelled here, but the pharmacy did not accept the cancel (pharmacy order ${order.pharmacy_order_id}). Cancel it in the pharmacy portal before it ships.`,
-  });
+  return byHand(
+    `This order was cancelled here, but the pharmacy did not accept the cancel (pharmacy order ${order.pharmacy_order_id}). Cancel it in the pharmacy portal before it ships.`,
+  );
 }

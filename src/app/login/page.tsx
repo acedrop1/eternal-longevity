@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -19,8 +20,8 @@ import { getSession } from '@/lib/auth-server';
 import { safeNext } from '@/lib/safe-next';
 
 export const metadata: Metadata = {
-  title: 'Log in',
-  description: 'Access your portal.',
+  ...pageMeta('/login', 'Log in', 'Log in to your Eternal Longevity account to see your orders, messages and prescription status.'),
+  robots: { index: false },
 };
 
 interface LoginPageProps {

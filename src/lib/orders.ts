@@ -14,6 +14,7 @@
  */
 
 import type { OrderStatus } from '@/lib/database.types';
+import type { Tone } from '@/components/portal/ui';
 
 /*
  * Every status the orders table can hold, not just the clinical ones. A
@@ -96,13 +97,17 @@ export function getPhysicianName(_id?: string): string | null {
   return null;
 }
 
+/**
+ * Staff wording. One name per state across admin, doctor and pharmacy, and
+ * matched to the member's wording below so the same order reads the same.
+ */
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'RECEIVED',
-  'pending-admin': 'AWAITING ADMIN REVIEW',
-  'denied-admin': 'DENIED BY ADMIN',
-  assigned: 'PROTOCOL REVIEW',
+  'pending-admin': 'IN REVIEW',
+  'denied-admin': 'CLOSED BY TEAM',
+  assigned: 'WITH PRESCRIBER',
   // Approved, not paid. Payment lands as 'paid'.
-  signed: 'APPROVED: PAYMENT NEEDED',
+  signed: 'AWAITING PAYMENT',
   paid: 'PAID',
   'declined-clinical': 'DECLINED',
   compounding: 'COMPOUNDING',
@@ -116,6 +121,47 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
 export function statusLabel(status: string): string {
   return STATUS_LABEL[status as OrderStatus] ?? status.replace(/[-_]/g, ' ').toUpperCase();
 }
+
+/** What a member reads for each state: plain words, already sentence case. */
+export const MEMBER_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending: 'Under review',
+  'pending-admin': 'Under review',
+  'denied-admin': 'Cancelled',
+  assigned: 'With your prescriber',
+  signed: 'Approved: payment needed',
+  paid: 'Being prepared',
+  'declined-clinical': 'Not approved',
+  compounding: 'Being prepared',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  canceled: 'Cancelled',
+  refunded: 'Refunded',
+};
+
+/** The member's label for one order. A refill whose card was declined reads as that. */
+export function memberStatusLabel(order: Pick<Order, 'status' | 'updates'>): string {
+  if (isFailedRefill(order)) return 'Payment failed';
+  const known = MEMBER_STATUS_LABEL[order.status as OrderStatus];
+  if (known) return known;
+  const words = String(order.status).replace(/[-_]/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Chip colour per state (portal/ui Tone). Waiting on the member is the one warn. */
+export const STATUS_TONE: Record<OrderStatus, Tone> = {
+  pending: 'neutral',
+  'pending-admin': 'neutral',
+  'denied-admin': 'error',
+  assigned: 'gold',
+  signed: 'warn',
+  paid: 'info',
+  'declined-clinical': 'error',
+  compounding: 'info',
+  shipped: 'gold',
+  delivered: 'muted',
+  canceled: 'muted',
+  refunded: 'muted',
+};
 
 /**
  * Timeline label refills.ts writes when a refill's charge fails. Read back to

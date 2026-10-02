@@ -20,7 +20,7 @@ export function AdminPageHeader({
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
         <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-[13px] text-ink/55">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-[13px] text-ink/65">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-none items-center gap-2">{actions}</div>}
     </header>
@@ -63,7 +63,7 @@ export function IndexTabs<T extends string>({
           >
             {t.label}
             {t.count !== undefined && (
-              <span className={cn('tabular-nums text-[12px]', on ? 'text-ink/60' : 'text-ink/40')}>{t.count}</span>
+              <span className={cn('tabular-nums text-[12px]', on ? 'text-ink/60' : 'text-ink/55')}>{t.count}</span>
             )}
           </button>
         );
@@ -91,7 +91,7 @@ export function IndexToolbar({
         <svg
           aria-hidden
           viewBox="0 0 20 20"
-          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40"
+          className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/55"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.8"
@@ -104,7 +104,7 @@ export function IndexToolbar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-10 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
+          className="h-10 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
         />
       </label>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
@@ -117,7 +117,7 @@ export const toolbarSelect =
 
 export function IndexFooter({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
-    <div className="border-t border-ink/10 px-4 py-2.5 text-[12px] tabular-nums text-ink/55">
+    <div className="border-t border-ink/10 px-4 py-2.5 text-[12px] tabular-nums text-ink/65">
       Showing {shown} of {total} {noun}
     </div>
   );
@@ -129,7 +129,7 @@ export function IndexFooter({ shown, total, noun }: { shown: number; total: numb
  */
 export const table = 'block w-full text-[13px] md:table';
 export const thead = 'hidden md:table-header-group';
-export const th = 'whitespace-nowrap bg-milk/60 px-2.5 py-2 text-left text-[12px] font-medium text-ink/55 first:pl-4 last:pr-4';
+export const th = 'whitespace-nowrap bg-milk/60 px-2.5 py-2 text-left text-[12px] font-medium text-ink/65 first:pl-4 last:pr-4';
 export const tbody = 'block md:table-row-group';
 export const row =
   'relative flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-ink/10 py-3 pl-4 pr-12 transition-colors first:border-t-0 hover:bg-milk/70 md:table-row md:px-0 md:py-0';

@@ -60,7 +60,7 @@ export default function GlobalError({
         </div>
 
         {error?.digest && (
-          <p className="mt-10 text-[13px] text-ink/40">Error ID: {error.digest}</p>
+          <p className="mt-10 text-[13px] text-ink/55">Error ID: {error.digest}</p>
         )}
       </div>
     </main>

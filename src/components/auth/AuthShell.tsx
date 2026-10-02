@@ -48,6 +48,8 @@ export function AuthShell({
                 </FadeIn>
 
                 <FadeIn delay={120} className="mt-8">
+                  {/* Keeps the outline H1 → H2 before the footer's column headings. */}
+                  <h2 className="sr-only">Your account</h2>
                   {children}
                 </FadeIn>
 
@@ -65,7 +67,7 @@ export function AuthShell({
               <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
               <div className={`absolute inset-x-6 bottom-6 rounded-inner p-7 xl:inset-x-8 xl:bottom-8 xl:p-8 ${GLASS_DARK}`}>
                 <p className="max-w-md text-[24px] font-semibold leading-[1.1] tracking-[-0.03em] [text-wrap:balance] xl:text-[28px]">
-                  Every protocol is compounded by a licensed 503A pharmacy against a prescription written for you.
+                  Every order is prepared by a licensed 503A pharmacy against a prescription written for you.
                 </p>
                 <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-[13px] font-medium text-white/90 ring-1 ring-white/25">
                   <span aria-hidden className="h-2 w-2 rounded-full bg-butter" />
@@ -83,7 +85,7 @@ export function AuthShell({
 
 /** Shared input styling for auth forms. */
 export const authInputClass =
-  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/40 transition-[background-color,box-shadow] focus:bg-white focus:outline-none focus:ring-ink/20';
+  'w-full rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink ring-1 ring-transparent placeholder:text-ink/55 transition-[background-color,box-shadow] focus:bg-white focus:outline-none focus:ring-ink/20';
 
 /** Error message box (server-returned auth errors). */
 export const authErrorClass =

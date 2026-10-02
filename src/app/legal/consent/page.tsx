@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
+import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
   BUSINESS_LEGAL_NAME,
   BUSINESS_ADDRESS,
   SUPPORT_EMAIL,
   SERVICE_AREA,
+  SERVICE_AREA_OR,
 } from '@/lib/site';
 
-export const metadata: Metadata = {
-  title: 'Telehealth Informed Consent',
-  description: 'How our asynchronous telehealth review works, its limits and risks, and your rights, including the right to withdraw.',
-};
+export const metadata: Metadata = pageMeta(
+  '/legal/consent',
+  'Telehealth Informed Consent',
+  'How our asynchronous telehealth review works, its limits and risks, and your rights, including the right to withdraw.',
+);
 
 export default function ConsentPolicyPage() {
   return (
@@ -24,7 +27,7 @@ export default function ConsentPolicyPage() {
           paragraphs: [
             `Our care is asynchronous: you complete a written medical intake online, and Dr. Bader Elder, DO, a physician licensed in ${SERVICE_AREA}, reviews it later rather than in a live visit. He decides whether a treatment is appropriate for you. He may prescribe, decline, or ask you for more information before deciding.`,
             'When he prescribes, a physician–patient relationship exists between you and Dr. Elder for that treatment. Prescriptions are dispensed by a state-licensed 503A compounding pharmacy. Refills on a plan ship on the same prescription until it expires or runs out of refills; the prescriber can pause or stop a plan at any time, and a new product needs a new review.',
-            `We serve patients located in ${SERVICE_AREA} only, and you must be 18 or older.`,
+            `We serve only patients located in ${SERVICE_AREA_OR}, and you must be 18 or older.`,
           ],
         },
         {

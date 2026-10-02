@@ -77,7 +77,7 @@ export async function PortalShell({
               >
                 {/* Same mark and deep-butter tint as the public header. */}
                 <Wordmark href={null} className="text-[26px] text-[#F2D060] md:text-[30px]" />
-                <span className="hidden text-[13px] font-medium text-ink/55 sm:inline">Portal</span>
+                <span className="hidden text-[13px] font-medium text-ink/65 sm:inline">Portal</span>
               </Link>
 
               <span className="ml-auto inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-medium leading-none text-ink/80 ring-1 ring-ink/5">

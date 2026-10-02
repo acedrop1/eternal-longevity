@@ -21,7 +21,8 @@ export async function GET(
 
   const res = await payPathForMember(user.id, ref);
   if (res.path) return to(res.path);
-  // A refill restarts from a fixed card; anything else is already paid,
-  // closed, or not theirs, and the orders page shows which.
-  return to(res.error === 'refill' ? '/portal/account' : '/portal/orders');
+  // A refill restarts from a fixed card; anything else says why on the orders page.
+  if (res.error === 'refill') return to('/portal/account');
+  const why = res.error === 'paid' || res.error === 'closed' ? res.error : 'error';
+  return to(`/portal/orders?pay=${why}`);
 }
