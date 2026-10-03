@@ -222,7 +222,7 @@ export function FulfillmentBoard({
           <option value="oldest">Oldest first</option>
         </select>
       </IndexToolbar>
-      {note && <p className="border-b border-ink/10 px-4 py-2 text-[12px] text-ink/65">{note}</p>}
+      {note && <p className="border-b border-ink/10 px-4 py-2 text-[14px] text-ink/65 md:text-[12px]">{note}</p>}
 
       <div className="md:overflow-x-auto">
       <table className={table}>
@@ -299,9 +299,9 @@ function OrderRow({
         <Link href={row.href} className="underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40">
           {row.ref}
         </Link>
-        {row.refill && <span className="ml-1.5 text-[12px] font-normal text-ink/60">Refill</span>}
+        {row.refill && <span className="ml-1.5 text-[13px] font-normal text-ink/60 md:text-[12px]">Refill</span>}
       </td>
-      <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[12px] text-ink/60 md:text-[13px]')}>
+      <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[14px] text-ink/60 md:text-[13px]')}>
         {shortDate(row.date)}
         {(showAge || (row.late && b)) && (
           <span
@@ -326,7 +326,7 @@ function OrderRow({
         )}
         </div>
         {showAge && row.reason && (
-          <div className="truncate text-[12px] text-amber-800 md:max-w-[220px]" title={row.reason}>
+          <div className="truncate text-[14px] text-amber-800 md:max-w-[220px] md:text-[12px]" title={row.reason}>
             {row.reason}
           </div>
         )}
@@ -350,7 +350,7 @@ function OrderRow({
       <td className={cn(td, 'order-5', !pharmacy && 'hidden')}>
         {pharmacy ? <StatusBadge tone={pharmacy[1]}>{pharmacy[0]}</StatusBadge> : <span className="text-ink/35">—</span>}
       </td>
-      <td className={cn(td, 'order-6 whitespace-nowrap text-[12px] text-ink/70', !trackingNumber && 'hidden')}>
+      <td className={cn(td, 'order-6 whitespace-nowrap text-[14px] text-ink/70 md:text-[12px]', !trackingNumber && 'hidden')}>
         {trackingNumber ? (
           <div className="truncate md:max-w-[110px]">
             {trackingCarrier}{' '}

@@ -217,6 +217,7 @@ export async function replyMessageAction(
   if (!user || (user.role !== 'doctor' && user.role !== 'admin')) {
     return { ok: false, error: 'Not authorized.' };
   }
+  if (!supabaseAdminConfigured()) return { ok: false, error: 'Messaging is not connected.' };
   if (!isChannel(channel)) return { ok: false, error: 'Unknown conversation.' };
   const text = body.trim();
   if (!text) return { ok: false, error: 'Type a message first.' };

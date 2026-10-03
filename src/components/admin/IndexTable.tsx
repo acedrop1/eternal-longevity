@@ -58,7 +58,7 @@ export function IndexTabs<T extends string>({
             aria-selected={on}
             onClick={() => onChange(t.key)}
             className={cn(
-              'inline-flex min-h-[36px] flex-none items-center gap-1.5 rounded-thumb px-3 text-[13px] font-medium transition-colors md:min-h-[30px]',
+              'inline-flex min-h-[44px] flex-none items-center gap-1.5 rounded-thumb px-3 text-[14px] font-medium transition-colors md:min-h-[30px] md:text-[13px]',
               on ? 'bg-ink/[0.07] text-ink' : 'text-ink/60 hover:bg-ink/[0.04] hover:text-ink',
             )}
           >
@@ -105,7 +105,7 @@ export function IndexToolbar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-10 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
+          className="h-11 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
         />
       </label>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}

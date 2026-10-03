@@ -5,6 +5,7 @@ import { DOCTOR_NAV } from '@/components/portal/ui';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPrescriber } from '@/lib/prescriber';
 import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
+import { AdminPageHeader, SectionCard, SettingsRow } from '@/components/admin/IndexTable';
 
 export const metadata: Metadata = {
   title: 'Physician Profile',
@@ -29,56 +30,45 @@ export default async function DoctorProfilePage() {
       user={user}
       nav={DOCTOR_NAV}
     >
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/65">
-          Physician profile
-        </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
+      <div className="space-y-6 max-md:[&_h2+p]:text-[15px] max-md:[&_h2]:text-[16px]">
+        <AdminPageHeader
+          title={record.display || user.name}
+          subtitle={
+            <span className="text-[15px] md:text-[13px]">
+              Your contact details and licensure, and how the system reaches you when an order needs signing.
+            </span>
+          }
+        />
+
+        <SettingsRow
+          title="Your details"
+          description="Your name, credential, NPI and state licence. Correct anything that is wrong here — it prints on every prescription and on the published prescription policy."
         >
-          {record.display || user.name}
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          Your contact details and licensure, and how the system reaches you
-          when an order needs signing. To change anything here, email support.
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        {/* === MAIN === */}
-        <div className="space-y-6">
-          <section className="rounded-shell bg-milk p-6 md:p-8">
-            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-              Your details
-            </h2>
-            <p className="mb-5 text-sm leading-relaxed text-ink/65">
-              Your name, credential, NPI and state licence. Correct anything
-              that is wrong here — it prints on every prescription and on the
-              published prescription policy.
-            </p>
+          {/* The shared form's labels and help run small on a phone; lift them here. */}
+          <SectionCard className="max-md:[&_button]:min-h-[44px] max-md:[&_label]:text-[15px] max-md:[&_p]:text-[14px]">
             <PrescriberForm record={record} mode="doctor" />
-          </section>
+          </SectionCard>
+        </SettingsRow>
 
-          <section className="rounded-shell bg-milk p-6 md:p-8">
-            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-              Email
-            </h2>
-            <p className="text-sm leading-relaxed text-ink/65">
-              {user.email} — where a new order reaches you. Email support to
-              change it, so your sign-in and your notification address never
-              drift apart.
-            </p>
-          </section>
+        <hr className="border-ink/10" />
 
-          <section className="rounded-shell bg-milk p-6 md:p-8">
-            <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-              How you're notified
-            </h2>
-            <p className="mb-5 text-sm leading-relaxed text-ink/65">
-              Not settings — this is what the system does. Nothing here can be
-              switched off, because nothing ships without your signature.
-            </p>
-            <ul className="space-y-2">
+        <SettingsRow
+          title="Email"
+          description="Where a new order reaches you. Email support to change it, so your sign-in and your notification address never drift apart."
+        >
+          <SectionCard>
+            <p className="break-words text-[15px] font-medium text-ink md:text-[13px]">{user.email}</p>
+          </SectionCard>
+        </SettingsRow>
+
+        <hr className="border-ink/10" />
+
+        <SettingsRow
+          title="How you're notified"
+          description="Not settings — this is what the system does. Nothing here can be switched off, because nothing ships without your signature."
+        >
+          <SectionCard flush>
+            <ul className="divide-y divide-ink/10">
               <Fact
                 title="Every new order emails and texts you"
                 body="Sent the moment a member checks out, to the address and number above. There is no admin step in front of you."
@@ -92,28 +82,25 @@ export default async function DoctorProfilePage() {
                 body="Approving releases the order to the pharmacy and charges the card the member saved at checkout. Declining charges nothing."
               />
             </ul>
-          </section>
-        </div>
+          </SectionCard>
+        </SettingsRow>
 
-        {/* === SIDEBAR === */}
-        <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-shell bg-milk p-5">
-            <div className="mb-2 text-[13px] font-medium text-ink/65">
-              Support
-            </div>
-            <p className="text-sm text-ink/75 leading-relaxed">
-              Something wrong with a case, or a member you need to reach?
+        <hr className="border-ink/10" />
+
+        <SettingsRow title="Support" description="Something wrong with a case, or a member you need to reach?">
+          <SectionCard>
+            <p className="text-[15px] text-ink/80 md:text-[13px]">
               Email{' '}
               <a
                 href="mailto:support@etlongevity.com"
-                className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                className="inline-flex min-h-[44px] items-center font-medium text-ink underline decoration-ink/30 md:min-h-0 underline-offset-[3px] hover:decoration-ink"
               >
                 support@etlongevity.com
               </a>
               .
             </p>
-          </div>
-        </aside>
+          </SectionCard>
+        </SettingsRow>
       </div>
     </PortalShell>
   );
@@ -122,14 +109,14 @@ export default async function DoctorProfilePage() {
 
 function Fact({ title, body }: { title: string; body: string }) {
   return (
-    <li className="flex gap-3 rounded-inner border border-ink/10 bg-white p-4">
+    <li className="flex gap-3 px-4 py-3">
       <span
         aria-hidden
-        className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-butter-deep"
+        className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-butter-deep"
       />
       <div className="min-w-0">
-        <div className="text-sm font-medium text-ink">{title}</div>
-        <p className="mt-0.5 text-xs leading-relaxed text-ink/65">
+        <div className="text-[15px] font-medium text-ink md:text-[13px]">{title}</div>
+        <p className="mt-0.5 text-[15px] leading-relaxed text-ink/65 md:text-[13px]">
           {body}
         </p>
       </div>

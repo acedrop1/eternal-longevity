@@ -26,7 +26,7 @@ export function DetailHeader({
         <Link
           href={backHref}
           aria-label={`Back to ${backLabel}`}
-          className="mt-0.5 inline-flex h-8 flex-none items-center gap-1 rounded-thumb px-1.5 text-[13px] font-medium text-ink/65 transition-colors hover:bg-ink/[0.06] hover:text-ink"
+          className="mt-0.5 inline-flex h-11 min-w-[44px] flex-none items-center justify-center gap-1 rounded-thumb px-1.5 md:h-8 md:min-w-0 text-[13px] font-medium text-ink/65 transition-colors hover:bg-ink/[0.06] hover:text-ink"
         >
           <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M12 5 7 10l5 5" strokeLinecap="round" strokeLinejoin="round" />

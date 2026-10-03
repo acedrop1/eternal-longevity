@@ -252,6 +252,7 @@ async function voidPlanForOrder(orderId: string): Promise<void> {
 
 /** Resolve an order_number to its uuid. */
 async function orderIdFor(orderNumber: string): Promise<string | null> {
+  if (!supabaseAdminConfigured()) return null;
   const db = createSupabaseAdminClient();
   const { data } = await db
     .from('orders')
