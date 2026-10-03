@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV } from '@/components/portal/ui';
@@ -76,13 +75,6 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-[13px] text-ink/65">
-        <Link href="/portal/admin/products" className="transition-colors hover:text-ink">
-          Products
-        </Link>
-        <span aria-hidden>/</span>
-        <span className="text-ink/85">{initial.isNew ? 'New product' : initial.name}</span>
-      </nav>
       <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} />
     </PortalShell>
   );

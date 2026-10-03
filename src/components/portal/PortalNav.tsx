@@ -10,6 +10,8 @@ export interface NavItem {
   href: string;
   /** Optional count pill — pending tasks waiting on this tab. */
   badge?: number;
+  /** Other path prefixes that belong to this tab (e.g. an order's own page). */
+  also?: string[];
 }
 
 interface PortalNavProps {
@@ -61,12 +63,10 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
   // Find the best-matching nav item (longest prefix) so deep routes like
   // /portal/orders/EL-1001 stay highlighted under "Orders".
   const activeHref = (() => {
+    const under = (base: string) => pathname === base || pathname.startsWith(base + '/');
     const matches = nav
-      .filter(
-        (item) =>
-          pathname === item.href || pathname.startsWith(item.href + '/')
-      )
-      .sort((a, b) => b.href.length - a.href.length);
+      .flatMap((item) => [item.href, ...(item.also ?? [])].filter(under).map((p) => ({ href: item.href, len: p.length })))
+      .sort((a, b) => b.len - a.len);
     return matches[0]?.href;
   })();
 

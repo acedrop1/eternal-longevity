@@ -16,7 +16,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Applications', href: '/portal/admin/queue' },
   { label: 'Messages', href: '/portal/admin/messages' },
   { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Orders', href: '/portal/admin/fulfillment' },
+  { label: 'Orders', href: '/portal/admin/fulfillment', also: ['/portal/admin/orders'] },
   { label: 'Products', href: '/portal/admin/products' },
   { label: 'Check-ins', href: '/portal/admin/checkins' },
   { label: 'Compliance', href: '/portal/admin/compliance' },
@@ -26,7 +26,7 @@ export const ADMIN_NAV: NavItem[] = [
 /** The prescriber's nav, one list so the doctor pages can't drift apart. */
 export const DOCTOR_NAV: NavItem[] = [
   { label: 'Queue', href: '/portal/doctor' },
-  { label: 'Orders', href: '/portal/doctor/fulfillment' },
+  { label: 'Orders', href: '/portal/doctor/fulfillment', also: ['/portal/admin/orders'] },
   { label: 'Messages', href: '/portal/doctor/messages' },
   { label: 'My signed Rx', href: '/portal/doctor/history' },
   { label: 'Profile', href: '/portal/doctor/profile' },

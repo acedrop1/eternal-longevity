@@ -6,6 +6,16 @@ import { getPrescriber, listAudit } from '@/lib/prescriber';
 import { formatDateTime } from '@/lib/format';
 import { BUSINESS_LEGAL_NAME, BUSINESS_ADDRESS, SERVICE_AREA } from '@/lib/site';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { supabaseAdminConfigured } from '@/lib/supabase/admin';
+import {
+  AdminPageHeader,
+  SectionCard,
+  StatusBadge,
+  plainTable,
+  plainTd,
+  th,
+} from '@/components/admin/IndexTable';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Compliance & audit' };
 
@@ -23,7 +33,12 @@ export default async function CompliancePage() {
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const [record, audit] = await Promise.all([getPrescriber(), listAudit(200)]);
+  const [record, liveAudit] = await Promise.all([getPrescriber(), listAudit(200)]);
+  let audit = liveAudit;
+  // Dev only: sample rows so the trail can be designed without Supabase.
+  // NODE_ENV is inlined at build, so production never loads the fixture.
+  const sample = process.env.NODE_ENV === 'development' && !supabaseAdminConfigured();
+  if (sample) audit = (await import('@/components/admin/dev-sample')).SAMPLE_AUDIT;
 
   const facts: [string, string][] = [
     ['Legal entity', BUSINESS_LEGAL_NAME],
@@ -45,107 +60,100 @@ export default async function CompliancePage() {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/65">
-          Compliance &amp; audit
-        </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
+      <AdminPageHeader
+        title="Compliance & audit"
+        subtitle="The facts a state board, a payment processor or LegitScript asks for, and every change made to them."
+      />
+
+      <div className="mt-5 space-y-5">
+        <SectionCard
+          flush
+          title="On file"
+          description="What prints on prescriptions and published policy."
+          actions={missing > 0 ? <StatusBadge tone="attention">{missing} not set</StatusBadge> : undefined}
         >
-          What we can evidence.
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          The facts a state board, a payment processor or LegitScript asks for,
-          and every change made to them.
-        </p>
-      </div>
-
-      <section className="mb-8 rounded-shell bg-milk p-6 md:p-8">
-        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
-            On file
-          </h2>
-          {missing > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-600/25 bg-amber-50 px-2.5 py-1 text-[12px] font-medium text-amber-900">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-              {missing} not set
-            </span>
-          )}
-        </div>
-        <dl className="grid gap-x-8 gap-y-0 md:grid-cols-2">
-          {facts.map(([k, v]) => (
-            <div
-              key={k}
-              className="flex items-baseline justify-between gap-4 border-b border-ink/[0.06] py-2.5 last:border-0"
-            >
-              <dt className="text-sm text-ink/60">{k}</dt>
-              <dd
-                className={
-                  v.startsWith('—')
-                    ? 'text-sm font-semibold text-amber-800'
-                    : 'text-right text-sm font-medium text-ink/90'
-                }
-              >
-                {v}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section className="rounded-shell bg-milk p-6 md:p-8">
-        <h2 className="mb-1.5 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-          Audit trail
-        </h2>
-        <p className="mb-5 text-sm leading-relaxed text-ink/65">
-          Append-only. Nothing here can be edited or removed from inside the
-          app.
-        </p>
-
-        {audit.length === 0 ? (
-          <p className="rounded-inner border border-ink/10 bg-white px-4 py-3 text-sm text-ink/65">
-            Nothing recorded yet. Changes to the prescriber&apos;s name,
-            credential, NPI or licence appear here, as does every staff
-            sign-in from a new device.
-          </p>
-        ) : (
-          <div className="max-h-[70vh] overflow-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-milk">
-                <tr className="border-b border-ink/10 text-left text-[12px] text-ink/60">
-                  <th className="py-2 pr-4 font-normal">When</th>
-                  <th className="py-2 pr-4 font-normal">Who</th>
-                  <th className="py-2 pr-4 font-normal">Field</th>
-                  <th className="py-2 pr-4 font-normal">From</th>
-                  <th className="py-2 font-normal">To</th>
+          <div className="overflow-x-auto">
+            <table className={cn(plainTable, 'min-w-[340px]')}>
+              <thead>
+                <tr>
+                  <th className={th}>Item</th>
+                  <th className={th}>On file</th>
+                  <th className={th}>
+                    <span className="sr-only">Status</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {audit.map((a, i) => (
-                  <tr key={i} className="border-t border-ink/10 first:border-t-0">
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-[12px] tabular-nums text-ink/60">
-                      {formatDateTime(a.at)}
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink/85">
-                      {a.actor}
-                      <span className="ml-1.5 text-[12px] text-ink/65">
-                        {a.role}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-ink/85">{a.field}</td>
-                    <td className="py-2.5 pr-4 text-ink/60 line-through">
-                      {a.from}
-                    </td>
-                    <td className="py-2.5 font-medium text-ink">
-                      {a.to}
-                    </td>
-                  </tr>
-                ))}
+                {facts.map(([k, v]) => {
+                  const unset = v.startsWith('—');
+                  return (
+                    <tr key={k}>
+                      <td className={cn(plainTd, 'w-[34%] whitespace-normal text-ink/65')}>{k}</td>
+                      <td
+                        className={cn(
+                          plainTd,
+                          'whitespace-normal',
+                          unset ? 'font-semibold text-amber-800' : 'font-medium text-ink/90',
+                        )}
+                      >
+                        {v}
+                      </td>
+                      <td className={cn(plainTd, 'w-px text-right')}>
+                        {unset && <StatusBadge tone="attention">Not set</StatusBadge>}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        )}
-      </section>
+        </SectionCard>
+
+        <SectionCard
+          flush
+          title="Audit trail"
+          description="Append-only. Nothing here can be edited or removed from inside the app."
+          actions={sample ? <StatusBadge tone="attention">Sample data (dev only)</StatusBadge> : undefined}
+        >
+          {audit.length === 0 ? (
+            <p className="px-4 py-6 text-[13px] text-ink/65">
+              Nothing recorded yet. Changes to the prescriber&apos;s name,
+              credential, NPI or licence appear here, as does every staff
+              sign-in from a new device.
+            </p>
+          ) : (
+            <div className="max-h-[70vh] overflow-auto">
+              <table className={plainTable}>
+                <thead className="sticky top-0 z-[1]">
+                  <tr>
+                    <th className={cn(th, 'bg-milk')}>When</th>
+                    <th className={cn(th, 'bg-milk')}>Who</th>
+                    <th className={cn(th, 'bg-milk')}>Field</th>
+                    <th className={cn(th, 'bg-milk')}>From</th>
+                    <th className={cn(th, 'bg-milk')}>To</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audit.map((a, i) => (
+                    <tr key={i}>
+                      <td className={cn(plainTd, 'text-[12px] tabular-nums text-ink/65')}>
+                        {formatDateTime(a.at)}
+                      </td>
+                      <td className={cn(plainTd, 'text-ink/85')}>
+                        {a.actor}
+                        <span className="ml-1.5 text-[12px] text-ink/65">{a.role}</span>
+                      </td>
+                      <td className={cn(plainTd, 'text-ink/85')}>{a.field}</td>
+                      <td className={cn(plainTd, 'text-ink/60 line-through')}>{a.from}</td>
+                      <td className={cn(plainTd, 'font-medium')}>{a.to}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
+      </div>
     </PortalShell>
   );
 }

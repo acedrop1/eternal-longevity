@@ -1,28 +1,19 @@
 'use client';
 
-import { useConfirm } from '@/components/ui/useConfirm';
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import type { Role } from '@/lib/auth';
 import type { AccountStatus } from '@/lib/database.types';
-import {
-  adminCreateUser,
-  adminSetUserStatus,
-  adminSetUserRole,
-  adminSendPasswordEmail,
-  type AdminUserResult,
-} from '@/lib/admin-users-actions';
+import { adminCreateUser, type AdminUserResult } from '@/lib/admin-users-actions';
 import { cn } from '@/lib/utils';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import {
   AdminPageHeader,
-  Chevron,
   IndexFooter,
   IndexTabs,
   IndexToolbar,
   StatusBadge,
-  detailCell,
-  detailRow,
   fromControl,
   headerButton,
   indexCard,
@@ -33,8 +24,8 @@ import {
   th,
   thead,
   toolbarSelect,
-  type BadgeTone,
 } from '@/components/admin/IndexTable';
+import { ROLE_LABEL, STATUS_BADGE, USER_TABS, type UserTab } from '@/components/admin/user-labels';
 
 export interface AdminUserRow {
   id: string;
@@ -45,23 +36,10 @@ export interface AdminUserRow {
   joinedAt: string;
 }
 
-const STATUS_BADGE: Record<AccountStatus, [string, BadgeTone]> = {
-  active: ['Active', 'success'],
-  suspended: ['Suspended', 'attention'],
-  deactivated: ['Deactivated', 'neutral'],
-};
-
-const ROLE_LABEL: Record<Role, string> = {
-  member: 'Member',
-  doctor: 'Doctor',
-  pharmacy: 'Pharmacy',
-  admin: 'Admin',
-};
-
 const inputClass =
   'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
 
-type Tab = 'all' | 'members' | 'staff' | 'suspended' | 'deactivated';
+type Tab = UserTab;
 
 const TAB_TEST: Record<Tab, (u: AdminUserRow) => boolean> = {
   all: () => true,
@@ -71,32 +49,33 @@ const TAB_TEST: Record<Tab, (u: AdminUserRow) => boolean> = {
   deactivated: (u) => u.status === 'deactivated',
 };
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'members', label: 'Members' },
-  { key: 'staff', label: 'Staff' },
-  { key: 'suspended', label: 'Suspended' },
-  { key: 'deactivated', label: 'Deactivated' },
-];
 
 export function AdminUsers({
   users,
   live,
   sample = false,
+  initialTab = 'all',
 }: {
   users: AdminUserRow[];
   live: boolean;
   /** Dev-only fixture rows are showing. */
   sample?: boolean;
+  /** From `?tab=`; the page has already checked it is a known key. */
+  initialTab?: Tab;
 }) {
-  const [confirm, confirmDialog] = useConfirm();
+  const router = useRouter();
+  const pathname = usePathname();
   const [rows, setRows] = useState(users);
-  const [tab, setTab] = useState<Tab>('all');
+  const [tab, setTabState] = useState<Tab>(initialTab);
+  /** Keep `?tab=` in step so the view can be linked and survives a refresh. */
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    router.replace(next === 'all' ? pathname : `${pathname}?tab=${next}`, { scroll: false });
+  };
   const [role, setRole] = useState<Role | 'all'>('all');
   const [sort, setSort] = useState<'newest' | 'oldest' | 'name'>('newest');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
 
   // Orders per member, from the orders the portal already loaded.
   const { orders } = useOrders();
@@ -122,21 +101,10 @@ export function AdminUsers({
     return list;
   }, [rows, tab, role, sort, query]);
 
-  function patchRole(id: string, role: Role) {
-    setRows((curr) => curr.map((u) => (u.id === id ? { ...u, role } : u)));
-  }
-
-  function patchStatus(id: string, status: AccountStatus) {
-    setRows((curr) =>
-      curr.map((u) => (u.id === id ? { ...u, status } : u)),
-    );
-  }
-
   const memberCount = rows.filter((u) => u.role === 'member').length;
 
   return (
     <div className="space-y-5">
-      {confirmDialog}
       <AdminPageHeader
         title="Members"
         subtitle={`${rows.length} people · ${memberCount} members. Members, doctors, the pharmacy and admins.`}
@@ -164,7 +132,7 @@ export function AdminUsers({
       <div className={indexCard}>
         <IndexTabs
           label="User filter"
-          tabs={TABS.map((t) => ({ ...t, count: t.key === 'all' ? undefined : rows.filter(TAB_TEST[t.key]).length }))}
+          tabs={USER_TABS.map((t) => ({ ...t, count: t.key === 'all' ? undefined : rows.filter(TAB_TEST[t.key]).length }))}
           value={tab}
           onChange={setTab}
         />
@@ -193,15 +161,12 @@ export function AdminUsers({
               <th className={th}>Status</th>
               <th className={cn(th, 'text-right')}>Orders</th>
               <th className={th}>Joined</th>
-              <th className={th}>
-                <span className="sr-only">Actions</span>
-              </th>
             </tr>
           </thead>
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={7} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+                <td colSpan={6} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
                   No users match.
                 </td>
               </tr>
@@ -211,11 +176,7 @@ export function AdminUsers({
                   key={u.id}
                   user={u}
                   orders={u.role === 'member' ? orderCount.get(u.id) ?? 0 : null}
-                  open={openId === u.id}
-                  onToggle={() => setOpenId((id) => (id === u.id ? null : u.id))}
-                  onStatus={patchStatus}
-                  onRole={patchRole}
-                  confirm={confirm}
+                  onOpen={() => router.push(userHref(u.id))}
                 />
               ))
             )}
@@ -230,223 +191,52 @@ export function AdminUsers({
 
 /* ------------------------------------------------------------------ */
 
+/** Every user's record (members, staff and the pharmacy) lives on the member page. */
+const userHref = (id: string) => `/portal/admin/members/${id}`;
+
 function UserRow({
   user,
   orders,
-  open,
-  onToggle,
-  onStatus,
-  onRole,
-  confirm,
+  onOpen,
 }: {
   user: AdminUserRow;
   orders: number | null;
-  open: boolean;
-  onToggle: () => void;
-  onStatus: (id: string, status: AccountStatus) => void;
-  onRole: (id: string, role: Role) => void;
-  confirm: ReturnType<typeof useConfirm>[0];
+  onOpen: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function setStatus(status: AccountStatus) {
-    const verb =
-      status === 'active'
-        ? 'Reactivate'
-        : status === 'suspended'
-          ? 'Suspend'
-          : 'Deactivate';
-    if (!(await confirm({ title: `${verb} ${user.name}'s account?`, confirmLabel: verb, danger: status !== 'active' }))) return;
-
-    setBusy(true);
-    setError(null);
-    const previous = user.status;
-    onStatus(user.id, status); // optimistic
-    try {
-      const res = await adminSetUserStatus({ userId: user.id, status });
-      if (!res.ok) {
-        onStatus(user.id, previous);
-        setError(res.message);
-      }
-    } catch {
-      onStatus(user.id, previous);
-      setError('Request failed.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const [statusLabel, statusTone] = STATUS_BADGE[user.status];
 
   return (
-    <Fragment>
-      <tr
-        className={cn(rowClass, open && 'bg-milk/70')}
-        onClick={(e) => {
-          if (!fromControl(e.target)) onToggle();
-        }}
-      >
-        <td className={cn(td, 'order-1 min-w-0 font-medium text-ink')}>
-          <div className="truncate md:max-w-[220px]">
-          {user.role === 'member' ? (
-            <Link
-              href={`/portal/admin/members/${user.id}`}
-              className="underline decoration-transparent underline-offset-[3px] transition-colors hover:decoration-ink/40"
-            >
-              {user.name}
-            </Link>
-          ) : (
-            user.name
-          )}
-          </div>
-        </td>
-        <td className={cn(td, 'order-3 min-w-0 basis-full text-ink/65')}>
-          <div className="truncate md:max-w-[260px]">{user.email}</div>
-        </td>
-        <td className={cn(td, 'order-4 text-[12px] text-ink/65 md:text-[13px] md:text-ink/80')}>{ROLE_LABEL[user.role]}</td>
-        <td className={cn(td, 'order-2 ml-auto md:ml-0')}>
-          <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
-        </td>
-        <td className={cn(td, 'hidden tabular-nums text-ink/80 md:text-right')}>
-          {orders ?? <span className="text-ink/35">—</span>}
-        </td>
-        <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px] md:text-ink/65')}>
-          <span className="md:hidden">· Joined </span>
-          {user.joinedAt}
-        </td>
-        <td className={cn(td, 'absolute right-2 top-2 md:static md:w-10 md:pl-0 md:text-right')}>
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={open}
-            aria-label={`${open ? 'Hide' : 'Show'} actions for ${user.name}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-thumb text-ink/60 hover:bg-ink/[0.06] hover:text-ink"
-          >
-            <Chevron open={open} />
-          </button>
-        </td>
-      </tr>
-      {(open || error) && (
-        <tr className={detailRow}>
-          <td colSpan={7} className={detailCell}>
-            {error && <p className="mb-3 text-[13px] text-red-700">{error}</p>}
-            {open && (
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Role had no control anywhere in the app — adminSetUserRole existed
-                    and nothing called it, so the only way to make someone a doctor
-                    was editing the database by hand. */}
-                <label className="flex items-center gap-2 text-[12px] text-ink/60">
-                  Role
-                  <select
-                    aria-label={`Role for ${user.name}`}
-                    value={user.role}
-                    disabled={busy}
-                    onChange={async (e) => {
-                      const next = e.target.value as Role;
-                      if (next === user.role) return;
-                      if (
-                        !(await confirm({
-                          title: `Change ${user.name} from ${user.role} to ${next}?`,
-                          body: 'This changes what they can see and do.',
-                          confirmLabel: 'Change role',
-                        }))
-                      ) {
-                        return;
-                      }
-                      setBusy(true);
-                      setError(null);
-                      const res = await adminSetUserRole({ userId: user.id, role: next });
-                      if (!res.ok) setError(res.message);
-                      else onRole(user.id, next);
-                      setBusy(false);
-                    }}
-                    className="min-h-[40px] rounded-full border border-ink/10 bg-white px-3 text-[16px] text-ink/80 focus:outline-none focus:ring-2 focus:ring-ink/30 disabled:opacity-40 md:min-h-[32px] md:text-[13px]"
-                  >
-                    <option value="member">member</option>
-                    <option value="doctor">doctor</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </label>
-
-                <ActionButton
-                  busy={busy}
-                  label="Send password email"
-                  onClick={async () => {
-                    setBusy(true);
-                    setError(null);
-                    const res = await adminSendPasswordEmail({ userId: user.id });
-                    setError(res.ok ? null : res.message);
-                    if (res.ok) void confirm({ title: 'Email sent', body: res.message, alert: true });
-                    setBusy(false);
-                  }}
-                />
-
-                {user.status !== 'active' && (
-                  <ActionButton
-                    busy={busy}
-                    label="Reactivate"
-                    onClick={() => setStatus('active')}
-                  />
-                )}
-                {user.status === 'active' && (
-                  <ActionButton
-                    busy={busy}
-                    label="Suspend"
-                    onClick={() => setStatus('suspended')}
-                  />
-                )}
-                {user.status !== 'deactivated' && (
-                  <ActionButton
-                    busy={busy}
-                    label="Deactivate"
-                    tone="danger"
-                    onClick={() => setStatus('deactivated')}
-                  />
-                )}
-
-                {user.role === 'member' && (
-                  <Link
-                    href={`/portal/admin/members/${user.id}`}
-                    className="ml-auto text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
-                  >
-                    Open member record
-                  </Link>
-                )}
-              </div>
-            )}
-          </td>
-        </tr>
-      )}
-    </Fragment>
-  );
-}
-
-function ActionButton({
-  label,
-  busy,
-  tone = 'neutral',
-  onClick,
-}: {
-  label: string;
-  busy: boolean;
-  tone?: 'neutral' | 'danger';
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={onClick}
-      className={cn(
-        'min-h-[40px] rounded-full border px-3.5 text-[13px] font-medium transition-colors disabled:opacity-50 md:min-h-[32px]',
-        tone === 'danger'
-          ? 'border-red-600/20 bg-red-50 text-red-700 hover:bg-red-100'
-          : 'border-ink/10 bg-white text-ink/80 hover:border-ink/25 hover:text-ink',
-      )}
+    <tr
+      className={cn(rowClass, 'pr-4')}
+      onClick={(e) => {
+        if (!fromControl(e.target)) onOpen();
+      }}
     >
-      {label}
-    </button>
+      <td className={cn(td, 'order-1 min-w-0 font-medium text-ink')}>
+        <div className="truncate md:max-w-[220px]">
+          <Link
+            href={userHref(user.id)}
+            className="underline decoration-transparent underline-offset-[3px] transition-colors hover:decoration-ink/40"
+          >
+            {user.name}
+          </Link>
+        </div>
+      </td>
+      <td className={cn(td, 'order-3 min-w-0 basis-full text-ink/65')}>
+        <div className="truncate md:max-w-[260px]">{user.email}</div>
+      </td>
+      <td className={cn(td, 'order-4 text-[12px] text-ink/65 md:text-[13px] md:text-ink/80')}>{ROLE_LABEL[user.role]}</td>
+      <td className={cn(td, 'order-2 ml-auto md:ml-0')}>
+        <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+      </td>
+      <td className={cn(td, 'hidden tabular-nums text-ink/80 md:text-right')}>
+        {orders ?? <span className="text-ink/35">—</span>}
+      </td>
+      <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px] md:text-ink/65')}>
+        <span className="md:hidden">· Joined </span>
+        {user.joinedAt}
+      </td>
+    </tr>
   );
 }
 

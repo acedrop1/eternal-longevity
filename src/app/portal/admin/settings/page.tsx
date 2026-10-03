@@ -17,6 +17,7 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
+import { AdminPageHeader } from '@/components/admin/IndexTable';
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -60,28 +61,19 @@ export default async function AdminSettingsPage() {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/65">
-          Settings
-        </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
-        >
-          Operations settings.
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          What&apos;s connected, where alerts are routed, and the prescriber on
-          file. Service keys live in your environment; the prescriber is editable
-          here.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Settings"
+        subtitle="What's connected, where alerts are routed, and the prescriber on file. Service keys live in your environment; the prescriber is editable here."
+      />
 
+      <div className="mt-5">
       <AdminSettings
         services={services}
         notifications={notifications}
         prescriber={prescriber}
         clinic={{ name: SITE_NAME, siteUrl: SITE_URL }}
       />
+      </div>
     </PortalShell>
   );
 }

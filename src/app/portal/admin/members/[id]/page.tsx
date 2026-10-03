@@ -5,10 +5,14 @@ import {
   formatDateTime as fmtDateTime,
   formatPhone,
 } from '@/lib/format';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminEmailMember } from '@/components/admin/AdminEmailMember';
+import { AdminMemberActions } from '@/components/admin/AdminMemberActions';
+import { ROLE_LABEL, STATUS_BADGE } from '@/components/admin/user-labels';
+import { SectionCard, StatusBadge, secondaryButton } from '@/components/admin/IndexTable';
+import { DetailHeader, InfoRow, detailGrid } from '@/components/admin/DetailHeader';
+import type { Role } from '@/lib/auth';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import type { AccountStatus } from '@/lib/database.types';
 import {
@@ -32,7 +36,9 @@ interface MemberDetail {
   phone: string | null;
   dob: string | null;
   status: AccountStatus;
+  role: Role;
   joinedAt: string;
+  addresses: { label: string; fullName: string; lines: string[]; primary: boolean }[];
   subscriptions: {
     productName: string;
     status: string;
@@ -64,12 +70,6 @@ interface MemberDetail {
   review: PatientReview | null;
 }
 
-const STATUS_BADGE: Record<AccountStatus, string> = {
-  active: 'border-emerald-600/20 bg-emerald-50 text-emerald-800',
-  suspended: 'border-amber-600/25 bg-amber-50 text-amber-800',
-  deactivated: 'border-ink/10 bg-milk text-ink/60',
-};
-
 /**
  * Empty record, used only when the Supabase lookup fails. This screen shows
  * member contact details and assessment answers, so a fabricated fallback
@@ -82,7 +82,9 @@ function demoDetail(id: string): MemberDetail {
     phone: '—',
     dob: '—',
     status: 'active',
+    role: 'member',
     joinedAt: '—',
+    addresses: [],
     subscriptions: [],
     orders: [],
     timeline: [],
@@ -92,13 +94,35 @@ function demoDetail(id: string): MemberDetail {
 
 
 async function loadDetail(id: string): Promise<MemberDetail | null> {
-  if (!supabaseAdminConfigured()) return demoDetail(id);
+  if (!supabaseAdminConfigured()) {
+    // Dev only: a sample record for the sample users the Members list shows.
+    // NODE_ENV is inlined at build, so production never loads the fixture.
+    if (process.env.NODE_ENV === 'development') {
+      const u = (await import('@/components/admin/dev-sample')).SAMPLE_USERS.find((x) => x.id === id);
+      if (u) {
+        const d: MemberDetail = (await import('@/components/admin/dev-sample-pages')).sampleMemberDetail();
+        const member = u.role === 'member';
+        return {
+          ...d,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          joinedAt: u.joinedAt,
+          orders: member ? d.orders : [],
+          subscriptions: member ? d.subscriptions : [],
+          timeline: member ? d.timeline : [],
+        };
+      }
+    }
+    return demoDetail(id);
+  }
 
   try {
     const db = createSupabaseAdminClient();
     const { data: profile } = await db
       .from('profiles')
-      .select('full_name, email, phone, date_of_birth, account_status, created_at')
+      .select('full_name, email, phone, date_of_birth, account_status, role, created_at')
       .eq('id', id)
       .maybeSingle();
     if (!profile) return null;
@@ -108,7 +132,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
      * applied, ordered, approved by the prescriber, charged, shipped — lives in
      * order_updates against their shop orders, and admin had no way to see it.
      */
-    const [{ data: subs }, { data: orders }, { data: intake }, { data: shopOrders }] =
+    const [{ data: subs }, { data: orders }, { data: intake }, { data: shopOrders }, { data: addressRows }] =
       await Promise.all([
         db
           .from('subscriptions')
@@ -132,6 +156,11 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
           .from('orders')
           .select('id, order_number')
           .eq('user_id', id),
+        db
+          .from('addresses')
+          .select('label, full_name, line1, line2, city, state, zip, is_primary')
+          .eq('user_id', id)
+          .order('created_at'),
       ]);
 
     const orderIds = (orders ?? []).map((o) => o.id);
@@ -172,7 +201,16 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
       phone: profile.phone,
       dob: profile.date_of_birth,
       status: profile.account_status,
+      role: profile.role,
       joinedAt: fmtDate(profile.created_at),
+      addresses: (addressRows ?? [])
+        .map((a) => ({
+          label: a.label,
+          fullName: a.full_name,
+          lines: [a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter((l): l is string => Boolean(l)),
+          primary: a.is_primary,
+        }))
+        .sort((x, y) => Number(y.primary) - Number(x.primary)),
       subscriptions: (subs ?? []).map((s) => ({
         productName: s.product_name,
         status: s.status,
@@ -271,277 +309,251 @@ export default async function MemberDetailPage({ params }: PageProps) {
   const detail = await loadDetail(id);
   if (!detail) notFound();
 
+  const sample = !supabaseAdminConfigured() && process.env.NODE_ENV === 'development';
+  const spent = detail.orders.reduce((n, o) => n + o.total, 0);
+  const [statusLabel, statusTone] = STATUS_BADGE[detail.status];
+
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <Link
-        href="/portal/admin/members"
-        className="mb-6 inline-flex items-center gap-1.5 text-[12px] text-ink/65 transition-colors hover:text-ink"
-      >
-        <span aria-hidden>←</span> All users
-      </Link>
+      <div className="space-y-5">
+        <DetailHeader
+          backHref="/portal/admin/members"
+          backLabel="Members"
+          title={detail.name}
+          badges={
+            <>
+              <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
+              {detail.role !== 'member' && <StatusBadge tone="info">{ROLE_LABEL[detail.role]}</StatusBadge>}
+            </>
+          }
+          meta={`${detail.email} · Member since ${detail.joinedAt}`}
+          actions={
+            <a href="#email-member" className={secondaryButton}>
+              Email member
+            </a>
+          }
+        />
 
-      {/* Header */}
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1
-            className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
-          >
-            {detail.name}
-          </h1>
-          <p className="mt-1 text-sm text-ink/65">{detail.email}</p>
-        </div>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px]',
-            STATUS_BADGE[detail.status],
-          )}
-        >
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-          {detail.status}
-        </span>
-      </div>
+        {sample && (
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+            Sample data (dev only). Account actions and email need Supabase.
+          </p>
+        )}
 
-      {/*
-        Was a two-column grid, which stretched an empty Order history card to
-        match the tall email composer beside it and left half the screen blank.
-        Short blocks share a row; anything that grows gets the full width.
-      */}
-      <div className="portal-stack">
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Account */}
-        <Section title="Account">
-          <Row label="Phone" value={formatPhone(detail.phone) || '—'} />
-          <Row
-            label="Date of birth"
-            value={
-              detail.dob
-                ? `${fmtDate(detail.dob)}${
-                    ageFrom(detail.dob) !== null ? ` · ${ageFrom(detail.dob)}` : ''
-                  }`
-                : '—'
-            }
-          />
-          <Row label="Member since" value={detail.joinedAt} />
-        </Section>
+        <div className={detailGrid}>
+          {/* ---------- Main column ---------- */}
+          <div className="min-w-0 space-y-4">
+            <SectionCard
+              title="Orders"
+              description={
+                detail.orders.length
+                  ? `${detail.orders.length} ${detail.orders.length === 1 ? 'order' : 'orders'} · $${spent} total`
+                  : undefined
+              }
+              flush
+            >
+              {detail.orders.length === 0 ? (
+                <Empty>No orders yet.</Empty>
+              ) : (
+                <ul className="divide-y divide-ink/10">
+                  {detail.orders.map((o) => (
+                    <li key={o.ref} className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="text-[13px] font-semibold text-ink">#{o.ref}</span>
+                        <span className="text-[12px] text-ink/60">{o.placedAt}</span>
+                        <StatusBadge tone={o.warning ? 'attention' : 'neutral'}>
+                          {STATUS_LABEL[o.status as OrderStatus] ?? o.status}
+                        </StatusBadge>
+                        <span className="ml-auto tabular-nums text-[13px] font-medium text-ink">${o.total}</span>
+                        <span className="basis-full truncate text-[13px] text-ink/80">{o.products}</span>
+                      </div>
 
-        {/* Plan */}
-        <Section title="Plan">
-          {detail.subscriptions.length === 0 ? (
-            <Empty>No active subscriptions.</Empty>
-          ) : (
-            <ul className="space-y-3">
-              {detail.subscriptions.map((s, i) => (
-                <li
-                  key={i}
-                  className="rounded-inner border border-ink/10 bg-white p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-ink">
-                      {s.productName}
-                    </span>
-                    <span className="text-[12px] font-medium text-emerald-700">
-                      {s.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-ink/65">
-                    {s.cadence} · ${s.perCycle} per cycle
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+                      {/* Why the charge is not the sticker price. */}
+                      <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+                        {o.money.map((m) => (
+                          <div key={m.label} className="flex items-baseline gap-1.5">
+                            <dt className="text-[12px] text-ink/60">{m.label}</dt>
+                            <dd className={cn('tabular-nums text-[12px]', m.strong ? 'font-semibold text-ink' : 'text-ink/75')}>
+                              {m.value < 0 ? '−' : ''}${Math.abs(m.value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
 
-        </div>
+                      {/* The dates, so "where is it" has an answer without
+                          opening anything. */}
+                      <ol className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5">
+                        {o.steps.map((st) => (
+                          <li key={st.label}>
+                            <div className="text-[12px] text-ink/60">{st.label}</div>
+                            <div className="text-[12px] text-ink/85">{st.at}</div>
+                          </li>
+                        ))}
+                      </ol>
 
-        <Section title="Order history">
-          {detail.orders.length === 0 ? (
-            <Empty>No orders yet.</Empty>
-          ) : (
-            <ul className="space-y-3">
-              {detail.orders.map((o) => (
-                <li
-                  key={o.ref}
-                  className="rounded-inner border border-ink/10 bg-white p-4"
-                >
-                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <span className="text-[12px] text-ink/85">
-                      {o.ref}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink/85">
-                      {o.products}
-                    </span>
-                    <span className="tabular-nums text-sm text-ink">
-                      ${o.total}
-                    </span>
-                    <span className="rounded-full border border-ink/10 px-2.5 py-0.5 text-[12px] text-ink/70">
-                      {(STATUS_LABEL[o.status as OrderStatus] ?? o.status)}
-                    </span>
-                  </div>
+                      {o.tracking && (
+                        <p className="mt-2 text-[12px] text-ink/75">
+                          <span className="text-ink/60">Tracking </span>
+                          {o.tracking.carrier} · {o.tracking.number}
+                        </p>
+                      )}
 
-                  {/* Why the charge is not the sticker price. */}
-                  <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
-                    {o.money.map((m) => (
-                      <div key={m.label} className="flex items-baseline gap-1.5">
-                        <dt className="text-[12px] text-ink/60">
-                          {m.label}
-                        </dt>
-                        <dd
-                          className={cn(
-                            'tabular-nums text-xs',
-                            m.strong
-                              ? 'font-semibold text-ink'
-                              : 'text-ink/75',
-                          )}
-                        >
-                          {m.value < 0 ? '−' : ''}${Math.abs(m.value)}
-                        </dd>
+                      {o.warning && (
+                        <p className="mt-2 rounded-thumb border border-amber-600/25 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                          {o.warning}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Subscriptions" flush>
+              {detail.subscriptions.length === 0 ? (
+                <Empty>No active subscriptions.</Empty>
+              ) : (
+                <ul className="divide-y divide-ink/10">
+                  {detail.subscriptions.map((s, i) => (
+                    <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+                      <span className="text-[13px] font-medium text-ink">{s.productName}</span>
+                      <StatusBadge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</StatusBadge>
+                      <span className="ml-auto text-[12px] tabular-nums text-ink/65">
+                        {s.cadence} · ${s.perCycle} per cycle
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Timeline">
+              {detail.timeline.length === 0 ? (
+                <p className="text-[13px] text-ink/65">
+                  Nothing yet. Applying, ordering, prescriber decisions, charges and
+                  shipments all appear here.
+                </p>
+              ) : (
+                <ol className="relative space-y-3 before:absolute before:bottom-1 before:left-[3px] before:top-1 before:w-px before:bg-ink/10">
+                  {detail.timeline.map((t, i) => (
+                    <li key={i} className="relative flex gap-3">
+                      <span aria-hidden className="mt-1.5 h-[7px] w-[7px] flex-none rounded-full bg-butter-deep ring-2 ring-white" />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="text-[13px] font-medium text-ink">{t.label}</span>
+                          <span className="text-[12px] text-ink/60">#{t.orderNumber}</span>
+                        </div>
+                        {t.body && <p className="mt-0.5 text-[12px] leading-relaxed text-ink/65">{t.body}</p>}
+                        <p className="mt-0.5 text-[12px] text-ink/60">
+                          {t.at}
+                          {t.author ? ` · ${t.author}` : ''}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </SectionCard>
+
+            <div id="email-member" className="scroll-mt-24">
+              <SectionCard title="Send an email">
+                <AdminEmailMember userId={id} email={detail.email} />
+              </SectionCard>
+            </div>
+
+            <SectionCard title="Medical record">
+              {!detail.review ? (
+                <p className="text-[13px] text-ink/60">No intake on file.</p>
+              ) : (
+                <div className="space-y-5">
+                  <div className="flex flex-wrap gap-x-8 gap-y-3">
+                    {(
+                      [
+                        ['Date of birth', detail.review.dob],
+                        ['Age', detail.review.age],
+                        ['Sex at birth', detail.review.sex],
+                        ['Height / weight', detail.review.body],
+                        ['Intake completed', detail.review.submittedAt],
+                      ] as [string, string][]
+                    ).map(([k, v]) => (
+                      <div key={k}>
+                        <div className="text-[12px] text-ink/60">{k}</div>
+                        <div className="mt-0.5 text-[13px] text-ink">{v}</div>
                       </div>
                     ))}
-                  </dl>
+                  </div>
 
-                  {/* The dates, so "where is it" has an answer without
-                      opening anything. */}
-                  <ol className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5">
-                    {o.steps.map((st) => (
-                      <li key={st.label}>
-                        <div className="text-[12px] text-ink/60">
-                          {st.label}
-                        </div>
-                        <div className="text-xs text-ink/80">{st.at}</div>
-                      </li>
-                    ))}
-                  </ol>
-
-                  {o.tracking && (
-                    <p className="mt-3 text-xs text-ink/70">
-                      <span className="text-ink/60">Tracking </span>
-                      {o.tracking.carrier} · {o.tracking.number}
-                    </p>
-                  )}
-
-                  {o.warning && (
-                    <p className="mt-3 rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                      {o.warning}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        {/* Assessment */}
-        <Section title="Send an email">
-          <AdminEmailMember userId={id} email={detail.email} />
-        </Section>
-
-        <Section title="Activity">
-          {detail.timeline.length === 0 ? (
-            <p className="text-sm text-ink/65">
-              Nothing yet. Applying, ordering, prescriber decisions, charges and
-              shipments all appear here.
-            </p>
-          ) : (
-            <ol className="space-y-3">
-              {detail.timeline.map((t, i) => (
-                <li key={i} className="flex gap-3">
-                  <span
-                    aria-hidden
-                    className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-butter-deep"
-                  />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-sm font-medium text-ink">
-                        {t.label}
-                      </span>
-                      <span className="text-[12px] text-ink/60">
-                        {t.orderNumber}
-                      </span>
+                  <RecordGroup title="Contact" lines={detail.review.contact} />
+                  <RecordGroup title="Billing" lines={detail.review.context} />
+                  <RecordGroup title="Safety screen" lines={detail.review.safety} />
+                  <RecordGroup title="History" lines={detail.review.history} />
+                  {detail.review.categories.length > 0 && (
+                    <div>
+                      <div className="mb-1.5 text-[13px] font-medium text-ink/65">Category answers</div>
+                      <CategoryAnswers sections={detail.review.categories} />
                     </div>
-                    {t.body && (
-                      <p className="mt-0.5 text-xs leading-relaxed text-ink/65">
-                        {t.body}
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-[12px] text-ink/60">
-                      {t.at}
-                      {t.author ? ` · ${t.author}` : ''}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Section>
-
-        <Section title="Medical record">
-          {!detail.review ? (
-            <Empty>No intake on file.</Empty>
-          ) : (
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-x-8 gap-y-3">
-                {(
-                  [
-                    ['Date of birth', detail.review.dob],
-                    ['Age', detail.review.age],
-                    ['Sex at birth', detail.review.sex],
-                    ['Height / weight', detail.review.body],
-                    ['Intake completed', detail.review.submittedAt],
-                  ] as [string, string][]
-                ).map(([k, v]) => (
-                  <div key={k}>
-                    <div className="text-[12px] text-ink/60">
-                      {k}
-                    </div>
-                    <div className="mt-0.5 text-sm text-ink">{v}</div>
-                  </div>
-                ))}
-              </div>
-
-              <RecordGroup title="Contact" lines={detail.review.contact} />
-              <RecordGroup title="Billing" lines={detail.review.context} />
-              <RecordGroup title="Safety screen" lines={detail.review.safety} />
-              <RecordGroup title="History" lines={detail.review.history} />
-              {detail.review.categories.length > 0 && (
-                <div>
-                  <div className="mb-1.5 text-[13px] font-medium text-ink/65">
-                    Category answers
-                  </div>
-                  <CategoryAnswers sections={detail.review.categories} />
+                  )}
                 </div>
               )}
-            </div>
-          )}
-        </Section>
+            </SectionCard>
+          </div>
+
+          {/* ---------- Sidebar ---------- */}
+          <aside className="min-w-0 space-y-4">
+            <SectionCard title="Contact">
+              <dl className="-my-1.5">
+                <InfoRow label="Email">
+                  {detail.email && detail.email !== '—' ? (
+                    <a href={`mailto:${detail.email}`} className="underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
+                      {detail.email}
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </InfoRow>
+                <InfoRow label="Phone">{formatPhone(detail.phone) || '—'}</InfoRow>
+                <InfoRow label="Date of birth">
+                  {detail.dob
+                    ? `${fmtDate(detail.dob)}${ageFrom(detail.dob) !== null ? ` · ${ageFrom(detail.dob)}` : ''}`
+                    : '—'}
+                </InfoRow>
+              </dl>
+            </SectionCard>
+
+            <SectionCard title="Addresses">
+              {detail.addresses.length === 0 ? (
+                <p className="text-[13px] text-ink/60">No saved addresses.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {detail.addresses.map((a, i) => (
+                    <li key={i} className="text-[13px] leading-relaxed text-ink/85">
+                      <div className="mb-0.5 flex items-center gap-2 text-[12px] text-ink/60">
+                        {a.label}
+                        {a.primary && <StatusBadge tone="neutral">Default</StatusBadge>}
+                      </div>
+                      <div className="text-ink">{a.fullName}</div>
+                      {a.lines.map((l) => (
+                        <div key={l}>{l}</div>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Account">
+              <AdminMemberActions
+                userId={id}
+                name={detail.name}
+                role={detail.role}
+                status={detail.status}
+                joinedAt={detail.joinedAt}
+              />
+            </SectionCard>
+          </aside>
+        </div>
       </div>
     </PortalShell>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-shell bg-milk p-6">
-      <h2 className="mb-4 text-[17px] font-semibold tracking-[-0.02em] text-ink">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between border-b border-ink/10 py-2.5 text-sm last:border-0">
-      <span className="text-ink/65">{label}</span>
-      <span className="text-ink/90">{value}</span>
-    </div>
   );
 }
 
@@ -580,5 +592,5 @@ function RecordGroup({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-ink/60">{children}</p>;
+  return <p className="px-4 py-3.5 text-[13px] text-ink/60">{children}</p>;
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 /**
@@ -190,3 +191,119 @@ export function shortDate(ms: number): string {
   const sameYear = d.getFullYear() === new Date().getFullYear();
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
 }
+
+/*
+ * Page-level building blocks for the non-index admin pages (Home, Billing,
+ * Settings): a metric tile, a titled section card, and a Settings-style
+ * label/content row.
+ */
+
+/** Compact metric tile; a link when `href` is set. */
+export function MetricCard({
+  label,
+  value,
+  hint,
+  href,
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  hint?: ReactNode;
+  href?: string;
+}) {
+  const body = (
+    <>
+      <p className="text-[12px] font-medium text-ink/65">{label}</p>
+      <p className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink tabular-nums">{value}</p>
+      {hint && <p className="mt-0.5 truncate text-[12px] text-ink/60">{hint}</p>}
+    </>
+  );
+  const cls = cn(indexCard, 'block min-w-0 px-4 py-3');
+  return href ? (
+    <Link href={href} className={cn(cls, 'transition-colors hover:bg-milk/70')}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
+}
+
+/**
+ * A white card with an optional title row. `flush` drops the body padding so
+ * a table or list can run edge to edge.
+ */
+export function SectionCard({
+  title,
+  description,
+  actions,
+  flush = false,
+  className,
+  children,
+}: {
+  title?: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  flush?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn(indexCard, className)}>
+      {(title || actions) && (
+        <div
+          className={cn(
+            'flex flex-wrap items-start justify-between gap-2 px-4 pt-3.5',
+            flush ? 'border-b border-ink/10 pb-3' : 'pb-0',
+          )}
+        >
+          <div className="min-w-0">
+            {title && <h2 className="text-[14px] font-semibold text-ink">{title}</h2>}
+            {description && <p className="mt-0.5 text-[13px] text-ink/65">{description}</p>}
+          </div>
+          {actions && <div className="flex flex-none items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      <div className={flush ? '' : 'px-4 py-3.5'}>{children}</div>
+    </section>
+  );
+}
+
+/**
+ * Shopify Settings row: label and help on the left, the card on the right.
+ * Stacks below md.
+ */
+export function SettingsRow({
+  title,
+  description,
+  children,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] md:gap-8">
+      <div className="min-w-0 md:pt-1">
+        <h2 className="text-[14px] font-semibold text-ink">{title}</h2>
+        {description && <p className="mt-1 text-[13px] leading-relaxed text-ink/65">{description}</p>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+/** Secondary (outline) button to sit beside `headerButton`. */
+export const secondaryButton =
+  'inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-white px-4 text-[13px] font-semibold text-ink ring-1 ring-ink/15 transition-colors hover:bg-milk md:min-h-[34px]';
+
+/*
+ * A plain table for short, non-clickable lists inside a `SectionCard flush`.
+ * Wrap it in `overflow-x-auto` so a narrow screen scrolls the card, not the page.
+ */
+export const plainTable = 'w-full min-w-[520px] text-[13px]';
+export const plainTd =
+  'h-11 whitespace-nowrap border-t border-ink/10 px-2.5 py-2 align-middle text-ink first:pl-4 last:pr-4';
+
+/** Form field and label in the admin's compact size (16px on phones so iOS does not zoom). */
+export const fieldInput =
+  'h-10 w-full rounded-thumb bg-white px-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]';
+export const fieldLabel = 'mb-1 block text-[13px] font-medium text-ink/75';

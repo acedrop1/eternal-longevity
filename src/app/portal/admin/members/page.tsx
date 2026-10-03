@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AdminUsers, type AdminUserRow } from '@/components/admin/AdminUsers';
+import { USER_TABS, type UserTab } from '@/components/admin/user-labels';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import {
   createSupabaseAdminClient,
@@ -28,7 +29,11 @@ function formatJoined(iso: string): string {
   });
 }
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string | string[] }>;
+}) {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
@@ -67,9 +72,13 @@ export default async function AdminUsersPage() {
     sample = true;
   }
 
+  // `?tab=` opens a filter tab directly; anything unknown falls back to All.
+  const { tab } = await searchParams;
+  const initialTab = USER_TABS.find((t) => t.key === tab)?.key ?? ('all' as UserTab);
+
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <AdminUsers users={users} live={live} sample={sample} />
+      <AdminUsers users={users} live={live} sample={sample} initialTab={initialTab} />
     </PortalShell>
   );
 }

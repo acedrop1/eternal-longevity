@@ -8,7 +8,7 @@ import type { Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 
 /**
- * Admin-only pieces of the Orders index (FulfillmentBoard renders them):
+ * Admin-only pieces of the Orders index and the order page:
  * which orders are still in motion, what is wrong with any of them, and the
  * way to cancel one.
  *
@@ -42,6 +42,10 @@ export function attentionFor(order: Order): string | null {
   return null;
 }
 
+/** Only orders still in motion, and never once the package has left. */
+export const cancellable = (order: Order) =>
+  LIVE_ORDER_STATUSES.includes(order.status) && !['shipped', 'delivered'].includes(order.status);
+
 /**
  * One order, and the way to stop it.
  *
@@ -49,29 +53,43 @@ export function attentionFor(order: Order): string | null {
  * for a reason first — the member reads that sentence, and "cancelled" with no
  * explanation is the thing that generates the phone call.
  */
-export function CancelOrder({ order }: { order: Order }) {
+export function CancelOrder({
+  order,
+  startOpen = false,
+  onClose,
+}: {
+  order: Order;
+  /** Skip the "Cancel order" link and show the reason form (the order page's dialog). */
+  startOpen?: boolean;
+  /** Called on "Keep it", and after the cancel lands, so a dialog can close. */
+  onClose?: () => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // What the cancel left for a person to do (refund failed, cancel in the pharmacy portal).
   const [followUp, setFollowUp] = useState<string | null>(null);
 
-  // Only orders still in motion, and never once the package has left.
-  const cancellable =
-    LIVE_ORDER_STATUSES.includes(order.status) && !['shipped', 'delivered'].includes(order.status);
   if (followUp) {
     return (
       <div role="alert" className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900">
         {followUp}{' '}
-        <button type="button" onClick={() => router.refresh()} className="font-semibold underline underline-offset-[3px]">
+        <button
+          type="button"
+          onClick={() => {
+            router.refresh();
+            onClose?.();
+          }}
+          className="font-semibold underline underline-offset-[3px]"
+        >
           Got it
         </button>
       </div>
     );
   }
-  if (!cancellable) return null;
+  if (!cancellable(order)) return null;
 
   if (!open) {
     return (
@@ -132,7 +150,10 @@ export function CancelOrder({ order }: { order: Order }) {
                 ].filter(Boolean);
                 // Refreshing drops the row, so a to-do is shown first and refreshes on "Got it".
                 if (todo.length) setFollowUp(todo.join(' '));
-                else router.refresh();
+                else {
+                  router.refresh();
+                  onClose?.();
+                }
               } else {
                 setError(
                   'Could not cancel this order. Nothing was refunded or sent.',
@@ -158,6 +179,7 @@ export function CancelOrder({ order }: { order: Order }) {
             setOpen(false);
             setReason('');
             setError(null);
+            onClose?.();
           }}
           className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
         >

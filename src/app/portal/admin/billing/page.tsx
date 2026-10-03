@@ -14,6 +14,8 @@ import {
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { monthlyRecurringCents, paidRevenue } from '@/lib/revenue';
+import { AdminPageHeader } from '@/components/admin/IndexTable';
+import type { PromoCode } from '@/lib/promo-db';
 
 export const metadata: Metadata = {
   title: 'Billing',
@@ -63,7 +65,7 @@ export default async function AdminBillingPage() {
           db.from('subscriptions').select('status, per_cycle_cents, cadence_label'),
           db
             .from('orders')
-            .select('order_number, status, total_cents, created_at')
+            .select('order_number, status, total_cents, created_at, paid_confirmed_at')
             .order('created_at', { ascending: false })
             .limit(100),
           // One definition of revenue for Overview, Billing and the daily report.
@@ -88,6 +90,8 @@ export default async function AdminBillingPage() {
           label: o.order_number,
           amountCents: o.total_cents ?? 0,
           when: fmtWhen(o.created_at),
+          status: o.status,
+          paid: Boolean(o.paid_confirmed_at),
         })),
       };
     } catch {
@@ -96,29 +100,31 @@ export default async function AdminBillingPage() {
     }
   }
 
+  // Dev only: sample rows so the page can be designed without Supabase.
+  // NODE_ENV is inlined at build, so production never loads the fixture.
+  let sampleCodes: PromoCode[] | undefined;
+  if (process.env.NODE_ENV === 'development' && !supabaseAdminConfigured()) {
+    const sample = await import('@/components/admin/dev-sample');
+    customers = sample.SAMPLE_BILLING_CUSTOMERS;
+    summary = sample.SAMPLE_BILLING_SUMMARY;
+    sampleCodes = sample.SAMPLE_PROMOS;
+  }
+
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <div>
-        <p className="mb-2 text-[13px] font-medium text-ink/65">
-          Billing
-        </p>
-        <h1
-          className="text-[36px] font-semibold leading-[1] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]"
-        >
-          Revenue & billing.
-        </h1>
-        <p className="mt-3 max-w-[68ch] text-[16px] leading-relaxed text-ink-soft">
-          The numbers across the top are your totals. To bill a specific
-          customer, search for them below. Customers add their own cards through
-          Stripe — the app never stores a raw card number.
-        </p>
-      </div>
-
-      <AdminBilling
-        customers={customers}
-        live={billingConfigured()}
-        summary={summary}
+      <AdminPageHeader
+        title="Billing"
+        subtitle="Revenue totals, discount codes, and billing for a single customer."
       />
+
+      <div className="mt-5">
+        <AdminBilling
+          customers={customers}
+          live={billingConfigured()}
+          summary={summary}
+          sampleCodes={sampleCodes}
+        />
+      </div>
     </PortalShell>
   );
 }

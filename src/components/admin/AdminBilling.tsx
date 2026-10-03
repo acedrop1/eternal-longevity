@@ -21,6 +21,21 @@ import {
 } from '@/lib/promo-db';
 import { cn } from '@/lib/utils';
 import { SHIPPING_PRICE } from '@/lib/shipping';
+import { paymentState, type PaymentState } from '@/lib/order-health';
+import { statusLabel, type OrderStatus } from '@/lib/orders';
+import {
+  MetricCard,
+  SectionCard,
+  SettingsRow,
+  StatusBadge,
+  fieldInput,
+  fieldLabel,
+  plainTable,
+  plainTd,
+  secondaryButton,
+  th,
+  type BadgeTone,
+} from '@/components/admin/IndexTable';
 
 export interface BillingCustomer {
   id: string;
@@ -33,13 +48,19 @@ export interface BillingSummary {
   cycleRevenueCents: number;
   paidOrders: number;
   lifetimeRevenueCents: number;
-  recent: { label: string; amountCents: number; when: string }[];
+  recent: {
+    label: string;
+    amountCents: number;
+    when: string;
+    /** Order status, and whether the money landed (paid_confirmed_at). */
+    status?: string;
+    paid?: boolean;
+  }[];
 }
 
-const inputClass =
-  'w-full rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-ink/30';
+const inputClass = fieldInput;
 
-const labelClass = 'mb-1.5 block text-[13px] font-medium text-ink/70';
+const labelClass = fieldLabel;
 
 function money(cents: number): string {
   return (cents / 100).toLocaleString('en-US', {
@@ -49,16 +70,37 @@ function money(cents: number): string {
   });
 }
 
+/** Paid is paid_confirmed_at and nothing else (lib/order-health), as on the Orders board. */
+const PAYMENT: Record<PaymentState, [string, BadgeTone]> = {
+  paid: ['Paid', 'success'],
+  pending: ['Pending', 'neutral'],
+  awaiting: ['Awaiting payment', 'attention'],
+  failed: ['Payment failed', 'critical'],
+};
+
+function paymentBadge(r: BillingSummary['recent'][number]): [string, BadgeTone] | null {
+  if (!r.status) return null;
+  const state = paymentState({ status: r.status as OrderStatus, paidAt: r.paid ? 1 : undefined });
+  if (state) return PAYMENT[state];
+  const words = statusLabel(r.status).toLowerCase();
+  return [words.charAt(0).toUpperCase() + words.slice(1), 'neutral'];
+}
+
+const orderRef = (n: string) => (/^\d+$/.test(n) ? `#${n}` : n);
+
 /* ================================================================== */
 
 export function AdminBilling({
   customers,
   live,
   summary,
+  sampleCodes,
 }: {
   customers: BillingCustomer[];
   live: boolean;
   summary: BillingSummary;
+  /** Dev-only fixture codes; when set, nothing is read from the database. */
+  sampleCodes?: PromoCode[];
 }) {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -77,134 +119,142 @@ export function AdminBilling({
   }, [customers, query]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {!live && (
-        <div className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Demo figures. Real revenue and billing actions go live once Stripe and
-          Supabase are connected.
-        </div>
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          {sampleCodes ? 'Sample data (dev only). ' : 'Demo figures. '}
+          Real revenue and billing actions go live once Stripe and Supabase are
+          connected.
+        </p>
       )}
 
       {/* Overview */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric
-          label="Active subscriptions"
-          value={String(summary.activeSubscriptions)}
-        />
-        <Metric
-          label="MRR (active plans)"
-          value={money(summary.cycleRevenueCents)}
-          tone="accent"
-        />
-        <Metric label="Paid orders" value={String(summary.paidOrders)} />
-        <Metric
-          label="Lifetime revenue"
-          value={money(summary.lifetimeRevenueCents)}
-          tone="accent"
-        />
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MetricCard label="Active subscriptions" value={String(summary.activeSubscriptions)} />
+        <MetricCard label="MRR (active plans)" value={money(summary.cycleRevenueCents)} />
+        <MetricCard label="Paid orders" value={String(summary.paidOrders)} />
+        <MetricCard label="Lifetime revenue" value={money(summary.lifetimeRevenueCents)} />
       </section>
 
-      {/* Recent activity */}
-      {summary.recent.length > 0 && (
-        <section className="rounded-shell bg-milk p-6">
-          <div className="mb-4 text-[13px] font-medium text-ink/65">
-            Recent activity
-          </div>
-          <ul className="divide-y divide-ink/10">
-            {summary.recent.map((r, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
-              >
-                <span className="text-[12px] text-ink/80">
-                  {r.label}
-                </span>
-                <span className="text-[12px] tabular-nums text-ink/60">{r.when}</span>
-                <span className="text-sm font-medium text-ink tabular-nums">
-                  {money(r.amountCents)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Bill a customer — search */}
-      <section className="rounded-shell bg-milk p-6 md:p-7">
-        <div className="mb-1 text-[13px] font-medium text-ink/65">
-          Bill a customer
-        </div>
-        <h2 className="mb-4 text-[20px] font-semibold tracking-[-0.03em] text-ink">
-          {selected ? selected.name : 'Search for a customer'}
-        </h2>
-
-        {selected ? (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedId(null);
-              setQuery('');
-            }}
-            className="text-[12px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
-          >
-            ← Choose a different customer
-          </button>
+      {/* Recent payments */}
+      <SectionCard flush title="Recent payments" description="The latest orders and whether their payment landed.">
+        {summary.recent.length === 0 ? (
+          <p className="px-4 py-6 text-[13px] text-ink/65">No orders yet.</p>
         ) : (
-          <div>
-            <input
-              aria-label="Search customers by name or email"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or email…"
-              className={inputClass}
-            />
-            {query.trim() && (
-              <ul className="mt-2 overflow-hidden rounded-inner bg-white ring-1 ring-ink/10">
-                {matches.length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-ink/60">
-                    No customers match.
-                  </li>
-                ) : (
-                  matches.map((c) => (
-                    <li key={c.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedId(c.id)}
-                        className="flex w-full items-center justify-between gap-3 border-b border-ink/10 px-4 py-3 text-left transition-colors last:border-0 hover:bg-milk"
-                      >
-                        <span className="text-sm font-medium text-ink">
-                          {c.name}
-                        </span>
-                        <span className="truncate text-xs text-ink/65">
-                          {c.email}
-                        </span>
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
+          <div className="overflow-x-auto">
+            <table className={cn(plainTable, 'min-w-[340px]')}>
+              <thead>
+                <tr>
+                  <th className={th}>Order</th>
+                  <th className={th}>Date</th>
+                  <th className={cn(th, 'text-right')}>Amount</th>
+                  <th className={th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.recent.map((r, i) => {
+                  const badge = paymentBadge(r);
+                  return (
+                    <tr key={i}>
+                      <td className={cn(plainTd, 'font-medium')}>{orderRef(r.label)}</td>
+                      <td className={cn(plainTd, 'tabular-nums text-ink/70')}>{r.when}</td>
+                      <td className={cn(plainTd, 'text-right tabular-nums')}>{money(r.amountCents)}</td>
+                      <td className={plainTd}>
+                        {badge ? <StatusBadge tone={badge[1]}>{badge[0]}</StatusBadge> : <span className="text-ink/35">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
-
-      {selected && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <CardLinkPanel userId={selected.id} />
-          <SubscriptionPanel userId={selected.id} />
-          <ChargePanel userId={selected.id} name={selected.name} />
-          <RefundPanel />
-        </div>
-      )}
+      </SectionCard>
 
       {/* Codes are not customer-specific, so this sits outside the selection. */}
-      <PromoPanel />
+      <PromoPanel sampleCodes={sampleCodes} />
+
+      {/* Bill a customer — search */}
+      <div className="space-y-5 border-t border-ink/10 pt-5">
+        <SettingsRow
+          title="Bill a customer"
+          description="Search for a member to send a card link, start a subscription, charge their card or refund an order. Customers add their own cards through Stripe — the app never stores a raw card number."
+        >
+          <SectionCard title={selected ? selected.name : 'Search for a customer'} description={selected?.email || undefined}>
+            {selected ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedId(null);
+                  setQuery('');
+                }}
+                className="text-[13px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+              >
+                ← Choose a different customer
+              </button>
+            ) : (
+              <div>
+                <input
+                  aria-label="Search customers by name or email"
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by name or email…"
+                  className={inputClass}
+                />
+                {query.trim() && (
+                  <ul className="mt-2 overflow-hidden rounded-thumb bg-white ring-1 ring-ink/10">
+                    {matches.length === 0 ? (
+                      <li className="px-3 py-2.5 text-[13px] text-ink/60">
+                        No customers match.
+                      </li>
+                    ) : (
+                      matches.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(c.id)}
+                            className="flex w-full items-center justify-between gap-3 border-b border-ink/10 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-milk"
+                          >
+                            <span className="text-[13px] font-medium text-ink">
+                              {c.name}
+                            </span>
+                            <span className="truncate text-[12px] text-ink/65">
+                              {c.email}
+                            </span>
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+            )}
+          </SectionCard>
+        </SettingsRow>
+
+        {selected && (
+          <>
+            <SettingsRow title="Card on file" description="Without a saved card nothing below can be charged.">
+              <CardLinkPanel userId={selected.id} />
+            </SettingsRow>
+            <SettingsRow title="Subscription" description="A recurring charge against the saved card.">
+              <SubscriptionPanel userId={selected.id} />
+            </SettingsRow>
+            <SettingsRow title="One-off charge" description="Bills the saved card once, after you confirm.">
+              <ChargePanel userId={selected.id} name={selected.name} />
+            </SettingsRow>
+            <SettingsRow title="Refund" description="By order number, or a Stripe pi_ id. Asks before it refunds.">
+              <RefundPanel />
+            </SettingsRow>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function PromoPanel() {
+function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
   const [confirm, confirmDialog] = useConfirm();
   const [codes, setCodes] = useState<PromoCode[]>([]);
   // The code being edited; null = the form creates a new one.
@@ -219,8 +269,9 @@ function PromoPanel() {
   const [result, setResult] = useState<AdminBillingResult | null>(null);
 
   const load = useCallback(() => {
-    void listPromosAction().then(setCodes);
-  }, []);
+    if (sampleCodes) setCodes(sampleCodes);
+    else void listPromosAction().then(setCodes);
+  }, [sampleCodes]);
   useEffect(load, [load]);
 
   function reset() {
@@ -233,6 +284,13 @@ function PromoPanel() {
     setIncludesShipping(false);
   }
 
+  /** Bring the form into view and put the cursor in the code field. */
+  function focusForm() {
+    const el = document.getElementById('promo-code') as HTMLInputElement | null;
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el?.focus({ preventScroll: true });
+  }
+
   function edit(c: PromoCode) {
     setEditing(c.id);
     setCode(c.code);
@@ -242,6 +300,7 @@ function PromoPanel() {
     setExpires(c.expiresAt ? c.expiresAt.slice(0, 10) : '');
     setIncludesShipping(c.includesShipping);
     setResult(null);
+    focusForm();
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -271,6 +330,11 @@ function PromoPanel() {
   }
 
   async function toggle(id: string, next: boolean) {
+    // Sample codes live only in this page; flip them locally.
+    if (sampleCodes) {
+      setCodes((cs) => cs.map((c) => (c.id === id ? { ...c, active: next } : c)));
+      return;
+    }
     await togglePromoAction(id, next);
     load();
   }
@@ -283,196 +347,192 @@ function PromoPanel() {
   }
 
   return (
-    <Panel
-      eyebrow="Promotions"
-      title="Discount codes"
-      description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
-    >
+    <>
       {confirmDialog}
-      <form onSubmit={onSubmit} className="space-y-4">
-        {editing && (
-          <p className="text-[13px] font-medium text-ink">
-            Editing {codes.find((c) => c.id === editing)?.code}. Orders already placed keep their discount.
-          </p>
-        )}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label htmlFor="promo-code" className={labelClass}>
-              Code
-            </label>
-            <input
-              id="promo-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="LAUNCH20"
-              required
-              className={inputClass}
-            />
+      <SectionCard
+        flush
+        title="Discount codes"
+        description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
+        actions={
+          <button
+            type="button"
+            onClick={() => {
+              reset();
+              setResult(null);
+              focusForm();
+            }}
+            className={secondaryButton}
+          >
+            Create discount
+          </button>
+        }
+      >
+        {codes.length === 0 ? (
+          <p className="px-4 py-6 text-[13px] text-ink/65">No discount codes yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={plainTable}>
+              <thead>
+                <tr>
+                  <th className={th}>Code</th>
+                  <th className={th}>Discount</th>
+                  <th className={th}>Uses</th>
+                  <th className={th}>Status</th>
+                  <th className={th}>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {codes.map((c) => {
+                  const spent =
+                    c.maxRedemptions !== null && c.redeemedCount >= c.maxRedemptions;
+                  const expired =
+                    !!c.expiresAt && new Date(c.expiresAt).getTime() < Date.now();
+                  return (
+                    <tr key={c.id} className={cn(editing === c.id && 'bg-butter/30')}>
+                      <td className={cn(plainTd, 'font-semibold')}>{c.code}</td>
+                      <td className={cn(plainTd, 'text-ink/80')}>
+                        {c.kind === 'percent' ? `${c.value}% off` : `${money(c.value)} off`}
+                        {c.includesShipping ? <span className="text-ink/60"> + free shipping</span> : ''}
+                      </td>
+                      <td className={cn(plainTd, 'tabular-nums text-ink/70')}>
+                        {c.redeemedCount}
+                        {c.maxRedemptions !== null ? ` / ${c.maxRedemptions}` : ''} used
+                        {expired ? ' · expired' : ''}
+                        {spent && !expired ? ' · spent' : ''}
+                      </td>
+                      <td className={plainTd}>
+                        <button
+                          type="button"
+                          onClick={() => toggle(c.id, !c.active)}
+                          title={c.active ? 'Turn this code off' : 'Turn this code on'}
+                          aria-label={`${c.code} is ${c.active ? 'active' : 'off'}. ${c.active ? 'Turn off' : 'Turn on'}`}
+                          className="rounded-full transition-opacity hover:opacity-75"
+                        >
+                          <StatusBadge tone={c.active ? 'success' : 'neutral'}>{c.active ? 'Active' : 'Off'}</StatusBadge>
+                        </button>
+                      </td>
+                      <td className={cn(plainTd, 'text-right')}>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => edit(c)}
+                            className="rounded-thumb px-2.5 py-1 text-[12px] font-medium text-ink/75 transition-colors hover:bg-ink/[0.05] hover:text-ink"
+                          >
+                            Edit
+                          </button>
+                          {c.redeemedCount === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => remove(c)}
+                              className="rounded-thumb px-2.5 py-1 text-[12px] font-medium text-red-700/85 transition-colors hover:bg-red-50 hover:text-red-700"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <div>
-            <label htmlFor="promo-value" className={labelClass}>
-              {kind === 'percent' ? 'Percent off (1–100)' : 'Dollars off'}
-            </label>
-            <div className="flex gap-2">
-              <select
-                aria-label="Discount type"
-                value={kind}
-                onChange={(e) => setKind(e.target.value as 'percent' | 'fixed')}
-                className={cn(inputClass, 'w-24 flex-none')}
-              >
-                <option value="percent">%</option>
-                <option value="fixed">$</option>
-              </select>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title={editing ? `Edit ${codes.find((c) => c.id === editing)?.code ?? 'code'}` : 'Create discount'}
+        description={editing ? 'Orders already placed keep their discount.' : 'A code members enter at checkout.'}
+      >
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="promo-code" className={labelClass}>
+                Code
+              </label>
               <input
-                id="promo-value"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                inputMode="decimal"
-                placeholder={kind === 'percent' ? '20' : '25.00'}
+                id="promo-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="LAUNCH20"
                 required
                 className={inputClass}
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="promo-max" className={labelClass}>
-              Max uses — blank for unlimited
-            </label>
-            <input
-              id="promo-max"
-              value={maxRedemptions}
-              onChange={(e) => setMax(e.target.value.replace(/\D/g, ''))}
-              inputMode="numeric"
-              placeholder="Unlimited"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="promo-expires" className={labelClass}>
-              Expires — blank for never
-            </label>
-            <input
-              id="promo-expires"
-              type="date"
-              value={expiresAt}
-              onChange={(e) => setExpires(e.target.value)}
-              className={cn(inputClass, '[color-scheme:light]')}
-            />
-          </div>
-        </div>
-        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-ink">
-          <input
-            type="checkbox"
-            checked={includesShipping}
-            onChange={(e) => setIncludesShipping(e.target.checked)}
-            className="h-4 w-4 accent-ink"
-          />
-          Free shipping too
-        </label>
-        <div className="flex items-center gap-3">
-          <SubmitButton busy={busy} label={editing ? 'Save changes' : 'Create code'} />
-          {editing && (
-            <button
-              type="button"
-              onClick={reset}
-              className="text-[14px] font-medium text-ink/60 hover:text-ink"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-      <ResultBanner result={result} />
-
-      {codes.length > 0 && (
-        <div className="mt-6 space-y-2">
-          {codes.map((c) => {
-            const spent =
-              c.maxRedemptions !== null && c.redeemedCount >= c.maxRedemptions;
-            const expired =
-              !!c.expiresAt && new Date(c.expiresAt).getTime() < Date.now();
-            return (
-              <div
-                key={c.id}
-                className={cn(
-                  'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-inner border bg-white px-4 py-3',
-                  editing === c.id ? 'border-ink/40' : 'border-ink/10',
-                )}
-              >
-                <span className="text-[13px] text-ink">
-                  {c.code}
-                </span>
-                <span className="text-xs text-ink/65">
-                  {c.kind === 'percent'
-                    ? `${c.value}% off`
-                    : `${money(c.value)} off`}
-                  {c.includesShipping ? ' + free shipping' : ''}
-                </span>
-                <span className="text-[12px] tabular-nums text-ink/60">
-                  {c.redeemedCount}
-                  {c.maxRedemptions !== null ? ` / ${c.maxRedemptions}` : ''} used
-                  {expired ? ' · expired' : ''}
-                  {spent && !expired ? ' · spent' : ''}
-                </span>
-                <div className="ml-auto flex flex-none items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => edit(c)}
-                    className="rounded-full border border-ink/10 px-3 py-1 text-[12px] font-medium text-ink/70 transition-colors hover:text-ink"
-                  >
-                    Edit
-                  </button>
-                  {c.redeemedCount === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(c)}
-                      className="rounded-full border border-ink/10 px-3 py-1 text-[12px] font-medium text-red-700/80 transition-colors hover:text-red-700"
-                    >
-                      Delete
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => toggle(c.id, !c.active)}
-                    className={cn(
-                      'rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
-                      c.active
-                        ? 'border-emerald-600/25 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                        : 'border-ink/10 text-ink/60 hover:text-ink',
-                    )}
-                  >
-                    {c.active ? 'Active' : 'Off'}
-                  </button>
-                </div>
+            <div>
+              <label htmlFor="promo-value" className={labelClass}>
+                {kind === 'percent' ? 'Percent off (1–100)' : 'Dollars off'}
+              </label>
+              <div className="flex gap-2">
+                <select
+                  aria-label="Discount type"
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as 'percent' | 'fixed')}
+                  className={cn(inputClass, 'w-20 flex-none')}
+                >
+                  <option value="percent">%</option>
+                  <option value="fixed">$</option>
+                </select>
+                <input
+                  id="promo-value"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  inputMode="decimal"
+                  placeholder={kind === 'percent' ? '20' : '25.00'}
+                  required
+                  className={inputClass}
+                />
               </div>
-            );
-          })}
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  tone = 'neutral',
-}: {
-  label: string;
-  value: string;
-  tone?: 'neutral' | 'accent';
-}) {
-  return (
-    <div className={cn('rounded-shell p-5', tone === 'accent' ? 'bg-butter-soft' : 'bg-milk')}>
-      <div className="mb-2 text-[13px] font-medium text-ink/65">
-        {label}
-      </div>
-      <div
-        className="text-[28px] font-semibold tracking-[-0.04em] text-ink tabular-nums"
-      >
-        {value}
-      </div>
-    </div>
+            </div>
+            <div>
+              <label htmlFor="promo-max" className={labelClass}>
+                Max uses — blank for unlimited
+              </label>
+              <input
+                id="promo-max"
+                value={maxRedemptions}
+                onChange={(e) => setMax(e.target.value.replace(/\D/g, ''))}
+                inputMode="numeric"
+                placeholder="Unlimited"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="promo-expires" className={labelClass}>
+                Expires — blank for never
+              </label>
+              <input
+                id="promo-expires"
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpires(e.target.value)}
+                className={cn(inputClass, '[color-scheme:light]')}
+              />
+            </div>
+          </div>
+          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
+            <input
+              type="checkbox"
+              checked={includesShipping}
+              onChange={(e) => setIncludesShipping(e.target.checked)}
+              className="h-4 w-4 accent-ink"
+            />
+            Free shipping too
+          </label>
+          <div className="flex items-center justify-end gap-2 border-t border-ink/10 pt-3">
+            {editing && (
+              <button type="button" onClick={reset} className={secondaryButton}>
+                Cancel
+              </button>
+            )}
+            <SubmitButton busy={busy} label={editing ? 'Save changes' : 'Create code'} />
+          </div>
+        </form>
+        <ResultBanner result={result} />
+      </SectionCard>
+    </>
   );
 }
 
@@ -480,30 +540,20 @@ function Metric({
 /*  Shared panel pieces                                                */
 /* ================================================================== */
 
+/** A settings card: title, one line of help, then the form. */
 function Panel({
-  eyebrow,
   title,
   description,
   children,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-shell bg-milk p-6 md:p-7">
-      <div className="mb-1 text-[13px] font-medium text-ink/65">
-        {eyebrow}
-      </div>
-      <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-ink">
-        {title}
-      </h3>
-      <p className="mt-1 mb-5 text-sm leading-relaxed text-ink/65">
-        {description}
-      </p>
+    <SectionCard title={title} description={description}>
       {children}
-    </section>
+    </SectionCard>
   );
 }
 
@@ -521,7 +571,7 @@ function SubmitButton({
       type="submit"
       disabled={busy}
       className={cn(
-        'inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[13px] font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50',
+        'inline-flex min-h-[40px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[13px] font-semibold transition-colors disabled:opacity-50 md:min-h-[34px]',
         tone === 'danger'
           ? 'bg-red-700 text-white hover:bg-red-800'
           : 'bg-ink text-white hover:bg-ink/85',
@@ -557,12 +607,18 @@ function SubmitButton({
   );
 }
 
+/** Right-aligned action row at the foot of a settings card. */
+function FormActions({ children }: { children: ReactNode }) {
+  return <div className="flex justify-end border-t border-ink/10 pt-3">{children}</div>;
+}
+
 function ResultBanner({ result }: { result: AdminBillingResult | null }) {
   if (!result) return null;
   return (
     <div
+      role="status"
       className={cn(
-        'mt-3 rounded-inner border px-4 py-3 text-sm',
+        'mt-3 rounded-thumb border px-3 py-2.5 text-[13px]',
         result.ok
           ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
           : 'border-red-600/20 bg-red-50 text-red-700',
@@ -577,6 +633,7 @@ function ResultBanner({ result }: { result: AdminBillingResult | null }) {
     </div>
   );
 }
+
 
 /* ================================================================== */
 /*  Panels                                                             */
@@ -601,7 +658,6 @@ function CardLinkPanel({ userId }: { userId: string }) {
 
   return (
     <Panel
-      eyebrow="Add a card"
       title="Send a card link"
       description="Emails the customer a secure Stripe page to save a card. Use this when they have no card on file."
     >
@@ -642,7 +698,6 @@ function SubscriptionPanel({ userId }: { userId: string }) {
 
   return (
     <Panel
-      eyebrow="Subscription"
       title="Create a subscription"
       description={`Starts a recurring charge against the customer's saved card. Every cycle ships, so enter the amount including shipping: $${SHIPPING_PRICE['2_DAY']} 2-day, $${SHIPPING_PRICE.OVERNIGHT} overnight cold-chain.`}
     >
@@ -687,7 +742,9 @@ function SubscriptionPanel({ userId }: { userId: string }) {
             </select>
           </div>
         </div>
-        <SubmitButton busy={busy} label="Create subscription" />
+        <FormActions>
+          <SubmitButton busy={busy} label="Create subscription" />
+        </FormActions>
       </form>
       <ResultBanner result={result} />
     </Panel>
@@ -728,7 +785,6 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
 
   return (
     <Panel
-      eyebrow="One-off charge"
       title="Charge the card"
       description="Bills the customer's saved card a single amount — an add-on, an adjustment, or a manual cycle."
     >
@@ -756,7 +812,9 @@ function ChargePanel({ userId, name }: { userId: string; name: string }) {
             className={inputClass}
           />
         </div>
-        <SubmitButton busy={busy} label="Charge card" />
+        <FormActions>
+          <SubmitButton busy={busy} label="Charge card" />
+        </FormActions>
       </form>
       <ResultBanner result={result} />
     </Panel>
@@ -809,7 +867,6 @@ function RefundPanel() {
 
   return (
     <Panel
-      eyebrow="Refund"
       title="Refund an order"
       description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Stripe pi_ id still works for anything without an order."
     >
@@ -861,7 +918,9 @@ function RefundPanel() {
             />
           </div>
         )}
-        <SubmitButton busy={busy} label="Issue refund" tone="danger" />
+        <FormActions>
+          <SubmitButton busy={busy} label="Issue refund" tone="danger" />
+        </FormActions>
       </form>
       <ResultBanner result={result} />
     </Panel>
