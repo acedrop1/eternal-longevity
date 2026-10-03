@@ -222,7 +222,7 @@ export function FulfillmentBoard({
           <option value="oldest">Oldest first</option>
         </select>
       </IndexToolbar>
-      {note && <p className="border-b border-ink/10 px-4 py-2 text-[14px] text-ink/65 md:text-[12px]">{note}</p>}
+      {note && <p className="border-b border-ink/10 px-4 py-2 text-[14px] text-ink/65 md:text-[13px]">{note}</p>}
 
       <div className="md:overflow-x-auto">
       <table className={table}>
@@ -242,7 +242,7 @@ export function FulfillmentBoard({
         <tbody className={tbody}>
           {visible.length === 0 ? (
             <tr className="block md:table-row">
-              <td colSpan={cols} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+              <td colSpan={cols} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                 {all.length === 0 ? 'No orders yet. Paid orders appear here.' : 'No orders match.'}
               </td>
             </tr>
@@ -299,9 +299,9 @@ function OrderRow({
         <Link href={row.href} className="underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40">
           {row.ref}
         </Link>
-        {row.refill && <span className="ml-1.5 text-[13px] font-normal text-ink/60 md:text-[12px]">Refill</span>}
+        {row.refill && <span className="ml-1.5 text-[14px] font-normal text-ink/60 md:text-[13px]">Refill</span>}
       </td>
-      <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[14px] text-ink/60 md:text-[13px]')}>
+      <td className={cn(td, 'order-7 basis-full whitespace-nowrap text-[14px] text-ink/60 md:text-[14px]')}>
         {shortDate(row.date)}
         {(showAge || (row.late && b)) && (
           <span
@@ -326,13 +326,13 @@ function OrderRow({
         )}
         </div>
         {showAge && row.reason && (
-          <div className="truncate text-[14px] text-amber-800 md:max-w-[220px] md:text-[12px]" title={row.reason}>
+          <div className="truncate text-[14px] text-amber-800 md:max-w-[220px] md:text-[13px]" title={row.reason}>
             {row.reason}
           </div>
         )}
       </td>
       <td className={cn(td, 'order-4 min-w-0 basis-full text-ink/65')}>
-        <div className="truncate md:max-w-[170px]">{row.items.join(' · ') || 'Care program'}</div>
+        <div className="truncate md:max-w-[148px]">{row.items.join(' · ') || 'Care program'}</div>
       </td>
       {admin && (
         <td className={cn(td, 'order-3 ml-auto whitespace-nowrap tabular-nums text-ink md:text-right')}>
@@ -350,7 +350,7 @@ function OrderRow({
       <td className={cn(td, 'order-5', !pharmacy && 'hidden')}>
         {pharmacy ? <StatusBadge tone={pharmacy[1]}>{pharmacy[0]}</StatusBadge> : <span className="text-ink/35">—</span>}
       </td>
-      <td className={cn(td, 'order-6 whitespace-nowrap text-[14px] text-ink/70 md:text-[12px]', !trackingNumber && 'hidden')}>
+      <td className={cn(td, 'order-6 whitespace-nowrap text-[14px] text-ink/70 md:text-[13px]', !trackingNumber && 'hidden')}>
         {trackingNumber ? (
           <div className="truncate md:max-w-[110px]">
             {trackingCarrier}{' '}

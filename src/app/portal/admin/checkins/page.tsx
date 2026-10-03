@@ -42,7 +42,7 @@ export default async function AdminCheckinsPage() {
           subtitle={`Sent 30 days after a member's first delivery of a product and after their first refill. ${answered.length} of ${rows.length} answered${low > 0 ? `, ${low} at 3 or below` : ''}.`}
         />
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
             Sample data (dev only). Check-ins load from Supabase once it is connected.
           </p>
         )}

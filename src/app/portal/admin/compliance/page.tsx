@@ -116,7 +116,7 @@ export default async function CompliancePage() {
           actions={sample ? <StatusBadge tone="attention">Sample data (dev only)</StatusBadge> : undefined}
         >
           {audit.length === 0 ? (
-            <p className="px-4 py-6 text-[13px] text-ink/65">
+            <p className="px-4 py-6 text-[14px] text-ink/65">
               Nothing recorded yet. Changes to the prescriber&apos;s name,
               credential, NPI or licence appear here, as does every staff
               sign-in from a new device.
@@ -136,12 +136,12 @@ export default async function CompliancePage() {
                 <tbody>
                   {audit.map((a, i) => (
                     <tr key={i}>
-                      <td className={cn(plainTd, 'text-[12px] tabular-nums text-ink/65')}>
+                      <td className={cn(plainTd, 'text-[13px] tabular-nums text-ink/65')}>
                         {formatDateTime(a.at)}
                       </td>
                       <td className={cn(plainTd, 'text-ink/85')}>
                         {a.actor}
-                        <span className="ml-1.5 text-[12px] text-ink/65">{a.role}</span>
+                        <span className="ml-1.5 text-[13px] text-ink/65">{a.role}</span>
                       </td>
                       <td className={cn(plainTd, 'text-ink/85')}>{a.field}</td>
                       <td className={cn(plainTd, 'text-ink/60 line-through')}>{a.from}</td>

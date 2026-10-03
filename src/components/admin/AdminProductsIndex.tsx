@@ -78,7 +78,7 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
         onChange={setTab}
       />
       {tab !== 'all' && (
-        <p className="border-b border-ink/10 bg-milk/40 px-4 py-2 text-[12px] text-ink/65">{PRODUCT_STATUS[tab][2]}</p>
+        <p className="border-b border-ink/10 bg-milk/40 px-4 py-2 text-[13px] text-ink/65">{PRODUCT_STATUS[tab][2]}</p>
       )}
       <IndexToolbar query={query} onQuery={setQuery} placeholder="Search products" />
 
@@ -99,7 +99,7 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={6} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+                <td colSpan={6} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                   {products.length === 0 ? 'No products yet.' : 'No products match.'}
                 </td>
               </tr>
@@ -123,12 +123,12 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
                       <Link href={href(p.id)} className="block truncate font-medium text-ink hover:underline md:max-w-[260px]">
                         {p.name}
                       </Link>
-                      <span className="block truncate text-[12px] text-ink/60 md:max-w-[260px]">
+                      <span className="block truncate text-[13px] text-ink/60 md:max-w-[260px]">
                         /{p.id}
                         {p.edited && ` · ${p.edited}`}
                       </span>
                       {/* Mobile: the other columns as one wrapped line. */}
-                      <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12px] text-ink/65 md:hidden">
+                      <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[13px] text-ink/65 md:hidden">
                         <StatusBadge tone={tone}>{label}</StatusBadge>
                         <span>{p.category}</span>
                         <span className="tabular-nums">· from ${p.from}/mo</span>
@@ -141,7 +141,7 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
                     <td className={cn(td, 'hidden text-ink/80')}>{p.category}</td>
                     <td className={cn(td, 'hidden whitespace-nowrap text-right tabular-nums')}>
                       <span className="text-ink">from ${p.from}/mo</span>
-                      <span className="block text-[12px] text-ink/60">${p.monthly}/mo monthly</span>
+                      <span className="block text-[13px] text-ink/60">${p.monthly}/mo monthly</span>
                     </td>
                     <td className={cn(td, 'hidden')}>
                       {p.hasSku ? (

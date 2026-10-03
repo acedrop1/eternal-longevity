@@ -25,14 +25,14 @@ import { sentenceCase } from '@/components/portal/ui';
  */
 
 /** Body copy: 15px on a phone, the admin's 13px from md up. */
-const body = 'text-[15px] leading-relaxed md:text-[13px]';
+const body = 'text-[15px] leading-relaxed md:text-[14px]';
 const primaryBtn = cn(headerButton, 'min-h-[44px] md:min-h-[34px] disabled:opacity-40');
 const outlineBtn = cn(secondaryButton, 'min-h-[44px] md:min-h-[34px] disabled:opacity-60');
 const dangerBtn =
-  'inline-flex min-h-[44px] items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[13px] font-semibold text-red-700 ring-1 ring-red-600/25 transition-colors hover:bg-red-50 disabled:opacity-60 md:min-h-[34px]';
+  'inline-flex min-h-[44px] items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[14px] font-semibold text-red-700 ring-1 ring-red-600/25 transition-colors hover:bg-red-50 disabled:opacity-60 md:min-h-[34px]';
 const textArea =
-  'w-full resize-none rounded-inner bg-white px-3.5 py-2.5 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[13px]';
-const alertBox = 'rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-[15px] text-red-700 md:text-[13px]';
+  'w-full resize-none rounded-inner bg-white px-3.5 py-2.5 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[14px]';
+const alertBox = 'rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-[15px] text-red-700 md:text-[14px]';
 
 const ACTIVE = ['signed', 'compounding', 'shipped'];
 
@@ -230,13 +230,13 @@ export function DoctorReview({
       />
 
       {sample && (
-        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[13px]">
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
           Sample data (dev only). Nothing here is a real patient, and actions need Supabase.
         </p>
       )}
 
       {done && (
-        <p role="status" className="rounded-inner border border-emerald-600/20 bg-emerald-50 px-4 py-2.5 text-[15px] text-emerald-900 md:text-[13px]">
+        <p role="status" className="rounded-inner border border-emerald-600/20 bg-emerald-50 px-4 py-2.5 text-[15px] text-emerald-900 md:text-[14px]">
           {done === 'signed' ? 'Signed. The order is on its way to the pharmacy.' : 'Declined. Your reason went to the patient.'}{' '}
           <Link href="/portal/doctor" className="font-semibold underline underline-offset-[3px]">
             Back to the queue
@@ -261,7 +261,7 @@ export function DoctorReview({
                     <span className="font-semibold text-ink">${order.total.toFixed(2)}</span> to the card on file and
                     releases the order to the pharmacy.
                   </p>
-                  <label htmlFor={`sig-${order.id}`} className="mb-1 block text-[15px] font-medium text-ink/75 md:text-[13px]">
+                  <label htmlFor={`sig-${order.id}`} className="mb-1 block text-[15px] font-medium text-ink/75 md:text-[14px]">
                     Directions
                   </label>
                   <p className={cn(body, 'mb-2 text-ink/65')}>
@@ -292,7 +292,7 @@ export function DoctorReview({
                         Your password is required again here. A session left open is not evidence that you are the one
                         signing. It then holds for ten minutes, so a morning&apos;s queue is one password.
                       </p>
-                      <label htmlFor={`pw-${order.id}`} className="mb-1 block text-[15px] font-medium text-ink/75 md:text-[13px]">
+                      <label htmlFor={`pw-${order.id}`} className="mb-1 block text-[15px] font-medium text-ink/75 md:text-[14px]">
                         Your password
                       </label>
                       <input
@@ -304,7 +304,7 @@ export function DoctorReview({
                           setPassword(e.target.value);
                           setSignError(null);
                         }}
-                        className="h-11 w-full rounded-inner bg-white px-3.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
+                        className="h-11 w-full rounded-inner bg-white px-3.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[14px]"
                       />
                     </>
                   )}
@@ -395,7 +395,7 @@ export function DoctorReview({
                       onClick={decline}
                       disabled={!note.trim() || busy !== null}
                       className={cn(
-                        'inline-flex min-h-[44px] items-center gap-2 rounded-full px-4 text-[13px] font-semibold transition-colors md:min-h-[34px]',
+                        'inline-flex min-h-[44px] items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-colors md:min-h-[34px]',
                         note.trim() && !busy ? 'bg-red-700 text-white hover:bg-red-800' : 'bg-ink/10 text-ink/65',
                       )}
                     >
@@ -442,7 +442,7 @@ export function DoctorReview({
                 {[review.age !== '—' && `${review.age} yrs`, review.sex !== '—' && review.sex].filter(Boolean).join(' · ') || '—'}
               </p>
             )}
-            <dl className="mt-2 [&_div]:text-[15px] md:[&_div]:text-[13px]">
+            <dl className="mt-2 [&_div]:text-[15px] md:[&_div]:text-[14px]">
               <InfoRow label="Email">{order.memberEmail || '—'}</InfoRow>
               <InfoRow label="State">{order.state || '—'}</InfoRow>
             </dl>
@@ -458,8 +458,8 @@ export function DoctorReview({
                   {l.image && <Image src={l.image} alt={l.productName} fill priority sizes="48px" className="object-cover opacity-50" />}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-medium text-ink md:text-[13px]">{l.productName}</p>
-                  <p className="text-[15px] text-ink/65 md:text-[13px]">
+                  <p className="text-[15px] font-medium text-ink md:text-[14px]">{l.productName}</p>
+                  <p className="text-[15px] text-ink/65 md:text-[14px]">
                     {l.cadenceLabel}
                     {l.quantity > 1 ? ` · ×${l.quantity}` : ''} {'·'} ${l.perCycle}
                   </p>
@@ -480,7 +480,7 @@ export function DoctorReview({
             {order.status !== 'assigned' && (
               <Link
                 href={`/portal/admin/orders/${encodeURIComponent(order.id)}`}
-                className="mt-3 inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[13px]"
+                className="mt-3 inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[14px]"
               >
                 Open order page
               </Link>
@@ -494,7 +494,7 @@ export function DoctorReview({
           )}
 
           <SectionCard title="Prescriber and thread">
-            <dl className="[&_div]:text-[15px] md:[&_div]:text-[13px]">
+            <dl className="[&_div]:text-[15px] md:[&_div]:text-[14px]">
               <InfoRow label="Prescriber">{doctorName}</InfoRow>
             </dl>
             <div className="mt-2">
@@ -507,7 +507,7 @@ export function DoctorReview({
             {order.userId && (
               <Link
                 href={`/portal/doctor/messages?u=${encodeURIComponent(order.userId)}`}
-                className="mt-2 inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[13px]"
+                className="mt-2 inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[14px]"
               >
                 {thread ? 'Open thread' : 'Go to messages'}
               </Link>
@@ -704,7 +704,7 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
     <ol className="space-y-3">
       {ordered.map((u) => (
         <li key={u.id} className="border-l-2 border-ink/10 pl-3">
-          <div className="mb-0.5 flex flex-wrap items-center justify-between gap-x-2 text-[13px] text-ink/65 md:text-[12px]">
+          <div className="mb-0.5 flex flex-wrap items-center justify-between gap-x-2 text-[14px] text-ink/65 md:text-[13px]">
             <span className="text-ink/85">
               {u.author} · {u.role}
             </span>
@@ -712,7 +712,7 @@ function Timeline({ updates }: { updates: Order['updates'] }) {
           </div>
           <p className={cn(body, 'text-ink/85')}>{u.note}</p>
           {u.statusChange && (
-            <p className="mt-1 text-[13px] font-medium text-ink/70 md:text-[12px]">Status · {STATUS_LABEL[u.statusChange]}</p>
+            <p className="mt-1 text-[14px] font-medium text-ink/70 md:text-[13px]">Status · {STATUS_LABEL[u.statusChange]}</p>
           )}
         </li>
       ))}
@@ -773,7 +773,7 @@ function ReviewSections({ review }: { review: PatientReview }) {
       {review.categories.length > 0 && (
         <SectionCard title="Category answers">
           {/* CategoryAnswers is shared with admin at 13px; phones read it at 15px here. */}
-          <div className="[&_dd]:text-[15px] [&_dt]:text-[15px] md:[&_dd]:text-[13px] md:[&_dt]:text-[13px]">
+          <div className="[&_dd]:text-[15px] [&_dt]:text-[15px] md:[&_dd]:text-[14px] md:[&_dt]:text-[14px]">
             <CategoryAnswers sections={review.categories} />
           </div>
         </SectionCard>
@@ -801,8 +801,8 @@ function Strip({ items }: { items: [string, string][] }) {
     <div className="flex flex-wrap gap-x-7 gap-y-2.5">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="text-[13px] text-ink/65 md:text-[12px]">{label}</div>
-          <div className="mt-0.5 text-[15px] font-semibold text-ink md:text-[13px]">{value}</div>
+          <div className="text-[14px] text-ink/65 md:text-[13px]">{label}</div>
+          <div className="mt-0.5 text-[15px] font-semibold text-ink md:text-[14px]">{value}</div>
         </div>
       ))}
     </div>
@@ -831,12 +831,12 @@ function Answers({ lines }: { lines: { label: string; value: string; flag?: bool
               long && 'flex-col items-start gap-0.5 xl:col-span-2',
             )}
           >
-            <dt className={cn('text-[15px] leading-snug md:text-[13px]', l.flag ? 'text-ink/80' : 'text-ink/70')}>
+            <dt className={cn('text-[15px] leading-snug md:text-[14px]', l.flag ? 'text-ink/80' : 'text-ink/70')}>
               {l.label}
             </dt>
             <dd
               className={cn(
-                'text-[15px] font-semibold leading-snug md:text-[13px]',
+                'text-[15px] font-semibold leading-snug md:text-[14px]',
                 long ? 'w-full break-words' : 'flex-none text-right',
                 l.flag ? 'text-amber-800' : 'text-ink/90',
               )}
@@ -856,8 +856,8 @@ function Answers({ lines }: { lines: { label: string; value: string; flag?: bool
 function Money({ label, value, strong, zeroLabel }: { label: string; value: number; strong?: boolean; zeroLabel?: string }) {
   return (
     <div className={cn('flex items-baseline justify-between gap-4 py-1', strong && 'mt-1 border-t border-ink/10 pt-2')}>
-      <dt className={cn('text-[15px] md:text-[13px]', strong ? 'font-semibold text-ink' : 'text-ink/60')}>{label}</dt>
-      <dd className={cn('tabular-nums text-[15px] md:text-[13px]', strong ? 'font-semibold text-ink' : 'text-ink/85')}>
+      <dt className={cn('text-[15px] md:text-[14px]', strong ? 'font-semibold text-ink' : 'text-ink/60')}>{label}</dt>
+      <dd className={cn('tabular-nums text-[15px] md:text-[14px]', strong ? 'font-semibold text-ink' : 'text-ink/85')}>
         {value === 0 && zeroLabel ? zeroLabel : `${value < 0 ? '−' : ''}$${Math.abs(value)}`}
       </dd>
     </div>

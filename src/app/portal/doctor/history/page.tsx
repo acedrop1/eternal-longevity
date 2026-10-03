@@ -71,13 +71,13 @@ export default async function DoctorHistoryPage() {
         <AdminPageHeader
           title="My signed Rx"
           subtitle={
-            <span className="text-[15px] md:text-[13px]">
+            <span className="text-[15px] md:text-[14px]">
               Every prescription you&apos;ve signed or declined, newest first. {signed.length} total.
             </span>
           }
         />
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[13px]">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
             Sample data (dev only).
           </p>
         )}

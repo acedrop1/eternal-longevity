@@ -335,7 +335,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
         />
 
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
             Sample data (dev only). Account actions and email need Supabase.
           </p>
         )}
@@ -359,21 +359,21 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   {detail.orders.map((o) => (
                     <li key={o.ref} className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span className="text-[13px] font-semibold text-ink">#{o.ref}</span>
-                        <span className="text-[12px] text-ink/60">{o.placedAt}</span>
+                        <span className="text-[14px] font-semibold text-ink">#{o.ref}</span>
+                        <span className="text-[13px] text-ink/60">{o.placedAt}</span>
                         <StatusBadge tone={o.warning ? 'attention' : 'neutral'}>
                           {STATUS_LABEL[o.status as OrderStatus] ?? o.status}
                         </StatusBadge>
-                        <span className="ml-auto tabular-nums text-[13px] font-medium text-ink">${o.total}</span>
-                        <span className="basis-full truncate text-[13px] text-ink/80">{o.products}</span>
+                        <span className="ml-auto tabular-nums text-[14px] font-medium text-ink">${o.total}</span>
+                        <span className="basis-full truncate text-[14px] text-ink/80">{o.products}</span>
                       </div>
 
                       {/* Why the charge is not the sticker price. */}
                       <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
                         {o.money.map((m) => (
                           <div key={m.label} className="flex items-baseline gap-1.5">
-                            <dt className="text-[12px] text-ink/60">{m.label}</dt>
-                            <dd className={cn('tabular-nums text-[12px]', m.strong ? 'font-semibold text-ink' : 'text-ink/75')}>
+                            <dt className="text-[13px] text-ink/60">{m.label}</dt>
+                            <dd className={cn('tabular-nums text-[13px]', m.strong ? 'font-semibold text-ink' : 'text-ink/75')}>
                               {m.value < 0 ? '−' : ''}${Math.abs(m.value)}
                             </dd>
                           </div>
@@ -385,21 +385,21 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       <ol className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5">
                         {o.steps.map((st) => (
                           <li key={st.label}>
-                            <div className="text-[12px] text-ink/60">{st.label}</div>
-                            <div className="text-[12px] text-ink/85">{st.at}</div>
+                            <div className="text-[13px] text-ink/60">{st.label}</div>
+                            <div className="text-[13px] text-ink/85">{st.at}</div>
                           </li>
                         ))}
                       </ol>
 
                       {o.tracking && (
-                        <p className="mt-2 text-[12px] text-ink/75">
+                        <p className="mt-2 text-[13px] text-ink/75">
                           <span className="text-ink/60">Tracking </span>
                           {o.tracking.carrier} · {o.tracking.number}
                         </p>
                       )}
 
                       {o.warning && (
-                        <p className="mt-2 rounded-thumb border border-amber-600/25 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                        <p className="mt-2 rounded-thumb border border-amber-600/25 bg-amber-50 px-3 py-2 text-[13px] text-amber-900">
                           {o.warning}
                         </p>
                       )}
@@ -416,9 +416,9 @@ export default async function MemberDetailPage({ params }: PageProps) {
                 <ul className="divide-y divide-ink/10">
                   {detail.subscriptions.map((s, i) => (
                     <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
-                      <span className="text-[13px] font-medium text-ink">{s.productName}</span>
+                      <span className="text-[14px] font-medium text-ink">{s.productName}</span>
                       <StatusBadge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</StatusBadge>
-                      <span className="ml-auto text-[12px] tabular-nums text-ink/65">
+                      <span className="ml-auto text-[13px] tabular-nums text-ink/65">
                         {s.cadence} · ${s.perCycle} per cycle
                       </span>
                     </li>
@@ -429,7 +429,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
             <SectionCard title="Timeline">
               {detail.timeline.length === 0 ? (
-                <p className="text-[13px] text-ink/65">
+                <p className="text-[14px] text-ink/65">
                   Nothing yet. Applying, ordering, prescriber decisions, charges and
                   shipments all appear here.
                 </p>
@@ -440,11 +440,11 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       <span aria-hidden className="mt-1.5 h-[7px] w-[7px] flex-none rounded-full bg-butter-deep ring-2 ring-white" />
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-baseline gap-x-2">
-                          <span className="text-[13px] font-medium text-ink">{t.label}</span>
-                          <span className="text-[12px] text-ink/60">#{t.orderNumber}</span>
+                          <span className="text-[14px] font-medium text-ink">{t.label}</span>
+                          <span className="text-[13px] text-ink/60">#{t.orderNumber}</span>
                         </div>
-                        {t.body && <p className="mt-0.5 text-[12px] leading-relaxed text-ink/65">{t.body}</p>}
-                        <p className="mt-0.5 text-[12px] text-ink/60">
+                        {t.body && <p className="mt-0.5 text-[13px] leading-relaxed text-ink/65">{t.body}</p>}
+                        <p className="mt-0.5 text-[13px] text-ink/60">
                           {t.at}
                           {t.author ? ` · ${t.author}` : ''}
                         </p>
@@ -463,7 +463,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
             <SectionCard title="Medical record">
               {!detail.review ? (
-                <p className="text-[13px] text-ink/60">No intake on file.</p>
+                <p className="text-[14px] text-ink/60">No intake on file.</p>
               ) : (
                 <div className="space-y-5">
                   <div className="flex flex-wrap gap-x-8 gap-y-3">
@@ -477,8 +477,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       ] as [string, string][]
                     ).map(([k, v]) => (
                       <div key={k}>
-                        <div className="text-[12px] text-ink/60">{k}</div>
-                        <div className="mt-0.5 text-[13px] text-ink">{v}</div>
+                        <div className="text-[13px] text-ink/60">{k}</div>
+                        <div className="mt-0.5 text-[14px] text-ink">{v}</div>
                       </div>
                     ))}
                   </div>
@@ -489,7 +489,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
                   <RecordGroup title="History" lines={detail.review.history} />
                   {detail.review.categories.length > 0 && (
                     <div>
-                      <div className="mb-1.5 text-[13px] font-medium text-ink/65">Category answers</div>
+                      <div className="mb-1.5 text-[14px] font-medium text-ink/65">Category answers</div>
                       <CategoryAnswers sections={detail.review.categories} />
                     </div>
                   )}
@@ -522,12 +522,12 @@ export default async function MemberDetailPage({ params }: PageProps) {
 
             <SectionCard title="Addresses">
               {detail.addresses.length === 0 ? (
-                <p className="text-[13px] text-ink/60">No saved addresses.</p>
+                <p className="text-[14px] text-ink/60">No saved addresses.</p>
               ) : (
                 <ul className="space-y-3">
                   {detail.addresses.map((a, i) => (
-                    <li key={i} className="text-[13px] leading-relaxed text-ink/85">
-                      <div className="mb-0.5 flex items-center gap-2 text-[12px] text-ink/60">
+                    <li key={i} className="text-[14px] leading-relaxed text-ink/85">
+                      <div className="mb-0.5 flex items-center gap-2 text-[13px] text-ink/60">
                         {a.label}
                         {a.primary && <StatusBadge tone="neutral">Default</StatusBadge>}
                       </div>
@@ -566,7 +566,7 @@ function RecordGroup({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[13px] font-medium text-ink/65">
+      <div className="mb-1.5 text-[14px] font-medium text-ink/65">
         {title}
       </div>
       <div className="grid gap-x-8 md:grid-cols-2">
@@ -575,10 +575,10 @@ function RecordGroup({
             key={l.label}
             className="flex items-baseline justify-between gap-3 border-b border-ink/[0.06] py-1.5 last:border-0"
           >
-            <span className="text-[13px] text-ink/60">{l.label}</span>
+            <span className="text-[14px] text-ink/60">{l.label}</span>
             <span
               className={cn(
-                'text-right text-[13px] font-medium',
+                'text-right text-[14px] font-medium',
                 l.flag ? 'text-amber-800' : 'text-ink/90',
               )}
             >
@@ -592,5 +592,5 @@ function RecordGroup({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="px-4 py-3.5 text-[13px] text-ink/60">{children}</p>;
+  return <p className="px-4 py-3.5 text-[14px] text-ink/60">{children}</p>;
 }

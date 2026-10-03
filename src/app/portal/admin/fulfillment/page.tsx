@@ -122,7 +122,7 @@ export default async function AdminFulfillmentPage() {
       />
 
       {!live && (
-        <p className="mt-4 rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+        <p className="mt-4 rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
           {sampleOrders ? 'Sample data (dev only). ' : 'Demo data. '}
           Real prescriptions and orders flow through once Supabase is connected.
         </p>

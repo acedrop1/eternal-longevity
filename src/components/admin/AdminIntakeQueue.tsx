@@ -131,7 +131,7 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
     return (
       <div className={cn(indexCard, 'px-6 py-10 text-center')}>
         <h2 className="mb-1 text-[15px] font-semibold text-ink">No applications yet</h2>
-        <p className="mx-auto max-w-md text-[13px] leading-relaxed text-ink/65">
+        <p className="mx-auto max-w-md text-[14px] leading-relaxed text-ink/65">
           Members who finish the intake appear here. Nothing here needs you
           before an order: the prescriber reviews each order under Orders.
         </p>
@@ -174,7 +174,7 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={5} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+                <td colSpan={5} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                   No applications match.
                 </td>
               </tr>
@@ -193,20 +193,20 @@ export function AdminIntakeQueue({ intakes }: { intakes: IntakeRowView[] }) {
                       <Link href={href(r.id)} className="block truncate font-medium text-ink hover:underline md:max-w-[280px]">
                         {r.name || r.email}
                       </Link>
-                      <div className="truncate text-[12px] text-ink/60 md:max-w-[280px]">
+                      <div className="truncate text-[13px] text-ink/60 md:max-w-[280px]">
                         {r.name ? r.email : r.caseId.toUpperCase()}
                       </div>
                     </td>
-                    <td className={cn(td, 'order-3 min-w-0 text-[12px] text-ink/70 md:text-[13px] md:text-ink/85')}>
+                    <td className={cn(td, 'order-3 min-w-0 text-[13px] text-ink/70 md:text-[14px] md:text-ink/85')}>
                       <span className="block truncate md:max-w-[220px]">
                         {r.source ?? <span className="text-ink/55">Apply Now</span>}
                       </span>
                     </td>
-                    <td className={cn(td, 'order-4 text-[12px] text-ink/65 md:text-[13px] md:text-ink/80')}>
+                    <td className={cn(td, 'order-4 text-[13px] text-ink/65 md:text-[14px] md:text-ink/80')}>
                       <span className="md:hidden">· </span>
                       {r.state || '—'}
                     </td>
-                    <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px]')}>
+                    <td className={cn(td, 'order-5 whitespace-nowrap text-[13px] tabular-nums text-ink/65 md:text-[14px]')}>
                       <span className="md:hidden">· </span>
                       {r.submittedAt}
                     </td>
@@ -306,7 +306,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
                   setOpen('decline');
                   setNote('');
                 }}
-                className="inline-flex min-h-[40px] items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[13px] font-semibold text-red-700 ring-1 ring-red-600/25 transition-colors hover:bg-red-50 md:min-h-[34px]"
+                className="inline-flex min-h-[40px] items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[14px] font-semibold text-red-700 ring-1 ring-red-600/25 transition-colors hover:bg-red-50 md:min-h-[34px]"
               >
                 Close &mdash; not eligible
               </button>
@@ -316,7 +316,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
       />
 
       {sample && (
-        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
           Sample data (dev only). Request info and close need Supabase.
         </p>
       )}
@@ -325,7 +325,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
         <p
           role={result.ok ? 'status' : 'alert'}
           className={cn(
-            'rounded-inner border px-4 py-2.5 text-[13px]',
+            'rounded-inner border px-4 py-2.5 text-[14px]',
             result.ok ? 'border-emerald-600/20 bg-emerald-50 text-emerald-900' : 'border-red-600/20 bg-red-50 text-red-800',
           )}
         >
@@ -346,7 +346,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
                     {CLOSE_REASONS.map((r) => (
                       <label
                         key={r}
-                        className="flex cursor-pointer items-start gap-3 rounded-inner border border-ink/10 bg-white px-3.5 py-2.5 text-[13px] text-ink/85 transition-colors hover:border-ink/25"
+                        className="flex cursor-pointer items-start gap-3 rounded-inner border border-ink/10 bg-white px-3.5 py-2.5 text-[14px] text-ink/85 transition-colors hover:border-ink/25"
                       >
                         <input
                           type="radio"
@@ -359,7 +359,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
                       </label>
                     ))}
                   </div>
-                  <p className="mt-3 text-[12px] leading-relaxed text-ink/60">
+                  <p className="mt-3 text-[13px] leading-relaxed text-ink/60">
                     Not a clinical decision. If the reason is medical, send it to the
                     prescriber instead — only he can decline on clinical grounds.
                   </p>
@@ -371,7 +371,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
                   rows={3}
                   aria-label="Note to the patient"
                   placeholder="The patient will see this note…"
-                  className="w-full resize-none rounded-inner bg-white px-3.5 py-2.5 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[13px]"
+                  className="w-full resize-none rounded-inner bg-white px-3.5 py-2.5 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[14px]"
                 />
               )}
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -380,7 +380,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
                   disabled={busy || !note.trim()}
                   onClick={() => run(open)}
                   className={cn(
-                    'inline-flex min-h-[40px] items-center rounded-full px-4 text-[13px] font-semibold text-white transition-colors disabled:opacity-40 md:min-h-[34px]',
+                    'inline-flex min-h-[40px] items-center rounded-full px-4 text-[14px] font-semibold text-white transition-colors disabled:opacity-40 md:min-h-[34px]',
                     open === 'decline' ? 'bg-red-700 hover:bg-red-800' : 'bg-ink hover:bg-ink/85',
                   )}
                 >
@@ -404,17 +404,17 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
             {intake.categories.length > 0 ? (
               <CategoryAnswers sections={intake.categories} />
             ) : (
-              <p className="text-[13px] text-ink/60">No category questions in this intake.</p>
+              <p className="text-[14px] text-ink/60">No category questions in this intake.</p>
             )}
           </SectionCard>
 
           <SectionCard title="Intake answers" flush>
             {intake.answers.length === 0 ? (
-              <p className="px-4 py-3.5 text-[13px] text-ink/60">No other answers.</p>
+              <p className="px-4 py-3.5 text-[14px] text-ink/60">No other answers.</p>
             ) : (
               <dl className="divide-y divide-ink/10">
                 {intake.answers.map((a, i) => (
-                  <div key={i} className="grid gap-1 px-4 py-2.5 text-[13px] sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-4">
+                  <div key={i} className="grid gap-1 px-4 py-2.5 text-[14px] sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-4">
                     <dt className="break-words text-ink/60">{a.label}</dt>
                     <dd className="break-words text-ink/90 sm:text-right">{a.value}</dd>
                   </div>
@@ -435,7 +435,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
             {intake.userId && (
               <Link
                 href={`/portal/admin/members/${intake.userId}`}
-                className="mt-3 inline-block text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                className="mt-3 inline-block text-[14px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
               >
                 Open member record
               </Link>
@@ -445,7 +445,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
           {/* Whether they picked a product first or came through Apply Now
               changes what the prescriber is being asked to decide. */}
           <SectionCard title="Product">
-            <p className="text-[13px] text-ink/85">
+            <p className="text-[14px] text-ink/85">
               {intake.source ? (
                 <>
                   Started from <span className="font-medium text-ink">{intake.source}</span>
@@ -457,7 +457,7 @@ export function IntakeReview({ intake, sample = false }: { intake: IntakeRowView
           </SectionCard>
 
           <SectionCard title="Next step">
-            <p className="text-[13px] leading-relaxed text-ink/65">
+            <p className="text-[14px] leading-relaxed text-ink/65">
               Nothing to action here. They can already shop, and the prescriber
               reviews each order under Orders. Request info or close the
               application only if something in it is wrong.

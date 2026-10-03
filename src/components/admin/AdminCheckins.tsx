@@ -59,7 +59,7 @@ export function AdminCheckins({ rows }: { rows: (CheckinRow & { date: string })[
         onChange={setTab}
       />
       {tab === 'followup' && (
-        <p className="border-b border-ink/10 bg-milk/40 px-4 py-2 text-[12px] text-ink/65">
+        <p className="border-b border-ink/10 bg-milk/40 px-4 py-2 text-[13px] text-ink/65">
           A score of 3 or below, or any comment. Each emailed the support inbox when it came in; follow up in the member&apos;s message thread.
         </p>
       )}
@@ -80,7 +80,7 @@ export function AdminCheckins({ rows }: { rows: (CheckinRow & { date: string })[
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={6} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+                <td colSpan={6} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                   {rows.length === 0 ? 'No check-ins yet. The first go out 30 days after a delivery.' : 'No check-ins match.'}
                 </td>
               </tr>
@@ -90,15 +90,15 @@ export function AdminCheckins({ rows }: { rows: (CheckinRow & { date: string })[
                   key={r.id}
                   className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-ink/10 px-4 py-3 first:border-t-0 md:table-row md:px-0 md:py-0"
                 >
-                  <td className={cn(td, 'order-4 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px]')}>
+                  <td className={cn(td, 'order-4 whitespace-nowrap text-[13px] tabular-nums text-ink/65 md:text-[14px]')}>
                     {r.date}
                   </td>
                   <td className={cn(td, 'order-1 min-w-0 flex-1 basis-[62%]')}>
                     <span className="block truncate font-medium text-ink md:max-w-[200px]">{r.memberName}</span>
-                    {r.memberEmail && <span className="block truncate text-[12px] text-ink/60 md:max-w-[200px]">{r.memberEmail}</span>}
+                    {r.memberEmail && <span className="block truncate text-[13px] text-ink/60 md:max-w-[200px]">{r.memberEmail}</span>}
                   </td>
-                  <td className={cn(td, 'order-3 text-[12px] text-ink/70 md:text-[13px] md:text-ink/85')}>{r.productName}</td>
-                  <td className={cn(td, 'order-3 text-[12px] text-ink/65 md:text-[13px]')}>
+                  <td className={cn(td, 'order-3 text-[13px] text-ink/70 md:text-[14px] md:text-ink/85')}>{r.productName}</td>
+                  <td className={cn(td, 'order-3 text-[13px] text-ink/65 md:text-[14px]')}>
                     <span className="md:hidden">· </span>
                     {r.kind === 'first' ? 'First' : 'Refill'}
                     <span className="md:hidden"> ·</span>
@@ -112,7 +112,7 @@ export function AdminCheckins({ rows }: { rows: (CheckinRow & { date: string })[
                       </StatusBadge>
                     )}
                   </td>
-                  <td className={cn(td, 'order-5 basis-full whitespace-pre-wrap text-[13px] text-ink/85 md:max-w-[40ch]')}>
+                  <td className={cn(td, 'order-5 basis-full whitespace-pre-wrap text-[14px] text-ink/85 md:max-w-[40ch]')}>
                     {r.comment || <span className="hidden text-ink/55 md:inline">—</span>}
                   </td>
                 </tr>

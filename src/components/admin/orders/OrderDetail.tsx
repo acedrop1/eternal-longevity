@@ -132,7 +132,7 @@ export function OrderDetail({
       <header className="space-y-2">
         <Link
           href={admin ? '/portal/admin/fulfillment' : '/portal/doctor/fulfillment'}
-          className="inline-flex min-h-[32px] items-center gap-1 text-[13px] font-medium text-ink/65 hover:text-ink"
+          className="inline-flex min-h-[32px] items-center gap-1 text-[14px] font-medium text-ink/65 hover:text-ink"
         >
           <span aria-hidden>←</span> Orders
         </Link>
@@ -145,7 +145,7 @@ export function OrderDetail({
               {b && <StatusBadge tone={refill ? 'attention' : 'neutral'}>{refill ? 'Refill' : 'New order'}</StatusBadge>}
               {late && b && <StatusBadge tone="critical">Waiting {b.ageDays} days</StatusBadge>}
             </div>
-            <p className="mt-1 text-[13px] text-ink/65">
+            <p className="mt-1 text-[14px] text-ink/65">
               Placed {formatDateTime(o?.placedAt ?? b?.createdAt)}
             </p>
           </div>
@@ -202,7 +202,7 @@ export function OrderDetail({
         <p
           role="status"
           className={cn(
-            'rounded-inner border px-4 py-2.5 text-[13px]',
+            'rounded-inner border px-4 py-2.5 text-[14px]',
             result.ok ? 'border-emerald-600/20 bg-emerald-50 text-emerald-900' : 'border-red-600/20 bg-red-50 text-red-800',
           )}
         >
@@ -218,10 +218,10 @@ export function OrderDetail({
               <>
                 <ul className="divide-y divide-ink/10">
                   {o.lines.map((l, i) => (
-                    <li key={i} className="flex items-start justify-between gap-4 px-4 py-3 text-[13px]">
+                    <li key={i} className="flex items-start justify-between gap-4 px-4 py-3 text-[14px]">
                       <div className="min-w-0">
                         <p className="font-medium text-ink">{l.productName}</p>
-                        <p className="text-[12px] text-ink/65">
+                        <p className="text-[13px] text-ink/65">
                           {l.cadenceLabel}
                           {b?.cycleLabel ? ` · ${b.cycleLabel}` : ''}
                         </p>
@@ -235,7 +235,7 @@ export function OrderDetail({
                     </li>
                   ))}
                 </ul>
-                <dl className="space-y-1.5 border-t border-ink/10 px-4 py-3 text-[13px] tabular-nums">
+                <dl className="space-y-1.5 border-t border-ink/10 px-4 py-3 text-[14px] tabular-nums">
                   <MoneyRow label="Subtotal" value={money(o.subtotal)} />
                   <MoneyRow label="Shipping" value={o.shippingCost ? money(o.shippingCost) : 'Free'} />
                   {!!extras?.discount && (
@@ -247,7 +247,7 @@ export function OrderDetail({
                   {!!o.tax && <MoneyRow label="Tax" value={money(o.tax)} />}
                   <MoneyRow label="Total" value={money(o.total)} strong />
                   {payment && (
-                    <div className="flex justify-between gap-4 pt-1 text-[12px] text-ink/65">
+                    <div className="flex justify-between gap-4 pt-1 text-[13px] text-ink/65">
                       <dt>Payment</dt>
                       <dd>
                         {payment[0]}
@@ -260,7 +260,7 @@ export function OrderDetail({
             ) : (
               <ul className="divide-y divide-ink/10">
                 {(b?.items.length ? b.items : ['Care program']).map((item) => (
-                  <li key={item} className="px-4 py-3 text-[13px] text-ink">
+                  <li key={item} className="px-4 py-3 text-[14px] text-ink">
                     {item}
                     {b?.cycleLabel && <span className="text-ink/65"> · {b.cycleLabel}</span>}
                   </li>
@@ -274,7 +274,7 @@ export function OrderDetail({
             actions={status && <StatusBadge tone={status[1]}>{status[0]}</StatusBadge>}
           >
             {b ? (
-              <div className="space-y-3 text-[13px]">
+              <div className="space-y-3 text-[14px]">
                 {STAGE_INFO[STAGE[b.status]].note && b.status !== 'delivered' && (
                   <p className="text-ink/65">{STAGE_INFO[STAGE[b.status]].note}</p>
                 )}
@@ -321,7 +321,7 @@ export function OrderDetail({
                       run(() => pharmacyAcceptOrder(b.id, pharmacyRef));
                     }}
                   >
-                    <label className="block text-[13px] font-medium text-ink/70" htmlFor={`ref-${b.id}`}>
+                    <label className="block text-[14px] font-medium text-ink/70" htmlFor={`ref-${b.id}`}>
                       Pharmacy order number (optional)
                     </label>
                     <div className="flex flex-col gap-2 sm:flex-row">
@@ -349,7 +349,7 @@ export function OrderDetail({
                       run(() => pharmacyAddTracking({ fulfillmentId: b.id, carrier, trackingNumber: tracking }));
                     }}
                   >
-                    <p className="text-[13px] font-medium text-ink/70">Tracking</p>
+                    <p className="text-[14px] font-medium text-ink/70">Tracking</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <select
                         aria-label="Carrier"
@@ -381,7 +381,7 @@ export function OrderDetail({
                 )}
               </div>
             ) : (
-              <p className="text-[13px] text-ink/70">
+              <p className="text-[14px] text-ink/70">
                 Not on the board yet; it joins To place once signed and paid.
               </p>
             )}
@@ -393,7 +393,7 @@ export function OrderDetail({
         {/* Sidebar */}
         <div className="min-w-0 space-y-5">
           <SectionCard title="Customer">
-            <div className="space-y-1 text-[13px]">
+            <div className="space-y-1 text-[14px]">
               <p className="font-medium text-ink">
                 {admin && o?.userId ? (
                   <Link
@@ -426,7 +426,7 @@ export function OrderDetail({
           </SectionCard>
 
           <SectionCard title="Shipping address">
-            <address className="text-[13px] not-italic leading-relaxed text-ink">
+            <address className="text-[14px] not-italic leading-relaxed text-ink">
               {o ? (
                 <>
                   {o.shippingAddress.fullName}
@@ -448,21 +448,21 @@ export function OrderDetail({
           </SectionCard>
 
           <SectionCard title="Prescription">
-            <dl className="space-y-2 text-[13px]">
+            <dl className="space-y-2 text-[14px]">
               <div>
-                <dt className="text-[12px] text-ink/65">Prescriber</dt>
+                <dt className="text-[13px] text-ink/65">Prescriber</dt>
                 <dd className="text-ink">
                   {b?.prescriber ? `${b.prescriber}${b.npi ? ` · NPI ${b.npi}` : ''}` : '—'}
                 </dd>
               </div>
               {extras?.prescription && (
                 <div>
-                  <dt className="text-[12px] text-ink/65">Protocol</dt>
+                  <dt className="text-[13px] text-ink/65">Protocol</dt>
                   <dd className="text-ink">{extras.prescription.protocol}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-[12px] text-ink/65">Directions</dt>
+                <dt className="text-[13px] text-ink/65">Directions</dt>
                 <dd className="text-ink">{extras?.prescription?.directions ?? '—'}</dd>
               </div>
             </dl>
@@ -470,7 +470,7 @@ export function OrderDetail({
 
           {b && (
             <SectionCard title="Details for the pharmacy">
-              <dl className={cn(inset, 'divide-y divide-ink/10 text-[13px]')}>
+              <dl className={cn(inset, 'divide-y divide-ink/10 text-[14px]')}>
                 {pharmacyDetails(b).map(([k, v]) => (
                   <Field key={k} label={k}>
                     {v}
@@ -482,7 +482,7 @@ export function OrderDetail({
           )}
 
           <SectionCard title="Notes">
-            <div className="space-y-2 text-[13px]">
+            <div className="space-y-2 text-[14px]">
               {attention && (
                 <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 leading-relaxed text-amber-900">
                   {attention}
@@ -513,7 +513,7 @@ export function OrderDetail({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex gap-4 px-3 py-2">
-      <dt className="w-28 flex-none text-[12px] text-ink/65">{label}</dt>
+      <dt className="w-28 flex-none text-[13px] text-ink/65">{label}</dt>
       <dd className="min-w-0 break-words text-ink">{children}</dd>
     </div>
   );
@@ -578,13 +578,13 @@ function MenuItem({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'block min-h-[40px] w-full px-3 py-2 text-left text-[13px] transition-colors hover:bg-milk disabled:cursor-not-allowed disabled:hover:bg-transparent',
+        'block min-h-[40px] w-full px-3 py-2 text-left text-[14px] transition-colors hover:bg-milk disabled:cursor-not-allowed disabled:hover:bg-transparent',
         danger ? 'text-red-700' : 'text-ink',
         disabled && 'text-ink/40',
       )}
     >
       {children}
-      {hint && <span className="block text-[12px] text-ink/50">{hint}</span>}
+      {hint && <span className="block text-[13px] text-ink/50">{hint}</span>}
     </button>
   );
 }
@@ -600,7 +600,7 @@ function CopyButton({ text }: { text: string }) {
           setTimeout(() => setDone(false), 1500);
         })
       }
-      className="mt-2 text-[13px] text-ink/70 underline decoration-ink/30 underline-offset-[3px] hover:text-ink hover:decoration-ink"
+      className="mt-2 text-[14px] text-ink/70 underline decoration-ink/30 underline-offset-[3px] hover:text-ink hover:decoration-ink"
     >
       {done ? 'Copied' : 'Copy all details'}
     </button>
@@ -658,7 +658,7 @@ function Timeline({ order: o }: { order?: Order }) {
             placeholder="Add a note. The member reads it on their order page."
             className={cn(input, 'resize-none')}
           />
-          {error && <p className="mt-2 text-[13px] text-red-800">{error}</p>}
+          {error && <p className="mt-2 text-[14px] text-red-800">{error}</p>}
           <div className="mt-2 flex justify-end">
             <button
               type="button"
@@ -674,10 +674,10 @@ function Timeline({ order: o }: { order?: Order }) {
       {updates.length ? (
         <ol className="space-y-3 border-l border-ink/15 pl-4">
           {updates.map((u) => (
-            <li key={u.id} className="relative text-[13px]">
+            <li key={u.id} className="relative text-[14px]">
               <span aria-hidden className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-ink/35" />
               <p className="text-ink">{u.note}</p>
-              <p className="text-[12px] text-ink/60">
+              <p className="text-[13px] text-ink/60">
                 {u.author}
                 {u.author !== ROLE[u.role] ? ` · ${ROLE[u.role] ?? u.role}` : ''} · {formatDateTime(u.at)}
               </p>
@@ -685,7 +685,7 @@ function Timeline({ order: o }: { order?: Order }) {
           ))}
         </ol>
       ) : (
-        <p className="text-[13px] text-ink/55">{o ? 'Nothing on the timeline yet.' : 'No member order is linked to this shipment.'}</p>
+        <p className="text-[14px] text-ink/55">{o ? 'Nothing on the timeline yet.' : 'No member order is linked to this shipment.'}</p>
       )}
     </SectionCard>
   );

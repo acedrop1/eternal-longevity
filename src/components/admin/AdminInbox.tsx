@@ -80,7 +80,7 @@ export function AdminInbox({
 
   if (threads.length === 0) {
     return (
-      <div className={cn(indexCard, 'px-6 py-10 text-center text-[13px] text-ink/65')}>
+      <div className={cn(indexCard, 'px-6 py-10 text-center text-[14px] text-ink/65')}>
         No messages yet. Member conversations will appear here.
       </div>
     );
@@ -111,11 +111,11 @@ export function AdminInbox({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversations"
             aria-label="Search conversations"
-            className="h-10 w-full rounded-thumb bg-white px-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
+            className="h-10 w-full rounded-thumb bg-white px-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[14px]"
           />
         </div>
         <ul className="min-h-0 flex-1 overflow-y-auto">
-          {visible.length === 0 && <li className="px-4 py-8 text-center text-[13px] text-ink/60">No conversations match.</li>}
+          {visible.length === 0 && <li className="px-4 py-8 text-center text-[14px] text-ink/60">No conversations match.</li>}
           {visible.map((t) => {
             const on = t.userId === activeId;
             return (
@@ -135,19 +135,19 @@ export function AdminInbox({
                 >
                   <span
                     aria-hidden
-                    className="grid h-8 w-8 flex-none place-items-center rounded-full bg-milk text-[12px] font-semibold text-ink/70 ring-1 ring-ink/10"
+                    className="grid h-8 w-8 flex-none place-items-center rounded-full bg-milk text-[13px] font-semibold text-ink/70 ring-1 ring-ink/10"
                   >
                     {initials(t.memberName)}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
-                      <span className={cn('truncate text-[13px] text-ink', t.awaitingReply ? 'font-semibold' : 'font-medium')}>
+                      <span className={cn('truncate text-[14px] text-ink', t.awaitingReply ? 'font-semibold' : 'font-medium')}>
                         {t.memberName}
                       </span>
-                      <span className="flex-none text-[12px] tabular-nums text-ink/55">{fmtTime(t.lastAt)}</span>
+                      <span className="flex-none text-[13px] tabular-nums text-ink/55">{fmtTime(t.lastAt)}</span>
                     </span>
                     <span className="mt-0.5 flex items-center gap-2">
-                      <span className={cn('min-w-0 flex-1 truncate text-[12px]', t.awaitingReply ? 'text-ink/85' : 'text-ink/60')}>
+                      <span className={cn('min-w-0 flex-1 truncate text-[13px]', t.awaitingReply ? 'text-ink/85' : 'text-ink/60')}>
                         {t.lastBody}
                       </span>
                       {t.awaitingReply && (
@@ -178,10 +178,10 @@ export function AdminInbox({
             </button>
             <div className="min-w-0">
               <p className="truncate text-[14px] font-semibold text-ink">{active.memberName}</p>
-              <p className="truncate text-[12px] text-ink/60">{active.memberEmail}</p>
+              <p className="truncate text-[13px] text-ink/60">{active.memberEmail}</p>
             </div>
             {active.awaitingReply && (
-              <span className="ml-auto inline-flex flex-none items-center gap-1.5 rounded-full bg-butter px-2 py-0.5 text-[12px] font-medium text-ink">
+              <span className="ml-auto inline-flex flex-none items-center gap-1.5 rounded-full bg-butter px-2 py-0.5 text-[13px] font-medium text-ink">
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 Awaiting reply
               </span>
@@ -195,12 +195,12 @@ export function AdminInbox({
               <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-inner px-3.5 py-2 text-[13px] leading-relaxed md:max-w-[70%]',
+                    'max-w-[85%] rounded-inner px-3.5 py-2 text-[14px] leading-relaxed md:max-w-[70%]',
                     mine ? 'bg-ink text-white' : 'bg-white text-ink/90 ring-1 ring-ink/10',
                   )}
                 >
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                  <span className={cn('mt-1 block text-[11px] tabular-nums', mine ? 'text-white/65' : 'text-ink/55')}>
+                  <span className={cn('mt-1 block text-[12px] tabular-nums', mine ? 'text-white/65' : 'text-ink/55')}>
                     {fmtTime(m.createdAt)}
                   </span>
                 </div>
@@ -209,7 +209,7 @@ export function AdminInbox({
           })}
         </div>
         <div className="border-t border-ink/10 p-3">
-          {error && <p className="mb-2 px-1 text-[12px] text-red-700">{error}</p>}
+          {error && <p className="mb-2 px-1 text-[13px] text-red-700">{error}</p>}
           <div className="flex items-end gap-2">
             <textarea
               value={draft}
@@ -223,13 +223,13 @@ export function AdminInbox({
               rows={2}
               aria-label="Reply"
               placeholder="Reply…"
-              className="min-w-0 flex-1 resize-none rounded-thumb bg-white px-3 py-2 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[13px]"
+              className="min-w-0 flex-1 resize-none rounded-thumb bg-white px-3 py-2 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[14px]"
             />
             <button
               type="button"
               onClick={send}
               disabled={isPending || !draft.trim() || !activeId}
-              className="inline-flex min-h-[40px] flex-none items-center rounded-full bg-ink px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
+              className="inline-flex min-h-[40px] flex-none items-center rounded-full bg-ink px-4 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
             >
               {isPending ? 'Sending…' : 'Send'}
             </button>

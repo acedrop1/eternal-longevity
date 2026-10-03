@@ -113,7 +113,7 @@ export function DoctorQueueList({ reviews, threads, messagesAwaiting, sampleOrde
         {rows.length === 0 ? (
           <div className="px-6 py-10 text-center">
             <h2 className="mb-1 text-[16px] font-semibold text-ink md:text-[14px]">{empty[tab][0]}</h2>
-            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-ink/65 md:text-[13px]">{empty[tab][1]}</p>
+            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-ink/65 md:text-[14px]">{empty[tab][1]}</p>
           </div>
         ) : (
           // A narrow tablet scrolls the card sideways, never the page.
@@ -175,7 +175,7 @@ function CaseRow({
 
   return (
     <tr
-      className={cn(rowClass, 'gap-y-1 py-3.5 pr-4 text-[15px] md:text-[13px]')}
+      className={cn(rowClass, 'gap-y-1 py-3.5 pr-4 text-[15px] md:text-[14px]')}
       onClick={(e) => {
         if (!fromControl(e.target)) router.push(href);
       }}
@@ -184,13 +184,13 @@ function CaseRow({
         <div className="flex items-baseline justify-between gap-3">
           <Link
             href={href}
-            className="min-w-0 truncate text-[16px] font-semibold text-ink underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40 md:text-[13px] md:font-medium"
+            className="min-w-0 truncate text-[16px] font-semibold text-ink underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40 md:text-[14px] md:font-medium"
           >
             {o.memberName || o.memberEmail}
           </Link>
           <span className="flex-none text-[15px] text-ink/65 md:hidden">{active ? null : waiting}</span>
         </div>
-        <p className="text-[15px] text-ink/60 md:text-[12px]">{orderRef(o.id)}</p>
+        <p className="text-[15px] text-ink/60 md:text-[13px]">{orderRef(o.id)}</p>
         {/* Phones: one stacked card, everything the columns say. */}
         <p className="mt-1 text-[15px] text-ink/85 md:hidden">
           {product} · {o.state}
@@ -214,7 +214,7 @@ function CaseRow({
           <>
             {status}
             {o.tracking && (
-              <span className="mt-0.5 block text-[12px] text-ink/60">
+              <span className="mt-0.5 block text-[13px] text-ink/60">
                 {o.carrier} · {o.tracking}
               </span>
             )}

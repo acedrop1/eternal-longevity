@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 /** Amber "Review" chip for answers that match a field's flagOn. */
 export function ReviewChip({ children = 'Review' }: { children?: React.ReactNode }) {
   return (
-    <span className="inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-600/25 bg-amber-50 px-2.5 py-1 text-[12px] font-medium leading-none text-amber-800">
+    <span className="inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-600/25 bg-amber-50 px-2.5 py-1 text-[13px] font-medium leading-none text-amber-800">
       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-500" />
       {children}
     </span>
@@ -22,7 +22,7 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
     <div className="space-y-4">
       {sections.map((s) => (
         <div key={s.key}>
-          <div className="mb-1.5 text-[13px] font-semibold text-ink">{s.title}</div>
+          <div className="mb-1.5 text-[14px] font-semibold text-ink">{s.title}</div>
           {s.items.length > 0 && (
             <dl>
               {s.items.map((i) => (
@@ -30,10 +30,10 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
                   key={i.label}
                   className="flex flex-col gap-1 border-b border-ink/[0.06] py-2 last:border-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                 >
-                  <dt className="text-[13px] leading-snug text-ink/70">{i.label}</dt>
+                  <dt className="text-[14px] leading-snug text-ink/70">{i.label}</dt>
                   <dd
                     className={cn(
-                      'flex flex-wrap items-center gap-2 text-[13px] font-semibold leading-snug sm:max-w-[55%] sm:justify-end sm:text-right',
+                      'flex flex-wrap items-center gap-2 text-[14px] font-semibold leading-snug sm:max-w-[55%] sm:justify-end sm:text-right',
                       i.flag ? 'text-amber-800' : 'text-ink/90',
                     )}
                   >
@@ -62,11 +62,11 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
                       <img src={p.url} alt="" className="aspect-square w-full bg-white object-cover" />
                     </a>
                   ) : (
-                    <div className="grid aspect-square w-full place-items-center rounded-thumb bg-white p-2 text-center text-[12px] text-ink/65 ring-1 ring-ink/10">
+                    <div className="grid aspect-square w-full place-items-center rounded-thumb bg-white p-2 text-center text-[13px] text-ink/65 ring-1 ring-ink/10">
                       Photo unavailable
                     </div>
                   )}
-                  <p className="mt-1 text-[12px] leading-snug text-ink/60">{p.label}</p>
+                  <p className="mt-1 text-[13px] leading-snug text-ink/60">{p.label}</p>
                 </li>
               ))}
             </ul>
@@ -75,7 +75,7 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
           {s.files.length > 0 && (
             <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
               {s.files.map((f) => (
-                <li key={f.path} className="text-[13px]">
+                <li key={f.path} className="text-[14px]">
                   {f.url ? (
                     <a
                       href={f.url}
@@ -106,7 +106,7 @@ export function ThreadChip({ status }: { status?: ThreadStatus }) {
     <span
       suppressHydrationWarning
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12px] font-medium leading-none',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[13px] font-medium leading-none',
         waiting
           ? 'border-ink/15 bg-white text-ink/80'
           : 'border-emerald-600/25 bg-emerald-50 text-emerald-800',

@@ -69,7 +69,7 @@ export function AdminEmailMember({
               setResult(null);
             }}
             className={cn(
-              'rounded-full border px-4 py-2 text-[13px] font-medium transition-colors',
+              'rounded-full border px-4 py-2 text-[14px] font-medium transition-colors',
               template === key
                 ? 'border-ink bg-ink text-white'
                 : 'border-ink/10 bg-white text-ink/70 hover:border-ink/25 hover:text-ink',
@@ -90,7 +90,7 @@ export function AdminEmailMember({
           <div>
             <label
               htmlFor="admin-email-subject"
-              className="mb-1.5 block text-[13px] font-medium text-ink/70"
+              className="mb-1.5 block text-[14px] font-medium text-ink/70"
             >
               Subject
             </label>
@@ -105,7 +105,7 @@ export function AdminEmailMember({
           <div>
             <label
               htmlFor="admin-email-body"
-              className="mb-1.5 block text-[13px] font-medium text-ink/70"
+              className="mb-1.5 block text-[14px] font-medium text-ink/70"
             >
               Message
             </label>
@@ -146,11 +146,11 @@ export function AdminEmailMember({
           type="button"
           disabled={!ready || busy}
           onClick={send}
-          className="rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
+          className="rounded-full bg-ink px-5 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-40"
         >
           {busy ? 'Sending…' : 'Send'}
         </button>
-        <span className="text-[12px] text-ink/60">to {email}</span>
+        <span className="text-[13px] text-ink/60">to {email}</span>
       </div>
     </div>
   );

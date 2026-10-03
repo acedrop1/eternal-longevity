@@ -56,13 +56,13 @@ export default async function DoctorMessagesPage({
         <AdminPageHeader
           title="Inbox"
           subtitle={
-            <span className="text-[15px] md:text-[13px]">
+            <span className="text-[15px] md:text-[14px]">
               Your threads with patients. {awaiting} awaiting a reply.
             </span>
           }
         />
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[13px]">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
             Sample data (dev only). Replies need Supabase.
           </p>
         )}

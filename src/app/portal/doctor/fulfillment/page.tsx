@@ -29,14 +29,14 @@ export default async function DoctorFulfillmentPage() {
         <AdminPageHeader
           title="Orders to place"
           subtitle={
-            <span className="text-[15px] md:text-[13px]">
+            <span className="text-[15px] md:text-[14px]">
               Every paid order, new or refill. Place it in the pharmacy portal and mark it placed here. Admin sees the
               same list, so whoever places it first marks it.
             </span>
           }
         />
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[13px]">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
             Sample data (dev only).
           </p>
         )}

@@ -26,7 +26,7 @@ export function DetailHeader({
         <Link
           href={backHref}
           aria-label={`Back to ${backLabel}`}
-          className="mt-0.5 inline-flex h-11 min-w-[44px] flex-none items-center justify-center gap-1 rounded-thumb px-1.5 md:h-8 md:min-w-0 text-[13px] font-medium text-ink/65 transition-colors hover:bg-ink/[0.06] hover:text-ink"
+          className="mt-0.5 inline-flex h-11 min-w-[44px] flex-none items-center justify-center gap-1 rounded-thumb px-1.5 md:h-8 md:min-w-0 text-[14px] font-medium text-ink/65 transition-colors hover:bg-ink/[0.06] hover:text-ink"
         >
           <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M12 5 7 10l5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -40,7 +40,7 @@ export function DetailHeader({
             </h1>
             {badges}
           </div>
-          {meta && <p className="mt-1 text-[13px] text-ink/65">{meta}</p>}
+          {meta && <p className="mt-1 text-[14px] text-ink/65">{meta}</p>}
         </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -51,8 +51,8 @@ export function DetailHeader({
 /** Label / value line inside a sidebar card. */
 export function InfoRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]">
-      <dt className="flex-none text-ink/60">{label}</dt>
+    <div className="flex items-baseline justify-between gap-3 py-1.5 text-[14px] md:text-[14px]">
+      <dt className="flex-none text-ink/70">{label}</dt>
       <dd className="min-w-0 break-words text-right text-ink">{children}</dd>
     </div>
   );

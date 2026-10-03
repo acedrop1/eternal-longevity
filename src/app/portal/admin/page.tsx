@@ -256,7 +256,7 @@ export default async function AdminPortalPage() {
         />
 
         {!live && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
             {sample ? 'Sample data (dev only). ' : 'Demo data. '}
             Real numbers appear once Supabase is connected.
           </p>
@@ -309,7 +309,7 @@ export default async function AdminPortalPage() {
               description="Orders board issues, unanswered messages, and anything stuck past its limit."
             >
               {attention.length === 0 ? (
-                <p className="px-4 py-6 text-[13px] text-ink/65">All clear. Nothing is waiting on the team.</p>
+                <p className="px-4 py-6 text-[14px] text-ink/65">All clear. Nothing is waiting on the team.</p>
               ) : (
                 <ul className="divide-y divide-ink/10">
                   {attention.map((a, i) => (
@@ -320,8 +320,8 @@ export default async function AdminPortalPage() {
                       >
                         <StatusBadge tone={a.tone}>{a.badge}</StatusBadge>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13px] font-medium text-ink">{a.label}</span>
-                          <span className="block truncate text-[12px] text-ink/65">{a.detail}</span>
+                          <span className="block truncate text-[14px] font-medium text-ink">{a.label}</span>
+                          <span className="block truncate text-[13px] text-ink/65">{a.detail}</span>
                         </span>
                         <span aria-hidden className="flex-none text-ink/40">›</span>
                       </Link>
@@ -333,15 +333,15 @@ export default async function AdminPortalPage() {
 
             <SectionCard flush title="Recent activity" description="Order and clinical updates as they happen.">
               {o.activity.length === 0 ? (
-                <p className="px-4 py-6 text-[13px] text-ink/65">
+                <p className="px-4 py-6 text-[14px] text-ink/65">
                   No activity yet. Order and clinical updates land here as they happen.
                 </p>
               ) : (
                 <ul className="divide-y divide-ink/10">
                   {o.activity.map((a, i) => (
                     <li key={i} className="flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:items-baseline sm:gap-4">
-                      <span className="flex-none text-[12px] text-ink/65 tabular-nums sm:w-28">{a.time}</span>
-                      <span className="min-w-0 text-[13px] text-ink/85">{a.action}</span>
+                      <span className="flex-none text-[13px] text-ink/65 tabular-nums sm:w-28">{a.time}</span>
+                      <span className="min-w-0 text-[14px] text-ink/85">{a.action}</span>
                     </li>
                   ))}
                 </ul>
@@ -355,7 +355,7 @@ export default async function AdminPortalPage() {
                 <li key={p.label}>
                   <Link
                     href={p.href}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 text-[13px] transition-colors hover:bg-milk/70"
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 text-[14px] transition-colors hover:bg-milk/70"
                   >
                     <span className="text-ink/75">{p.label}</span>
                     <span className="font-semibold tabular-nums text-ink">{p.count}</span>
@@ -366,7 +366,7 @@ export default async function AdminPortalPage() {
             <div className="border-t border-ink/10 px-4 py-2.5">
               <Link
                 href="/portal/admin/queue"
-                className="text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                className="text-[14px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
               >
                 See applications →
               </Link>

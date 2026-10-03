@@ -34,7 +34,7 @@ export default async function DoctorProfilePage() {
         <AdminPageHeader
           title={record.display || user.name}
           subtitle={
-            <span className="text-[15px] md:text-[13px]">
+            <span className="text-[15px] md:text-[14px]">
               Your contact details and licensure, and how the system reaches you when an order needs signing.
             </span>
           }
@@ -57,7 +57,7 @@ export default async function DoctorProfilePage() {
           description="Where a new order reaches you. Email support to change it, so your sign-in and your notification address never drift apart."
         >
           <SectionCard>
-            <p className="break-words text-[15px] font-medium text-ink md:text-[13px]">{user.email}</p>
+            <p className="break-words text-[15px] font-medium text-ink md:text-[14px]">{user.email}</p>
           </SectionCard>
         </SettingsRow>
 
@@ -89,7 +89,7 @@ export default async function DoctorProfilePage() {
 
         <SettingsRow title="Support" description="Something wrong with a case, or a member you need to reach?">
           <SectionCard>
-            <p className="text-[15px] text-ink/80 md:text-[13px]">
+            <p className="text-[15px] text-ink/80 md:text-[14px]">
               Email{' '}
               <a
                 href="mailto:support@etlongevity.com"
@@ -115,8 +115,8 @@ function Fact({ title, body }: { title: string; body: string }) {
         className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-butter-deep"
       />
       <div className="min-w-0">
-        <div className="text-[15px] font-medium text-ink md:text-[13px]">{title}</div>
-        <p className="mt-0.5 text-[15px] leading-relaxed text-ink/65 md:text-[13px]">
+        <div className="text-[15px] font-medium text-ink md:text-[14px]">{title}</div>
+        <p className="mt-0.5 text-[15px] leading-relaxed text-ink/65 md:text-[14px]">
           {body}
         </p>
       </div>

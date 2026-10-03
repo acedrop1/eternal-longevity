@@ -61,7 +61,7 @@ export default async function AdminProductsPage() {
         />
 
         {note && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">{note}</p>
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">{note}</p>
         )}
 
         <AdminProductsIndex products={rows} />

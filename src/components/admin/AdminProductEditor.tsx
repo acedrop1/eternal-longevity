@@ -39,7 +39,7 @@ const unlines = (s: string) => s.split('\n');
 
 /** Compact Shopify-size field; 16px on phones so iOS does not zoom. */
 const input =
-  'w-full rounded-thumb bg-white px-3 py-2 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[13px]';
+  'w-full rounded-thumb bg-white px-3 py-2 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[14px]';
 
 export function AdminProductEditor({ initial, canSave }: { initial: ProductInput; canSave: boolean }) {
   const router = useRouter();
@@ -134,7 +134,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
         <p
           role={message.ok ? 'status' : 'alert'}
           className={cn(
-            'rounded-inner border px-4 py-2.5 text-[13px]',
+            'rounded-inner border px-4 py-2.5 text-[14px]',
             message.ok ? 'border-emerald-600/20 bg-emerald-50 text-emerald-900' : 'border-red-600/20 bg-red-50 text-red-800',
           )}
         >
@@ -198,7 +198,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 {p.image ? (
                   <Image src={p.image} alt="" fill sizes="128px" className="object-cover" />
                 ) : (
-                  <span className="grid h-full place-items-center text-[12px] text-ink/60">No photo yet</span>
+                  <span className="grid h-full place-items-center text-[13px] text-ink/60">No photo yet</span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -221,7 +221,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 >
                   {uploading ? 'Uploading…' : p.image ? 'Replace photo' : 'Upload photo'}
                 </button>
-                <p className="mt-2 text-[12px] text-ink/60">
+                <p className="mt-2 text-[13px] text-ink/60">
                   {p.id ? 'JPG, PNG or WebP, 5 MB max. 3:4 portrait works best.' : 'Set the URL name first.'}
                 </p>
               </div>
@@ -316,7 +316,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 <input className={input} value={p.pharmacy.dosageForm} maxLength={120} onChange={(e) => setRx('dosageForm', e.target.value)} />
               </Field>
             </div>
-            <p className="mt-3 text-[12px] text-ink/60">
+            <p className="mt-3 text-[13px] text-ink/60">
               Name, strength, size and form are sent alongside the SKU so the pharmacist can check the order. Left empty, the built-in value is used.
             </p>
           </SectionCard>
@@ -344,15 +344,15 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                       {on && <span className="h-2 w-2 rounded-full bg-ink" />}
                     </span>
                     <span>
-                      <span className="block text-[13px] font-medium text-ink">{s.label}</span>
-                      <span className="block text-[12px] leading-snug text-ink/60">{s.body}</span>
+                      <span className="block text-[14px] font-medium text-ink">{s.label}</span>
+                      <span className="block text-[13px] leading-snug text-ink/60">{s.body}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
             {goingLive && (
-              <p className="mt-3 rounded-thumb bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-900 ring-1 ring-amber-600/25">
+              <p className="mt-3 rounded-thumb bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-600/25">
                 Saving as Live lists this product on the public site and lets members order it. Make sure it is cleared for sale
                 (pharmacy, prescriber and LegitScript).
               </p>
@@ -402,12 +402,12 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
               <Link
                 href={`/shop/${p.id}`}
                 target="_blank"
-                className="text-[13px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                className="text-[14px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
               >
                 View on site ↗
               </Link>
             ) : (
-              <p className="text-[13px] leading-relaxed text-ink/65">
+              <p className="text-[14px] leading-relaxed text-ink/65">
                 Not on the site while it is {PRODUCT_STATUS[baseline.status][0].toLowerCase()}. Save it as Live to publish
                 {p.id ? ` /shop/${p.id}` : ' it'}.
               </p>
@@ -418,7 +418,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 
       {/* Footer save, always there; the bar below appears only with unsaved edits. */}
       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-ink/10 pt-4">
-        {!canSave && <p className="mr-auto text-[12px] text-ink/65">Connect Supabase to save changes.</p>}
+        {!canSave && <p className="mr-auto text-[13px] text-ink/65">Connect Supabase to save changes.</p>}
         <button type="button" className={cn(headerButton, 'disabled:opacity-40')} disabled={!canSave || saving || uploading} onClick={save}>
           {saving ? 'Saving…' : p.isNew ? 'Create product' : 'Save changes'}
         </button>
@@ -431,13 +431,13 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             aria-label="Unsaved changes"
             className="flex flex-wrap items-center justify-between gap-2 rounded-inner bg-ink px-4 py-2.5 text-white shadow-[0_8px_24px_rgba(17,17,17,0.25)]"
           >
-            <span className="text-[13px] font-medium">{p.isNew ? 'Unsaved product' : 'Unsaved changes'}</span>
+            <span className="text-[14px] font-medium">{p.isNew ? 'Unsaved product' : 'Unsaved changes'}</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={discard}
                 disabled={saving}
-                className="inline-flex min-h-[40px] items-center rounded-full px-4 text-[13px] font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-white/10 disabled:opacity-40 md:min-h-[32px]"
+                className="inline-flex min-h-[40px] items-center rounded-full px-4 text-[14px] font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-white/10 disabled:opacity-40 md:min-h-[32px]"
               >
                 Discard
               </button>
@@ -445,7 +445,7 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                 type="button"
                 onClick={save}
                 disabled={!canSave || saving || uploading}
-                className="inline-flex min-h-[40px] items-center rounded-full bg-butter px-4 text-[13px] font-semibold text-ink transition-colors hover:bg-butter-deep disabled:opacity-40 md:min-h-[32px]"
+                className="inline-flex min-h-[40px] items-center rounded-full bg-butter px-4 text-[14px] font-semibold text-ink transition-colors hover:bg-butter-deep disabled:opacity-40 md:min-h-[32px]"
               >
                 {saving ? 'Saving…' : 'Save'}
               </button>
@@ -460,9 +460,9 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-ink/80">{label}</span>
+      <span className="mb-1.5 block text-[14px] font-medium text-ink/80">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-[12px] text-ink/60">{hint}</span>}
+      {hint && <span className="mt-1 block text-[13px] text-ink/60">{hint}</span>}
     </label>
   );
 }
@@ -470,7 +470,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function Money({ value, onChange }: { value: number; onChange: (v: string) => void }) {
   return (
     <span className="relative block">
-      <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-ink/60 md:text-[13px]">
+      <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-ink/60 md:text-[14px]">
         $
       </span>
       <input
@@ -500,8 +500,8 @@ function Check({ checked, onChange, label, body }: { checked: boolean; onChange:
     <label className="flex cursor-pointer items-start gap-3">
       <input type="checkbox" className="mt-0.5 h-4 w-4 flex-none accent-ink" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        <span className="block text-[13px] font-medium text-ink">{label}</span>
-        <span className="block text-[12px] leading-snug text-ink/60">{body}</span>
+        <span className="block text-[14px] font-medium text-ink">{label}</span>
+        <span className="block text-[13px] leading-snug text-ink/60">{body}</span>
       </span>
     </label>
   );

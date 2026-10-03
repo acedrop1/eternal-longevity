@@ -21,7 +21,7 @@ export function AdminPageHeader({
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
         <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-[13px] text-ink/65">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-[14px] text-ink/65">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-none items-center gap-2">{actions}</div>}
     </header>
@@ -29,11 +29,11 @@ export function AdminPageHeader({
 }
 
 export const indexCard =
-  'overflow-hidden rounded-inner border border-ink/10 bg-white shadow-[0_1px_2px_rgba(17,17,17,0.05)]';
+  'overflow-hidden rounded-inner border border-ink/[0.12] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.08)]';
 
 /** Small header button, Shopify-sized. */
 export const headerButton =
-  'inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 md:min-h-[34px]';
+  'inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-4 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 md:min-h-[34px]';
 
 export function IndexTabs<T extends string>({
   tabs,
@@ -58,13 +58,13 @@ export function IndexTabs<T extends string>({
             aria-selected={on}
             onClick={() => onChange(t.key)}
             className={cn(
-              'inline-flex min-h-[44px] flex-none items-center gap-1.5 rounded-thumb px-3 text-[14px] font-medium transition-colors md:min-h-[30px] md:text-[13px]',
+              'inline-flex min-h-[44px] flex-none items-center gap-1.5 rounded-thumb px-3 text-[14px] font-medium transition-colors md:min-h-[30px] md:text-[14px]',
               on ? 'bg-ink/[0.07] text-ink' : 'text-ink/60 hover:bg-ink/[0.04] hover:text-ink',
             )}
           >
             {t.label}
             {t.count !== undefined && (
-              <span className={cn('tabular-nums text-[12px]', on ? 'text-ink/60' : 'text-ink/55')}>{t.count}</span>
+              <span className={cn('tabular-nums text-[13px]', on ? 'text-ink/60' : 'text-ink/55')}>{t.count}</span>
             )}
           </button>
         );
@@ -105,7 +105,7 @@ export function IndexToolbar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-11 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]"
+          className="h-11 w-full rounded-thumb bg-white pl-8 pr-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[14px]"
         />
       </label>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
@@ -114,11 +114,11 @@ export function IndexToolbar({
 }
 
 export const toolbarSelect =
-  'h-10 min-w-0 flex-1 rounded-thumb bg-white px-2.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 sm:flex-none md:h-9 md:text-[13px]';
+  'h-10 min-w-0 flex-1 rounded-thumb bg-white px-2.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 sm:flex-none md:h-9 md:text-[14px]';
 
 export function IndexFooter({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
-    <div className="border-t border-ink/10 px-4 py-2.5 text-[12px] tabular-nums text-ink/65">
+    <div className="border-t border-ink/10 px-4 py-2.5 text-[13px] tabular-nums text-ink/65">
       Showing {shown} of {total} {noun}
     </div>
   );
@@ -128,13 +128,13 @@ export function IndexFooter({ shown, total, noun }: { shown: number; total: numb
  * Table pieces. Below md every row stacks as a wrapped flex card (no
  * horizontal page scroll); from md up it is a real table.
  */
-export const table = 'block w-full text-[13px] md:table';
+export const table = 'block w-full text-[14px] md:table';
 export const thead = 'hidden md:table-header-group';
-export const th = 'whitespace-nowrap bg-milk/60 px-2.5 py-2 text-left text-[12px] font-medium text-ink/65 first:pl-4 last:pr-4';
+export const th = 'whitespace-nowrap bg-milk px-2 py-2 text-left text-[13px] font-semibold text-ink/70 first:pl-4 last:pr-4';
 export const tbody = 'block md:table-row-group';
 export const row =
   'relative flex cursor-pointer flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-ink/10 py-3 pl-4 pr-12 transition-colors first:border-t-0 hover:bg-milk/70 md:table-row md:px-0 md:py-0';
-export const td = 'md:table-cell md:h-11 md:px-2.5 md:py-2 md:align-middle md:first:pl-4 md:last:pr-4';
+export const td = 'md:table-cell md:h-11 md:px-2 md:py-2 md:align-middle md:first:pl-4 md:last:pr-4';
 /** The expanded detail under a row. */
 export const detailRow = 'block border-t border-ink/10 bg-milk/50 md:table-row';
 export const detailCell = 'block px-4 py-4 md:table-cell md:px-4';
@@ -175,7 +175,7 @@ export function StatusBadge({ tone, children }: { tone: BadgeTone; children: Rea
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-medium leading-5',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[13px] font-medium leading-5',
         chip,
       )}
     >
@@ -212,9 +212,9 @@ export function MetricCard({
 }) {
   const body = (
     <>
-      <p className="text-[12px] font-medium text-ink/65">{label}</p>
+      <p className="text-[13px] font-medium text-ink/65">{label}</p>
       <p className="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink tabular-nums">{value}</p>
-      {hint && <p className="mt-0.5 truncate text-[12px] text-ink/60">{hint}</p>}
+      {hint && <p className="mt-0.5 truncate text-[13px] text-ink/60">{hint}</p>}
     </>
   );
   const cls = cn(indexCard, 'block min-w-0 px-4 py-3');
@@ -256,8 +256,8 @@ export function SectionCard({
           )}
         >
           <div className="min-w-0">
-            {title && <h2 className="text-[14px] font-semibold text-ink">{title}</h2>}
-            {description && <p className="mt-0.5 text-[13px] text-ink/65">{description}</p>}
+            {title && <h2 className="text-[15px] font-semibold text-ink">{title}</h2>}
+            {description && <p className="mt-0.5 text-[14px] text-ink/70">{description}</p>}
           </div>
           {actions && <div className="flex flex-none items-center gap-2">{actions}</div>}
         </div>
@@ -284,7 +284,7 @@ export function SettingsRow({
     <div className="grid gap-3 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] md:gap-8">
       <div className="min-w-0 md:pt-1">
         <h2 className="text-[14px] font-semibold text-ink">{title}</h2>
-        {description && <p className="mt-1 text-[13px] leading-relaxed text-ink/65">{description}</p>}
+        {description && <p className="mt-1 text-[14px] leading-relaxed text-ink/65">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
     </div>
@@ -293,17 +293,17 @@ export function SettingsRow({
 
 /** Secondary (outline) button to sit beside `headerButton`. */
 export const secondaryButton =
-  'inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-white px-4 text-[13px] font-semibold text-ink ring-1 ring-ink/15 transition-colors hover:bg-milk md:min-h-[34px]';
+  'inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-white px-4 text-[14px] font-semibold text-ink ring-1 ring-ink/15 transition-colors hover:bg-milk md:min-h-[34px]';
 
 /*
  * A plain table for short, non-clickable lists inside a `SectionCard flush`.
  * Wrap it in `overflow-x-auto` so a narrow screen scrolls the card, not the page.
  */
-export const plainTable = 'w-full min-w-[520px] text-[13px]';
+export const plainTable = 'w-full min-w-[520px] text-[14px]';
 export const plainTd =
   'h-11 whitespace-nowrap border-t border-ink/10 px-2.5 py-2 align-middle text-ink first:pl-4 last:pr-4';
 
 /** Form field and label in the admin's compact size (16px on phones so iOS does not zoom). */
 export const fieldInput =
-  'h-10 w-full rounded-thumb bg-white px-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[13px]';
-export const fieldLabel = 'mb-1 block text-[13px] font-medium text-ink/75';
+  'h-10 w-full rounded-thumb bg-white px-3 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-9 md:text-[14px]';
+export const fieldLabel = 'mb-1 block text-[14px] font-medium text-ink/75';

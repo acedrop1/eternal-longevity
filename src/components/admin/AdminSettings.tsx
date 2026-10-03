@@ -36,8 +36,8 @@ export function AdminSettings({
       <p
         className={
           live
-            ? 'rounded-inner border border-emerald-600/20 bg-emerald-50 px-4 py-2.5 text-[13px] text-emerald-800'
-            : 'rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900'
+            ? 'rounded-inner border border-emerald-600/20 bg-emerald-50 px-4 py-2.5 text-[14px] text-emerald-800'
+            : 'rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900'
         }
       >
         {live
@@ -51,8 +51,8 @@ export function AdminSettings({
             {services.map((s) => (
               <li key={s.name} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
-                  <div className="text-[13px] font-medium text-ink">{s.name}</div>
-                  <div className="mt-0.5 truncate text-[12px] text-ink/65">{s.detail}</div>
+                  <div className="text-[14px] font-medium text-ink">{s.name}</div>
+                  <div className="mt-0.5 truncate text-[13px] text-ink/65">{s.detail}</div>
                 </div>
                 <StatusBadge tone={s.connected ? 'success' : 'neutral'}>
                   {s.connected ? 'Connected' : 'Not set'}
@@ -107,8 +107,8 @@ function Divider() {
 function ReadRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 border-t border-ink/10 px-4 py-3 first:border-t-0">
-      <span className="flex-none text-[13px] text-ink/65">{label}</span>
-      <span className="min-w-0 truncate text-[13px] text-ink/90">{value}</span>
+      <span className="flex-none text-[14px] text-ink/65">{label}</span>
+      <span className="min-w-0 truncate text-[14px] text-ink/90">{value}</span>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export function CancelOrder({
 
   if (followUp) {
     return (
-      <div role="alert" className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900">
+      <div role="alert" className="rounded-inner border border-amber-600/25 bg-amber-50 px-3 py-2 text-[14px] leading-relaxed text-amber-900">
         {followUp}{' '}
         <button
           type="button"
@@ -99,7 +99,7 @@ export function CancelOrder({
           setError(null);
           setOpen(true);
         }}
-        className="text-[13px] text-ink/60 underline decoration-ink/20 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700/40"
+        className="text-[14px] text-ink/60 underline decoration-ink/20 underline-offset-[3px] transition-colors hover:text-red-700 hover:decoration-red-700/40"
       >
         Cancel order
       </button>
@@ -108,7 +108,7 @@ export function CancelOrder({
 
   return (
     <div className="rounded-inner border border-red-600/20 bg-red-50 p-4">
-      <div className="mb-2 text-[13px] font-medium text-red-700">
+      <div className="mb-2 text-[14px] font-medium text-red-700">
         Why are you cancelling?
       </div>
       <p className="mb-3 text-xs leading-relaxed text-ink/65">
@@ -164,7 +164,7 @@ export function CancelOrder({
             }
           }}
           className={cn(
-            'rounded-full px-5 py-2 text-[13px] font-semibold transition-colors',
+            'rounded-full px-5 py-2 text-[14px] font-semibold transition-colors',
             reason.trim() && !busy
               ? 'bg-red-700 text-white hover:bg-red-800'
               : 'bg-ink/10 text-ink/65',
@@ -181,7 +181,7 @@ export function CancelOrder({
             setError(null);
             onClose?.();
           }}
-          className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
+          className="rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25 disabled:opacity-60"
         >
           Keep it
         </button>

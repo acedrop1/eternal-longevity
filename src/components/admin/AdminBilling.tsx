@@ -121,7 +121,7 @@ export function AdminBilling({
   return (
     <div className="space-y-5">
       {!live && (
-        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
           {sampleCodes ? 'Sample data (dev only). ' : 'Demo figures. '}
           Real revenue and billing actions go live once Stripe and Supabase are
           connected.
@@ -139,7 +139,7 @@ export function AdminBilling({
       {/* Recent payments */}
       <SectionCard flush title="Recent payments" description="The latest orders and whether their payment landed.">
         {summary.recent.length === 0 ? (
-          <p className="px-4 py-6 text-[13px] text-ink/65">No orders yet.</p>
+          <p className="px-4 py-6 text-[14px] text-ink/65">No orders yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className={cn(plainTable, 'min-w-[340px]')}>
@@ -188,7 +188,7 @@ export function AdminBilling({
                   setSelectedId(null);
                   setQuery('');
                 }}
-                className="text-[13px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+                className="text-[14px] text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
               >
                 ← Choose a different customer
               </button>
@@ -205,7 +205,7 @@ export function AdminBilling({
                 {query.trim() && (
                   <ul className="mt-2 overflow-hidden rounded-thumb bg-white ring-1 ring-ink/10">
                     {matches.length === 0 ? (
-                      <li className="px-3 py-2.5 text-[13px] text-ink/60">
+                      <li className="px-3 py-2.5 text-[14px] text-ink/60">
                         No customers match.
                       </li>
                     ) : (
@@ -216,10 +216,10 @@ export function AdminBilling({
                             onClick={() => setSelectedId(c.id)}
                             className="flex w-full items-center justify-between gap-3 border-b border-ink/10 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-milk"
                           >
-                            <span className="text-[13px] font-medium text-ink">
+                            <span className="text-[14px] font-medium text-ink">
                               {c.name}
                             </span>
-                            <span className="truncate text-[12px] text-ink/65">
+                            <span className="truncate text-[13px] text-ink/65">
                               {c.email}
                             </span>
                           </button>
@@ -368,7 +368,7 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
         }
       >
         {codes.length === 0 ? (
-          <p className="px-4 py-6 text-[13px] text-ink/65">No discount codes yet.</p>
+          <p className="px-4 py-6 text-[14px] text-ink/65">No discount codes yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className={plainTable}>
@@ -418,7 +418,7 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
                           <button
                             type="button"
                             onClick={() => edit(c)}
-                            className="rounded-thumb px-2.5 py-1 text-[12px] font-medium text-ink/75 transition-colors hover:bg-ink/[0.05] hover:text-ink"
+                            className="rounded-thumb px-2.5 py-1 text-[13px] font-medium text-ink/75 transition-colors hover:bg-ink/[0.05] hover:text-ink"
                           >
                             Edit
                           </button>
@@ -426,7 +426,7 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
                             <button
                               type="button"
                               onClick={() => remove(c)}
-                              className="rounded-thumb px-2.5 py-1 text-[12px] font-medium text-red-700/85 transition-colors hover:bg-red-50 hover:text-red-700"
+                              className="rounded-thumb px-2.5 py-1 text-[13px] font-medium text-red-700/85 transition-colors hover:bg-red-50 hover:text-red-700"
                             >
                               Delete
                             </button>
@@ -512,7 +512,7 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
               />
             </div>
           </div>
-          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
+          <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-ink">
             <input
               type="checkbox"
               checked={includesShipping}
@@ -571,7 +571,7 @@ function SubmitButton({
       type="submit"
       disabled={busy}
       className={cn(
-        'inline-flex min-h-[40px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[13px] font-semibold transition-colors disabled:opacity-50 md:min-h-[34px]',
+        'inline-flex min-h-[40px] items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[14px] font-semibold transition-colors disabled:opacity-50 md:min-h-[34px]',
         tone === 'danger'
           ? 'bg-red-700 text-white hover:bg-red-800'
           : 'bg-ink text-white hover:bg-ink/85',
@@ -618,7 +618,7 @@ function ResultBanner({ result }: { result: AdminBillingResult | null }) {
     <div
       role="status"
       className={cn(
-        'mt-3 rounded-thumb border px-3 py-2.5 text-[13px]',
+        'mt-3 rounded-thumb border px-3 py-2.5 text-[14px]',
         result.ok
           ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800'
           : 'border-red-600/20 bg-red-50 text-red-700',

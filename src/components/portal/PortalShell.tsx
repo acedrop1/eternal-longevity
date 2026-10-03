@@ -51,6 +51,9 @@ export async function PortalShell({
 }: PortalShellProps) {
   const theme = ROLE_THEME[user.role];
   const lightBody = bodyTheme !== 'dark';
+  // Staff screens are dense tables and cards: white cards on a light grey
+  // page (the Shopify admin pattern) so each card reads as its own surface.
+  const staff = user.role !== 'member';
 
   // Attach pending-task count badges to the nav.
   const navItems = await enrichNavWithCounts(nav, user.role);
@@ -64,7 +67,7 @@ export async function PortalShell({
           user.role === 'member' ? IDLE_MINUTES.member : IDLE_MINUTES.staff
         }
       />
-      <div className={cn('min-h-screen', lightBody ? 'bg-white text-ink' : 'bg-ink text-white')}>
+      <div className={cn('min-h-screen', lightBody ? (staff ? 'bg-[#ECECE8] text-ink' : 'bg-white text-ink') : 'bg-ink text-white')}>
         {/* ============ TOP BAR ============ */}
         {/* The public header's frosted glass: a floating rounded bar, milky
             white so it reads over anything scrolling beneath it. */}

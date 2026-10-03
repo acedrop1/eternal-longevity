@@ -83,7 +83,7 @@ export function DoctorHistory({ rows }: { rows: SignedRx[] }) {
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={6} className="block px-4 py-10 text-center text-[15px] text-ink/65 md:table-cell md:text-[13px]">
+                <td colSpan={6} className="block px-4 py-10 text-center text-[15px] text-ink/65 md:table-cell md:text-[14px]">
                   {rows.length === 0
                     ? 'Nothing signed yet. Prescriptions you approve or decline are logged here permanently.'
                     : 'No prescriptions match.'}
@@ -95,19 +95,19 @@ export function DoctorHistory({ rows }: { rows: SignedRx[] }) {
                 return (
                   <tr
                     key={r.id}
-                    className={cn(rowClass, 'gap-y-1 py-3.5 pr-4 text-[15px] md:text-[13px]')}
+                    className={cn(rowClass, 'gap-y-1 py-3.5 pr-4 text-[15px] md:text-[14px]')}
                     onClick={(e) => {
                       if (!fromControl(e.target)) router.push(r.href);
                     }}
                   >
-                    <td className={cn(td, 'order-2 w-full whitespace-nowrap text-[15px] text-ink/60 md:w-auto md:text-[13px] md:font-medium md:text-ink')}>
+                    <td className={cn(td, 'order-2 w-full whitespace-nowrap text-[15px] text-ink/60 md:w-auto md:text-[14px] md:font-medium md:text-ink')}>
                       <Link href={r.href} className="underline decoration-transparent underline-offset-[3px] hover:decoration-ink/40">
                         {orderRef(r.id)}
                       </Link>
                     </td>
                     <td className={cn(td, 'order-1 min-w-0 flex-1')}>
-                      <div className="truncate text-[16px] font-semibold text-ink md:text-[13px] md:font-normal">{r.patient}</div>
-                      <div className="hidden text-[12px] text-ink/65 md:block">{r.state}</div>
+                      <div className="truncate text-[16px] font-semibold text-ink md:text-[14px] md:font-normal">{r.patient}</div>
+                      <div className="hidden text-[13px] text-ink/65 md:block">{r.state}</div>
                     </td>
                     <td className={cn(td, 'order-3 w-full text-ink/85 md:w-auto')}>
                       {r.protocol}
@@ -117,7 +117,7 @@ export function DoctorHistory({ rows }: { rows: SignedRx[] }) {
                       </span>
                     </td>
                     <td className={cn(td, 'hidden text-ink/65 md:table-cell')}>{r.cycle}</td>
-                    <td className={cn(td, 'order-4 w-full whitespace-nowrap tabular-nums text-ink/60 md:w-auto md:text-[12px]')}>
+                    <td className={cn(td, 'order-4 w-full whitespace-nowrap tabular-nums text-ink/60 md:w-auto md:text-[13px]')}>
                       <span className="md:hidden">{r.status === 'declined' ? 'Declined ' : 'Signed '}</span>
                       {r.signedAt}
                     </td>

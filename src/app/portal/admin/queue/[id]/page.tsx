@@ -46,7 +46,7 @@ export default async function AdminApplicationPage({ params }: PageProps) {
       ) : (
         <div className="space-y-5">
           <DetailHeader backHref="/portal/admin/queue" backLabel="Applications" title="Application" />
-          <p role="alert" className="rounded-inner border border-red-600/20 bg-red-50 px-4 py-8 text-center text-[13px] text-red-700">
+          <p role="alert" className="rounded-inner border border-red-600/20 bg-red-50 px-4 py-8 text-center text-[14px] text-red-700">
             This application could not be loaded. Refresh to try again.
           </p>
         </div>

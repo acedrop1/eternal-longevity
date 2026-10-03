@@ -116,7 +116,7 @@ export function AdminUsers({
       />
 
       {!live && (
-        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+        <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
           {sample ? 'Sample data (dev only). ' : 'Demo directory. '}
           Adding and suspending users goes live once Supabase is connected.
         </p>
@@ -166,7 +166,7 @@ export function AdminUsers({
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={6} className="block px-4 py-10 text-center text-[13px] text-ink/65 md:table-cell">
+                <td colSpan={6} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                   No users match.
                 </td>
               </tr>
@@ -225,14 +225,14 @@ function UserRow({
       <td className={cn(td, 'order-3 min-w-0 basis-full text-ink/65')}>
         <div className="truncate md:max-w-[260px]">{user.email}</div>
       </td>
-      <td className={cn(td, 'order-4 text-[12px] text-ink/65 md:text-[13px] md:text-ink/80')}>{ROLE_LABEL[user.role]}</td>
+      <td className={cn(td, 'order-4 text-[13px] text-ink/65 md:text-[14px] md:text-ink/80')}>{ROLE_LABEL[user.role]}</td>
       <td className={cn(td, 'order-2 ml-auto md:ml-0')}>
         <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
       </td>
       <td className={cn(td, 'hidden tabular-nums text-ink/80 md:text-right')}>
         {orders ?? <span className="text-ink/35">—</span>}
       </td>
-      <td className={cn(td, 'order-5 whitespace-nowrap text-[12px] tabular-nums text-ink/65 md:text-[13px] md:text-ink/65')}>
+      <td className={cn(td, 'order-5 whitespace-nowrap text-[13px] tabular-nums text-ink/65 md:text-[14px] md:text-ink/65')}>
         <span className="md:hidden">· Joined </span>
         {user.joinedAt}
       </td>
@@ -348,14 +348,14 @@ function AddUserPanel({
         <button
           type="submit"
           disabled={busy}
-          className="rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-50"
+          className="rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-ink/85 disabled:opacity-50"
         >
           {busy ? 'Creating…' : 'Create account'}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
+          className="rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:ring-ink/25"
         >
           Close
         </button>
@@ -372,7 +372,7 @@ function AddUserPanel({
       )}
       {result?.tempPassword && (
         <div className="mt-3 rounded-inner border border-ink/10 bg-white p-4">
-          <div className="mb-2.5 text-[13px] font-medium text-ink/65">
+          <div className="mb-2.5 text-[14px] font-medium text-ink/65">
             Sign-in details
           </div>
           <dl className="space-y-2 text-sm">
@@ -390,7 +390,7 @@ function AddUserPanel({
           <button
             type="button"
             onClick={copyDetails}
-            className="mt-3 rounded-full bg-milk px-4 py-1.5 text-[13px] font-semibold text-ink transition-colors hover:bg-milk-deep"
+            className="mt-3 rounded-full bg-milk px-4 py-1.5 text-[14px] font-semibold text-ink transition-colors hover:bg-milk-deep"
           >
             {copied ? 'Copied' : 'Copy details'}
           </button>

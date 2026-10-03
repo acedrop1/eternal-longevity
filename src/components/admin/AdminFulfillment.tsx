@@ -35,10 +35,10 @@ export function AdminFulfillment({
           Signed prescriptions not on the board{' '}
           <span className="font-normal tabular-nums text-ink/60">{readyPrescriptions.length}</span>
         </h2>
-        <p className="text-[12px] text-ink/65">Add one only if it is missing from the list above.</p>
+        <p className="text-[13px] text-ink/65">Add one only if it is missing from the list above.</p>
       </div>
       {readyPrescriptions.length === 0 ? (
-        <p className="px-4 py-3 text-[13px] text-ink/65">Nothing waiting.</p>
+        <p className="px-4 py-3 text-[14px] text-ink/65">Nothing waiting.</p>
       ) : (
         <ul className="divide-y divide-ink/10">
           {readyPrescriptions.map((rx) => (
@@ -76,18 +76,18 @@ function RxRow({ rx }: { rx: ReadyRxView }) {
     <li className="px-4 py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[13px] font-medium text-ink">
+          <p className="flex items-center gap-2 text-[14px] font-medium text-ink">
             {rx.patientName}
             {rx.kind === 'draft' && <StatusBadge tone="info">Refill</StatusBadge>}
           </p>
-          <p className="text-[12px] text-ink/65">{rx.protocolName}</p>
+          <p className="text-[13px] text-ink/65">{rx.protocolName}</p>
         </div>
         <button
           type="button"
           disabled={busy || done}
           onClick={submit}
           className={cn(
-            'min-h-[40px] flex-shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors md:min-h-[32px]',
+            'min-h-[40px] flex-shrink-0 rounded-full px-4 text-[14px] font-semibold transition-colors md:min-h-[32px]',
             done
               ? 'bg-milk text-ink/60'
               : 'bg-ink text-white hover:bg-ink/85 disabled:opacity-50',

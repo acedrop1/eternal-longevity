@@ -66,7 +66,7 @@ export default async function DoctorPortalPage() {
         <AdminPageHeader
           title="Clinical queue"
           subtitle={
-            <span className="text-[15px] md:text-[13px]">
+            <span className="text-[15px] md:text-[14px]">
               Welcome back, {greeting}. Every order arrives here the moment a member checks out. Signing charges
               their card and puts the order on{" "}
               <Link href="/portal/doctor/fulfillment" className="underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
@@ -77,7 +77,7 @@ export default async function DoctorPortalPage() {
           }
         />
         {sampleOrders && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[13px]">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
             Sample data (dev only). Real cases flow through once Supabase is connected.
           </p>
         )}

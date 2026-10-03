@@ -47,17 +47,17 @@ export default async function AdminQueuePage() {
         />
 
         {sample && (
-          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+          <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
             Sample data (dev only). Applications load from Supabase once it is connected.
           </p>
         )}
 
         {!live && !sample ? (
-          <p className="rounded-inner border border-ink/10 bg-white px-4 py-8 text-center text-[13px] text-ink/60">
+          <p className="rounded-inner border border-ink/10 bg-white px-4 py-8 text-center text-[14px] text-ink/60">
             Applications appear here once Supabase is connected.
           </p>
         ) : failed ? (
-          <p role="alert" className="rounded-inner border border-red-600/20 bg-red-50 px-4 py-8 text-center text-[13px] text-red-700">
+          <p role="alert" className="rounded-inner border border-red-600/20 bg-red-50 px-4 py-8 text-center text-[14px] text-red-700">
             Applications could not be loaded. Refresh to try again.
           </p>
         ) : (

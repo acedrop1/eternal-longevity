@@ -64,20 +64,20 @@ export function AdminMemberActions({
   return (
     <div className="space-y-3">
       <dl className="-my-1.5">
-        <div className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
+        <div className="flex items-center justify-between gap-3 py-1.5 text-[14px]">
           <dt className="text-ink/60">Status</dt>
           <dd>
             <StatusBadge tone={statusTone}>{statusLabel}</StatusBadge>
           </dd>
         </div>
-        <div className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
+        <div className="flex items-center justify-between gap-3 py-1.5 text-[14px]">
           <dt className="text-ink/60">Member since</dt>
           <dd className="text-ink">{joinedAt}</dd>
         </div>
         {/* Role had no control anywhere in the app — adminSetUserRole existed
             and nothing called it, so the only way to make someone a doctor
             was editing the database by hand. */}
-        <div className="flex items-center justify-between gap-3 py-1.5 text-[13px]">
+        <div className="flex items-center justify-between gap-3 py-1.5 text-[14px]">
           <dt>
             <label htmlFor={`role-${userId}`} className="text-ink/60">
               Role
@@ -111,7 +111,7 @@ export function AdminMemberActions({
                 }
                 setBusy(false);
               }}
-              className="min-h-[40px] rounded-thumb bg-white px-2.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 disabled:opacity-40 md:min-h-[32px] md:text-[13px]"
+              className="min-h-[40px] rounded-thumb bg-white px-2.5 text-[16px] text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30 disabled:opacity-40 md:min-h-[32px] md:text-[14px]"
             >
               <option value="member">member</option>
               <option value="doctor">doctor</option>
@@ -127,7 +127,7 @@ export function AdminMemberActions({
       </dl>
 
       {error && (
-        <p role="alert" className="text-[13px] text-red-700">
+        <p role="alert" className="text-[14px] text-red-700">
           {error}
         </p>
       )}
@@ -173,7 +173,7 @@ function ActionButton({
       disabled={busy}
       onClick={onClick}
       className={cn(
-        'min-h-[40px] w-full rounded-full px-3.5 text-[13px] font-medium ring-1 transition-colors disabled:opacity-50 md:min-h-[34px]',
+        'min-h-[40px] w-full rounded-full px-3.5 text-[14px] font-medium ring-1 transition-colors disabled:opacity-50 md:min-h-[34px]',
         tone === 'danger'
           ? 'bg-white text-red-700 ring-red-600/25 hover:bg-red-50'
           : 'bg-white text-ink/85 ring-ink/15 hover:bg-milk hover:text-ink',
