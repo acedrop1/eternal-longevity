@@ -13,6 +13,9 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { SectionCard, StatusBadge, headerButton, secondaryButton } from '@/components/admin/IndexTable';
 import { DetailHeader, detailGrid } from '@/components/admin/DetailHeader';
 import { PRODUCT_STATUS } from '@/components/admin/AdminProductsIndex';
+import { planEconomics } from '@/lib/profit';
+import { SHIPPING_PRICE, shippingMethodFor } from '@/lib/shipping';
+import { formatMoney } from '@/lib/format';
 
 /**
  * Admin → Products editor. Plain controlled form; the server action does the
@@ -41,7 +44,25 @@ const unlines = (s: string) => s.split('\n');
 const input =
   'w-full rounded-thumb bg-white px-3 py-2 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/55 focus:outline-none focus:ring-2 focus:ring-ink/30 md:text-[14px]';
 
-export function AdminProductEditor({ initial, canSave }: { initial: ProductInput; canSave: boolean }) {
+/** What the pharmacy prices by: "vial", "capsule"… read off the size and form. */
+function unitWord(rx: { size: string; dosageForm: string }): string {
+  const t = `${rx.size} ${rx.dosageForm}`.toLowerCase();
+  return ['vial', 'tube', 'jar', 'bottle', 'capsule', 'tablet', 'troche'].find((w) => t.includes(w)) ?? 'unit';
+}
+
+const pct = (m: number | null) => (m === null ? '—' : `${Math.round(m * 100)}%`);
+const signed = (cents: number) => (cents < 0 ? `−${formatMoney(-cents)}` : formatMoney(cents));
+
+export function AdminProductEditor({
+  initial,
+  canSave,
+  storage,
+}: {
+  initial: ProductInput;
+  canSave: boolean;
+  /** The product's storage: picks the shipping method for the margin table. */
+  storage?: 'refrigerated' | 'room';
+}) {
   const router = useRouter();
   const [p, setP] = useState<ProductInput>(initial);
   /** The last saved version: what Discard returns to and what "unsaved" compares with. */
@@ -52,6 +73,9 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirm, confirmDialog] = useConfirm();
+  // Typed as text so "1." survives while typing; unitCost holds the number.
+  const costText0 = (v: number) => (v ? String(v) : '');
+  const [costText, setCostText] = useState(costText0(initial.pharmacy.unitCost));
 
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => {
     setP((prev) => ({ ...prev, [k]: v }));
@@ -67,10 +91,26 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
   const sixMonth = p.pricing.sixMonth ?? 0;
   const sixMonthSave = p.pricing.monthly ? Math.round((1 - sixMonth / (p.pricing.monthly * 6)) * 100) : 0;
   const goingLive = p.status === 'live' && baseline.status !== 'live';
+  const unit = unitWord(p.pharmacy);
+  const monthCost = p.pharmacy.unitCost * Math.max(1, p.pharmacy.quantity);
+  const method = shippingMethodFor(storage);
+  const plans = (
+    [
+      ['Monthly', p.pricing.monthly, 1],
+      ['Quarterly', p.pricing.quarterly, 3],
+      ['6-month', sixMonth, 6],
+    ] as const
+  )
+    .filter(([, price]) => price > 0)
+    .map(([label, price, months]) => ({
+      label,
+      ...planEconomics(price, SHIPPING_PRICE[method], months, { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage }),
+    }));
   const dirty = p.isNew || JSON.stringify(p) !== JSON.stringify(baseline);
 
   const discard = () => {
     setP(baseline);
+    setCostText(costText0(baseline.pharmacy.unitCost));
     setIdTouched(!baseline.isNew);
     setMessage(null);
   };
@@ -251,6 +291,43 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
             </div>
           </SectionCard>
 
+          <SectionCard
+            title="Margin by plan"
+            description={`Admin only. Charged = plan price + $${SHIPPING_PRICE[method]} shipping the customer pays. Stripe fee estimated at 2.9% + 30¢.`}
+            flush
+          >
+            {p.pharmacy.unitCost > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-[14px] tabular-nums">
+                  <thead>
+                    <tr className="bg-milk text-left text-[13px] text-ink/70">
+                      {['Plan', 'Charged', 'Product cost', 'Pharmacy shipping', 'Stripe fee', 'Profit', 'Margin'].map((h, i) => (
+                        <th key={h} className={cn('whitespace-nowrap px-2.5 py-2 font-semibold first:pl-4 last:pr-4', i > 0 && 'text-right')}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {plans.map((r) => (
+                      <tr key={r.label} className="border-t border-ink/10">
+                        <td className="whitespace-nowrap px-2.5 py-2 pl-4 font-medium text-ink">{r.label}</td>
+                        <td className="px-2.5 py-2 text-right text-ink">{formatMoney(r.charged)}</td>
+                        <td className="px-2.5 py-2 text-right text-ink/75">−{formatMoney(r.productCost)}</td>
+                        <td className="px-2.5 py-2 text-right text-ink/75">−{formatMoney(r.shippingCost)}</td>
+                        <td className="px-2.5 py-2 text-right text-ink/75">−{formatMoney(r.stripeFee)}</td>
+                        <td className={cn('px-2.5 py-2 text-right font-semibold', r.profit < 0 ? 'text-red-700' : 'text-ink')}>{signed(r.profit)}</td>
+                        <td className="px-2.5 py-2 pr-4 text-right text-ink">{pct(r.margin)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="px-4 py-3.5 text-[14px] text-ink/65">Set “Your cost” in the Pharmacy section to see the margin on each plan.</p>
+            )}
+          </SectionCard>
+
           <SectionCard title="Product page lists" description="One item per line.">
             <div className="grid gap-4 sm:grid-cols-2">
               <ListField label="What it does" value={p.benefits} onChange={(v) => set('benefits', v)} />
@@ -292,6 +369,30 @@ export function AdminProductEditor({ initial, canSave }: { initial: ProductInput
                   value={p.pharmacy.quantity || ''}
                   onChange={(e) => setRx('quantity', Number(e.target.value.replace(/[^0-9]/g, '')))}
                 />
+              </Field>
+              <Field
+                label="Your cost"
+                hint={
+                  p.pharmacy.quantity > 1
+                    ? `Per ${unit}; ${p.pharmacy.quantity} per month = ${formatMoney(Math.round(monthCost * 100))} per 30 days. Admin only.`
+                    : `Per ${unit} = ${formatMoney(Math.round(monthCost * 100))} per 30 days. Admin only.`
+                }
+              >
+                <span className="relative block">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-ink/60 md:text-[14px]">
+                    $
+                  </span>
+                  <input
+                    className={cn(input, 'pl-7 tabular-nums')}
+                    inputMode="decimal"
+                    value={costText}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                      setCostText(v);
+                      setRx('unitCost', Number(v) || 0);
+                    }}
+                  />
+                </span>
               </Field>
               <div className="sm:col-span-2">
                 <Field label="Default directions" hint="Prefills the directions Dr. Elder signs. He can edit them on every prescription.">

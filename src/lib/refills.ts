@@ -19,6 +19,7 @@ import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
 import { getLiveProduct } from '@/lib/catalog';
+import { snapshotOrderCosts } from '@/lib/profit-data';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { renewalSplit, shippingPriceFor } from '@/lib/shipping';
 import { AWAITING_PAYMENT, cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
@@ -389,6 +390,8 @@ export async function renewSubscription(
       .from('orders')
       .update({ stripe_payment_intent_id: intent.id })
       .eq('id', order.id);
+    // Profit (admin only); the webhook writes the same values and Stripe's fee.
+    await snapshotOrderCosts(db, order.id);
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'charge_failed';
     await db.from('order_updates').insert({

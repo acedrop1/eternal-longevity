@@ -22,6 +22,9 @@ export function shippingMethodFor(storage: Storage): ShippingMethod {
 /** Whole dollars per shipment. */
 export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 30, OVERNIGHT: 40 };
 
+/** What the pharmacy charges us per shipment, whole dollars. Admin-only (profit, lib/profit). */
+export const SHIPPING_COST: Record<ShippingMethod, number> = { '2_DAY': 25, OVERNIGHT: 35 };
+
 export const SHIPPING_LABEL: Record<ShippingMethod, string> = {
   '2_DAY': '2-day shipping',
   OVERNIGHT: 'Overnight, cold-chain',

@@ -25,6 +25,7 @@ import { noticeEmail, refundedEmail, sendEmail } from './email';
 import { getStripe } from './stripe';
 import { ORDER_FROM, intentBelongsTo } from './order-rules';
 import { denyOrderAction } from './orders-db';
+import { syncStripeAmounts } from './profit-data';
 
 export interface AdminBillingResult {
   ok: boolean;
@@ -226,6 +227,8 @@ export async function adminRefund(input: {
       id,
       input.amountDollars ? Math.round(input.amountDollars * 100) : undefined,
     );
+    // Profit: if this payment belongs to an order, record what is now refunded.
+    if (supabaseAdminConfigured()) await syncStripeAmounts(createSupabaseAdminClient(), id);
     return { ok: true, message: `Refund ${status}.` };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
@@ -328,6 +331,7 @@ export async function adminRefundOrder(input: {
     }
 
     const { status } = await refundPayment(order.stripe_payment_intent_id, cents);
+    await syncStripeAmounts(db, order.stripe_payment_intent_id); // profit: refunded_cents
 
     await db.from('order_updates').insert({
       order_id: order.id,

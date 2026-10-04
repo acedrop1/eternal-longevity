@@ -32,6 +32,8 @@ export interface ProductRowView {
   from: number;
   /** Set: orders go to the pharmacy automatically. Missing: placed by hand. */
   hasSku: boolean;
+  /** Admin only: profit and margin per plan (monthly first); empty when no cost is set. */
+  plans: { label: string; profit: number; margin: number | null }[];
   /** "edited Oct 2 by Ops Admin", or null for the built-in copy. */
   edited: string | null;
 }
@@ -51,6 +53,8 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 const href = (id: string) => `/portal/admin/products/${id}`;
+const pct = (m: number | null) => (m === null ? '—' : `${Math.round(m * 100)}%`);
+const dollars = (cents: number) => `${cents < 0 ? '−' : ''}$${Math.round(Math.abs(cents) / 100)}`;
 
 export function AdminProductsIndex({ products }: { products: ProductRowView[] }) {
   const router = useRouter();
@@ -93,13 +97,14 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
               <th className={th}>Status</th>
               <th className={th}>Category</th>
               <th className={cn(th, 'text-right')}>Price</th>
+              <th className={cn(th, 'text-right')}>Monthly margin</th>
               <th className={th}>Pharmacy SKU</th>
             </tr>
           </thead>
           <tbody className={tbody}>
             {visible.length === 0 ? (
               <tr className="block md:table-row">
-                <td colSpan={6} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
+                <td colSpan={7} className="block px-4 py-10 text-center text-[14px] text-ink/65 md:table-cell">
                   {products.length === 0 ? 'No products yet.' : 'No products match.'}
                 </td>
               </tr>
@@ -133,6 +138,11 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
                         <span>{p.category}</span>
                         <span className="tabular-nums">· from ${p.from}/mo</span>
                         {!p.hasSku && <span className="text-amber-800">· No SKU</span>}
+                        {p.plans[0] && (
+                          <span className={cn('tabular-nums', p.plans[0].profit < 0 && 'text-red-700')}>
+                            · {pct(p.plans[0].margin)} margin monthly
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className={cn(td, 'hidden')}>
@@ -142,6 +152,23 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
                     <td className={cn(td, 'hidden whitespace-nowrap text-right tabular-nums')}>
                       <span className="text-ink">from ${p.from}/mo</span>
                       <span className="block text-[13px] text-ink/60">${p.monthly}/mo monthly</span>
+                    </td>
+                    <td className={cn(td, 'hidden whitespace-nowrap text-right tabular-nums')}>
+                      {p.plans[0] ? (
+                        <>
+                          <span className={cn(p.plans[0].profit < 0 ? 'text-red-700' : 'text-ink')}>
+                            {dollars(p.plans[0].profit)} · {pct(p.plans[0].margin)}
+                          </span>
+                          <span className="block text-[13px] text-ink/60">
+                            {p.plans
+                              .slice(1)
+                              .map((x) => `${x.label} ${pct(x.margin)}`)
+                              .join(' · ') || 'monthly'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-[13px] text-ink/55">No cost set</span>
+                      )}
                     </td>
                     <td className={cn(td, 'hidden')}>
                       {p.hasSku ? (

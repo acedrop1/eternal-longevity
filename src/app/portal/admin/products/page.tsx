@@ -9,6 +9,8 @@ import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalog, getPharmacyEntries } from '@/lib/catalog';
 import { SHOP_CATEGORIES } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
+import { planEconomics } from '@/lib/profit';
+import { shippingPriceFor } from '@/lib/shipping';
 
 export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
@@ -37,6 +39,21 @@ export default async function AdminProductsPage() {
     monthly: p.pricing.monthly,
     from: fromPrice(p.pricing),
     hasSku: Boolean(pharmacy[p.id]?.sku),
+    // Admin only (this page redirects everyone else): profit on each plan, from lib/profit.
+    plans: pharmacy[p.id]?.unitCost
+      ? (
+          [
+            ['Monthly', p.pricing.monthly, 1],
+            ['3-mo', p.pricing.quarterly, 3],
+            ['6-mo', p.pricing.sixMonth ?? 0, 6],
+          ] as const
+        )
+          .filter(([, price]) => price > 0)
+          .map(([label, price, months]) => {
+            const e = planEconomics(price, shippingPriceFor(p), months, { ...pharmacy[p.id], storage: p.storage });
+            return { label, profit: e.profit, margin: e.margin };
+          })
+      : [],
     edited:
       p.edited && p.updatedAt
         ? `edited ${new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${

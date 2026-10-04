@@ -55,9 +55,9 @@ export function CartDrawer() {
         aria-label="Your cart"
         aria-modal="true"
         className={cn(
-          'fixed inset-y-0 right-0 z-[65] flex w-[calc(100%-16px)] max-w-md flex-col overflow-hidden rounded-l-shell bg-white text-ink shadow-[0_24px_60px_-20px_rgba(17,17,17,0.45)]',
+          'fixed inset-y-0 right-0 z-[65] flex w-[calc(100%-16px)] max-w-md flex-col overflow-hidden rounded-l-shell bg-white text-ink',
           'transition-transform duration-500 ease-out-expo will-change-transform motion-reduce:transition-none',
-          drawerOpen ? 'translate-x-0' : 'translate-x-full'
+          drawerOpen ? 'translate-x-0 shadow-[0_24px_60px_-20px_rgba(17,17,17,0.45)]' : 'translate-x-full shadow-none'
         )}
       >
         {/* Header */}

@@ -72,7 +72,7 @@ export function SavedCardsManager() {
   return (
     <div className="space-y-3">
       {profile.cards.length === 0 && !adding && (
-        <p className="text-[15px] text-ink/60">
+        <p className="text-[15px] text-ink/70">
           No saved cards yet. Add one for faster checkout.
         </p>
       )}
@@ -99,7 +99,7 @@ export function SavedCardsManager() {
                 </span>
               )}
             </div>
-            <div className="mt-0.5 text-[14px] tabular-nums text-ink/60">
+            <div className="mt-0.5 text-[14px] tabular-nums text-ink/70">
               Expires {c.expMonth}/{c.expYear} · {c.nameOnCard}
             </div>
           </div>

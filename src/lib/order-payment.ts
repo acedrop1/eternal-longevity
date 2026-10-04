@@ -27,6 +27,7 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { intentBelongsTo } from '@/lib/order-rules';
+import { syncStripeAmounts } from '@/lib/profit-data';
 
 /**
  * Create the setup the member confirms at checkout.
@@ -138,6 +139,7 @@ export async function refundDeclinedOrder(
       // A retried cancel must not refund twice.
       { idempotencyKey: `refund-${pi.id}` },
     );
+    await syncStripeAmounts(db, pi.id); // profit: refunded_cents (never throws)
 
     await db
       .from('orders')

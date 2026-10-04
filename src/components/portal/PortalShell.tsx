@@ -9,6 +9,8 @@ import { enrichNavWithCounts } from '@/lib/pending-counts';
 import { IdleTimeout } from '@/components/portal/IdleTimeout';
 import { PortalContent } from '@/components/portal/PortalContent';
 import { IDLE_MINUTES } from '@/lib/session-policy';
+import { MemberTabBar } from '@/components/portal/MemberTabBar';
+import { memberRepliesWaiting } from '@/lib/member-portal';
 
 /** Role chip in the top bar: a label and a dot, so no role reads on colour alone. */
 /** Frosted bar, as the public header (src/components/nav/Header.tsx) wears it once scrolled. */
@@ -57,6 +59,8 @@ export async function PortalShell({
 
   // Attach pending-task count badges to the nav.
   const navItems = await enrichNavWithCounts(nav, user.role);
+  // Members: the phone tab bar's Messages dot (care team spoke last).
+  const replyWaiting = !staff && (await memberRepliesWaiting(user.id)).size > 0;
 
   return (
     <>
@@ -124,7 +128,8 @@ export async function PortalShell({
           </div>
 
           {/* Mobile-only nav strip, swipeable, same glass as the bar */}
-          {navItems.length > 0 && (
+          {/* Members use the bottom tab bar on phones instead. */}
+          {staff && navItems.length > 0 && (
             <div className={cn(GLASS_BAR, 'mt-2 md:hidden')}>
               <PortalNav nav={navItems} variant="mobile" />
             </div>
@@ -146,11 +151,18 @@ export async function PortalShell({
             )}
 
             {/* Main content */}
-            <main className="min-h-[calc(100vh-5rem)] min-w-0 flex-1">
+            {/* Members: room under the content for the phone tab bar. */}
+            <main
+              className={cn(
+                'min-h-[calc(100vh-5rem)] min-w-0 flex-1',
+                !staff && 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0',
+              )}
+            >
               <PortalContent>{children}</PortalContent>
             </main>
           </div>
         </div>
+        {!staff && <MemberTabBar messagesDot={replyWaiting} />}
       </div>
     </>
   );

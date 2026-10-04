@@ -30,6 +30,7 @@ import { AWAITING_PAYMENT, TERMINAL_ORDER } from '@/lib/order-rules';
 import { orderRef } from '@/lib/format';
 import { SITE_URL } from '@/lib/site';
 import { paymentMatchesOrder } from '@/lib/payment-match';
+import { snapshotOrderCosts, syncStripeAmounts } from '@/lib/profit-data';
 
 // Webhooks need the raw body + Node crypto.
 export const runtime = 'nodejs';
@@ -103,6 +104,17 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         'Payment failed',
         'We could not charge your card. Please update your payment method.',
       );
+      break;
+    }
+
+    // Profit (admin only): the fee lands on the charge's balance transaction,
+    // sometimes a moment after payment_intent.succeeded; refunds from anywhere,
+    // the Stripe dashboard included. Needs both events enabled on the endpoint.
+    case 'charge.updated':
+    case 'charge.refunded': {
+      const charge = event.data.object;
+      const piId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+      if (piId) await syncStripeAmounts(db, piId);
       break;
     }
 
@@ -213,6 +225,11 @@ async function recordPayment(db: Db, pi: Stripe.PaymentIntent): Promise<void> {
       .eq('id', order.id)
       .in('status', AWAITING_PAYMENT);
   }
+
+  // Profit (admin only): what it cost us, frozen now, and Stripe's real fee.
+  // Neither throws; a missing migration only logs.
+  await snapshotOrderCosts(db, order.id);
+  await syncStripeAmounts(db, pi.id);
 
   await addOrderUpdate(
     db,

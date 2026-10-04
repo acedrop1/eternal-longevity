@@ -8,10 +8,10 @@ import { cn } from '@/lib/utils';
  * pill buttons, butter only for the one main call to action.
  */
 
-/** The member nav, one list so the pages can't drift apart. */
 /** The admin nav, one list so the admin pages can't drift apart. */
 export const ADMIN_NAV: NavItem[] = [
   { label: 'Overview', href: '/portal/admin' },
+  { label: 'Analytics', href: '/portal/admin/analytics' },
   { label: 'Members', href: '/portal/admin/members' },
   { label: 'Applications', href: '/portal/admin/queue' },
   { label: 'Messages', href: '/portal/admin/messages' },
@@ -32,13 +32,14 @@ export const DOCTOR_NAV: NavItem[] = [
   { label: 'Profile', href: '/portal/doctor/profile' },
 ];
 
+/** The member's desktop sidebar. Phones get MemberTabBar (Home, Treatments, Messages, Account). */
 export const MEMBER_NAV: NavItem[] = [
-  { label: 'Dashboard', href: '/portal' },
-  { label: 'Shop', href: '/shop' },
+  { label: 'Home', href: '/portal' },
+  { label: 'Treatments', href: '/portal/subscriptions' },
   { label: 'Orders', href: '/portal/orders' },
   { label: 'Messages', href: '/portal/messages' },
-  { label: 'Subscriptions', href: '/portal/subscriptions' },
   { label: 'Account', href: '/portal/account' },
+  { label: 'Shop', href: '/shop' },
 ];
 
 export const panel = 'rounded-shell bg-milk';

@@ -13,6 +13,7 @@ import {
 import { addOrderNoteAction } from '@/lib/orders-db';
 import type { BoardRow } from '@/lib/fulfillment-core';
 import type { OrderExtras } from '@/lib/order-detail';
+import type { Economics } from '@/lib/profit';
 import { trackingUrl, type Order, type UpdateAuthorRole } from '@/lib/orders';
 import { paymentState } from '@/lib/order-health';
 import { formatDateTime, formatMoney } from '@/lib/format';
@@ -57,12 +58,15 @@ export function OrderDetail({
   order: o,
   extras,
   admin,
+  profit = null,
 }: {
   board?: BoardRow;
   order?: Order;
   extras: OrderExtras | null;
   /** Cancel and the member record are admin's; the prescriber gets the rest. */
   admin: boolean;
+  /** Admin only: the page computes it on the server and passes null for the prescriber. */
+  profit?: Economics | null;
 }) {
   const router = useRouter();
   const [confirm, confirmDialog] = useConfirm();
@@ -425,6 +429,8 @@ export function OrderDetail({
             </div>
           </SectionCard>
 
+          {admin && profit && <ProfitCard e={profit} />}
+
           <SectionCard title="Shipping address">
             <address className="text-[14px] not-italic leading-relaxed text-ink">
               {o ? (
@@ -516,6 +522,53 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <dt className="w-28 flex-none text-[13px] text-ink/65">{label}</dt>
       <dd className="min-w-0 break-words text-ink">{children}</dd>
     </div>
+  );
+}
+
+/** Admin only. Revenue down to profit, each estimated figure marked "est.". */
+function ProfitCard({ e }: { e: Economics }) {
+  const est = <span className="ml-1 text-[12px] font-normal text-amber-800">est.</span>;
+  const row = (label: string, cents: number, estimated = false) => (
+    <div className="flex justify-between gap-4 text-ink/75">
+      <dt>{label}</dt>
+      <dd>
+        {cents ? `−${formatMoney(cents)}` : formatMoney(0)}
+        {estimated && est}
+      </dd>
+    </div>
+  );
+  return (
+    <SectionCard
+      title="Profit"
+      actions={<span className="text-[12px] font-medium text-ink/55">Admin only</span>}
+    >
+      <dl className="space-y-1.5 text-[14px] tabular-nums">
+        <div className="flex justify-between gap-4 text-ink/75">
+          <dt>Revenue</dt>
+          <dd>{formatMoney(e.revenue)}</dd>
+        </div>
+        {row('Product cost', e.productCost, e.est.cost)}
+        {row('Pharmacy shipping', e.shippingCost, e.est.shipping)}
+        {row('Stripe fee', e.stripeFee, e.est.fee)}
+        {e.refunds > 0 && row('Refunds', e.refunds)}
+        <div className="flex justify-between gap-4 border-t border-ink/10 pt-2 font-semibold text-ink">
+          <dt>Profit</dt>
+          <dd className={cn(e.profit < 0 && 'text-red-700')}>
+            {e.profit < 0 ? `−${formatMoney(-e.profit)}` : formatMoney(e.profit)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4 text-ink/75">
+          <dt>Margin</dt>
+          <dd>{e.margin === null ? '—' : `${Math.round(e.margin * 100)}%`}</dd>
+        </div>
+      </dl>
+      {(e.estimated || e.closed) && (
+        <p className="mt-2.5 text-[13px] leading-snug text-ink/60">
+          {e.closed && 'Closed without shipping: no product or shipping cost. '}
+          {e.estimated && 'est. = not recorded at payment, so worked out from today’s costs and Stripe’s 2.9% + 30¢.'}
+        </p>
+      )}
+    </SectionCard>
   );
 }
 

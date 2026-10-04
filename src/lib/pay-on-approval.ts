@@ -29,6 +29,7 @@ import {
 import { getStripe, stripeConfigured } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/billing';
 import { AWAITING_PAYMENT, intentBelongsTo } from '@/lib/order-rules';
+import { snapshotOrderCosts } from '@/lib/profit-data';
 import { REFILL_CHARGE_FAILED } from '@/lib/orders';
 
 export const TOKEN_TTL_DAYS = 7;
@@ -436,6 +437,8 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
       .select('id');
     if (!claimed?.length) return { ok: true, charged: false };
     await db.from('orders').update({ status: 'paid' }).eq('id', order.id).in('status', AWAITING_PAYMENT);
+    // Profit (admin only): no Stripe charge, so no fee.
+    await snapshotOrderCosts(db, order.id, { stripe_fee_cents: 0 });
     await db.from('order_updates').insert({
       order_id: order.id,
       label: 'Order confirmed',

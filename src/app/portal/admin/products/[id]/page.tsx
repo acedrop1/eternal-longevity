@@ -36,7 +36,7 @@ const BLANK: ProductInput = {
   image: '',
   popular: false,
   fdaApproved: false,
-  pharmacy: { sku: '', quantity: 1, defaultSig: '', name: '', strength: '', size: '', dosageForm: '' },
+  pharmacy: { sku: '', quantity: 1, defaultSig: '', name: '', strength: '', size: '', dosageForm: '', unitCost: 0 },
 };
 
 export default async function AdminProductPage({ params }: PageProps) {
@@ -46,9 +46,11 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   const { id } = await params;
   let initial: ProductInput = BLANK;
+  let storage: 'refrigerated' | 'room' | undefined;
   if (id !== 'new') {
     const [p, rx] = await Promise.all([getCatalogProduct(id), pharmacyEntryFor(id)]);
     if (!p || !rx) notFound();
+    storage = p.storage;
     initial = {
       id: p.id,
       isNew: false,
@@ -75,7 +77,7 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} />
+      <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} storage={storage} />
     </PortalShell>
   );
 }

@@ -9,10 +9,14 @@ import { loadCart } from '@/lib/profile-db';
 import { memberNextStep } from '@/lib/member-next-step';
 import { listOrders } from '@/lib/orders-db';
 import { listOpenCheckinsForUser } from '@/lib/checkins-db';
-import { memberStatusLabel, STATUS_TONE } from '@/lib/orders';
 import { listMyMessages } from '@/lib/messages-db';
 import { threadStatuses } from '@/lib/prescriber-view';
-import { MEMBER_NAV, PageHeader, StatusChip, panel } from '@/components/portal/ui';
+import { MEMBER_NAV, PageHeader, btnPrimary, btnSecondary, panel } from '@/components/portal/ui';
+import Image from 'next/image';
+import { loadSubscriptions } from '@/lib/member-portal';
+import { treatmentCards } from '@/lib/member-view';
+import { memberSamples, SAMPLE_ORDERS, SAMPLE_THREADS } from '@/lib/dev-member-samples';
+import { cn } from '@/lib/utils';
 import { listAssessmentDrafts } from '@/lib/assessment-drafts';
 import { getAnyShopProduct } from '@/lib/shopProducts';
 import { CATEGORY_LABEL } from '@/lib/intake-categories';
@@ -32,26 +36,29 @@ export const metadata: Metadata = {
 };
 
 /**
- * Member home. Deliberately minimal: a greeting, ONE required action if there
- * is one, the latest order's status, and three big tiles. Everything else
- * lives on its own page.
+ * Member home: a greeting, ONE required action if there is one, the draft to
+ * pick back up, then "Your treatments": one card per order on its way and per
+ * plan, each with a plain status and one button. The tab bar / sidebar covers
+ * the rest.
  */
 export default async function MemberPortalPage() {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const [pendingVisit, media, orders, checkins, doctorThread, drafts, state, latestAnswers, cart, needsInfo] = await Promise.all([
+  const [pendingVisit, media, orders, checkins, doctorThread, drafts, state, latestAnswers, cart, needsInfo, plans] = await Promise.all([
     getPendingVisit(),
     pendingMediaFor(user.id),
-    listOrders().catch(() => []),
+    // Dev without a database: sample orders and threads (lib/dev-member-samples).
+    memberSamples ? SAMPLE_ORDERS : listOrders().catch(() => []),
     listOpenCheckinsForUser(user.id).catch(() => []),
-    listMyMessages('doctor').catch(() => []),
+    memberSamples ? SAMPLE_THREADS.doctor : listMyMessages('doctor').catch(() => []),
     listAssessmentDrafts().catch(() => []),
     intakeStateFor(user.id),
     latestIntakeAnswers(user.id),
     loadCart().catch(() => ({ items: [] })),
     intakeNeedsInfo(user.id).catch(() => false),
+    loadSubscriptions(user.id).catch(() => []),
   ]);
   const unfinished = drafts[0] ? { ...drafts[0], ...resumeFor(drafts[0].entry) } : null;
   // Their own thread only (RLS). Unanswered = the prescriber spoke last.
@@ -80,6 +87,10 @@ export default async function MemberPortalPage() {
     needsInfo,
   });
   const latest = orders[0] ?? null;
+  const treatments = treatmentCards(orders, plans, (id) => {
+    const p = getAnyShopProduct(id);
+    return { image: p?.image, overnight: p?.storage === 'refrigerated' };
+  });
   /*
    * An unfinished assessment stands in for "get started" and "choose your
    * plan" (continuing it is that step). Anything urgent (payment, the
@@ -88,26 +99,6 @@ export default async function MemberPortalPage() {
   const step =
     next && unfinished && (next.eyebrow === 'Get started' || next.title.endsWith('assessment is complete')) ? null : next;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
-
-  const tiles = [
-    {
-      href: '/shop',
-      title: 'Shop',
-      body: 'Browse our treatments.',
-    },
-    {
-      href: '/portal/orders',
-      title: 'Orders',
-      body: latest
-        ? `Latest: ${memberStatusLabel(latest)}`
-        : 'No orders yet.',
-    },
-    {
-      href: '/portal/messages',
-      title: 'Messages',
-      body: 'Your care team and doctor.',
-    },
-  ];
 
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
@@ -127,7 +118,7 @@ export default async function MemberPortalPage() {
           aria-labelledby="dr-question"
           className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
         >
-          <p className="mb-1 text-[13px] font-medium text-ink/60">From your prescriber</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">From your prescriber</p>
           <h2
             id="dr-question"
             className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
@@ -154,7 +145,7 @@ export default async function MemberPortalPage() {
           aria-labelledby="next-step"
           className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
         >
-          <p className="mb-1 text-[13px] font-medium text-ink/60">{step.eyebrow}</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">{step.eyebrow}</p>
           <h2
             id="next-step"
             className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
@@ -177,7 +168,7 @@ export default async function MemberPortalPage() {
           aria-labelledby="resume-visit"
           className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
         >
-          <p className="mb-1 text-[13px] font-medium text-ink/60">Pick up where you left off</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">Pick up where you left off</p>
           <h2
             id="resume-visit"
             className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
@@ -195,11 +186,11 @@ export default async function MemberPortalPage() {
             >
               <div className="h-full rounded-full bg-butter-deep" style={{ width: `${unfinished.progress}%` }} />
             </div>
-            <span className="flex-none text-[13px] font-medium tabular-nums text-ink/60">
+            <span className="flex-none text-[14px] font-medium tabular-nums text-ink/70">
               {unfinished.progress}% done
             </span>
           </div>
-          <p className="mt-2 text-[14px] text-ink/60">
+          <p className="mt-2 text-[14px] text-ink/70">
             Your answers are saved. Last updated {formatDate(unfinished.updatedAt)}.
           </p>
           <Link
@@ -212,28 +203,61 @@ export default async function MemberPortalPage() {
         </section>
       )}
 
-      {/* Latest order, one line */}
-      {latest && (
-        <Link
-          href="/portal/orders"
-          className={`${panel} flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-milk-deep md:px-6 md:py-5`}
-        >
-          <div className="min-w-0">
-            <p className="mb-1 text-[13px] font-medium text-ink/65">Latest order</p>
-            <p className="truncate text-[15px] text-ink">
-              {latest.lines.map((l) => l.productName).join(', ')}
-            </p>
-          </div>
-          <span className="flex-none">
-            <StatusChip tone={STATUS_TONE[latest.status] ?? 'neutral'}>{memberStatusLabel(latest)}</StatusChip>
-          </span>
-        </Link>
+      {/* Your treatments: one card per order on its way and per plan. */}
+      {treatments.length > 0 && (
+        <section aria-labelledby="your-treatments">
+          <h2
+            id="your-treatments"
+            className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
+          >
+            Your treatments
+          </h2>
+          <ul className="mt-4 grid gap-3 lg:grid-cols-2">
+            {treatments.map((t, i) => (
+              <li key={t.key} className={cn(panel, 'flex flex-col p-4 md:p-5')}>
+                <div className="flex flex-1 gap-4">
+                  <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-inner bg-milk-deep md:h-20 md:w-20">
+                    <Image src={t.image} alt="" fill sizes="80px" priority={i < 2} className="object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-ink">{t.name}</h3>
+                    <p className="text-[15px] text-ink/70">{t.plan}</p>
+                    <p
+                      className={cn(
+                        'mt-1.5 flex items-start gap-1.5 text-[15px] font-medium leading-snug',
+                        t.tone === 'attention' ? 'text-amber-900' : 'text-ink',
+                      )}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'mt-[7px] h-1.5 w-1.5 flex-none rounded-full',
+                          { attention: 'bg-amber-500', ok: 'bg-emerald-600', muted: 'bg-ink/30' }[t.tone],
+                        )}
+                      />
+                      {t.status}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={t.cta.href}
+                  prefetch={t.cta.href.startsWith('/portal/orders/pay') ? false : undefined}
+                  {...(t.cta.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className={cn(t.tone === 'attention' ? btnPrimary : btnSecondary, 'mt-4 w-full')}
+                >
+                  {t.cta.label}
+                  {t.cta.external && <span aria-hidden>↗</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {/* 30-day check-in, only while one is open. Same flow as the email. */}
       {checkin && (
         <div className={`${panel} px-5 py-4 md:px-6 md:py-5`}>
-          <p className="mb-1 text-[13px] font-medium text-ink/65">Check-in</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">Check-in</p>
           <p className="text-[15px] text-ink">
             How’s it going with your treatment? 1 = not well, 5 = very well.
           </p>
@@ -252,29 +276,22 @@ export default async function MemberPortalPage() {
         </div>
       )}
 
-      {/* Three tiles. That's the whole dashboard. */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {tiles.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className="group flex flex-col rounded-shell bg-white p-5 ring-1 ring-ink/5 transition-colors hover:bg-milk md:p-6"
-          >
-            <p className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]">
-              {t.title}
-            </p>
-            <p className="mt-1.5 text-[15px] text-ink-soft">{t.body}</p>
-            <span
-              aria-hidden
-              className="mt-6 grid h-8 w-8 place-items-center rounded-full bg-milk text-[14px] font-semibold text-ink/60 transition-transform group-hover:translate-x-1 group-hover:bg-butter group-hover:text-ink"
-            >
-              →
-            </span>
-          </Link>
-        ))}
-      </div>
+      <Link
+        href="/shop"
+        className="group flex min-h-[56px] items-center justify-between gap-3 rounded-shell px-5 text-[16px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:bg-milk"
+      >
+        <span className="flex items-center gap-3">
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-butter text-[18px] leading-none">
+            +
+          </span>
+          Start a new treatment
+        </span>
+        <span aria-hidden className="text-ink/70 transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
+      </Link>
 
-      <p className="text-[14px] text-ink/65">
+      <p className="text-[15px] text-ink/70">
         Need anything?{' '}
         <Link
           href="/portal/messages"

@@ -9,6 +9,8 @@ import { loadOrderExtras, type OrderExtras } from '@/lib/order-detail';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 import type { Order } from '@/lib/orders';
+import { economicsForOrder } from '@/lib/profit-data';
+import type { Economics } from '@/lib/profit';
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
   const ref = decodeURIComponent((await params).ref);
@@ -49,7 +51,7 @@ export default async function OrderPage({ params }: { params: Promise<{ ref: str
     // Dev only, as on the index: the sample rows. NODE_ENV is inlined at build.
     const sample = await import('@/components/admin/dev-sample');
     board = sample.SAMPLE_BOARD.find((b) => b.orderNumber === ref || b.orderRef === ref);
-    order = sample.SAMPLE_ORDERS.find((o) => o.id === ref) ?? null;
+    order = [...sample.SAMPLE_ORDERS, ...sample.SAMPLE_HISTORY].find((o) => o.id === ref) ?? null;
     if (order) {
       extras = { promoCode: order.promoCode ?? null, discount: order.discount ?? 0, prescription: sample.SAMPLE_RX[ref] ?? null };
     }
@@ -57,9 +59,13 @@ export default async function OrderPage({ params }: { params: Promise<{ ref: str
 
   if (!board && !order) notFound();
 
+  // Profit is admin-only: worked out here, on the server, and never for the prescriber.
+  const orderNumber = order?.id ?? board?.orderNumber;
+  const profit: Economics | null = admin && orderNumber ? await economicsForOrder(orderNumber).catch(() => null) : null;
+
   return (
     <PortalShell user={user} nav={admin ? ADMIN_NAV : DOCTOR_NAV}>
-      <OrderDetail board={board} order={order ?? undefined} extras={extras} admin={admin} />
+      <OrderDetail board={board} order={order ?? undefined} extras={extras} admin={admin} profit={profit} />
     </PortalShell>
   );
 }

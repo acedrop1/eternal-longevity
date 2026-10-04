@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { MessagesPanel } from '@/components/messages/MessagesPanel';
+import { MemberChat } from './MemberChat';
+import { memberSamples, SAMPLE_THREADS } from '@/lib/dev-member-samples';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { listMyMessages } from '@/lib/messages-db';
 import { MEMBER_NAV, PageHeader, EmptyState, btnPrimary } from '@/components/portal/ui';
@@ -20,7 +21,10 @@ export default async function MemberMessagesPage({
   if (user.role !== 'member') redirect(user.redirectTo);
 
   const [threads, { thread }] = await Promise.all([
-    Promise.all([listMyMessages('support'), listMyMessages('doctor')]).catch(() => null),
+    // Dev without a database: sample threads (lib/dev-member-samples).
+    memberSamples
+      ? [SAMPLE_THREADS.support, SAMPLE_THREADS.doctor]
+      : Promise.all([listMyMessages('support'), listMyMessages('doctor')]).catch(() => null),
     searchParams,
   ]);
 
@@ -53,11 +57,13 @@ export default async function MemberMessagesPage({
 
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
-      <PageHeader
-        title="Messages"
-        intro="Support for orders and billing, or your doctor for treatment."
+      <PageHeader title="Messages" />
+      <MemberChat
+        threads={{ support, doctor }}
+        initialChannel={initialChannel}
+        // The care team spoke last: a reply is waiting on the member.
+        waiting={(['doctor', 'support'] as const).filter((c) => ({ support, doctor })[c].at(-1)?.senderRole === 'staff')}
       />
-      <MessagesPanel threads={{ support, doctor }} initialChannel={initialChannel} />
     </PortalShell>
   );
 }

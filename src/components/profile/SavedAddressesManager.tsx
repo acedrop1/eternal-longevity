@@ -65,7 +65,7 @@ export function SavedAddressesManager() {
   return (
     <div className="space-y-3">
       {profile.addresses.length === 0 && !adding && (
-        <p className="text-[15px] text-ink/60">
+        <p className="text-[15px] text-ink/70">
           No saved addresses yet. Add one to skip re-entering at checkout.
         </p>
       )}
@@ -89,11 +89,11 @@ export function SavedAddressesManager() {
                 )}
               </div>
               <p className="text-[15px] text-ink/80">{a.fullName}</p>
-              <p className="mt-0.5 text-[14px] text-ink/60">
+              <p className="mt-0.5 text-[15px] text-ink/70">
                 {formatAddressOneLine(a)}
               </p>
               {a.phone && (
-                <p className="mt-0.5 text-[14px] tabular-nums text-ink/60">{formatPhone(a.phone)}</p>
+                <p className="mt-0.5 text-[14px] tabular-nums text-ink/70">{formatPhone(a.phone)}</p>
               )}
             </div>
             <div className="flex flex-shrink-0 gap-2">

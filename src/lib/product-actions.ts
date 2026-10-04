@@ -41,7 +41,7 @@ export interface ProductInput {
   popular: boolean;
   fdaApproved: boolean;
   /** The pharmacy mapping. Blank SKU: the order is placed by hand. */
-  pharmacy: { sku: string; quantity: number; defaultSig: string; name: string; strength: string; size: string; dosageForm: string };
+  pharmacy: { sku: string; quantity: number; defaultSig: string; name: string; strength: string; size: string; dosageForm: string; unitCost: number };
 }
 
 export interface ProductResult {
@@ -192,6 +192,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
         ['Pharmacy strength', pharmacyBefore?.strength, data.pharmacy.strength],
         ['Pharmacy size', pharmacyBefore?.size, data.pharmacy.size],
         ['Pharmacy dosage form', pharmacyBefore?.dosageForm, data.pharmacy.dosageForm],
+        ['Your cost (per unit)', pharmacyBefore ? String(pharmacyBefore.unitCost) : null, String(data.pharmacy.unitCost)],
       ] as [string, string | null | undefined, string][]
     ).map(([field, oldValue, newValue]) => ({
       actorId: session.id,

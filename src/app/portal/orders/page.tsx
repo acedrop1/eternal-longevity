@@ -9,6 +9,7 @@ import {
 } from '@/components/orders/MemberOrderHistory';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { MEMBER_NAV, PageHeader } from '@/components/portal/ui';
+import { memberSamples, SAMPLE_ORDERS, SAMPLE_PLAN_PRODUCTS } from '@/lib/dev-member-samples';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -96,8 +97,8 @@ export default async function OrdersPage({
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
       <PageHeader
-        title="Your shipments & receipts."
-        intro="Every cycle you've ordered, with live status from order confirmation through delivery."
+        title="Orders & tracking"
+        intro="Every order, from Dr. Elder’s review to your door."
       />
 
       {/* Two complementary views: the workflow orders the member placed, and
@@ -107,7 +108,11 @@ export default async function OrdersPage({
           {PAY_NOTICE[pay]}
         </p>
       )}
-      <MemberOrdersList memberEmail={user.email} planProductIds={planProductIds} />
+      <MemberOrdersList
+        memberEmail={user.email}
+        planProductIds={memberSamples ? SAMPLE_PLAN_PRODUCTS : planProductIds}
+        sampleOrders={memberSamples ? SAMPLE_ORDERS : undefined}
+      />
       {live && orders.length > 0 && <MemberOrderHistory orders={orders} />}
     </PortalShell>
   );

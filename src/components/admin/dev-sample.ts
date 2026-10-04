@@ -74,6 +74,13 @@ export const SAMPLE_BOARD: BoardRow[] = [
   }),
 ];
 
+/** Sample product names to catalogue ids, so the sample orders can be costed (Analytics, profit). */
+const SAMPLE_PRODUCT_ID: Record<string, string> = {
+  'NAD+ injection': 'nad-plus',
+  Glutathione: 'glutathione',
+  Sermorelin: 'sermorelin',
+};
+
 function order(n: number, status: OrderStatus, name: string, product: string, total: number, days: number, extra: Partial<Order> = {}): Order {
   return {
     id: String(n),
@@ -83,7 +90,7 @@ function order(n: number, status: OrderStatus, name: string, product: string, to
     state: 'NJ',
     lines: [
       {
-        productId: 'sample',
+        productId: SAMPLE_PRODUCT_ID[product] ?? 'sample',
         productName: product,
         cadence: 'monthly',
         cadenceLabel: 'Monthly',
@@ -117,7 +124,7 @@ export const SAMPLE_ORDERS: Order[] = [
   order(1047, 'signed', 'Daniel Ortiz', 'Sermorelin', 299, 2, { paidAt: ago(2) }),
   order(1046, 'paid', 'Priya Nair', 'NAD+ injection', 249, 0, {
     paidAt: ago(0),
-    lines: [{ productId: 'sample', productName: 'NAD+ injection', cadence: 'monthly', cadenceLabel: 'Monthly', quantity: 2, perCycle: 249, image: '', swatch: '' }],
+    lines: [{ productId: 'nad-plus', productName: 'NAD+ injection', cadence: 'monthly', cadenceLabel: 'Monthly', quantity: 2, perCycle: 249, image: '', swatch: '' }],
     subtotal: 498,
     total: 498,
   }),
@@ -148,6 +155,73 @@ export const SAMPLE_ORDERS: Order[] = [
     updates: [{ id: 's6', at: ago(1), author: 'Ops Admin', role: 'admin', note: 'Delivered', statusChange: 'delivered' }],
   }),
 ];
+
+/*
+ * Analytics history: about seven months of paid orders across real catalogue
+ * products, so the charts and month tables have something to show. Analytics
+ * only (not on the Orders board). Deterministic, so screenshots are stable.
+ * Snapshot columns (migration 0025) are filled on most rows; every fifth is
+ * left empty to show the "est." path, one is a partial refund, one a full
+ * refund, one a $0 order covered by a code.
+ */
+const HISTORY_PRODUCTS: [id: string, name: string, monthly: number, quarterly: number, sixMonth: number][] = [
+  ['nad-plus', 'NAD+', 149, 417, 810],
+  ['glutathione', 'Glutathione', 149, 387, 654],
+  ['finasteride', 'Finasteride', 85, 255, 510],
+  ['sildenafil-tadalafil', 'Sildenafil + Tadalafil', 49, 135, 252],
+  ['glow-cream', 'Glow Cream', 49, 141, 270],
+  ['enclomiphene', 'Enclomiphene', 149, 357, 594],
+  ['methylene-blue', 'Methylene Blue', 79, 216, 414],
+  ['hrt-cream', 'Estradiol + Progesterone Cream', 89, 237, 432],
+];
+const HISTORY_NAMES = ['Owen Hart', 'Iris Vega', 'Theo Grant', 'Mila Shah', 'Jonah Reed', 'Nora Quinn', 'Leo Marsh', 'Ruby Cole', 'Felix Ward', 'Zara Bloom', 'Ivy Stone', 'Max Rowe'];
+const PLANS = [
+  ['monthly', 'Monthly', 1],
+  ['monthly', 'Monthly', 1],
+  ['quarterly', 'Quarterly', 3],
+  ['monthly', 'Monthly', 1],
+  ['sixMonth', '6-month', 6],
+] as const;
+
+export const SAMPLE_HISTORY: Order[] = Array.from({ length: 64 }, (_, i) => {
+  const [productId, productName, ...prices] = HISTORY_PRODUCTS[(i * 5) % HISTORY_PRODUCTS.length];
+  const [cadence, cadenceLabel, months] = PLANS[(i * 3) % PLANS.length];
+  const price = prices[months === 1 ? 0 : months === 3 ? 1 : 2];
+  const name = HISTORY_NAMES[(i * 7) % HISTORY_NAMES.length];
+  const days = 3 + Math.round(i * 3.3 + ((i * 13) % 5));
+  const free = i === 9; // covered in full by a code
+  const subtotal = free ? 0 : price;
+  const total = free ? 0 : price + 30;
+  return order(2000 + i, i === 22 ? 'canceled' : i % 4 === 0 ? 'delivered' : 'shipped', name, productName, total, days, {
+    userId: `sample-history-${(i * 7) % HISTORY_NAMES.length}`,
+    paidAt: ago(days),
+    lines: [{ productId, productName, cadence, cadenceLabel, quantity: 1, perCycle: subtotal, image: '', swatch: '' }],
+    subtotal,
+    shippingCost: free ? 0 : 30,
+    ...(free ? { promoCode: 'COMPED', discount: price + 30 } : {}),
+  });
+});
+
+/**
+ * Every sample order money landed on, as profit reads it, with a sample
+ * Stripe fee and refund. The caller adds the cost snapshot to every row that
+ * has a fee, as the webhook writes both. The converter is passed in so this
+ * fixture stays free of server imports.
+ */
+export function sampleEconOrders<T extends { number: string; totalCents: number; status: string }>(
+  convert: (o: Order, snap?: { costCents?: number | null; shippingCostCents?: number | null; stripeFeeCents?: number | null; refundedCents?: number }) => T,
+): T[] {
+  const fee = (cents: number) => (cents > 0 ? Math.round(cents * 0.029) + 30 : 0);
+  const history = SAMPLE_HISTORY.map((o, i) => {
+    if (i % 5 === 1) return convert(o); // no snapshot: estimated
+    const t = Math.round(o.total * 100);
+    const refundedCents = i === 7 ? 3000 : i === 22 ? t : 0;
+    // Snapshot fee: Stripe's real fee runs a touch under the list price on some cards.
+    return convert(o, { stripeFeeCents: fee(t) - (i % 3 === 0 && t > 0 ? 4 : 0), refundedCents });
+  });
+  const board = SAMPLE_ORDERS.filter((o) => o.paidAt).map((o) => convert(o));
+  return [...history, ...board];
+}
 
 /** The prescription behind each sample order, for the order page. */
 export const SAMPLE_RX: Record<string, { protocol: string; directions: string | null }> = {

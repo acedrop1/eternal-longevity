@@ -67,8 +67,8 @@ export default async function AccountPage({
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
       <PageHeader
-        title="Your settings."
-        intro="Update your profile, payment methods, and notification preferences. Changes save instantly to your account."
+        title="Account"
+        intro="Your profile, cards, addresses and notifications. Changes save as you go."
       />
 
       {(result || added) && (
@@ -86,7 +86,7 @@ export default async function AccountPage({
       {/* A refill whose card was declined: restarts from the card on file. */}
       {refills.length > 0 && (
         <section aria-labelledby="refill-failed" className={notice}>
-          <p className="mb-1 text-[13px] font-medium text-ink/60">Payment needed</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">Payment needed</p>
           <h2 id="refill-failed" className={heading}>
             Your {refills.map((o) => o.productName).join(' and ')} refill didn’t go through
           </h2>
@@ -105,7 +105,7 @@ export default async function AccountPage({
       {/* An approved first order still waiting on money: pays by link. */}
       {firstOrders.map((o) => (
         <section key={o.orderNumber} className={notice}>
-          <p className="mb-1 text-[13px] font-medium text-ink/60">Payment needed</p>
+          <p className="mb-1 text-[14px] font-medium text-ink/70">Payment needed</p>
           <h2 className={heading}>Dr. Elder approved your {o.productName}</h2>
           <p className={copy}>
             {added

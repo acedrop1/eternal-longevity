@@ -18,6 +18,8 @@ import {
   type SweepShipment,
 } from '@/lib/order-health';
 import { getPendingCounts } from '@/lib/pending-counts';
+import { loadEconData } from '@/lib/profit-data';
+import { aggregate, dayOf, presetRange } from '@/lib/profit';
 import type { OrderStatus } from '@/lib/orders';
 import {
   AdminPageHeader,
@@ -189,7 +191,13 @@ export default async function AdminPortalPage() {
   const live = supabaseAdminConfigured();
   // NODE_ENV is inlined at build, so production never loads the fixture.
   const sample = process.env.NODE_ENV === 'development' && !live;
-  const o = sample ? await loadSample() : await loadOverview();
+  const [o, profit30] = await Promise.all([
+    sample ? loadSample() : loadOverview(),
+    // Admin only (this page redirects everyone else). Same numbers as Analytics, last 30 days.
+    loadEconData()
+      .then((d) => aggregate(d.orders, presetRange('last_30', dayOf(Date.now())), d.costs).totals)
+      .catch(() => null),
+  ]);
 
   const by = (...s: string[]) => o.orders.filter((r) => s.includes(r.status));
   const withPrescriber = by('assigned');
@@ -262,7 +270,7 @@ export default async function AdminPortalPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <MetricCard
             label="Revenue today"
             value={money(o.revenueToday.cents)}
@@ -274,6 +282,16 @@ export default async function AdminPortalPage() {
             value={money(o.revenueWeek.cents)}
             hint={plural(o.revenueWeek.orders, 'paid order')}
             href="/portal/admin/billing"
+          />
+          <MetricCard
+            label="Gross profit, 30 days"
+            value={profit30 ? `${profit30.profit < 0 ? '−' : ''}${money(Math.abs(profit30.profit))}` : '—'}
+            hint={
+              profit30
+                ? `${profit30.margin === null ? '—' : `${Math.round(profit30.margin * 100)}%`} margin${profit30.estimatedOrders ? ' · est.' : ''}`
+                : 'Not available'
+            }
+            href="/portal/admin/analytics?range=last_30"
           />
           <MetricCard
             label="With prescriber"
