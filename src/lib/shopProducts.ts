@@ -7,6 +7,8 @@
  * Plan) or a one-time purchase.
  */
 
+import { shippingPriceFor } from './shipping';
+
 export type ShopCategory =
   | 'recovery'
   | 'growth'
@@ -1068,11 +1070,11 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'Taken as needed, not daily',
     ],
     whatsIncluded: [
-      '30 sublingual troches of compounded Sildenafil + Tadalafil 120 mg / 22 mg',
+      '8 sublingual troches a month of compounded Sildenafil + Tadalafil 120 mg / 22 mg',
       'Ongoing messaging with your prescriber',
     ],
     delivery: 'oral',
-    cycleLength: 'As-needed dosing · 30 troches',
+    cycleLength: 'As-needed dosing · 8 troches a month',
     pricing: { monthly: 49, quarterly: 135, sixMonth: 252, annual: 504 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/sildenafil-tadalafil.jpg',
@@ -1973,9 +1975,16 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
   const m = p.pricing.monthly;
   const q = p.pricing.quarterly;
   const qPerMonth = Math.round(q / 3);
-  const qSave = Math.round((1 - q / (m * 3)) * 100);
   const s = p.pricing.sixMonth;
-  const sSave = s ? Math.round((1 - s / (m * 6)) * 100) : 0;
+  // What a longer plan saves against ordering monthly, shipping included:
+  // monthly orders each ship (and charge shipping) on their own; a 3- or
+  // 6-month plan ships once.
+  const ship = shippingPriceFor(p);
+  const saved = (months: number, total: number) => m * months + ship * months - (total + ship);
+  const qSaved = saved(3, q);
+  const sSaved = s ? saved(6, s) : 0;
+  const saveLine = (dollars: number, months: number) =>
+    `Save $${dollars} vs. ${months} monthly orders, shipping included`;
   // Monthly stays first: callers fall back to tiers[0] for an unknown cadence.
   return [
     {
@@ -1998,8 +2007,9 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       description: 'Billed every 3 months · Ships every 3 months',
       total: q,
       perMonth: qPerMonth,
-      saveLabel: qSave > 0 ? `Save ${qSave}%` : undefined,
+      saveLabel: qSaved > 0 ? `Save $${qSaved}` : undefined,
       breakdown: [
+        ...(qSaved > 0 ? [saveLine(qSaved, 3)] : []),
         'Billed every 3 months, shipped every 3 months',
         'Ships on the same prescription until it expires',
         'Adjust your refill date whenever you like',
@@ -2015,8 +2025,9 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
             description: 'Billed every 6 months · Ships every 6 months',
             total: s,
             perMonth: Math.round(s / 6),
-            saveLabel: sSave > 0 ? `Save ${sSave}%` : undefined,
+            saveLabel: sSaved > 0 ? `Save $${sSaved}` : undefined,
             breakdown: [
+              ...(sSaved > 0 ? [saveLine(sSaved, 6)] : []),
               'Billed every 6 months, shipped every 6 months',
               'Ships on the same prescription until it expires',
               'Adjust your refill date whenever you like',

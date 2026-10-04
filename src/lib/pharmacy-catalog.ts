@@ -51,7 +51,7 @@ export const PHARMACY_CATALOG: Record<string, PharmacyItem> = {
 
   // Sexual health
   'pt-141': { sku: 'SX-PT1', name: 'PT-141 (Bremelanotide) Injection', strength: '2 mg/mL', size: '5 mL Vial', dosageForm: 'Injectable Solution', defaultSig: null, quantity: 1, unitCost: 80 },
-  'sildenafil-tadalafil': { sku: 'SX-STS', name: 'Sildenafil + Tadalafil Troche', strength: 'Sildenafil 120 mg / Tadalafil 22 mg', size: '30 Troches', dosageForm: 'Sublingual Troche', defaultSig: null, quantity: 30, unitCost: 1.87 },
+  'sildenafil-tadalafil': { sku: 'SX-STS', name: 'Sildenafil + Tadalafil Troche', strength: 'Sildenafil 120 mg / Tadalafil 22 mg', size: '8 Troches', dosageForm: 'Sublingual Troche', defaultSig: null, quantity: 8, unitCost: 1.87 },
   sildenafil: { sku: 'SX-SLD-02', name: 'Sildenafil', strength: '100 mg', size: '8 Capsules', dosageForm: 'Oral Capsule', defaultSig: null, quantity: 8, unitCost: 1.25 },
   oxytocin: { sku: 'HR-OXT', name: 'Oxytocin', strength: '50 IU', size: '30 Tablets', dosageForm: 'Rapid-Dissolve Tablet', defaultSig: null, quantity: 30, unitCost: 0.95 },
   enclomiphene: { sku: 'HR-ECC', name: 'Enclomiphene', strength: '12.5 mg', size: '30 Capsules', dosageForm: 'Oral Capsule', defaultSig: null, quantity: 30, unitCost: 1.25 },
