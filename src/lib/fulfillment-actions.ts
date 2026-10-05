@@ -259,7 +259,8 @@ export async function markDeliveredAction(fulfillmentId: string): Promise<Fulfil
 }
 
 /**
- * "Retry send to pharmacy" on the board, for an order the API did not take.
+ * "Send to pharmacy" on the order page, for an order the API did not take
+ * (dry run, or a failed send). Goes even in dry run: a person chose this one.
  * sendToPharmacyApi refuses anything already sent or already in flight.
  */
 export async function retrySendToPharmacyAction(fulfillmentId: string): Promise<FulfillmentResult> {
@@ -274,7 +275,7 @@ export async function retrySendToPharmacyAction(fulfillmentId: string): Promise<
   if (!row?.order_ref.startsWith('FUL-')) {
     return { ok: false, message: 'This order has no order number to send. Place it by hand.' };
   }
-  const res = await sendToPharmacyApi(row.order_ref.slice(4));
+  const res = await sendToPharmacyApi(row.order_ref.slice(4), { manual: true });
   for (const p of ['/portal/admin/fulfillment', '/portal/doctor/fulfillment', '/portal/orders']) revalidatePath(p);
   return { ok: res.sent, message: res.message };
 }

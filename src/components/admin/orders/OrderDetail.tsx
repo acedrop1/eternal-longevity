@@ -115,9 +115,9 @@ export function OrderDetail({
   const retrySend = async () => {
     if (!b) return;
     const ok = await confirm({
-      title: `Send ${ref} to the pharmacy again?`,
-      body: 'It goes through the pharmacy API once more. If it fails again, place it by hand.',
-      confirmLabel: 'Retry send',
+      title: `Send ${ref} to the pharmacy?`,
+      body: 'It is placed with the pharmacy now, and its cost comes out of your pharmacy wallet. If it fails, the reason shows here and you can place it by hand.',
+      confirmLabel: 'Send to pharmacy',
     });
     if (ok) run(() => retrySendToPharmacyAction(b.id));
   };
@@ -154,35 +154,28 @@ export function OrderDetail({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <MoreActions>
-              {(close) => (
-                <>
+            {admin && o && (
+              <MoreActions>
+                {(close) => (
                   <MenuItem
-                    disabled={!retry || pending}
-                    hint={retry ? undefined : 'Only for an order the pharmacy API did not take'}
+                    danger
+                    disabled={!cancel}
+                    hint={cancel ? undefined : 'Not once it has shipped or closed'}
                     onClick={() => {
                       close();
-                      retrySend();
+                      setCancelling(true);
                     }}
                   >
-                    Retry send to pharmacy
+                    Cancel order
                   </MenuItem>
-                  {admin && o && (
-                    <MenuItem
-                      danger
-                      disabled={!cancel}
-                      hint={cancel ? undefined : 'Not once it has shipped or closed'}
-                      onClick={() => {
-                        close();
-                        setCancelling(true);
-                      }}
-                    >
-                      Cancel order
-                    </MenuItem>
-                  )}
-                </>
-              )}
-            </MoreActions>
+                )}
+              </MoreActions>
+            )}
+            {retry && (
+              <button type="button" onClick={retrySend} disabled={pending} className={cn(headerButton, 'disabled:opacity-40')}>
+                {pending ? 'Sending…' : 'Send to pharmacy'}
+              </button>
+            )}
             {toPlace && (
               <button type="submit" form="mark-placed" disabled={pending} className={cn(headerButton, 'disabled:opacity-40')}>
                 {pending ? 'Saving…' : 'Mark placed'}

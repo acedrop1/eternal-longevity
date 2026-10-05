@@ -76,7 +76,7 @@ const RETRYABLE = ['ERROR', 'MANUAL', 'DRY_RUN'];
 export const pharmacyBadge = (p: NonNullable<BoardRow['pharmacy']>): [string, BadgeTone] =>
   PHARMACY[p.status] ?? ['Sent to pharmacy', 'info'];
 
-/** "Retry send to pharmacy" applies: still to place, never accepted by the API, and a retryable failure. */
+/** "Send to pharmacy" applies: still to place, never accepted by the API, and a retryable failure. */
 export const canRetry = (row: BoardRow) =>
   (row.status === 'submitted' || row.status === 'draft') &&
   !!row.pharmacy &&

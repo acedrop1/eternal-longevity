@@ -318,8 +318,9 @@ export async function alertCareTeam(input: {
 /**
  * Send one paid order to the pharmacy over its API.
  *
- * Called when the order joins the board, and again from the board's "Retry
- * send to pharmacy". Never sends twice: an order with a pharmacy order id is
+ * Called when the order joins the board, and again from "Send to pharmacy" on
+ * the order page (`manual`, which goes even in dry run: a person chose to
+ * send this one). Never sends twice: an order with a pharmacy order id is
  * done, the SENDING claim below lets only one caller through at a time, and
  * our order number is the partnerOrderId, so a resend the pharmacy already has
  * comes back 409 and is reconciled instead of duplicated.
@@ -327,7 +328,10 @@ export async function alertCareTeam(input: {
  * Not sent means the row stays in "To place" with the reason on it, exactly
  * as a manual order does today.
  */
-export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: boolean; message: string }> {
+export async function sendToPharmacyApi(
+  orderNumber: string,
+  opts: { manual?: boolean } = {},
+): Promise<{ sent: boolean; message: string }> {
   if (!rxhereConfigured() || !supabaseAdminConfigured()) {
     return { sent: false, message: 'The pharmacy API is not configured. Place it by hand.' };
   }
@@ -436,12 +440,12 @@ export async function sendToPharmacyApi(orderNumber: string): Promise<{ sent: bo
     if (!built.ok) return fail(built.error === 'sku_missing' ? 'MANUAL' : 'ERROR', NOT_SENT[built.error]);
     const payload = built.payload;
 
-    if (rxhereDryRun()) {
+    if (rxhereDryRun() && !opts.manual) {
       // Shape only: which fields are filled, never their values.
       console.info(
         `[rxhere] dry run · order ${order.order_number} · sku ${payload.sku} · ${payload.shippingMethod} · qty ${payload.quantity} · patient fields ${Object.keys(payload.patient).filter((k) => payload.patient[k as keyof typeof payload.patient] !== undefined).join(',')}`,
       );
-      return fail('DRY_RUN', 'Dry run: the order was built but not sent. Place it by hand.');
+      return fail('DRY_RUN', 'Dry run: not sent automatically. Use “Send to pharmacy” on the order, or place it by hand.');
     }
 
     let res = await submitPharmacyOrder(payload);
