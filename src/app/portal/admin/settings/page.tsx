@@ -11,6 +11,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { stripeConfigured } from '@/lib/stripe';
 import { emailConfigured } from '@/lib/email';
 import { smsConfigured } from '@/lib/sms';
+import { getShippingRates, rxhereConfigured, rxhereDryRun } from '@/lib/rxhere';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import {
   createSupabaseAdminClient,
@@ -28,6 +29,9 @@ export default async function AdminSettingsPage() {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
+
+  // A real read-only call with the saved token: the only way to know a secret env value is right.
+  const rx = rxhereConfigured() ? await getShippingRates() : null;
 
   const services: ServiceStatus[] = [
     {
@@ -49,6 +53,17 @@ export default async function AdminSettingsPage() {
       name: 'Twilio',
       connected: smsConfigured(),
       detail: 'SMS notifications and codes',
+    },
+    {
+      name: 'Pharmacy',
+      connected: Boolean(rx?.ok),
+      detail: !rx
+        ? 'Partner API token not set'
+        : rx.ok
+          ? `Token accepted${rxhereDryRun() ? ' · dry run on, orders are not sent' : ' · orders send automatically'}`
+          : rx.code === 'auth'
+            ? 'Token rejected. Create a new one in the pharmacy portal'
+            : `Pharmacy API not reachable (${rx.status || 'timeout'})`,
     },
   ];
 
