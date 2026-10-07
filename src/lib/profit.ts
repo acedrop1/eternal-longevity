@@ -78,11 +78,11 @@ export interface Economics {
   closed: boolean;
 }
 
-// ponytail: placeholder 2.9% + 30¢ until Frame's contracted card rate is
-// confirmed; update both with the real rate. Only orders without a recorded
-// fee use it.
-export const PROCESSING_FEE_PCT = 0.029;
-export const PROCESSING_FEE_FIXED_CENTS = 30;
+// ponytail: Frame's public card rate (framepayments.com/pricing, 2026-10-07).
+// Risk-priced accounts can differ: replace with the contracted rate once
+// Frame confirms it. Only orders without a recorded fee use this estimate.
+export const PROCESSING_FEE_PCT = 0.02;
+export const PROCESSING_FEE_FIXED_CENTS = 39;
 
 /** Estimated card processing fee. Nothing charged, no fee. */
 export function estimateProcessingFeeCents(chargedCents: number): number {
