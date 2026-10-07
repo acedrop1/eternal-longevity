@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/format';
 import { SHIPPING_COST } from '@/lib/shipping';
-import { PRESETS, change, dayLabel, type DateRange, type OrderRow, type Preset, type Row, type Totals } from '@/lib/profit';
+import { PRESETS, PROCESSING_FEE_FIXED_CENTS, PROCESSING_FEE_PCT, change, dayLabel, type DateRange, type OrderRow, type Preset, type Row, type Totals } from '@/lib/profit';
 import {
   AdminPageHeader,
   MetricCard,
@@ -38,6 +38,7 @@ interface Props {
 const money = (cents: number) => (cents < 0 ? `−${formatMoney(-cents)}` : formatMoney(cents));
 const pct = (m: number | null) => (m === null ? '—' : `${(m * 100).toFixed(1)}%`);
 const year = (d: string) => d.slice(0, 4);
+const FEE_RATE = `${(PROCESSING_FEE_PCT * 100).toFixed(1)}% + ${PROCESSING_FEE_FIXED_CENTS}¢`;
 const span = (r: DateRange) =>
   r.from === r.to
     ? `${dayLabel(r.from)}, ${year(r.from)}`
@@ -64,7 +65,7 @@ export function AnalyticsView(p: Props) {
     ['Net sales', money(t.net), t.net, b.net, 'up'],
     ['Product cost', money(t.productCost), t.productCost, b.productCost, 'none'],
     ['Pharmacy shipping', money(t.shippingCost), t.shippingCost, b.shippingCost, 'none'],
-    ['Stripe fees', money(t.fees), t.fees, b.fees, 'none'],
+    ['Processing fees', money(t.fees), t.fees, b.fees, 'none'],
     ['Gross profit', money(t.profit), t.profit, b.profit, 'up'],
     ['Margin', pct(t.margin), t.margin ?? 0, b.margin ?? 0, 'up'],
     ['Orders', t.orders, t.orders, b.orders, 'up'],
@@ -75,7 +76,7 @@ export function AnalyticsView(p: Props) {
 
   const exportMonths = () =>
     download(`months-${p.range.from}-to-${p.range.to}.csv`, [
-      ['Month', 'Units', 'Orders', 'Gross sales', 'Refunds', 'Net sales', 'Product cost', 'Pharmacy shipping', 'Stripe fees', 'Gross profit', 'Margin %'],
+      ['Month', 'Units', 'Orders', 'Gross sales', 'Refunds', 'Net sales', 'Product cost', 'Pharmacy shipping', 'Processing fees', 'Gross profit', 'Margin %'],
       ...[...p.byMonth, { ...t, label: 'Total' }].map((r) => [
         r.label,
         r.units,
@@ -92,7 +93,7 @@ export function AnalyticsView(p: Props) {
     ]);
   const exportOrders = () =>
     download(`orders-${p.range.from}-to-${p.range.to}.csv`, [
-      ['Order', 'Date', 'Customer', 'Items', 'Gross sales', 'Refunds', 'Net sales', 'Product cost', 'Pharmacy shipping', 'Stripe fee', 'Gross profit', 'Margin %', 'Estimated'],
+      ['Order', 'Date', 'Customer', 'Items', 'Gross sales', 'Refunds', 'Net sales', 'Product cost', 'Pharmacy shipping', 'Processing fee', 'Gross profit', 'Margin %', 'Estimated'],
       ...p.orders.map((o) => [
         o.number,
         o.day,
@@ -173,7 +174,7 @@ export function AnalyticsView(p: Props) {
       {p.source === 'live' && !p.snapshots && (
         <Notice>
           Cost snapshots are not available (run migration 0025_order_costs.sql). Every order below is estimated from today’s costs and
-          Stripe’s list price.
+          the estimated processing fee.
         </Notice>
       )}
       {p.missingCost.length > 0 && (
@@ -280,18 +281,18 @@ export function AnalyticsView(p: Props) {
       <SectionCard title="How each number is worked out">
         <dl className="grid gap-x-8 gap-y-3 text-[14px] leading-relaxed md:grid-cols-2">
           {[
-            ['Which orders', 'Every order the money landed on (the Stripe webhook’s paid time), plus any refunded since. Dated by when it was paid, as a New York calendar day; a fully refunded order is dated by when it was placed. Unpaid and declined orders are not counted.'],
+            ['Which orders', 'Every order the money landed on (the payment webhook’s paid time), plus any refunded since. Dated by when it was paid, as a New York calendar day; a fully refunded order is dated by when it was placed. Unpaid and declined orders are not counted.'],
             ['Gross sales', 'What the card was charged: items after any discount, plus the shipping the customer paid, minus tax (tax is not ours). A $0 order covered by a code counts as $0.'],
-            ['Refunds', 'What Stripe reports as refunded on the order’s charge, in full or in part, from the portal or the Stripe dashboard.'],
+            ['Refunds', 'What the card processor reports as refunded on the order’s charge, in full or in part, from the portal or the Frame dashboard.'],
             ['Net sales', 'Gross sales − refunds.'],
             ['Product cost', 'Your cost per unit (Products → Pharmacy) × units per 30 days × months in the plan × quantity. Frozen on the order when it is paid, so a later price change does not rewrite the past. Not counted on an order closed without shipping (cancelled, denied, declined).'],
             ['Pharmacy shipping', `What the pharmacy charges us per order: $${SHIPPING_COST['2_DAY']} for 2-day, $${SHIPPING_COST.OVERNIGHT} for overnight (cold-chain). Frozen at payment like product cost.`],
-            ['Stripe fees', 'The real fee from the charge’s balance transaction in Stripe. Stripe keeps it when a payment is refunded, so it stays. Where it was not recorded: 2.9% + 30¢ of the amount charged (est.). $0 orders have no fee.'],
-            ['Gross profit', 'Net sales − product cost − pharmacy shipping − Stripe fees. Excludes everything else (prescriber, software, ads, payroll).'],
+            ['Processing fees', `The real fee the card processor reports for the charge. The processor keeps it when a payment is refunded, so it stays. Where it was not recorded: ${FEE_RATE} of the amount charged (est.). $0 orders have no fee.`],
+            ['Gross profit', 'Net sales − product cost − pharmacy shipping − processing fees. Excludes everything else (prescriber, software, ads, payroll).'],
             ['Margin', 'Gross profit ÷ net sales.'],
             ['Orders and average order value', 'Count of orders in the range; average order value = gross sales ÷ orders.'],
             ['New and returning customers', 'Customers with an order in the range. New: their first-ever paid order is in the range. Returning: they had paid before it (refills count as returning).'],
-            ['est.', 'An order paid before costs were recorded (or with the fee still on its way from Stripe) is worked out at read time from today’s costs and 2.9% + 30¢.'],
+            ['est.', `An order paid before costs were recorded (or with the fee still on its way from the processor) is worked out at read time from today’s costs and ${FEE_RATE}.`],
             ['Compared with', 'A range from the 1st of a month is compared with the same days of the month before; year to date with the same dates last year; anything else with the same number of days just before it.'],
             ['By product', 'Units are plans sold (a 3-month plan is 1). Product cost is by line; shipping, fees and refunds are split across an order’s lines by what each line charged.'],
           ].map(([k, v]) => (
@@ -343,7 +344,7 @@ function Delta({ now, prev, good, points }: { now: number; prev: number; good: '
 }
 
 function MoneyTable({ first, rows, total, empty }: { first: string; rows: Row[]; total: Totals; empty: string }) {
-  const heads = [first, 'Units', 'Orders', 'Net sales', 'Product cost', 'Shipping', 'Stripe fees', 'Profit', 'Margin'];
+  const heads = [first, 'Units', 'Orders', 'Net sales', 'Product cost', 'Shipping', 'Processing fees', 'Profit', 'Margin'];
   const cells = (r: Row) => [
     r.units,
     r.orders,

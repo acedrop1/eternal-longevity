@@ -1,9 +1,8 @@
 import 'server-only';
-import type Stripe from 'stripe';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getCatalog, getPharmacyEntries } from './catalog';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
-import { getStripe } from './stripe';
+import { getTransfer, listRefunds, type FrameTransfer } from './frame';
 import type { Order } from './orders';
 import {
   orderEconomics,
@@ -27,7 +26,7 @@ import {
 type Db = ReturnType<typeof createSupabaseAdminClient>;
 // The generated types predate migration 0025.
 const untyped = (db: Db) => db as unknown as SupabaseClient;
-const MIGRATION_HINT = '(has supabase/migrations/0025_order_costs.sql been run?)';
+const MIGRATION_HINT = '(have supabase/migrations/0025_order_costs.sql and 0026_frame_payments.sql been run?)';
 
 /** Per product: cost per unit, units per 30 days, storage (for the shipping method). */
 export async function costTable(): Promise<CostTable> {
@@ -68,29 +67,32 @@ export async function snapshotOrderCosts(db: Db, orderId: string, extra: Record<
 }
 
 /**
- * Copy Stripe's own numbers onto the order that owns this payment: the fee
- * from the charge's balance transaction, and what has been refunded so far.
- * Absolute values, so running it twice (webhook + the refund code) is safe.
- * The balance transaction can lag the charge by a moment; charge.updated
- * fills the fee in then.
+ * Copy the processor's own numbers onto the order this charge paid: Frame's
+ * fee on the transfer, and what has been refunded so far (summed from the
+ * refund records; refunds don't change the transfer's status). Absolute
+ * values, so running it twice (in-line result + webhook + refund code) is safe.
  */
-export async function syncStripeAmounts(db: Db, paymentIntentId: string): Promise<void> {
+export async function syncProcessorAmounts(db: Db, transfer: FrameTransfer | string): Promise<void> {
+  const transferId = typeof transfer === 'string' ? transfer : transfer.id;
   try {
-    const pi = await getStripe().paymentIntents.retrieve(paymentIntentId, {
-      expand: ['latest_charge.balance_transaction'],
-    });
-    const charge = typeof pi.latest_charge === 'object' ? (pi.latest_charge as Stripe.Charge | null) : null;
-    if (!charge) return;
-    const bt = typeof charge.balance_transaction === 'object' ? charge.balance_transaction : null;
-    // Only the order that owns this intent; a stray payment refunded elsewhere matches nothing.
-    const { data: order } = await db.from('orders').select('id').eq('stripe_payment_intent_id', paymentIntentId).maybeSingle();
+    const t = typeof transfer === 'string' ? await getTransfer(transfer) : { ok: true as const, data: transfer };
+    if (!t.ok) return;
+    // Only the order that owns this charge; a stray payment refunded elsewhere matches nothing.
+    const { data: order } = await db.from('orders').select('id').eq('frame_transfer_id', transferId).maybeSingle();
     if (!order) return;
-    const patch: Record<string, string | number> = { order_id: order.id, refunded_cents: charge.amount_refunded ?? 0 };
-    if (bt) patch.stripe_fee_cents = bt.fee;
+    const refunds = await listRefunds(transferId);
+    const patch: Record<string, string | number> = { order_id: order.id };
+    if (refunds.ok) {
+      patch.refunded_cents = refunds.data
+        .filter((r) => r.status !== 'failed' && r.status !== 'canceled')
+        .reduce((sum, r) => sum + (r.amount ?? 0), 0);
+    }
+    const fee = t.data.total_fees ?? t.data.frame_fee;
+    if (fee !== null && fee !== undefined) patch.processor_fee_cents = fee;
     const { error } = await untyped(db).from('order_costs').upsert(patch, { onConflict: 'order_id' });
-    if (error) console.error(`[profit] Stripe fee/refund not written for ${paymentIntentId} ${MIGRATION_HINT}:`, error.message);
+    if (error) console.error(`[profit] fee/refund not written for ${transferId} ${MIGRATION_HINT}:`, error.message);
   } catch (err) {
-    console.error(`[profit] Stripe fee/refund sync failed for ${paymentIntentId}:`, err);
+    console.error(`[profit] fee/refund sync failed for ${transferId}:`, err);
   }
 }
 
@@ -99,7 +101,7 @@ export async function syncStripeAmounts(db: Db, paymentIntentId: string): Promis
 type Row = Record<string, unknown>;
 const ITEMS = 'order_items(product_id, product_name, cadence, quantity, unit_price_cents)';
 const BASE = `id, order_number, user_id, member_email, member_name, status, total_cents, tax_cents, created_at, paid_confirmed_at, ${ITEMS}`;
-const SNAP = 'order_costs(cost_cents, shipping_cost_cents, stripe_fee_cents, refunded_cents)';
+const SNAP = 'order_costs(cost_cents, shipping_cost_cents, processor_fee_cents, refunded_cents)';
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 function fromRow(r: Row): EconOrder {
@@ -123,7 +125,7 @@ function fromRow(r: Row): EconOrder {
     })),
     costCents: num(c.cost_cents),
     shippingCostCents: num(c.shipping_cost_cents),
-    stripeFeeCents: num(c.stripe_fee_cents),
+    stripeFeeCents: num(c.processor_fee_cents),
     refundedCents: Number(c.refunded_cents ?? 0),
   };
 }

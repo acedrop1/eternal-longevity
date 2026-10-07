@@ -17,9 +17,8 @@ import 'server-only';
  * Two things gate it, and neither is optional:
  *
  *   Payment. A signature says the treatment is appropriate; it says nothing
- *   about whether the money arrived. We submit only on a confirmed capture —
- *   not on the order's `paid_confirmed_at`, which is written asynchronously by
- *   the Stripe webhook and may not have landed yet.
+ *   about whether the money arrived. We submit only once a charge has
+ *   succeeded: lib/payment-record calls this as it records the payment.
  *
  *   The prescriber's NPI. It prints on the prescription and a pharmacy will
  *   reject one without it. Submitting anyway wastes a cycle with the pharmacy and
@@ -98,7 +97,7 @@ export async function autoSubmitToPharmacy(
       : Promise.resolve({ data: null }),
     db
       .from('order_items')
-      .select('product_name, quantity, cadence_label')
+      .select('product_id, product_name, quantity, cadence_label')
       .eq('order_id', order.id),
   ]);
 
@@ -153,10 +152,31 @@ export async function autoSubmitToPharmacy(
    * prescription with no shipment against it; without this link an order
    * already queued here stayed on that list and could be submitted twice.
    */
-  const prescriptionId =
+  let prescriptionId =
     opts.prescriptionId ??
     (await db.from('prescriptions').select('id').eq('order_id', order.id).maybeSingle()).data?.id ??
     null;
+  /*
+   * A refill has no prescription of its own: it ships on its plan's. Recording
+   * the payment (lib/payment-record) submits it before the renewal can say so,
+   * so find the plan here. A first order always has its own, written at signing.
+   */
+  let refill = Boolean(opts.refill);
+  if (!prescriptionId && order.user_id && items?.[0]?.product_id) {
+    const { data: plan } = await db
+      .from('subscriptions')
+      .select('prescription_id')
+      .eq('user_id', order.user_id)
+      .eq('product_id', String(items[0].product_id))
+      .not('prescription_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (plan?.prescription_id) {
+      prescriptionId = plan.prescription_id;
+      refill = true;
+    }
+  }
 
   const cadence = items?.[0]?.cadence_label ?? 'First cycle';
   const { error: insErr } = await db.from('fulfillment_orders').insert({
@@ -169,8 +189,9 @@ export async function autoSubmitToPharmacy(
     shipping_address: (order.shipping_address ?? null) as Json | null,
     prescriber_name: doctor.full_name,
     prescriber_npi: doctor.npi,
-    items: (items ?? []) as unknown as Json,
-    cycle_label: opts.refill ? `Refill · ${cadence}` : cadence,
+    // The lines as the board has always stored them; product_id was only for the lookup above.
+    items: (items ?? []).map(({ product_id: _id, ...line }) => line) as unknown as Json,
+    cycle_label: refill ? `Refill · ${cadence}` : cadence,
     submitted_at: new Date().toISOString(),
   });
 
@@ -237,7 +258,7 @@ export async function autoSubmitToPharmacy(
         orderRef,
         patientName,
         items: itemList,
-        refill: Boolean(opts.refill),
+        refill,
         portalUrl,
       });
       await sendEmail({ to, subject: msg.subject, html: msg.html });

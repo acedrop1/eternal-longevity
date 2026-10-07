@@ -1,139 +1,76 @@
 'use server';
 
 /**
- * Cards on file, through Stripe.
+ * Cards on file, for the signed-in member.
  *
- * The previous version of this took a card number typed into an ordinary text
- * input, kept the last four digits in our own table, and never contacted
- * Stripe at all. Two problems with that, and the second is worse than the
- * first: the full number was passing through our form and our JavaScript,
- * which drags the whole site into PCI scope — and no card was ever actually
- * saved, so "card on file" did nothing when a refill came due.
- *
- * Now a SetupIntent does the work. The card is entered inside Stripe's own
- * iframe, Stripe attaches it to the customer, and we only ever see the brand,
- * the last four and the expiry that come back on the PaymentMethod.
+ * The card is typed into the processor's own iframe (components/payments/
+ * FrameCardField); what reaches us is the encrypted number and CVC, which
+ * lib/payments forwards unchanged. We only ever see the brand, the last four
+ * and the expiry that come back on the saved card. lib/payments also checks
+ * that any card id from the browser belongs to this member.
  */
 
 import { revalidatePath } from 'next/cache';
 import { getSession } from '@/lib/auth-server';
-import { getStripe, stripeConfigured } from '@/lib/stripe';
-import { getOrCreateStripeCustomer } from '@/lib/billing';
+import type { EncryptedCard } from '@/lib/frame';
+import {
+  frameAccountFor,
+  memberCards,
+  removeCard,
+  saveCard,
+  setChargedCard,
+  type CardOnFile,
+  type SaveCardResult,
+} from '@/lib/payments';
+import { allow, LIMITS } from '@/lib/rate-limit';
 
-export interface SavedCard {
-  id: string;
-  brand: string;
-  last4: string;
-  expMonth: number;
-  expYear: number;
-  isDefault: boolean;
-}
+export type SavedCard = CardOnFile;
 
-/** Client secret for the Stripe Elements card form. */
-export async function createSetupIntentAction(): Promise<{
-  ok: boolean;
-  clientSecret?: string;
-  error?: string;
-}> {
+async function member() {
   const user = await getSession();
-  if (!user) return { ok: false, error: 'not_authenticated' };
-  if (!stripeConfigured()) return { ok: false, error: 'not_configured' };
-
-  const customerId = await getOrCreateStripeCustomer({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-  });
-
-  const intent = await getStripe().setupIntents.create({
-    customer: customerId,
-    // Cards saved here are charged later without the member present, when a
-    // prescriber approves a refill. Stripe needs to know that up front so it
-    // collects the right authentication now rather than failing the refill.
-    usage: 'off_session',
-    automatic_payment_methods: { enabled: true },
-  });
-
-  return { ok: true, clientSecret: intent.client_secret ?? undefined };
+  return user?.role === 'member' ? user : null;
 }
 
-/** Cards Stripe currently holds for this member. Stripe is the source of truth. */
+/**
+ * Save the card the member just entered and make it the one charged on
+ * approval. Charges nothing. A failure carries a message fit to show them.
+ */
+export async function saveCardAction(card: EncryptedCard): Promise<SaveCardResult | { ok: false; error: 'not_authenticated' | 'rate_limited'; message: string }> {
+  const user = await member();
+  if (!user) return { ok: false, error: 'not_authenticated', message: 'Please sign in again to save a card.' };
+  // Card testing: the same account trying number after number.
+  if (!(await allow('cards', LIMITS.form, user.id))) {
+    return { ok: false, error: 'rate_limited', message: 'Too many attempts. Please wait a few minutes and try again.' };
+  }
+  const res = await saveCard(user.id, card);
+  if (res.ok) revalidatePath('/portal/account');
+  return res;
+}
+
+/** Every card on the member's account, the one we charge marked default. */
 export async function listCardsAction(): Promise<SavedCard[]> {
-  const user = await getSession();
-  if (!user || !stripeConfigured()) return [];
-
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-  });
-
-  const [methods, customer] = await Promise.all([
-    stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
-    stripe.customers.retrieve(customerId),
-  ]);
-
-  const defaultId =
-    customer && !('deleted' in customer)
-      ? (customer.invoice_settings?.default_payment_method as string | null)
-      : null;
-
-  return methods.data
-    .filter((m) => m.card)
-    .map((m) => ({
-      id: m.id,
-      brand: m.card!.brand,
-      last4: m.card!.last4,
-      expMonth: m.card!.exp_month,
-      expYear: m.card!.exp_year,
-      isDefault: m.id === defaultId,
-    }));
+  const user = await member();
+  return user ? memberCards(user.id) : [];
 }
 
-export async function removeCardAction(
-  paymentMethodId: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const user = await getSession();
-  if (!user || !stripeConfigured()) return { ok: false, error: 'not_authenticated' };
-
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-  });
-
-  // Confirm the card belongs to this customer before detaching it — the id
-  // arrives from the browser, and one member must not be able to remove
-  // another's card by guessing at ids.
-  const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
-  if (pm.customer !== customerId) return { ok: false, error: 'not_found' };
-
-  await stripe.paymentMethods.detach(paymentMethodId);
+export async function removeCardAction(paymentMethodId: string): Promise<{ ok: boolean; error?: string }> {
+  const user = await member();
+  if (!user) return { ok: false, error: 'not_authenticated' };
+  if (!(await removeCard(user.id, paymentMethodId))) return { ok: false, error: 'not_found' };
   revalidatePath('/portal/account');
   return { ok: true };
 }
 
-export async function setDefaultCardAction(
-  paymentMethodId: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const user = await getSession();
-  if (!user || !stripeConfigured()) return { ok: false, error: 'not_authenticated' };
-
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-  });
-
-  const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
-  if (pm.customer !== customerId) return { ok: false, error: 'not_found' };
-
-  await stripe.customers.update(customerId, {
-    invoice_settings: { default_payment_method: paymentMethodId },
-  });
+export async function setDefaultCardAction(paymentMethodId: string): Promise<{ ok: boolean; error?: string }> {
+  const user = await member();
+  if (!user) return { ok: false, error: 'not_authenticated' };
+  if (!(await setChargedCard(user.id, paymentMethodId))) return { ok: false, error: 'not_found' };
   revalidatePath('/portal/account');
   return { ok: true };
+}
+
+/** The member's processor account id, for Frame.init (fraud signals). */
+export async function frameAccountIdAction(): Promise<string | null> {
+  const user = await member();
+  return user ? frameAccountFor(user.id) : null;
 }

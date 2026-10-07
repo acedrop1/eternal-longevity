@@ -542,7 +542,7 @@ function ProfitCard({ e }: { e: Economics }) {
         </div>
         {row('Product cost', e.productCost, e.est.cost)}
         {row('Pharmacy shipping', e.shippingCost, e.est.shipping)}
-        {row('Stripe fee', e.stripeFee, e.est.fee)}
+        {row('Processing fee', e.stripeFee, e.est.fee)}
         {e.refunds > 0 && row('Refunds', e.refunds)}
         <div className="flex justify-between gap-4 border-t border-ink/10 pt-2 font-semibold text-ink">
           <dt>Profit</dt>
@@ -558,7 +558,7 @@ function ProfitCard({ e }: { e: Economics }) {
       {(e.estimated || e.closed) && (
         <p className="mt-2.5 text-[13px] leading-snug text-ink/60">
           {e.closed && 'Closed without shipping: no product or shipping cost. '}
-          {e.estimated && 'est. = not recorded at payment, so worked out from today’s costs and Stripe’s 2.9% + 30¢.'}
+          {e.estimated && 'est. = not recorded at payment, so worked out from today’s costs and the estimated processing fee.'}
         </p>
       )}
     </SectionCard>

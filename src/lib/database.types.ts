@@ -137,6 +137,8 @@ export type Database = {
           phone: string | null;
           date_of_birth: string | null;
           stripe_customer_id: string | null;
+          frame_account_id: string | null;
+          frame_payment_method_id: string | null;
           npi: string | null;
           credential: string | null;
           license_state: string | null;
@@ -160,6 +162,8 @@ export type Database = {
           phone?: string | null;
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
+          frame_account_id?: string | null;
+          frame_payment_method_id?: string | null;
           npi?: string | null;
           credential?: string | null;
           license_state?: string | null;
@@ -183,6 +187,8 @@ export type Database = {
           phone?: string | null;
           date_of_birth?: string | null;
           stripe_customer_id?: string | null;
+          frame_account_id?: string | null;
+          frame_payment_method_id?: string | null;
           npi?: string | null;
           credential?: string | null;
           license_state?: string | null;
@@ -395,6 +401,7 @@ export type Database = {
           promo_code: string | null;
           discount_cents: number;
           stripe_payment_intent_id: string | null;
+          frame_transfer_id: string | null;
           shipping_address: Json | null;
           tracking_carrier: string | null;
           tracking_number: string | null;
@@ -431,6 +438,7 @@ export type Database = {
           promo_code?: string | null;
           discount_cents?: number;
           stripe_payment_intent_id?: string | null;
+          frame_transfer_id?: string | null;
           shipping_address?: Json | null;
           tracking_carrier?: string | null;
           tracking_number?: string | null;
@@ -467,6 +475,7 @@ export type Database = {
           promo_code?: string | null;
           discount_cents?: number;
           stripe_payment_intent_id?: string | null;
+          frame_transfer_id?: string | null;
           shipping_address?: Json | null;
           tracking_carrier?: string | null;
           tracking_number?: string | null;

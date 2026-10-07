@@ -4,12 +4,10 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   adminChargeOnce,
-  adminCreateSubscription,
   adminRefund,
   adminRefundOrder,
   adminSendCardLink,
   type AdminBillingResult,
-  type AdminCadence,
 } from '@/lib/admin-billing-actions';
 import {
   createPromoAction,
@@ -20,7 +18,6 @@ import {
   type PromoCode,
 } from '@/lib/promo-db';
 import { cn } from '@/lib/utils';
-import { SHIPPING_PRICE } from '@/lib/shipping';
 import { paymentState, type PaymentState } from '@/lib/order-health';
 import { statusLabel, type OrderStatus } from '@/lib/orders';
 import {
@@ -123,8 +120,8 @@ export function AdminBilling({
       {!live && (
         <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
           {sampleCodes ? 'Sample data (dev only). ' : 'Demo figures. '}
-          Real revenue and billing actions go live once Stripe and Supabase are
-          connected.
+          Real revenue and billing actions go live once the card processor and
+          Supabase are connected.
         </p>
       )}
 
@@ -178,7 +175,7 @@ export function AdminBilling({
       <div className="space-y-5 border-t border-ink/10 pt-5">
         <SettingsRow
           title="Bill a customer"
-          description="Search for a member to send a card link, start a subscription, charge their card or refund an order. Customers add their own cards through Stripe — the app never stores a raw card number."
+          description="Search for a member to send a card link, charge their card or refund an order. Customers add their own cards through the secure card form — the app never stores a raw card number."
         >
           <SectionCard title={selected ? selected.name : 'Search for a customer'} description={selected?.email || undefined}>
             {selected ? (
@@ -238,13 +235,10 @@ export function AdminBilling({
             <SettingsRow title="Card on file" description="Without a saved card nothing below can be charged.">
               <CardLinkPanel userId={selected.id} />
             </SettingsRow>
-            <SettingsRow title="Subscription" description="A recurring charge against the saved card.">
-              <SubscriptionPanel userId={selected.id} />
-            </SettingsRow>
             <SettingsRow title="One-off charge" description="Bills the saved card once, after you confirm.">
               <ChargePanel userId={selected.id} name={selected.name} />
             </SettingsRow>
-            <SettingsRow title="Refund" description="By order number, or a Stripe pi_ id. Asks before it refunds.">
+            <SettingsRow title="Refund" description="By order number, or a Frame transfer id. Asks before it refunds.">
               <RefundPanel />
             </SettingsRow>
           </>
@@ -352,7 +346,7 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
       <SectionCard
         flush
         title="Discount codes"
-        description="The discount comes off the order total before the card is charged, so Stripe sees the reduced amount. Codes are redeemed when the order is placed."
+        description="The discount comes off the order total before the card is charged, so the card is only ever charged the reduced amount. Codes are redeemed when the order is placed."
         actions={
           <button
             type="button"
@@ -659,92 +653,10 @@ function CardLinkPanel({ userId }: { userId: string }) {
   return (
     <Panel
       title="Send a card link"
-      description="Emails the customer a secure Stripe page to save a card. Use this when they have no card on file."
+      description="Emails the customer a secure link to save a card. Use this when they have no card on file."
     >
       <form onSubmit={onSubmit}>
         <SubmitButton busy={busy} label="Create & email card link" />
-      </form>
-      <ResultBanner result={result} />
-    </Panel>
-  );
-}
-
-function SubscriptionPanel({ userId }: { userId: string }) {
-  const [productName, setProductName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [cadence, setCadence] = useState<AdminCadence>('monthly');
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<AdminBillingResult | null>(null);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setResult(null);
-    try {
-      setResult(
-        await adminCreateSubscription({
-          userId,
-          productName,
-          amountDollars: Number(amount) || 0,
-          cadence,
-        }),
-      );
-    } catch {
-      setResult({ ok: false, message: 'Request failed. Please try again.' });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Panel
-      title="Create a subscription"
-      description={`Starts a recurring charge against the customer's saved card. Every cycle ships, so enter the amount including shipping: $${SHIPPING_PRICE['2_DAY']} 2-day, $${SHIPPING_PRICE.OVERNIGHT} overnight cold-chain.`}
-    >
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className={labelClass}>Protocol / product name</label>
-          <input
-            aria-label="Protocol or product name"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            placeholder="GHK-Cu"
-            required
-            className={inputClass}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Amount (USD)</label>
-            <input
-              aria-label="Subscription amount in US dollars"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              inputMode="decimal"
-              placeholder="160.00"
-              required
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Billed</label>
-            <select
-              value={cadence}
-              onChange={(e) =>
-                setCadence(e.target.value as AdminCadence)
-              }
-              className={cn(inputClass, 'appearance-none')}
-            >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="sixMonth">Every 6 months</option>
-              <option value="annual">Annual</option>
-            </select>
-          </div>
-        </div>
-        <FormActions>
-          <SubmitButton busy={busy} label="Create subscription" />
-        </FormActions>
       </form>
       <ResultBanner result={result} />
     </Panel>
@@ -830,11 +742,10 @@ function RefundPanel() {
   const [result, setResult] = useState<AdminBillingResult | null>(null);
 
   // An operator has the order number — it is on the confirmation email, the
-  // member's order page and the support ticket. Requiring a pi_ id meant
-  // going to Stripe first, which is most of the work they wanted to skip.
-  // A pasted pi_ still works, so nothing that used to is broken.
+  // member's order page and the support ticket. A pasted Frame transfer id
+  // (a UUID, from app.framepayments.com) still works for a charge with no order.
   const trimmed = ref.trim();
-  const isStripeId = trimmed.startsWith('pi_');
+  const isTransferId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -849,7 +760,7 @@ function RefundPanel() {
     const amountDollars = amount.trim() ? Number(amount) || 0 : undefined;
     try {
       setResult(
-        isStripeId
+        isTransferId
           ? await adminRefund({ paymentIntentId: trimmed, amountDollars })
           : await adminRefundOrder({
               orderNumber: trimmed,
@@ -857,7 +768,7 @@ function RefundPanel() {
               reason: reason.trim() || undefined,
             }),
       );
-      if (!isStripeId) setReason('');
+      if (!isTransferId) setReason('');
     } catch {
       setResult({ ok: false, message: 'Request failed. Please try again.' });
     } finally {
@@ -868,7 +779,7 @@ function RefundPanel() {
   return (
     <Panel
       title="Refund an order"
-      description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Stripe pi_ id still works for anything without an order."
+      description="Enter the order number. Refunding by order records it on the member's timeline and clears the paid flag; a Frame transfer id still works for anything without an order."
     >
       {confirmDialog}
       <form onSubmit={onSubmit} className="space-y-4">
@@ -884,9 +795,9 @@ function RefundPanel() {
             required
             className={inputClass}
           />
-          {isStripeId && (
+          {isTransferId && (
             <p className="mt-1.5 text-xs text-ink/65">
-              Refunding a raw Stripe payment — this will not appear on the
+              Refunding a raw Frame transfer — this will not appear on the
               member&apos;s order timeline.
             </p>
           )}
@@ -904,7 +815,7 @@ function RefundPanel() {
             className={inputClass}
           />
         </div>
-        {!isStripeId && (
+        {!isTransferId && (
           <div>
             <label htmlFor="refund-reason" className={labelClass}>
               Reason (shown on the order timeline)

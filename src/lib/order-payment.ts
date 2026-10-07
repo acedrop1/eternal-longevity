@@ -3,12 +3,13 @@ import 'server-only';
 /**
  * Save the card at checkout; charge it when the prescriber approves.
  *
- * The member enters a card and is not charged. When Dr. Elder signs, that card
- * is billed off-session — which is exactly what they authorised at checkout.
+ * The member enters a card and is not charged (lib/cards). When Dr. Elder
+ * signs, that card is billed off-session — which is exactly what they
+ * authorised at checkout (lib/pay-on-approval).
  * A decline charges nothing, so there is nothing to refund.
  *
  * The alternative was charging up front and refunding declines. It is simpler
- * to reason about, but Stripe keeps roughly 2.9% + 30c on every refund, so
+ * to reason about, but the processor keeps its fee on every refund, so
  * each decline would cost about \$5.50 with no revenue — and a visible refund
  * rate is exactly what underwriting reads as risk on a restricted business.
  * Not charging in the first place avoids both.
@@ -18,66 +19,12 @@ import 'server-only';
  * order later declined.
  */
 
-import { getStripe, stripeConfigured } from '@/lib/stripe';
-import { getOrCreateStripeCustomer } from '@/lib/billing';
-import { getSession } from '@/lib/auth-server';
+import { createRefund, getTransfer, listRefunds } from '@/lib/frame';
+import { paymentsConfigured } from '@/lib/payments';
 import { refundedEmail, sendEmail } from '@/lib/email';
-import {
-  createSupabaseAdminClient,
-  supabaseAdminConfigured,
-} from '@/lib/supabase/admin';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { intentBelongsTo } from '@/lib/order-rules';
-import { syncStripeAmounts } from '@/lib/profit-data';
-
-/**
- * Create the setup the member confirms at checkout.
- *
- * A SetupIntent stores the card against the Stripe customer without moving
- * money and without a pending line on their statement. `usage: 'off_session'`
- * tells Stripe the card will be charged later with nobody at the keyboard, so
- * it collects the right authentication now rather than failing the charge
- * after a prescription has been signed.
- *
- * `amountCents` is unused by the SetupIntent itself and kept only so the
- * caller can keep passing the order total for display.
- */
-export async function createOrderAuthAction(amountCents: number): Promise<{
-  ok: boolean;
-  clientSecret?: string;
-  error?: string;
-}> {
-  const user = await getSession();
-  if (!user) return { ok: false, error: 'not_authenticated' };
-  if (!stripeConfigured()) return { ok: false, error: 'not_configured' };
-  if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    return { ok: false, error: 'invalid_amount' };
-  }
-
-  const customerId = await getOrCreateStripeCustomer({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-  });
-
-  const intent = await getStripe().setupIntents.create({
-    customer: customerId,
-    usage: 'off_session',
-    /*
-     * Cards only, deliberately — not automatic_payment_methods. This whole
-     * model rests on charging the saved credential off-session once the
-     * prescriber approves, and every method enabled in the dashboard that
-     * cannot be charged that way is a member who saves something, waits for
-     * approval, and then gets a pay link instead of a shipped order. Apple Pay
-     * and Google Pay still appear: they are wallets that hand back a card.
-     */
-    payment_method_types: ['card'],
-  });
-
-  return {
-    ok: true,
-    clientSecret: intent.client_secret ?? undefined,
-  };
-}
+import { syncProcessorAmounts } from '@/lib/profit-data';
 
 /**
  * Refund in full. Called when the prescriber declines, or when an order is
@@ -101,45 +48,46 @@ export async function refundDeclinedOrder(
   refunded?: boolean;
   error?: string;
 }> {
-  if (!stripeConfigured() || !supabaseAdminConfigured()) {
+  if (!paymentsConfigured()) {
     return { ok: false, error: 'not_configured' };
   }
 
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, member_email, total_cents, stripe_payment_intent_id')
+    .select('id, order_number, member_name, member_email, total_cents, frame_transfer_id')
     .eq('order_number', orderNumber)
     .maybeSingle();
 
-  if (!order?.stripe_payment_intent_id) return { ok: true, refunded: false };
+  // Never charged: nothing to return.
+  if (!order?.frame_transfer_id) return { ok: true, refunded: false };
 
   try {
-    const stripe = getStripe();
-    const pi = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
-    // Never refund an intent this order did not create — the id on the row is
-    // only trusted as far as the intent's own metadata agrees.
-    if (!intentBelongsTo(pi, order)) return { ok: true, refunded: false };
+    const t = await getTransfer(order.frame_transfer_id);
+    if (!t.ok) return { ok: false, error: `refund_failed_${t.code}` };
+    // Never refund a charge this order did not make — the id on the row is
+    // only trusted as far as the charge's own metadata agrees.
+    if (!intentBelongsTo(t.data, order)) return { ok: true, refunded: false };
 
-    if (pi.status !== 'succeeded') {
-      /*
-       * Nothing moved yet, but a pay form left open still holds this intent's
-       * client secret. Cancel it so the order cannot be paid after the fact.
-       * A 'processing' intent can't be cancelled; if it lands, the webhook
-       * refunds it.
-       */
-      if (pi.status !== 'canceled' && pi.status !== 'processing') {
-        await stripe.paymentIntents.cancel(pi.id);
-      }
-      return { ok: true, refunded: false };
-    }
+    /*
+     * Nothing moved yet (declined, or still waiting on the bank). If it lands
+     * after this, it lands on a closed order and lib/payment-record refunds it.
+     */
+    if (t.data.status !== 'succeeded') return { ok: true, refunded: false };
 
-    await stripe.refunds.create(
-      { payment_intent: pi.id },
-      // A retried cancel must not refund twice.
-      { idempotencyKey: `refund-${pi.id}` },
-    );
-    await syncStripeAmounts(db, pi.id); // profit: refunded_cents (never throws)
+    // Only what is still held: a retried cancel finds nothing left and stops,
+    // and an earlier partial refund is not paid out twice.
+    const prior = await listRefunds(t.data.id);
+    if (!prior.ok) return { ok: false, error: `refund_failed_${prior.code}` };
+    const returned = prior.data
+      .filter((r) => r.status !== 'failed' && r.status !== 'canceled')
+      .reduce((sum, r) => sum + (r.amount ?? 0), 0);
+    const remaining = t.data.amount - returned;
+    if (remaining <= 0) return { ok: true, refunded: false };
+
+    const refund = await createRefund({ transferId: t.data.id, amountCents: returned ? remaining : undefined });
+    if (!refund.ok) return { ok: false, error: `refund_failed_${refund.code}` };
+    await syncProcessorAmounts(db, t.data.id); // profit: refunded_cents (never throws)
 
     await db
       .from('orders')

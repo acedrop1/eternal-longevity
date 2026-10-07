@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             'Contact: email, shipping address, and phone number.',
             'Health information: height, weight, medical history, medications, allergies, and anything else you share with the prescriber.',
             'Account: password (stored hashed), sign-in and security factors, and login history.',
-            'Payment: billing address and card brand and last four digits. Full card numbers are handled by Stripe and are never stored on our servers.',
+            'Payment: billing address and card brand and last four digits. Full card numbers are handled by our payment processor and are never stored on our servers.',
             'Technical: IP address and browser and device details, recorded in server and security logs.',
           ],
         },
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
           bullets: [
             'The state-licensed pharmacy that fills and ships your prescription (named on your prescription label).',
             'Shipping carriers, for delivery.',
-            'Stripe, to save your card and process payments.',
+            'Frame Payments, our payment processor, to save your card and process payments.',
             'Google, whose Places service suggests addresses as you type your shipping address at checkout. It receives what you type in that field, not your health information.',
             'Hosting, database, email and text-message providers that run the service for us.',
             'Government bodies or law enforcement when the law requires it.',
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
         {
           heading: 'Cookies',
           paragraphs: [
-            'We set only strictly necessary cookies: to keep you signed in and protect against forgery. Your cart and the contact details from an unfinished assessment are kept in your browser’s local storage, and a signed-in member’s unfinished assessment is saved to their account. At checkout, Stripe sets its own fraud-prevention cookies and Google Places suggests addresses. We run no analytics or advertising pixels. See our Cookie Notice.',
+            'We set only strictly necessary cookies: to keep you signed in and protect against forgery. Your cart and the contact details from an unfinished assessment are kept in your browser’s local storage, and a signed-in member’s unfinished assessment is saved to their account. At checkout, our payment processor may set its own fraud-prevention cookies and Google Places suggests addresses. We run no analytics or advertising pixels. See our Cookie Notice.',
           ],
         },
         {

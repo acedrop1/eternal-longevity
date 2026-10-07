@@ -3,7 +3,7 @@ import type { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
 /*
  * Revenue, one definition for Overview, Billing and the daily report. Money
- * counts when it landed: `paid_confirmed_at`, which the Stripe webhook writes
+ * counts when it landed: `paid_confirmed_at`, which lib/payment-record writes
  * and a full refund clears. Not an order status, and not the prescriber's
  * signature.
  */

@@ -7,7 +7,7 @@
  * that product is live the row is listed, shows its image and price and links
  * to its product page. Drafts are not listed at all unless LIST_DRAFTS is on.
  * ponytail: static list; move into Admin → Products before launch so checkout
- * and Stripe prices exist for every row.
+ * prices exist for every row.
  */
 
 /**

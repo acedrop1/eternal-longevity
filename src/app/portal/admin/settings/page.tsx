@@ -8,7 +8,7 @@ import {
 } from '@/components/admin/AdminSettings';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { supabaseConfigured } from '@/lib/env';
-import { stripeConfigured } from '@/lib/stripe';
+import { frameConfigured } from '@/lib/frame';
 import { emailConfigured } from '@/lib/email';
 import { smsConfigured } from '@/lib/sms';
 import { getShippingRates, rxhereConfigured, rxhereDryRun } from '@/lib/rxhere';
@@ -33,6 +33,14 @@ export default async function AdminSettingsPage() {
   // A real read-only call with the saved token: the only way to know a secret env value is right.
   const rx = rxhereConfigured() ? await getShippingRates() : null;
 
+  // No cheap read-only Frame call, so this reads the key's prefix (never the key).
+  const frameKey = process.env.FRAME_SECRET_KEY ?? '';
+  const frameMode = frameKey.startsWith('sk_production_')
+    ? 'live keys'
+    : frameKey.startsWith('sk_sandbox_')
+      ? 'sandbox keys'
+      : 'unrecognised key';
+
   const services: ServiceStatus[] = [
     {
       name: 'Supabase',
@@ -40,9 +48,11 @@ export default async function AdminSettingsPage() {
       detail: 'Database, authentication, and file storage',
     },
     {
-      name: 'Stripe',
-      connected: stripeConfigured(),
-      detail: 'Payments and recurring subscriptions',
+      name: 'Payments',
+      connected: frameConfigured(),
+      detail: !frameConfigured()
+        ? 'Card processor key not set'
+        : `Frame · ${frameMode}${process.env.FRAME_WEBHOOK_SECRET ? '' : ' · webhook not set'}`,
     },
     {
       name: 'Resend',

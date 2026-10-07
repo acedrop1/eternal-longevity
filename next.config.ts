@@ -26,7 +26,10 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
           },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://maps.gstatic.com https://*.supabase.co https://static.legitscript.com; media-src 'self'; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://places.googleapis.com; frame-src https://js.stripe.com https://hooks.stripe.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+          // Card fields: Frame.js loads from js.framepayments.com. Its docs do not
+          // name the card iframe, 3D Secure or fraud-signal hosts, so the
+          // framepayments.com wildcard covers them in connect-src and frame-src.
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.framepayments.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://maps.gstatic.com https://*.supabase.co https://static.legitscript.com; media-src 'self'; connect-src 'self' https://api.framepayments.com https://*.framepayments.com https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://places.googleapis.com; frame-src https://js.framepayments.com https://*.framepayments.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {

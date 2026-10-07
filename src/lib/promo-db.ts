@@ -3,11 +3,9 @@
 /**
  * Promotion codes.
  *
- * The discount is applied to the order total before the PaymentIntent is
- * created, so Stripe charges the already-reduced amount. Stripe's own coupons
- * only auto-apply to Checkout Sessions and Subscriptions; the first charge
- * here is a bare PaymentIntent minted from a pay link after approval, so a
- * Stripe coupon attached to a customer would silently do nothing.
+ * The discount is applied to the order total when the order is placed, so the
+ * card is charged the already-reduced amount (lib/payments charges the
+ * order's total as it stands). There are no processor-side coupons.
  *
  * Redemption happens when the order is placed, not when it is paid. An order
  * can sit unpaid for seven days, and holding a limited code open that whole

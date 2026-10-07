@@ -4,8 +4,8 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { ageFrom, formatDate } from '@/lib/format';
-import { defaultCardSummary } from '@/lib/pay-on-approval';
-import { stripeConfigured } from '@/lib/stripe';
+import { cardSummaryFor } from '@/lib/pay-on-approval';
+import { paymentsConfigured } from '@/lib/payments';
 import { getSession } from '@/lib/auth-server';
 import {
   categoryAnswers,
@@ -149,20 +149,14 @@ export async function reviewsForOrders(
   }
 
   /*
-   * Asked of Stripe, one customer at a time. There are never many orders
-   * waiting at once, and being wrong about whether a card exists is worse than
-   * the round trip.
+   * Asked of the processor, one member at a time. There are never many
+   * orders waiting at once, and being wrong about whether a card exists is
+   * worse than the round trip.
    */
   const cards = new Map<string, string | null>();
-  if (stripeConfigured()) {
-    const { data: profiles } = await db
-      .from('profiles')
-      .select('id, stripe_customer_id')
-      .in('id', userIds as string[]);
-    for (const pr of profiles ?? []) {
-      if (pr.stripe_customer_id) {
-        cards.set(pr.id, await defaultCardSummary(pr.stripe_customer_id));
-      }
+  if (paymentsConfigured()) {
+    for (const id of userIds as string[]) {
+      cards.set(id, await cardSummaryFor(id));
     }
   }
 

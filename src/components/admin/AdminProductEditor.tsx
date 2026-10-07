@@ -13,7 +13,7 @@ import { useConfirm } from '@/components/ui/useConfirm';
 import { SectionCard, StatusBadge, headerButton, secondaryButton } from '@/components/admin/IndexTable';
 import { DetailHeader, detailGrid } from '@/components/admin/DetailHeader';
 import { PRODUCT_STATUS } from '@/components/admin/AdminProductsIndex';
-import { planEconomics } from '@/lib/profit';
+import { PROCESSING_FEE_FIXED_CENTS, PROCESSING_FEE_PCT, planEconomics } from '@/lib/profit';
 import { SHIPPING_PRICE, shippingMethodFor } from '@/lib/shipping';
 import { formatMoney } from '@/lib/format';
 
@@ -293,7 +293,7 @@ export function AdminProductEditor({
 
           <SectionCard
             title="Margin by plan"
-            description={`Admin only. Charged = plan price + $${SHIPPING_PRICE[method]} shipping the customer pays. Stripe fee estimated at 2.9% + 30¢.`}
+            description={`Admin only. Charged = plan price + $${SHIPPING_PRICE[method]} shipping the customer pays. Processing fee estimated at ${(PROCESSING_FEE_PCT * 100).toFixed(1)}% + ${PROCESSING_FEE_FIXED_CENTS}¢.`}
             flush
           >
             {p.pharmacy.unitCost > 0 ? (
@@ -301,7 +301,7 @@ export function AdminProductEditor({
                 <table className="w-full min-w-[560px] text-[14px] tabular-nums">
                   <thead>
                     <tr className="bg-milk text-left text-[13px] text-ink/70">
-                      {['Plan', 'Charged', 'Product cost', 'Pharmacy shipping', 'Stripe fee', 'Profit', 'Margin'].map((h, i) => (
+                      {['Plan', 'Charged', 'Product cost', 'Pharmacy shipping', 'Processing fee', 'Profit', 'Margin'].map((h, i) => (
                         <th key={h} className={cn('whitespace-nowrap px-2.5 py-2 font-semibold first:pl-4 last:pr-4', i > 0 && 'text-right')}>
                           {h}
                         </th>

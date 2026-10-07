@@ -4,74 +4,127 @@
  * Card form on the approved-order pay link.
  *
  * The prescriber has already approved by the time anyone sees this, so the
- * PaymentIntent charges on confirm — there is no authorize-then-capture step
- * that could strand money on a card. The Stripe webhook flips the order to
- * paid; this component only has to get the customer through the form.
+ * charge goes through on submit — there is no authorize-then-capture step
+ * that could strand money on a card. The server charges (and marks the order
+ * paid); this component gets the customer through the form, and through
+ * their bank's check when the bank asks for one.
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { loadStripe, type Stripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
-} from '@stripe/react-stripe-js';
-import { createPayIntentAction } from '@/lib/checkout-payment-actions';
+import { useRef, useState } from 'react';
+import { confirm3ds, FrameCardField, type FrameCardHandle } from '@/components/payments/FrameCardField';
+import { finishPaymentAction, payOrderAction } from '@/lib/checkout-payment-actions';
 
-const ERRORS: Record<string, string> = {
-  invalid_link: 'This payment link is no longer valid.',
-  already_paid: 'This order has already been paid.',
-  expired: 'This payment link has expired. We can send you a fresh one.',
-  not_configured: 'Card payment is not available right now.',
-  invalid_amount: 'We could not read the amount for this order.',
-};
+const TRY_AGAIN = 'We could not process that payment. Please try again.';
 
-function CardFields({
+export function PayForm({
+  token,
   amountLabel,
   cadenceLabel,
   orderNumber,
+  accountId,
+  cardSummary,
 }: {
+  token: string;
   amountLabel: string;
   cadenceLabel: string;
   orderNumber: string;
+  /** The member's processor account, when it exists: links fraud signals to the charge. */
+  accountId?: string;
+  /** The card on file, offered as an option; null or absent asks for a card. */
+  cardSummary?: { brand: string; last4: string } | null;
 }) {
-  const stripe = useStripe();
-  const elements = useElements();
+  const field = useRef<FrameCardHandle>(null);
+  // The page exists because the saved card did not go through, so a new card leads.
+  const [useSaved, setUseSaved] = useState(false);
+  const [complete, setComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<'paid' | 'pending' | null>(null);
   const recurring = cadenceLabel.toLowerCase() !== 'one-time';
+  const saved = useSaved && !!cardSummary;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!stripe || !elements || submitting || !authorized) return;
+    if (submitting || !authorized) return;
+    const card = saved ? null : (field.current?.getCard() ?? null);
+    if (!saved && !card) return;
 
     setSubmitting(true);
     setError(null);
-
-    const { error: submitErr } = await elements.submit();
-    if (submitErr) {
-      setError(submitErr.message ?? 'Please check your card details.');
+    try {
+      const res = await payOrderAction(token, card);
+      if (!res.ok) {
+        if (!saved && res.error === 'card_rejected') field.current?.setFieldError('number', res.message);
+        setError(res.message || TRY_AGAIN);
+        return;
+      }
+      if ('paid' in res && res.paid) return setDone('paid');
+      if ('requiresAction' in res && res.requiresAction) {
+        // The bank wants the cardholder to confirm. The server then reads the outcome.
+        const check = await confirm3ds(res.clientSecret, accountId);
+        if (!check.ok) {
+          setError(check.message);
+          return;
+        }
+        const fin = await finishPaymentAction(token, res.transferId);
+        if (!fin.ok) {
+          setError(fin.message || TRY_AGAIN);
+          return;
+        }
+        return setDone(fin.paid ? 'paid' : 'pending');
+      }
+      setDone('pending');
+    } catch {
+      setError(TRY_AGAIN);
+    } finally {
       setSubmitting(false);
-      return;
     }
+  }
 
-    const { error: confirmErr } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}${window.location.pathname}?paid=1`,
-      },
-    });
-
-    // We only get here if confirmation failed — success redirects away.
-    setError(confirmErr.message ?? 'We could not process that card.');
-    setSubmitting(false);
+  if (done) {
+    return (
+      <div role="status" className="rounded-inner bg-butter-soft px-4 py-4 ring-1 ring-butter-deep/40">
+        <p className="text-[15px] font-semibold text-ink">
+          {done === 'paid' ? 'Payment received. Thank you.' : 'Payment is processing.'}
+        </p>
+        <p className="mt-1 text-[15px] leading-relaxed text-ink/80">
+          {done === 'paid'
+            ? `Order ${orderNumber} is on its way to the pharmacy. You'll get tracking as soon as it ships.`
+            : `Your bank is still confirming it. We'll email you as soon as it clears and send order ${orderNumber} to the pharmacy.`}
+        </p>
+      </div>
+    );
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement options={{ layout: 'tabs' }} />
+      {cardSummary && (
+        <div role="radiogroup" aria-label="Card to pay with" className="mb-4 grid gap-2 sm:grid-cols-2">
+          {[
+            { value: true, label: `${cardSummary.brand.charAt(0).toUpperCase()}${cardSummary.brand.slice(1)} •••• ${cardSummary.last4}` },
+            { value: false, label: 'A different card' },
+          ].map((o) => (
+            <button
+              key={o.label}
+              type="button"
+              role="radio"
+              aria-checked={useSaved === o.value}
+              onClick={() => {
+                setUseSaved(o.value);
+                setError(null);
+              }}
+              className={`min-h-[48px] rounded-inner px-4 py-3 text-left text-[15px] font-medium text-ink ring-1 transition-colors ${
+                useSaved === o.value ? 'bg-butter-soft ring-butter-deep' : 'bg-white ring-ink/10 hover:bg-milk'
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!saved && <FrameCardField ref={field} accountId={accountId} onCompleteChange={setComplete} />}
 
       {error && (
         <p role="alert" className="mt-4 rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
@@ -112,8 +165,8 @@ function CardFields({
 
       <button
         type="submit"
-        disabled={!stripe || submitting || !authorized}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-butter px-5 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={submitting || !authorized || (!saved && !complete)}
+        className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-butter px-5 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting && (
           <span
@@ -125,87 +178,8 @@ function CardFields({
       </button>
 
       <p className="mt-3 text-center text-[12px] text-ink/65">
-        Secured by Stripe. Your card details never touch our servers.
+        Card details are encrypted in your browser and never touch our servers.
       </p>
     </form>
-  );
-}
-
-export function PayForm({
-  token,
-  publishableKey,
-  amountLabel,
-  cadenceLabel,
-  orderNumber,
-}: {
-  token: string;
-  publishableKey: string;
-  amountLabel: string;
-  cadenceLabel: string;
-  orderNumber: string;
-}) {
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const stripePromise = useMemo<Promise<Stripe | null>>(
-    () => loadStripe(publishableKey),
-    [publishableKey],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    createPayIntentAction(token).then((res) => {
-      if (cancelled) return;
-      if (res.ok && res.clientSecret) setClientSecret(res.clientSecret);
-      else setError(ERRORS[res.error ?? ''] ?? 'We could not start payment.');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
-  if (error) {
-    return (
-      <p role="alert" className="rounded-inner bg-red-50 px-4 py-3 text-[15px] leading-relaxed text-red-800 ring-1 ring-red-700/20">
-        {error}
-      </p>
-    );
-  }
-
-  if (!clientSecret) {
-    return (
-      <div className="flex items-center gap-3 text-[13px] font-medium text-ink/65">
-        <span
-          aria-hidden
-          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/15 border-t-ink"
-        />
-        Loading secure payment…
-      </div>
-    );
-  }
-
-  return (
-    <Elements
-      stripe={stripePromise}
-      options={{
-        clientSecret,
-        appearance: {
-          theme: 'stripe',
-          variables: {
-            colorPrimary: '#111111',
-            colorBackground: '#ffffff',
-            colorText: '#111111',
-            borderRadius: '18px',
-            fontSizeBase: '16px',
-          },
-        },
-      }}
-    >
-      <CardFields
-        amountLabel={amountLabel}
-        cadenceLabel={cadenceLabel}
-        orderNumber={orderNumber}
-      />
-    </Elements>
   );
 }

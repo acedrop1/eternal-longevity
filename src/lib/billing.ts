@@ -1,241 +1,59 @@
 /**
- * Stripe billing helpers — server-only.
+ * Admin billing helpers — server-only.
  *
- * Card data NEVER touches this code or the database. Customers enter their card
- * into Stripe-hosted fields; here we only ever work with Stripe IDs and the
- * brand / last-4 metadata Stripe returns. This keeps the app out of the
- * heavyweight PCI-DSS scope.
+ * Card data NEVER touches this code or the database. Members type their card
+ * into the processor's own field (lib/cards); here we only ever work with the
+ * processor's ids and the brand / last-4 it returns.
  *
- * Every function assumes Stripe + the Supabase service role are configured;
- * callers must guard with `billingConfigured()` first.
+ * Plans are rows in `subscriptions`, renewed by our own cron (lib/refills);
+ * nothing here creates a recurring charge at the processor.
  */
 import 'server-only';
-import { getStripe, stripeConfigured } from './stripe';
-import {
-  createSupabaseAdminClient,
-  supabaseAdminConfigured,
-} from './supabase/admin';
-import { SITE_URL } from './site';
-import { nextOrderNumber } from '@/lib/order-number';
+import { confirmTransfer, createCharge } from './frame';
+import { cardOnFile, frameAccountFor, paymentsConfigured } from './payments';
 
-/** True when both Stripe and the Supabase service role are available. */
+/** True when both the processor and the Supabase service role are available. */
 export function billingConfigured(): boolean {
-  return stripeConfigured() && supabaseAdminConfigured();
+  return paymentsConfigured();
 }
-
-export interface SavedCard {
-  id: string;
-  brand: string;
-  last4: string;
-  expMonth: number | null;
-  expYear: number | null;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Customers                                                                 */
-/* -------------------------------------------------------------------------- */
 
 /**
- * Find or create the Stripe customer for a member, caching the id on their
- * profile row so we never create duplicates.
+ * Charge a member's card on file a one-off amount (a merchant-initiated
+ * charge tied to no order). Tagged `admin_charge` so the webhook's order
+ * bookkeeping leaves it alone. Messages are for the admin who pressed it.
  */
-export async function getOrCreateStripeCustomer(params: {
-  userId: string;
-  email: string;
-  name?: string;
-}): Promise<string> {
-  const stripe = getStripe();
-  const db = createSupabaseAdminClient();
-
-  const { data: profile } = await db
-    .from('profiles')
-    .select('stripe_customer_id')
-    .eq('id', params.userId)
-    .maybeSingle();
-
-  if (profile?.stripe_customer_id) return profile.stripe_customer_id;
-
-  const customer = await stripe.customers.create({
-    email: params.email,
-    name: params.name,
-    metadata: { user_id: params.userId },
-  });
-
-  await db
-    .from('profiles')
-    .update({ stripe_customer_id: customer.id })
-    .eq('id', params.userId);
-
-  return customer.id;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Card-on-file (customer enters their own card on a Stripe-hosted page)      */
-/* -------------------------------------------------------------------------- */
-
-/**
- * A Stripe-hosted page where the customer saves a card. The resulting payment
- * method is attached to their Stripe customer — the card number never reaches
- * our servers. Hand this URL to the customer (link or email).
- */
-export async function createCardSetupSession(params: {
-  userId: string;
-  email: string;
-  name?: string;
-}): Promise<{ url: string }> {
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer(params);
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'setup',
-    customer: customerId,
-    success_url: `${SITE_URL}/portal/account?card=added`,
-    cancel_url: `${SITE_URL}/portal/account`,
-  });
-
-  if (!session.url) {
-    throw new Error('Stripe did not return a setup URL.');
-  }
-  return { url: session.url };
-}
-
-/** List the cards a customer has on file (display metadata only). */
-export async function listPaymentMethods(
-  customerId: string,
-): Promise<SavedCard[]> {
-  const stripe = getStripe();
-  const pms = await stripe.paymentMethods.list({
-    customer: customerId,
-    type: 'card',
-  });
-  return pms.data.map((pm) => ({
-    id: pm.id,
-    brand: pm.card?.brand ?? 'card',
-    last4: pm.card?.last4 ?? '0000',
-    expMonth: pm.card?.exp_month ?? null,
-    expYear: pm.card?.exp_year ?? null,
-  }));
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Subscriptions                                                             */
-/* -------------------------------------------------------------------------- */
-
-export type BillingInterval = 'day' | 'week' | 'month' | 'year';
-
-/** Create a recurring subscription billed against the customer's saved card. */
-export async function createSubscription(params: {
-  userId: string;
-  email: string;
-  name?: string;
-  productName: string;
-  amountCents: number;
-  interval: BillingInterval;
-  intervalCount?: number;
-}): Promise<{ subscriptionId: string; status: string }> {
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer(params);
-
-  const cards = await stripe.paymentMethods.list({
-    customer: customerId,
-    type: 'card',
-  });
-  if (cards.data.length === 0) {
-    throw new Error(
-      'This customer has no card on file. Send them an add-a-card link first.',
-    );
-  }
-
-  const product = await stripe.products.create({ name: params.productName });
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    default_payment_method: cards.data[0].id,
-    items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product: product.id,
-          unit_amount: params.amountCents,
-          recurring: {
-            interval: params.interval,
-            interval_count: params.intervalCount ?? 1,
-          },
-        },
-      },
-    ],
-    metadata: { user_id: params.userId },
-  });
-
-  return { subscriptionId: subscription.id, status: subscription.status };
-}
-
-export async function pauseSubscription(subscriptionId: string): Promise<void> {
-  await getStripe().subscriptions.update(subscriptionId, {
-    pause_collection: { behavior: 'void' },
-  });
-}
-
-export async function resumeSubscription(
-  subscriptionId: string,
-): Promise<void> {
-  await getStripe().subscriptions.update(subscriptionId, {
-    pause_collection: null,
-  });
-}
-
-export async function cancelSubscription(
-  subscriptionId: string,
-): Promise<void> {
-  await getStripe().subscriptions.cancel(subscriptionId);
-}
-
-/* -------------------------------------------------------------------------- */
-/*  One-off charges + refunds                                                 */
-/* -------------------------------------------------------------------------- */
-
-/** Charge a customer's saved card a one-off amount (a merchant-initiated charge). */
 export async function chargeOnce(params: {
   userId: string;
-  email: string;
-  name?: string;
   amountCents: number;
   description: string;
-}): Promise<{ paymentIntentId: string; status: string }> {
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer(params);
-
-  const cards = await stripe.paymentMethods.list({
-    customer: customerId,
-    type: 'card',
-  });
-  if (cards.data.length === 0) {
-    throw new Error(
-      'This customer has no card on file. Send them an add-a-card link first.',
-    );
+}): Promise<{ ok: true; status: string; transferId: string } | { ok: false; message: string }> {
+  const [accountId, card] = await Promise.all([frameAccountFor(params.userId), cardOnFile(params.userId)]);
+  if (!accountId) return { ok: false, message: 'Could not set up payment for this member.' };
+  if (!card) {
+    return { ok: false, message: 'This customer has no card on file. Send them an add-a-card link first.' };
   }
 
-  const intent = await stripe.paymentIntents.create({
-    amount: params.amountCents,
-    currency: 'usd',
-    customer: customerId,
-    payment_method: cards.data[0].id,
+  // Two steps, like every charge (lib/frame): nothing moves until confirmed.
+  const created = await createCharge({
+    accountId,
+    paymentMethodId: card.id,
+    amountCents: params.amountCents,
     description: params.description,
-    off_session: true,
-    confirm: true,
+    metadata: { admin_charge: 'true', user_id: params.userId },
   });
-
-  return { paymentIntentId: intent.id, status: intent.status };
-}
-
-/** Refund a payment in full, or in part when `amountCents` is given. */
-export async function refundPayment(
-  paymentIntentId: string,
-  amountCents?: number,
-): Promise<{ refundId: string; status: string }> {
-  const stripe = getStripe();
-  const refund = await stripe.refunds.create({
-    payment_intent: paymentIntentId,
-    ...(amountCents ? { amount: amountCents } : {}),
-  });
-  return { refundId: refund.id, status: refund.status ?? 'pending' };
+  if (!created.ok) {
+    return created.code === 'declined'
+      ? { ok: false, message: `Declined: ${created.decline?.message ?? 'the card was declined'}.` }
+      : { ok: false, message: `The charge could not start (${created.code}). Nothing was charged.` };
+  }
+  const res = await confirmTransfer(created.data.id);
+  if (!res.ok) {
+    return res.code === 'declined'
+      ? { ok: false, message: `Declined: ${res.decline?.message ?? 'the card was declined'}.` }
+      : {
+          ok: false,
+          message: `No answer from the processor (${res.code}). Check transfer ${created.data.id} in the Frame dashboard before charging again.`,
+        };
+  }
+  return { ok: true, status: res.data.status, transferId: res.data.id };
 }

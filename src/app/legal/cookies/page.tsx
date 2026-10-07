@@ -19,7 +19,7 @@ export default function CookiesPage() {
     <LegalLayout
       title="Cookie Notice"
       effective="October 2026"
-      lead={`This is a short page because we keep very little in your browser. We run no analytics and no advertising pixels on this site. The few things we do store are there to make the site work, and two services we rely on at checkout (Stripe and Google) set or use their own, described below.`}
+      lead={`This is a short page because we keep very little in your browser. We run no analytics and no advertising pixels on this site. The few things we do store are there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own, described below.`}
       sections={[
         {
           heading: `What We Set`,
@@ -54,7 +54,7 @@ export default function CookiesPage() {
             `Two services we use at checkout load their own code and may set or read their own cookies:`,
           ],
           bullets: [
-            `Stripe processes payments. On the pages where you enter a card, Stripe's script sets cookies used to detect and prevent fraud. Stripe's own privacy policy governs that data.`,
+            `Frame Payments processes payments. On the pages where you enter a card, its script may set cookies and collects device and browser signals used to detect and prevent fraud. Frame Payments' own privacy policy governs that data.`,
             `Google Places suggests addresses as you type your shipping address. Google receives what you type in that field, not your health information.`,
           ],
         },

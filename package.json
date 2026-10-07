@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@stripe/react-stripe-js": "^6.9.0",
-    "@stripe/stripe-js": "^9.15.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "clsx": "^2.1.1",
@@ -21,7 +19,6 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "resend": "^6.12.3",
-    "stripe": "^22.1.1",
     "tailwind-merge": "^2.5.5",
     "twilio": "^6.0.2"
   },

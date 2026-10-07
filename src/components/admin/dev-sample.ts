@@ -204,7 +204,7 @@ export const SAMPLE_HISTORY: Order[] = Array.from({ length: 64 }, (_, i) => {
 
 /**
  * Every sample order money landed on, as profit reads it, with a sample
- * Stripe fee and refund. The caller adds the cost snapshot to every row that
+ * processing fee and refund. The caller adds the cost snapshot to every row that
  * has a fee, as the webhook writes both. The converter is passed in so this
  * fixture stays free of server imports.
  */
@@ -216,7 +216,7 @@ export function sampleEconOrders<T extends { number: string; totalCents: number;
     if (i % 5 === 1) return convert(o); // no snapshot: estimated
     const t = Math.round(o.total * 100);
     const refundedCents = i === 7 ? 3000 : i === 22 ? t : 0;
-    // Snapshot fee: Stripe's real fee runs a touch under the list price on some cards.
+    // Snapshot fee: the processor's real fee runs a touch under the list price on some cards.
     return convert(o, { stripeFeeCents: fee(t) - (i % 3 === 0 && t > 0 ? 4 : 0), refundedCents });
   });
   const board = SAMPLE_ORDERS.filter((o) => o.paidAt).map((o) => convert(o));

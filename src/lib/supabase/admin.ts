@@ -4,7 +4,7 @@
  * expose the resulting client or the key to the browser.
  *
  * Good uses: writing an intake submission before the member has an account,
- * processing a Stripe webhook, admin/ops jobs.
+ * processing a payment webhook, admin/ops jobs.
  */
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';

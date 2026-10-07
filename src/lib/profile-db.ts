@@ -263,7 +263,7 @@ export async function addCardAction(
   if (!user) return { ok: false, error: 'not_authenticated' };
   const db = await createSupabaseServerClient();
   // Only the display fields are stored — never a full card number. Real
-  // charges run on a Stripe payment-method token.
+  // charges run on the processor's saved card (lib/payments).
   const { data, error } = await db
     .from('payment_methods')
     .insert({

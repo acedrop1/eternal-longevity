@@ -577,7 +577,7 @@ export function refundedEmail(input: {
            ? `<p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>`
            : ''
        }
-       ${nextStep('It goes back to the card you paid with. Banks usually post it within 5&ndash;10 business days; it&rsquo;s out of our hands once Stripe sends it.')}
+       ${nextStep('It goes back to the card you paid with. Banks usually post it within 5&ndash;10 business days; it&rsquo;s out of our hands once it&rsquo;s sent.')}
        <p style="margin:0;">Questions? Just reply to this email.</p>`,
       { preheader: 'It goes back to the card you paid with.' },
     ),
@@ -630,7 +630,7 @@ export function chargeFailedInternalEmail(input: {
            <strong style="color:${INK};">${escapeHtml(input.memberName)}</strong><br/>
            <span style="color:${MUTED};">${escapeHtml(input.memberEmail)}</span><br/>
            <span style="color:${MUTED};">Amount:</span> $${(input.amount / 100).toFixed(2)}<br/>
-           <span style="color:${MUTED};">Stripe said:</span> ${escapeHtml(input.reason)}
+           <span style="color:${MUTED};">Card processor said:</span> ${escapeHtml(input.reason)}
          </td></tr>
        </table>
        <p style="margin:0;color:${MUTED};font-size:13px;"><strong style="color:${INK};">This order will not ship.</strong> Submitting to the pharmacy is blocked until it is paid.</p>`,

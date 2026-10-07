@@ -71,9 +71,11 @@ interface CheckoutFlowProps {
   defaultState?: string;
   /** Absent in every environment without a Places key; the field degrades. */
   googlePlacesKey?: string;
-  /** Empty when Stripe is unconfigured; the card step hides and the order
-   *  can still be placed, which keeps preview environments usable. */
-  stripePublishableKey?: string;
+  /** False when card payments are unconfigured; the card step hides and the
+   *  order can still be placed, which keeps preview environments usable. */
+  cardsEnabled?: boolean;
+  /** The member's processor account, when it exists: links fraud signals to the charge. */
+  paymentAccountId?: string;
   /** The card on file ("Visa •••• 4242"), when there is one: the card step starts done. */
   savedCard?: string | null;
   /** Cart products the member already has (lib/held-products): flagged up front, not at Place order. */
@@ -189,7 +191,8 @@ export function CheckoutFlow({
   defaultZip = '',
   defaultState = '',
   googlePlacesKey,
-  stripePublishableKey,
+  cardsEnabled = false,
+  paymentAccountId,
   savedCard,
   held = {},
 }: CheckoutFlowProps) {
@@ -529,7 +532,7 @@ export function CheckoutFlow({
   async function handlePay() {
     if (!termsAccepted || !chargesAccepted || !hasCart || heldLines.length) return;
     setPayError(null);
-    if (stripePublishableKey && !cardSaved) return;
+    if (cardsEnabled && !cardSaved) return;
     if (!emailValid || !shippingValid || !methodValid) return;
     setIsPaying(true);
 
@@ -1486,7 +1489,7 @@ export function CheckoutFlow({
               </p>
             </div>
 
-            {stripePublishableKey && (
+            {cardsEnabled && (
               <div className="mt-4">
                 <p className="mb-2.5 text-[13px] font-medium text-ink/70">
                   Payment method
@@ -1507,9 +1510,8 @@ export function CheckoutFlow({
                   </div>
                 ) : (
                   <CheckoutCardStep
-                    publishableKey={stripePublishableKey}
+                    accountId={paymentAccountId}
                     amountLabel={`$${totalText}`}
-                    amountCents={Math.round(total * 100)}
                     saved={cardSaved}
                     onSaved={() => setCardSaved(true)}
                   />
@@ -1594,7 +1596,7 @@ export function CheckoutFlow({
             <button
               type="button"
               onClick={handlePay}
-              disabled={isPaying || !termsAccepted || !chargesAccepted || !hasCart || heldLines.length > 0 || (!!stripePublishableKey && !cardSaved)}
+              disabled={isPaying || !termsAccepted || !chargesAccepted || !hasCart || heldLines.length > 0 || (cardsEnabled && !cardSaved)}
               className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-butter px-6 py-3.5 text-[16px] font-semibold text-ink transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-butter"
             >
               {isPaying && (

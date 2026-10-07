@@ -468,7 +468,7 @@ async function placeOrder(input: {
    * order (one product, one shipment) at the product's price (lib/shipping),
    * and the promo never touches it. No sales tax is charged: prescription
    * drugs are exempt in every state we serve (NJ, NY, PA, MI). If a taxable
-   * item is ever sold, compute it here (e.g. Stripe Tax calculations) rather
+   * item is ever sold, compute it here (with a tax-rate service) rather
    * than trusting a number the browser sent.
    */
   const cartTaxCents = 0;

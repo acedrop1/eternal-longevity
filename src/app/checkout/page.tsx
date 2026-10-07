@@ -4,9 +4,8 @@ import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { intakeStateFor } from '@/lib/intake-status';
 import { checkoutPrefill } from '@/lib/checkout-prefill';
-import { billingConfigured } from '@/lib/billing';
-import { defaultCardSummary } from '@/lib/pay-on-approval';
-import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
+import { cardOnFile, frameAccountFor, paymentsConfigured } from '@/lib/payments';
+import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { latestIntakeAnswers } from '@/lib/intake-status';
 import { loadCart } from '@/lib/profile-db';
@@ -18,18 +17,16 @@ export const metadata: Metadata = {
   title: 'Checkout',
 };
 
-/**
- * The card on file, as the approval charge will find it (defaultCardFor).
- * Read only: a member with no Stripe customer yet gets one when they save a card.
- */
+/** Card entry needs the server key (to save) and the browser key (to render the field). */
+function cardsEnabled(): boolean {
+  return paymentsConfigured() && Boolean(process.env.NEXT_PUBLIC_FRAME_PUBLISHABLE_KEY);
+}
+
+/** The card on file ("Visa •••• 4242"), as the approval charge will find it (cardOnFile). */
 async function savedCardFor(userId: string): Promise<string | null> {
-  if (!billingConfigured()) return null;
-  const { data } = await createSupabaseAdminClient()
-    .from('profiles')
-    .select('stripe_customer_id')
-    .eq('id', userId)
-    .maybeSingle();
-  return data?.stripe_customer_id ? defaultCardSummary(data.stripe_customer_id) : null;
+  const card = await cardOnFile(userId).catch(() => null);
+  if (!card) return null;
+  return `${card.brand.charAt(0).toUpperCase()}${card.brand.slice(1)} \u2022\u2022\u2022\u2022 ${card.last4}`;
 }
 
 export default async function CheckoutPage() {
@@ -105,7 +102,16 @@ export default async function CheckoutPage() {
    * They gave us a phone and a ZIP during the intake. Asking for them again at
    * checkout is asking someone to prove they meant it.
    */
-  const [prefill, savedCard] = await Promise.all([checkoutPrefill(user.id), savedCardFor(user.id)]);
+  const cards = cardsEnabled();
+  /*
+   * The account is created here on a first checkout rather than on save, so
+   * the card field can link this session's fraud signals to it (Frame.init).
+   */
+  const [prefill, savedCard, paymentAccountId] = await Promise.all([
+    checkoutPrefill(user.id),
+    cards ? savedCardFor(user.id) : null,
+    cards ? frameAccountFor(user.id).catch(() => null) : null,
+  ]);
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -118,11 +124,8 @@ export default async function CheckoutPage() {
         googlePlacesKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}
         savedCard={savedCard}
         held={held}
-        stripePublishableKey={
-          (process.env.STRIPE_PUBLISHABLE_KEY ?? '').startsWith('pk_')
-            ? (process.env.STRIPE_PUBLISHABLE_KEY as string)
-            : ''
-        }
+        cardsEnabled={cards}
+        paymentAccountId={paymentAccountId ?? undefined}
       />
     </main>
   );

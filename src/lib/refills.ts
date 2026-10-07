@@ -3,9 +3,8 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import type { Json } from '@/lib/database.types';
-import { getStripe, stripeConfigured } from '@/lib/stripe';
-import { getOrCreateStripeCustomer } from '@/lib/billing';
-import { chargeOnApproval, defaultCardFor } from '@/lib/pay-on-approval';
+import { cardOnFile, chargeOrder, paymentsConfigured } from '@/lib/payments';
+import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import {
   planNeedsReviewEmail,
@@ -19,7 +18,6 @@ import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
 import { getLiveProduct } from '@/lib/catalog';
-import { snapshotOrderCosts } from '@/lib/profit-data';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { renewalSplit, shippingPriceFor } from '@/lib/shipping';
 import { AWAITING_PAYMENT, cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
@@ -188,10 +186,10 @@ export async function renewSubscription(
     .eq('id', subscriptionId)
     .maybeSingle();
   if (!sub) return { subscriptionId, result: 'error', detail: 'not_found' };
-  // Billed by Stripe itself (created in Admin → Billing); charging here too
-  // would bill the member twice.
+  // A custom plan the old processor billed itself (Admin → Billing, before
+  // 2026-10). It has no prescription to renew against; a person decides.
   if (sub.stripe_subscription_id) {
-    return { subscriptionId, result: 'error', detail: 'stripe_managed' };
+    return { subscriptionId, result: 'error', detail: 'legacy_processor_plan' };
   }
 
   const { data: rx } = sub.prescription_id
@@ -254,7 +252,7 @@ export async function renewSubscription(
 
   const { data: profile } = await db
     .from('profiles')
-    .select('email, full_name, stripe_customer_id')
+    .select('email, full_name')
     .eq('id', sub.user_id)
     .maybeSingle();
   if (!profile?.email) {
@@ -308,14 +306,24 @@ export async function renewSubscription(
   const plan = cadenceTiersForProduct(product).find((t) => t.key === cadence);
   const split = renewalSplit(amount, Math.round((plan?.total ?? 0) * 100), shippingPriceFor(product) * 100);
 
-  const customerId = await getOrCreateStripeCustomer({
-    userId: sub.user_id,
-    email: profile.email,
-    name: profile.full_name ?? undefined,
-  });
-  // No card is handled as a failed charge below, so it leaves the same
-  // order and marker a declined card does, and restarts the same way.
-  const paymentMethodId = await defaultCardFor(customerId);
+  /*
+   * Claim this cycle before anything is created. An overlapping cron run that
+   * read the same plan finds the date already moved and stops here, so one
+   * cycle is one order and one charge (chargeOrder is idempotent per order,
+   * not per plan). A charge that fails puts the date back.
+   */
+  const months = monthsPerCycle(cadence);
+  const claim = db
+    .from('subscriptions')
+    .update({ next_billing_date: isoDate(addMonths(new Date(), months)) })
+    .eq('id', sub.id)
+    .eq('status', 'active');
+  const { data: claimed } = await (
+    sub.next_billing_date ? claim.eq('next_billing_date', sub.next_billing_date) : claim.is('next_billing_date', null)
+  ).select('id');
+  if (!claimed?.length) return { subscriptionId, result: 'error', detail: 'already_renewing' };
+  const unclaim = () =>
+    db.from('subscriptions').update({ next_billing_date: sub.next_billing_date }).eq('id', sub.id);
 
   const orderNumber = await nextOrderNumber();
   const { data: order, error: orderErr } = await db
@@ -339,6 +347,7 @@ export async function renewSubscription(
     .select('id')
     .single();
   if (orderErr || !order) {
+    await unclaim();
     return { subscriptionId, result: 'error', detail: orderErr?.message };
   }
 
@@ -352,48 +361,32 @@ export async function renewSubscription(
     cadence_label: sub.cadence_label ?? 'Monthly',
   });
 
-  const addr = shipTo as Record<string, string | undefined>;
-  try {
-    if (!paymentMethodId) throw new Error('No card on file.');
-    const intent = await getStripe().paymentIntents.create({
-      amount,
-      currency: 'usd',
-      customer: customerId,
-      payment_method: paymentMethodId,
-      off_session: true,
-      confirm: true,
-      description: `Refill — order ${orderNumber}`,
-      shipping: addr.line1
-        ? {
-            name: addr.fullName || profile.full_name || 'Member',
-            address: {
-              line1: addr.line1,
-              line2: addr.line2 || undefined,
-              city: addr.city || undefined,
-              state: addr.state || undefined,
-              postal_code: addr.zip || undefined,
-              country: 'US',
-            },
-          }
-        : undefined,
-      metadata: { order_number: orderNumber, order_id: order.id, refill: 'true' },
-    }, {
-      // One charge per plan per billing date, even if two cron runs overlap.
-      // ponytail: an overlapping run still inserts a second (unpaid) order row;
-      // add a row lock on the subscription if the cron ever runs concurrently.
-      idempotencyKey: `renew-${sub.id}-${sub.next_billing_date}-${paymentMethodId}`,
-    });
-    if (intent.status !== 'succeeded') {
-      throw new Error(`Charge not completed (${intent.status}).`);
-    }
-    await db
-      .from('orders')
-      .update({ stripe_payment_intent_id: intent.id })
-      .eq('id', order.id);
-    // Profit (admin only); the webhook writes the same values and Stripe's fee.
-    await snapshotOrderCosts(db, order.id);
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : 'charge_failed';
+  /*
+   * Charged like any order (lib/payments): the charge is stored on the order
+   * before it is confirmed, and a success is recorded, confirmed to the
+   * member and sent to the pharmacy there. No card is handled as a failed
+   * charge below, so it leaves the same order and marker a declined card
+   * does, and restarts the same way.
+   */
+  let charge = await chargeOrder(order.id);
+  // A timeout leaves the charge unknown; the second call reads it back.
+  if (charge.status === 'error' && charge.code === 'unavailable') charge = await chargeOrder(order.id);
+
+  /*
+   * Still unknown: the money may yet move, and the webhook records it if it
+   * does. Pausing now and restarting later would charge this cycle twice, so
+   * the cycle stays claimed and a person looks (the cron's summary email).
+   */
+  const unknown = charge.status === 'error' && charge.code === 'unavailable';
+  if (charge.status !== 'paid' && charge.status !== 'pending' && !unknown) {
+    const reason =
+      charge.status === 'declined'
+        ? charge.message
+        : charge.status === 'no_card'
+          ? 'No card on file.'
+          : charge.status === 'requires_action'
+            ? 'The bank asked the member to approve the charge.'
+            : `The charge could not complete (${charge.code}).`;
     await db.from('order_updates').insert({
       order_id: order.id,
       label: REFILL_CHARGE_FAILED,
@@ -401,36 +394,37 @@ export async function renewSubscription(
       author: 'System',
       author_role: 'system',
     });
-    await db.from('subscriptions').update({ status: 'paused' }).eq('id', sub.id);
+    // Back to the date it was due, so a restart charges it within a day.
+    await db
+      .from('subscriptions')
+      .update({ status: 'paused', next_billing_date: sub.next_billing_date })
+      .eq('id', sub.id);
     await notifyRenewalFailed(sub, profile, reason);
     return { subscriptionId, result: 'charge_failed', orderNumber, detail: reason };
   }
 
-  // Burn a refill and schedule the next cycle.
-  const months = monthsPerCycle(cadence);
+  // Burn a refill; the next cycle was scheduled by the claim above.
+  const paid = charge.status === 'paid';
   await Promise.all([
     db
       .from('prescriptions')
       .update({ refills_remaining: (rx.refills_remaining ?? 1) - 1 })
       .eq('id', rx.id),
-    db
-      .from('subscriptions')
-      .update({
-        next_billing_date: isoDate(addMonths(new Date(), months)),
-        last_charged_at: new Date().toISOString(),
-      })
-      .eq('id', sub.id),
-    db.from('order_updates').insert({
-      order_id: order.id,
-      label: 'Refill on your plan',
-      body: 'Charged to your card on file and sent to the pharmacy. No new review was needed — your prescription is still in date.',
-      author: 'System',
-      author_role: 'system',
-    }),
+    db.from('subscriptions').update({ last_charged_at: new Date().toISOString() }).eq('id', sub.id),
+    paid &&
+      db.from('order_updates').insert({
+        order_id: order.id,
+        label: 'Refill on your plan',
+        body: 'Charged to your card on file and sent to the pharmacy. No new review was needed — your prescription is still in date.',
+        author: 'System',
+        author_role: 'system',
+      }),
   ]);
 
-  // The webhook marks it paid and submits it; this is the belt to that braces.
-  await autoSubmitToPharmacy(orderNumber, { refill: true, prescriptionId: rx.id });
+  if (unknown) return { subscriptionId, result: 'error', orderNumber, detail: 'charge_unconfirmed' };
+  // Recording the payment already submitted it; this is the belt to that braces.
+  // A pending charge ships when it settles, never before.
+  if (paid) await autoSubmitToPharmacy(orderNumber, { refill: true, prescriptionId: rx.id });
 
   return { subscriptionId, result: 'charged', orderNumber };
 }
@@ -501,16 +495,12 @@ export async function resumeAfterNewCard(user: {
   name?: string;
 }): Promise<ResumeResult> {
   const done: ResumeResult = { plans: 0, charged: 0, payLinks: 0 };
-  if (!stripeConfigured()) return { ...done, reason: 'notPaused' };
+  if (!paymentsConfigured()) return { ...done, reason: 'notPaused' };
   const owed = await paymentsOwed(user.id);
   if (!owed.length) return { ...done, reason: 'notPaused' };
 
   // Still no card: switching a plan back on would only fail again tomorrow.
-  const card = owed.some((o) => o.refill)
-    ? await defaultCardFor(
-        await getOrCreateStripeCustomer({ userId: user.id, email: user.email, name: user.name }),
-      )
-    : undefined;
+  const card = owed.some((o) => o.refill) ? await cardOnFile(user.id) : null;
 
   const db = createSupabaseAdminClient();
   for (const o of owed) {
@@ -574,7 +564,7 @@ export async function dueSubscriptionIds(limit = 100): Promise<string[]> {
     .from('subscriptions')
     .select('id')
     .eq('status', 'active')
-    // Stripe bills its own subscriptions; the cron only renews ours.
+    // Custom plans the old processor billed; nothing renews them here.
     .is('stripe_subscription_id', null)
     .lte('next_billing_date', isoDate(new Date()))
     .limit(limit);

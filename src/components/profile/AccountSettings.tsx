@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useMemberProfile } from './MemberProfileProvider';
 import { SavedAddressesManager } from './SavedAddressesManager';
-import { StripeCardsManager } from './StripeCardsManager';
+import { CardsManager } from './CardsManager';
 import { SavedCardsManager } from './SavedCardsManager';
 import {
   DEFAULT_NOTIFICATIONS,
@@ -253,12 +253,15 @@ function Field({
 export function AccountSettings({
   userName,
   userEmail,
-  stripePublishableKey,
+  cardsEnabled = false,
+  paymentAccountId,
 }: {
   userName: string;
   userEmail: string;
-  /** Empty when Stripe is not configured for this environment. */
-  stripePublishableKey?: string;
+  /** False when card payments are not configured for this environment. */
+  cardsEnabled?: boolean;
+  /** The member's processor account, when it exists (fraud signals for the card field). */
+  paymentAccountId?: string;
 }) {
   const { profile, patchProfile, syncError } = useMemberProfile();
 
@@ -368,10 +371,10 @@ export function AccountSettings({
           title="Payment methods"
           description="Cards saved here pre-fill at checkout. We never store the full number. Only the brand and last four for display."
         >
-          {/* Real cards go through Stripe. The local-only manager remains as
-              the fallback so a preview environment without keys still renders. */}
-          {stripePublishableKey ? (
-            <StripeCardsManager publishableKey={stripePublishableKey} />
+          {/* Real cards go to the card processor. The local-only manager remains
+              as the fallback so a preview environment without keys still renders. */}
+          {cardsEnabled ? (
+            <CardsManager accountId={paymentAccountId} />
           ) : (
             <SavedCardsManager />
           )}

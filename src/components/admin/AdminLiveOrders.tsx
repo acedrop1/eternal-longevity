@@ -145,7 +145,7 @@ export function CancelOrder({
                 setOpen(false);
                 setReason('');
                 const todo = [
-                  res.refundError && `Cancelled, but the refund failed (${res.refundError}). Refund it from Stripe.`,
+                  res.refundError && `Cancelled, but the refund failed (${res.refundError}). Refund it from the Frame dashboard (app.framepayments.com).`,
                   res.cancelByHand && 'This order was placed with the pharmacy by hand. Cancel it in the pharmacy portal now.',
                 ].filter(Boolean);
                 // Refreshing drops the row, so a to-do is shown first and refreshes on "Got it".

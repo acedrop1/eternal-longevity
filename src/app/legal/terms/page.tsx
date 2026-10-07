@@ -49,13 +49,13 @@ export default function TermsPage() {
           heading: 'Pricing & Billing',
           paragraphs: [
             `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. Shipping is charged per shipment, including each plan renewal: $${SHIPPING_PRICE['2_DAY']} for 2-day or $${SHIPPING_PRICE.OVERNIGHT} for overnight cold-chain, depending on the medication, as shown on the product page and at checkout. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
-            'All payments are processed by Stripe, a PCI-DSS Level 1 service provider. We do not receive or store your full card number.',
+            'All payments are processed by our payment processor, a PCI-DSS compliant service provider. We do not receive or store your full card number.',
           ],
         },
         {
           heading: 'When You Are Charged',
           paragraphs: [
-            'At checkout you save a card with our payment processor, Stripe. Saving it does not charge you. Your intake then goes to the prescriber for review.',
+            'At checkout you save a card with our payment processor. Saving it does not charge you. Your intake then goes to the prescriber for review.',
             'If the prescriber approves, we charge that saved card for the plan you chose, without you needing to be present. If the prescriber declines, you are not charged. If the saved card cannot be charged, we email you a secure link to pay, and nothing ships until payment goes through.',
             `Charges from us appear on your statement as ${STATEMENT_DESCRIPTOR}. No medication name appears on your card statement.`,
           ],

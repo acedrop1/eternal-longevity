@@ -44,7 +44,7 @@ export const SITE_DESCRIPTION = `Online care for longevity, sexual health, hormo
 /* ------------------------- merchant identity ------------------------------ */
 
 /**
- * Card networks and Stripe both expect a customer to be able to find, on the
+ * Card networks and our card processor both expect a customer to be able to find, on the
  * website, the same business they see on their statement — legal name, a
  * postal address, a phone, an email, and the descriptor itself. Missing any of
  * these is a standard reason a restricted-business account gets held, and an
@@ -58,7 +58,7 @@ export const BUSINESS_ADDRESS = '825 Riverview Dr, Floor 2, Totowa, NJ 07512';
 export const SUPPORT_EMAIL = 'support@etlongevity.com';
 
 /**
- * Must stay identical to the phone on the Stripe account — a customer-service
+ * Must stay identical to the phone on the Frame merchant account — a customer-service
  * number that differs between the site and the merchant record is a routine
  * reason a restricted-business account gets held. Overridable by env so the
  * number can change without a deploy.
@@ -82,10 +82,8 @@ export const GOOGLE_REVIEW_URL = '';
 
 /**
  * Exactly what a member sees on their card statement — the descriptor set on
- * the Stripe account, verbatim. We deliberately attach no per-charge suffix:
- * a suffix is only appended when the account also has a *shortened* descriptor
- * configured, and is silently dropped otherwise, which would leave this page
- * promising a string that never appears on anyone's statement.
+ * the Frame merchant account, verbatim. No per-charge suffix is attached, so
+ * this page never promises a string that doesn't appear on a statement.
  */
 export const STATEMENT_DESCRIPTOR = 'ET LONGEVITY';
 

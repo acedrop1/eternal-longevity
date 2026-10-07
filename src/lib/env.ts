@@ -2,7 +2,7 @@
  * Client-safe environment helpers.
  *
  * Only NEXT_PUBLIC_* values appear here, so this module is safe to import from
- * client components. Server-only secrets (service-role key, Stripe secret,
+ * client components. Server-only secrets (service-role key, card processor secret,
  * Resend / Twilio tokens) are read directly inside their own server-only
  * modules — never here.
  */

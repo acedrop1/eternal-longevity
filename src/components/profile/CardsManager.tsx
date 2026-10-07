@@ -1,18 +1,13 @@
 'use client';
 
 import { useConfirm } from '@/components/ui/useConfirm';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FrameCardField, type FrameCardHandle } from '@/components/payments/FrameCardField';
 import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
-} from '@stripe/react-stripe-js';
-import {
-  createSetupIntentAction,
   listCardsAction,
   removeCardAction,
+  saveCardAction,
   setDefaultCardAction,
   type SavedCard,
 } from '@/lib/cards';
@@ -20,50 +15,40 @@ import { cn } from '@/lib/utils';
 import { btnPrimary, btnSecondary, btnSmall, errorBox, inset } from '@/components/portal/ui';
 
 /**
- * Cards on file, entered inside Stripe's iframe.
+ * Cards on file, entered inside the processor's iframe.
  *
- * Nothing here ever sees a card number. The PaymentElement renders on
- * Stripe's origin, the SetupIntent attaches the card to the customer, and we
- * re-read the list from Stripe afterwards rather than trusting anything the
- * browser tells us about what was saved.
+ * Nothing here ever sees a card number. The field encrypts it in the browser,
+ * the server saves it to the member's account, and we re-read the list
+ * afterwards rather than trusting anything the browser tells us about what
+ * was saved.
  */
 
-function AddCardForm({ onSaved }: { onSaved: () => void }) {
-  const stripe = useStripe();
-  const elements = useElements();
+function AddCardForm({ accountId, onSaved }: { accountId?: string; onSaved: () => void }) {
+  const field = useRef<FrameCardHandle>(null);
+  const [complete, setComplete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!stripe || !elements || busy) return;
+    const card = field.current?.getCard();
+    if (!card || busy) return;
     setBusy(true);
     setError(null);
-
-    const { error: submitErr } = await elements.submit();
-    if (submitErr) {
-      setError(submitErr.message ?? 'Please check the card details.');
-      setBusy(false);
-      return;
-    }
-
-    const { error: confirmErr } = await stripe.confirmSetup({
-      elements,
-      redirect: 'if_required',
-    });
-
-    if (confirmErr) {
-      setError(confirmErr.message ?? 'We could not save that card.');
-      setBusy(false);
-      return;
-    }
+    const res = await saveCardAction(card).catch(() => null);
     setBusy(false);
-    onSaved();
+    if (res?.ok) {
+      onSaved();
+      return;
+    }
+    const message = res?.message ?? 'We could not save your card just now. Please try again in a minute.';
+    if (res?.error === 'card_rejected') field.current?.setFieldError('number', message);
+    setError(message);
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <PaymentElement options={{ layout: 'tabs' }} />
+      <FrameCardField ref={field} accountId={accountId} onCompleteChange={setComplete} />
       {error && (
         <p role="alert" className={errorBox}>
           {error}
@@ -71,34 +56,25 @@ function AddCardForm({ onSaved }: { onSaved: () => void }) {
       )}
       <button
         type="submit"
-        disabled={!stripe || busy}
+        disabled={!complete || busy}
         className={cn(btnPrimary, 'w-full')}
       >
         {busy ? 'Saving…' : 'Save card'}
       </button>
       <p className="text-center text-[15px] text-ink/70">
-        Entered directly with Stripe. Card details never reach our servers.
+        Encrypted in your browser. We never see your full card number.
       </p>
     </form>
   );
 }
 
-export function StripeCardsManager({
-  publishableKey,
-}: {
-  publishableKey: string;
-}) {
+export function CardsManager({ accountId }: { accountId?: string }) {
   const [confirm, confirmDialog] = useConfirm();
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  const stripePromise = useMemo<Promise<Stripe | null>>(
-    () => loadStripe(publishableKey),
-    [publishableKey],
-  );
+  const router = useRouter();
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -108,17 +84,14 @@ export function StripeCardsManager({
   }, []);
   useEffect(refresh, [refresh]);
 
-  async function startAdd() {
-    setAdding(true);
-    const res = await createSetupIntentAction();
-    if (res.ok && res.clientSecret) setClientSecret(res.clientSecret);
-  }
-
-  async function onSaved() {
+  function onSaved() {
     setAdding(false);
-    setClientSecret(null);
-    // Read the truth back from Stripe rather than optimistically inserting.
+    // Read the truth back from the server rather than optimistically inserting.
     refresh();
+    // The page above offers what a new card unlocks (a declined refill, an
+    // approved order waiting on payment) when it sees card=added.
+    router.replace('/portal/account?card=added', { scroll: false });
+    router.refresh();
   }
 
   return (
@@ -189,51 +162,25 @@ export function StripeCardsManager({
         </div>
       ))}
 
-      {adding && clientSecret ? (
+      {adding ? (
         <div className={cn(inset, 'p-4')}>
-          <Elements
-            stripe={stripePromise}
-            options={{
-              clientSecret,
-              appearance: {
-                // Light, to sit on the white portal. Appearance only.
-                theme: 'stripe',
-                variables: {
-                  colorPrimary: '#111111',
-                  colorBackground: '#ffffff',
-                  colorText: '#111111',
-                  borderRadius: '18px',
-                },
-              },
-            }}
-          >
-            <AddCardForm onSaved={onSaved} />
-          </Elements>
+          <AddCardForm accountId={accountId} onSaved={onSaved} />
           <button
             type="button"
-            onClick={() => {
-              setAdding(false);
-              setClientSecret(null);
-            }}
+            onClick={() => setAdding(false)}
             className="mt-2 min-h-[44px] w-full text-center text-[14px] font-medium text-ink/70 hover:text-ink"
           >
             Cancel
           </button>
         </div>
       ) : (
-        !adding && (
-          <button
-            type="button"
-            onClick={startAdd}
-            className={btnSecondary}
-          >
-            + Add a card
-          </button>
-        )
-      )}
-
-      {adding && !clientSecret && (
-        <p role="status" className="text-[15px] text-ink/70">Opening secure form…</p>
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className={btnSecondary}
+        >
+          + Add a card
+        </button>
       )}
     </div>
   );

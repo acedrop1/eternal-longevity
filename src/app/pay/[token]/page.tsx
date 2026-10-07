@@ -4,7 +4,7 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { getOrderByPayToken } from '@/lib/pay-on-approval';
 import { PayForm } from '@/components/pay/PayForm';
-import { stripeConfigured } from '@/lib/stripe';
+import { cardOnFile, frameAccountFor, paymentsConfigured } from '@/lib/payments';
 
 export const metadata: Metadata = {
   title: 'Complete your payment',
@@ -26,8 +26,13 @@ export default async function PayPage({ params }: PayPageProps) {
   const { token } = await params;
   const order = await getOrderByPayToken(token);
 
-  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY ?? '';
-  const cardReady = stripeConfigured() && publishableKey.startsWith('pk_');
+  const cardReady = paymentsConfigured() && Boolean(process.env.NEXT_PUBLIC_FRAME_PUBLISHABLE_KEY);
+  // The member's processor account (fraud signals in the card field) and the
+  // card the approval charge tried, offered first. Only for a link still payable.
+  const payable = order && !order.alreadyPaid && cardReady;
+  const [accountId, card] = payable
+    ? await Promise.all([frameAccountFor(order.userId).catch(() => null), cardOnFile(order.userId).catch(() => null)])
+    : [null, null];
 
   return (
     <>
@@ -131,7 +136,8 @@ export default async function PayPage({ params }: PayPageProps) {
                 {cardReady ? (
                   <PayForm
                     token={token}
-                    publishableKey={publishableKey}
+                    accountId={accountId ?? undefined}
+                    cardSummary={card ? { brand: card.brand, last4: card.last4 } : null}
                     amountLabel={`$${(order.totalCents / 100).toFixed(2)}`}
                     cadenceLabel={order.cadenceLabel}
                     orderNumber={order.orderNumber}

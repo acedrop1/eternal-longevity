@@ -9,16 +9,17 @@
  *   revenue        = total charged − tax
  *   product cost   = Σ lines unitCost × units per 30 days × months in the plan × line quantity
  *   pharmacy ship  = SHIPPING_COST for the order's method (overnight if any line is cold-chain)
- *   Stripe fee     = the charge's real fee (balance transaction), else 2.9% + 30¢ of the total
- *   refunds        = what Stripe says was refunded on the charge
+ *   processing fee = the charge's real fee as the card processor reports it, else the
+ *                    PROCESSING_FEE_* estimate of the total
+ *   refunds        = what the card processor says was refunded on the charge
  *   net sales      = revenue − refunds
- *   profit         = net sales − product cost − pharmacy shipping − Stripe fee
+ *   profit         = net sales − product cost − pharmacy shipping − processing fee
  *   margin         = profit ÷ net sales
  *
  * Cost and shipping are snapshotted in order_costs when the order is paid
  * (migration 0025, lib/profit-data); an order without the snapshot is costed
  * at today's prices and marked estimated. An order closed without shipping (cancelled, denied, declined)
- * has no product or shipping cost; Stripe keeps its fee on a refund.
+ * has no product or shipping cost; the processor keeps its fee on a refund.
  */
 
 import { TERMINAL_ORDER, monthsPerCycle } from './order-rules';
@@ -77,13 +78,18 @@ export interface Economics {
   closed: boolean;
 }
 
-export const STRIPE_PERCENT = 0.029;
-export const STRIPE_FIXED_CENTS = 30;
+// ponytail: placeholder 2.9% + 30¢ until Frame's contracted card rate is
+// confirmed; update both with the real rate. Only orders without a recorded
+// fee use it.
+export const PROCESSING_FEE_PCT = 0.029;
+export const PROCESSING_FEE_FIXED_CENTS = 30;
 
-/** Stripe's standard US card price. Nothing charged, no fee. */
-export function estimateStripeFeeCents(chargedCents: number): number {
-  return chargedCents > 0 ? Math.round(chargedCents * STRIPE_PERCENT) + STRIPE_FIXED_CENTS : 0;
+/** Estimated card processing fee. Nothing charged, no fee. */
+export function estimateProcessingFeeCents(chargedCents: number): number {
+  return chargedCents > 0 ? Math.round(chargedCents * PROCESSING_FEE_PCT) + PROCESSING_FEE_FIXED_CENTS : 0;
 }
+/** Old name, still imported by the profit check. */
+export const estimateStripeFeeCents = estimateProcessingFeeCents;
 
 /** Pharmacy units in one line: units per 30 days × months in the plan × line quantity. */
 export function lineUnits(line: Pick<EconLine, 'cadence' | 'quantity'>, cost: Pick<CostInfo, 'quantity'>): number {
@@ -116,7 +122,7 @@ export function orderEconomics(o: EconOrder, costs: CostTable): Economics {
   const revenue = o.totalCents - o.taxCents;
   const productCost = closed ? 0 : o.costCents ?? productCostCents(o.lines, costs);
   const shippingCost = closed ? 0 : o.shippingCostCents ?? shippingCostCents(o.lines, costs);
-  const stripeFee = o.stripeFeeCents ?? estimateStripeFeeCents(o.totalCents);
+  const stripeFee = o.stripeFeeCents ?? estimateProcessingFeeCents(o.totalCents);
   const refunds = o.refundedCents;
   const net = revenue - refunds;
   const profit = net - productCost - shippingCost - stripeFee;
@@ -147,7 +153,7 @@ export function planEconomics(
   const charged = Math.round((priceDollars + shippingPriceDollars) * 100);
   const productCost = Math.round(cost.unitCost * 100 * Math.max(1, cost.quantity) * months);
   const shippingCost = SHIPPING_COST[cost.storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY'] * 100;
-  const stripeFee = estimateStripeFeeCents(charged);
+  const stripeFee = estimateProcessingFeeCents(charged);
   const profit = charged - productCost - shippingCost - stripeFee;
   return { charged, productCost, shippingCost, stripeFee, profit, margin: charged > 0 ? profit / charged : null };
 }

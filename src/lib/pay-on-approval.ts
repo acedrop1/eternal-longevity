@@ -26,9 +26,10 @@ import {
   sendEmail,
   SUPPORT_EMAIL,
 } from '@/lib/email';
-import { getStripe, stripeConfigured } from '@/lib/stripe';
-import { getOrCreateStripeCustomer } from '@/lib/billing';
-import { AWAITING_PAYMENT, intentBelongsTo } from '@/lib/order-rules';
+import { cardOnFile, chargeOrder, paymentsConfigured, saveCard, type CardOnFile } from '@/lib/payments';
+import { getTransfer, type EncryptedCard } from '@/lib/frame';
+import { allow, LIMITS } from '@/lib/rate-limit';
+import { AWAITING_PAYMENT } from '@/lib/order-rules';
 import { snapshotOrderCosts } from '@/lib/profit-data';
 import { REFILL_CHARGE_FAILED } from '@/lib/orders';
 
@@ -36,6 +37,8 @@ export const TOKEN_TTL_DAYS = 7;
 
 export interface PayableOrder {
   orderNumber: string;
+  /** Server-side only: whose card pays it. */
+  userId: string;
   memberName: string;
   totalCents: number;
   /** Part of totalCents. */
@@ -148,7 +151,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, member_name, total_cents, shipping_cents, pay_token_expires, paid_confirmed_at, status')
+    .select('id, order_number, user_id, member_name, total_cents, shipping_cents, pay_token_expires, paid_confirmed_at, status')
     .eq('pay_token', token)
     .maybeSingle();
   if (!order) return null;
@@ -170,6 +173,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
 
   return {
     orderNumber: order.order_number,
+    userId: order.user_id,
     memberName: order.member_name ?? '',
     totalCents: order.total_cents ?? 0,
     shippingCents: order.shipping_cents ?? 0,
@@ -184,188 +188,187 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
 
 /* ----------------------------- card payment ------------------------------ */
 
-/**
- * Create (or reuse) the PaymentIntent for a pay link. Called from the pay
- * page; the token is the authorization, so no session is required — the
- * member clicks through from their email.
- *
- * Approval already happened, so this charges immediately on confirmation.
- * There is no separate capture step to forget.
- */
-export async function createPayIntentAction(token: string): Promise<{
-  ok: boolean;
-  clientSecret?: string;
-  error?: string;
-}> {
-  if (!stripeConfigured() || !supabaseAdminConfigured()) {
-    return { ok: false, error: 'not_configured' };
-  }
+type Db = ReturnType<typeof createSupabaseAdminClient>;
 
-  const db = createSupabaseAdminClient();
+/** A payment that did not go through, with a message fit to show the member. */
+export type PayFailure = { ok: false; error: string; message: string };
+
+export type PayResult =
+  | { ok: true; paid: true }
+  /** Still being processed; the order confirms on its own when it settles. */
+  | { ok: true; pending: true }
+  /** The bank wants the member to approve it in the browser, then finishPaymentAction. */
+  | { ok: true; requiresAction: true; clientSecret: string; transferId: string }
+  | PayFailure;
+
+const TRY_LATER: PayFailure = {
+  ok: false,
+  error: 'unavailable',
+  message: 'We could not take the payment just now. Please try again in a minute. You will not be charged twice.',
+};
+const NOT_SET_UP: PayFailure = {
+  ok: false,
+  error: 'not_configured',
+  message: 'Card payment is not available right now. Message us and we will help you pay.',
+};
+const FAILED_TRANSFER = new Set(['failed', 'fraud_declined', 'canceled', 'cancelled']);
+
+/**
+ * The order behind a pay link, on the rules getOrderByPayToken shows the page
+ * by: known, still open, not expired. The token is the authorization, so no
+ * session is required; the member clicks through from their email.
+ */
+async function orderForToken(
+  db: Db,
+  token: string,
+): Promise<{ id: string; userId: string; paid: boolean; transferId: string | null } | PayFailure> {
+  const dead: PayFailure = {
+    ok: false,
+    error: 'invalid_link',
+    message: 'This payment link is no longer valid. Message us and we will send a fresh one.',
+  };
+  if (typeof token !== 'string' || !token) return dead;
   const { data: order } = await db
     .from('orders')
-    .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, pay_token_expires, paid_confirmed_at, stripe_payment_intent_id, shipping_address, ship_state, status',
-    )
+    .select('id, user_id, status, paid_confirmed_at, pay_token_expires, frame_transfer_id')
     .eq('pay_token', token)
     .maybeSingle();
-
-  if (!order) return { ok: false, error: 'invalid_link' };
-  if (order.paid_confirmed_at) return { ok: false, error: 'already_paid' };
-  if (!AWAITING_PAYMENT.includes(order.status)) {
-    return { ok: false, error: 'invalid_link' };
+  if (!order) return dead;
+  const found = { id: order.id, userId: order.user_id, transferId: order.frame_transfer_id };
+  if (order.paid_confirmed_at) return { ...found, paid: true };
+  if (!AWAITING_PAYMENT.includes(order.status)) return dead;
+  if (order.pay_token_expires && new Date(order.pay_token_expires).getTime() < Date.now()) {
+    return { ok: false, error: 'expired', message: 'This payment link has expired. Message us and we will send a fresh one.' };
   }
-  if (
-    order.pay_token_expires &&
-    new Date(order.pay_token_expires).getTime() < Date.now()
-  ) {
-    return { ok: false, error: 'expired' };
+  return { ...found, paid: false };
+}
+
+/**
+ * Pay an order from its link. With a card, the member just typed it: it is
+ * saved on their account (and charged for refills from now on, which the pay
+ * form asks them to agree to) and charged. Without one, the card on file is
+ * charged.
+ *
+ * chargeOrder is idempotent per order, so a double click, a reload, or the
+ * approval charge still in flight reports the one charge instead of making a
+ * second. Wrapped for the browser in lib/checkout-payment-actions.
+ */
+export async function payOrderAction(token: string, card: EncryptedCard | null): Promise<PayResult> {
+  if (!paymentsConfigured()) return NOT_SET_UP;
+  // The link is the only credential here, so this is where card testing would happen.
+  if (!(await allow('pay', LIMITS.form, token))) {
+    return { ok: false, error: 'rate_limited', message: 'Too many attempts. Please wait a few minutes and try again.' };
   }
+  const db = createSupabaseAdminClient();
+  const order = await orderForToken(db, token);
+  if ('ok' in order) return order;
+  if (order.paid) return { ok: true, paid: true };
 
-  const amount = order.total_cents ?? 0;
-  if (amount <= 0) return { ok: false, error: 'invalid_amount' };
+  let paymentMethodId: string | undefined;
+  if (card) {
+    const saved = await saveCard(order.userId, card);
+    if (!saved.ok) return { ok: false, error: saved.error, message: saved.message };
+    paymentMethodId = saved.card.id;
+  }
+  const c = await chargeOrder(order.id, { paymentMethodId });
+  switch (c.status) {
+    case 'paid':
+      return { ok: true, paid: true };
+    case 'pending':
+      return { ok: true, pending: true };
+    case 'requires_action':
+      return { ok: true, requiresAction: true, clientSecret: c.clientSecret, transferId: c.transferId };
+    case 'declined':
+      return { ok: false, error: 'declined', message: c.message };
+    case 'no_card':
+      return { ok: false, error: 'no_card', message: 'Enter your card details to pay.' };
+    default:
+      return c.code === 'not_configured' ? NOT_SET_UP : TRY_LATER;
+  }
+}
 
-  const stripe = getStripe();
-
-  // Reuse the intent if the member reloads the page, so one order never
-  // produces two charges.
-  if (order.stripe_payment_intent_id) {
-    try {
-      const existing = await stripe.paymentIntents.retrieve(
-        order.stripe_payment_intent_id,
-      );
-      if (
-        intentBelongsTo(existing, order) &&
-        existing.client_secret &&
-        existing.amount === amount &&
-        ['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(
-          existing.status,
-        )
-      ) {
-        return { ok: true, clientSecret: existing.client_secret };
-      }
-    } catch {
-      // Fall through and create a fresh one.
+/**
+ * The browser finished the bank's approval step: read the charge back and
+ * report it. `transferId` (from payOrderAction) is how a payment that landed
+ * in the meantime is still found: recording a payment burns its link.
+ */
+export async function finishPaymentAction(
+  token: string,
+  transferId?: string,
+): Promise<{ ok: true; paid: boolean } | PayFailure> {
+  if (!paymentsConfigured()) return NOT_SET_UP;
+  const db = createSupabaseAdminClient();
+  const order = await orderForToken(db, token);
+  if ('ok' in order) {
+    if (typeof transferId === 'string' && transferId) {
+      const { data: paid } = await db
+        .from('orders')
+        .select('id')
+        .eq('frame_transfer_id', transferId)
+        .not('paid_confirmed_at', 'is', null)
+        .maybeSingle();
+      if (paid) return { ok: true, paid: true };
     }
+    return order;
   }
+  if (order.paid) return { ok: true, paid: true };
+  if (!order.transferId) return { ok: false, error: 'no_payment', message: 'We could not find that payment. Please try again.' };
 
-  const customerId = order.member_email
-    ? await getOrCreateStripeCustomer({
-        userId: order.user_id,
-        email: order.member_email,
-        name: order.member_name ?? undefined,
-      })
-    : undefined;
+  /*
+   * The bank said no: report it. chargeOrder would treat a failed charge as
+   * room for a new attempt and charge the card on file, which the member did
+   * not just ask for.
+   */
+  const t = await getTransfer(order.transferId);
+  if (t.ok && FAILED_TRANSFER.has(t.data.status)) {
+    return {
+      ok: false,
+      error: 'declined',
+      message: t.data.failure_message ?? 'Your bank did not approve the payment. Try again or use another card.',
+    };
+  }
+  const c = await chargeOrder(order.id);
+  switch (c.status) {
+    case 'paid':
+      return { ok: true, paid: true };
+    case 'pending':
+      return { ok: true, paid: false };
+    case 'requires_action':
+      return { ok: false, error: 'authentication_required', message: 'Your bank still needs you to approve this payment. Please try again.' };
+    case 'declined':
+      return { ok: false, error: 'declined', message: c.message };
+    default:
+      return TRY_LATER;
+  }
+}
 
-  // Radar can only judge what it is given. Without a shipping address on the
-  // intent, every address-based rule silently matches nothing and Stripe's own
-  // model is working half blind. Send it.
-  const addr = (order.shipping_address ?? {}) as Record<string, string>;
-  const shipping = addr.line1
-    ? {
-        name: addr.fullName || order.member_name || 'Member',
-        address: {
-          line1: addr.line1,
-          line2: addr.line2 || undefined,
-          city: addr.city || undefined,
-          state: addr.state || order.ship_state || undefined,
-          postal_code: addr.zip || undefined,
-          country: 'US',
-        },
-      }
-    : undefined;
-
-  const intent = await stripe.paymentIntents.create({
-    amount,
-    currency: 'usd',
-    customer: customerId,
-    shipping,
-    // Neutral naming — peptide names never reach the card statement or
-    // dispute record. No statement_descriptor_suffix: the account carries no
-    // shortened descriptor, so a suffix would be dropped and the charge would
-    // not match what our Terms and Contact page tell members to expect.
-    description: `Care program — order ${order.order_number}`,
-    metadata: {
-      order_number: order.order_number,
-      order_id: order.id,
-    },
-    // Keep the card on file for approved refills; the member consents to
-    // this explicitly on the pay form before the button enables.
-    setup_future_usage: 'off_session',
-    automatic_payment_methods: { enabled: true },
-  });
-
-  await db
-    .from('orders')
-    .update({ stripe_payment_intent_id: intent.id })
-    .eq('id', order.id);
-
-  return { ok: true, clientSecret: intent.client_secret ?? undefined };
+/** "Visa •••• 4242". */
+function describeCard(c: CardOnFile): string {
+  const brand = c.brand ? c.brand.charAt(0).toUpperCase() + c.brand.slice(1) : 'Card';
+  return c.last4 ? `${brand} •••• ${c.last4}` : brand;
 }
 
 /**
- * Charge the card the member saved at checkout, now that a prescriber has
- * approved. Called from signRxAction.
+ * The card the approval charge will use, as a person would describe it, or
+ * null when there is none.
  *
- * The card lives on the Stripe customer rather than on the order, so a member
- * who replaced their card between ordering and approval is charged the current
- * one rather than a dead token.
- *
- * If the charge fails — expired card, insufficient funds, a bank that wants
- * the cardholder present — we fall back to emailing the pay link. A failed
- * charge must not dead-end an approved prescription.
- */
-/**
- * The card to charge off-session: the one the member set as default, else the
- * most recently saved. Shared with refills, which have to pick the same card a
- * first order would have used.
- */
-export async function defaultCardFor(
-  customerId: string,
-): Promise<string | undefined> {
-  const stripe = getStripe();
-  const [methods, customer] = await Promise.all([
-    stripe.paymentMethods.list({ customer: customerId, type: 'card' }),
-    stripe.customers.retrieve(customerId),
-  ]);
-  const preferred =
-    customer && !('deleted' in customer)
-      ? (customer.invoice_settings?.default_payment_method as string | null)
-      : null;
-  return (
-    (preferred && methods.data.find((m) => m.id === preferred)?.id) ??
-    methods.data[0]?.id
-  );
-}
-
-/**
- * The saved card as a person would describe it.
- *
- * `orders.card_last4` is only filled by the old manual card form; the Stripe
- * flow saves the card against the customer and leaves that column empty. A
+ * `orders.card_last4` is only filled by the old manual card form. A
  * prescriber reading "no card on file" off it would be told the charge will
- * fail on every order that is actually fine.
+ * fail on every order that is actually fine, so ask the processor.
  */
-export async function defaultCardSummary(
-  customerId: string,
-): Promise<string | null> {
+export async function cardSummaryFor(userId: string): Promise<string | null> {
   try {
-    const id = await defaultCardFor(customerId);
-    if (!id) return null;
-    const pm = await getStripe().paymentMethods.retrieve(id);
-    const brand = pm.card?.brand
-      ? pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1)
-      : 'Card';
-    return pm.card?.last4 ? `${brand} \u2022\u2022\u2022\u2022 ${pm.card.last4}` : brand;
+    const card = await cardOnFile(userId);
+    return card ? describeCard(card) : null;
   } catch {
     return null;
   }
 }
 
 /**
- * The order confirmation for an order a code covered in full. Mirrors the
- * Stripe webhook's sendOrderConfirmation, looked up by order id. Never throws:
- * the order is confirmed whether or not the email goes.
+ * The order confirmation for an order a code covered in full. Mirrors
+ * lib/payment-record's sendOrderConfirmation, looked up by order id. Never
+ * throws: the order is confirmed whether or not the email goes.
  */
 async function sendCompedConfirmation(
   db: ReturnType<typeof createSupabaseAdminClient>,
@@ -402,21 +405,31 @@ async function sendCompedConfirmation(
   }
 }
 
+/**
+ * Charge the card the member saved at checkout, now that a prescriber has
+ * approved. Called from signRxAction.
+ *
+ * The card is the one on the member's profile rather than on the order, so a
+ * member who replaced their card between ordering and approval is charged the
+ * current one rather than a dead token.
+ *
+ * If the charge fails — expired card, insufficient funds, a bank that wants
+ * the cardholder present — we fall back to emailing the pay link. A failed
+ * charge must not dead-end an approved prescription.
+ */
 export async function chargeOnApproval(orderNumber: string): Promise<{
   ok: boolean;
   charged?: boolean;
   error?: string;
 }> {
-  if (!stripeConfigured() || !supabaseAdminConfigured()) {
+  if (!paymentsConfigured()) {
     return { ok: false, error: 'not_configured' };
   }
 
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select(
-      'id, order_number, user_id, member_email, member_name, total_cents, paid_confirmed_at, shipping_address, ship_state, stripe_payment_intent_id, promo_code',
-    )
+    .select('id, order_number, member_email, member_name, total_cents, paid_confirmed_at, promo_code')
     .eq('order_number', orderNumber)
     .maybeSingle();
 
@@ -425,8 +438,8 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
 
   /*
    * A code that covers the items and the shipping leaves nothing to charge,
-   * and Stripe refuses $0. Settle it here with the same claim the webhook
-   * makes, so it goes to the pharmacy like any paid order.
+   * and a card charge cannot be $0. Settle it here with the same claim
+   * recordPayment makes, so it goes to the pharmacy like any paid order.
    */
   if ((order.total_cents ?? 0) === 0 && order.promo_code) {
     const { data: claimed } = await db
@@ -437,8 +450,8 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
       .select('id');
     if (!claimed?.length) return { ok: true, charged: false };
     await db.from('orders').update({ status: 'paid' }).eq('id', order.id).in('status', AWAITING_PAYMENT);
-    // Profit (admin only): no Stripe charge, so no fee.
-    await snapshotOrderCosts(db, order.id, { stripe_fee_cents: 0 });
+    // Profit (admin only): no card charge, so no fee.
+    await snapshotOrderCosts(db, order.id, { processor_fee_cents: 0 });
     await db.from('order_updates').insert({
       order_id: order.id,
       label: 'Order confirmed',
@@ -446,125 +459,72 @@ export async function chargeOnApproval(orderNumber: string): Promise<{
       author: 'System',
       author_role: 'system',
     });
-    // No Stripe payment, so no webhook to send the confirmation: send it here.
+    // No card payment, so nothing else sends the confirmation: send it here.
     await sendCompedConfirmation(db, order.id);
     return { ok: true, charged: true };
   }
 
-  const stripe = getStripe();
-
-  /*
-   * paid_confirmed_at is written by the webhook, seconds after the charge. A
-   * second approval inside that window (a double click, a retried request)
-   * would otherwise charge again. If this order's intent already went through,
-   * report it and stop.
-   */
-  if (order.stripe_payment_intent_id) {
-    try {
-      const prior = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
-      // Only this order's own intent counts. An id that came from anywhere
-      // else must not make an unpaid order look paid.
-      if (
-        intentBelongsTo(prior, order) &&
-        (prior.status === 'succeeded' || prior.status === 'processing')
-      ) {
-        return { ok: true, charged: prior.status === 'succeeded' };
-      }
-    } catch {
-      // Unknown id: fall through and charge.
-    }
-  }
-
   const amount = order.total_cents ?? 0;
   if (amount <= 0) return { ok: false, error: 'invalid_amount' };
-  if (!order.member_email) return { ok: false, error: 'no_email' };
 
-  const customerId = await getOrCreateStripeCustomer({
-    userId: order.user_id,
-    email: order.member_email,
-    name: order.member_name ?? undefined,
-  });
-  const paymentMethodId = await defaultCardFor(customerId);
-
-  if (!paymentMethodId) {
+  /*
+   * One charge per order, however many times this runs: a double click, a
+   * retried request, or the pay link racing it all read back the charge
+   * already started (lib/payments). A charge that succeeds is recorded there,
+   * the one place an order becomes paid.
+   */
+  const charge = await chargeOrder(order.id);
+  if (charge.status === 'paid') return { ok: true, charged: true };
+  // Still deciding (a fraud review): the webhook settles it either way.
+  if (charge.status === 'pending') return { ok: true, charged: false };
+  if (charge.status === 'no_card') {
     // Nothing saved — the emailed link is the only way through.
     await issuePayLink(orderNumber);
     return { ok: true, charged: false, error: 'no_card_on_file' };
   }
 
-  const addr = (order.shipping_address ?? {}) as Record<string, string>;
+  /*
+   * Declined, or the bank wants the member present to approve it (they are
+   * not: the pay page handles that step), or the processor could not be
+   * reached. A charge left half-way is stored on the order, so paying from the
+   * link finishes it rather than charging twice.
+   */
+  const reason =
+    charge.status === 'declined'
+      ? charge.message
+      : charge.status === 'requires_action'
+        ? 'The bank asked the member to approve the charge.'
+        : `The charge could not complete (${charge.code}).`;
+
+  // The member gets a way to pay. The prescriber does not hear about this —
+  // his work is finished and a declined card is not a clinical matter.
+  await issuePayLink(orderNumber);
+
+  await db.from('order_updates').insert({
+    order_id: order.id,
+    label: 'Charge failed after approval',
+    body: `${reason} Member emailed a payment link. Will not ship until paid.`,
+    author: 'System',
+    author_role: 'system',
+  });
+
+  // Somebody has to know a signed prescription is sitting unpaid.
+  const alert = chargeFailedInternalEmail({
+    orderNumber: order.order_number,
+    memberName: order.member_name ?? 'Member',
+    memberEmail: order.member_email ?? '',
+    amount,
+    reason,
+  });
   try {
-    const intent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
-      customer: customerId,
-      payment_method: paymentMethodId,
-      // The member is not at the keyboard — they authorised this at checkout.
-      off_session: true,
-      confirm: true,
-      description: `Care program — order ${order.order_number}`,
-      shipping: addr.line1
-        ? {
-            name: addr.fullName || order.member_name || 'Member',
-            address: {
-              line1: addr.line1,
-              line2: addr.line2 || undefined,
-              city: addr.city || undefined,
-              state: addr.state || order.ship_state || undefined,
-              postal_code: addr.zip || undefined,
-              country: 'US',
-            },
-          }
-        : undefined,
-      metadata: { order_number: order.order_number, order_id: order.id },
-    }, {
-      // Two approvals racing each other get one charge: Stripe returns the
-      // first intent for the same key. Keyed on the card too, so a retry after
-      // the member replaces a declined card is a new attempt.
-      idempotencyKey: `approve-${order.id}-${paymentMethodId}`,
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: alert.subject,
+      html: alert.html,
     });
-
-    await db
-      .from('orders')
-      .update({ stripe_payment_intent_id: intent.id })
-      .eq('id', order.id);
-
-    // The webhook marks it paid — one code path owns that transition whether
-    // the charge happened here or through the pay link.
-    return { ok: true, charged: intent.status === 'succeeded' };
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : 'charge_failed';
-
-    // The member gets a way to pay. The prescriber does not hear about this —
-    // his work is finished and a declined card is not a clinical matter.
-    await issuePayLink(orderNumber);
-
-    await db.from('order_updates').insert({
-      order_id: order.id,
-      label: 'Charge failed after approval',
-      body: `${reason} Member emailed a payment link. Will not ship until paid.`,
-      author: 'System',
-      author_role: 'system',
-    });
-
-    // Somebody has to know a signed prescription is sitting unpaid.
-    const alert = chargeFailedInternalEmail({
-      orderNumber: order.order_number,
-      memberName: order.member_name ?? 'Member',
-      memberEmail: order.member_email,
-      amount,
-      reason,
-    });
-    try {
-      await sendEmail({
-        to: SUPPORT_EMAIL,
-        subject: alert.subject,
-        html: alert.html,
-      });
-    } catch {
-      // The order timeline already records it.
-    }
-
-    return { ok: true, charged: false, error: reason };
+  } catch {
+    // The order timeline already records it.
   }
+
+  return { ok: true, charged: false, error: reason };
 }
