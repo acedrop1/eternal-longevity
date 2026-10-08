@@ -101,6 +101,7 @@ export function orderCard(o: Order, image: string, overnight: boolean): Treatmen
   const base = {
     key: `order-${o.id}`,
     name: o.lines.map((l) => l.productName).join(' + ') || 'Your order',
+    // Orders from before plans-only still say 'once': they keep their label.
     plan: o.lines[0] && o.lines[0].cadence !== 'once' ? `${o.lines[0].cadenceLabel} plan` : 'One-time order',
     image,
     tone: 'ok' as TreatmentCard['tone'],

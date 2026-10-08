@@ -9,7 +9,7 @@ import {
   SERVICE_AREA,
   SERVICE_AREA_OR,
 } from '@/lib/site';
-import { SHIPPING_PRICE } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
 
 export const metadata: Metadata = pageMeta(
   '/legal/terms',
@@ -17,7 +17,15 @@ export const metadata: Metadata = pageMeta(
   'The agreement that governs your use of Eternal Longevity.',
 );
 
-export default function TermsPage() {
+// The shipping price is edited in Admin → Settings; pick up a change within minutes.
+export const revalidate = 300;
+
+export default async function TermsPage() {
+  const { pricePerShipment: per, firstOrderFree } = await getShippingSettings();
+  const shipLine =
+    per === 0
+      ? 'Shipping is free.'
+      : `Shipping is $${per} per box, including each plan renewal${firstOrderFree ? '; the first box of your first paid order ships free' : ''}.`;
   return (
     <LegalLayout
       title="Terms of Service"
@@ -48,7 +56,7 @@ export default function TermsPage() {
         {
           heading: 'Pricing & Billing',
           paragraphs: [
-            `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. Shipping is charged per shipment, including each plan renewal: $${SHIPPING_PRICE['2_DAY']} for 2-day or $${SHIPPING_PRICE.OVERNIGHT} for overnight cold-chain, depending on the medication, as shown on the product page and at checkout. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
+            `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. ${shipLine} It is the same for 2-day and overnight cold-chain delivery and is shown at checkout before you order. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
             'All payments are processed by our payment processor, a PCI-DSS compliant service provider. We do not receive or store your full card number.',
           ],
         },
@@ -63,7 +71,7 @@ export default function TermsPage() {
         {
           heading: 'Subscriptions & Cancellation',
           paragraphs: [
-            'You can buy a one-time supply or choose a plan that renews monthly, quarterly, or every six months. By choosing a plan at checkout, you authorise us to charge your saved card at the start of each period until the plan ends.',
+            'Treatment is sold as a plan that renews monthly, every three months, every six months or, for some medications, every twelve months. By choosing a plan at checkout, you authorise us to charge your saved card at the start of each period until the plan ends. A 12-month plan is billed once a year, up front, and ships in two boxes about six months apart; shipping for both boxes is charged with the year.',
             'Renewals ship on the same prescription, without a new review by the prescriber, until the prescription expires or runs out of refills. At that point the plan pauses until the prescriber reviews it again. The prescriber can pause or stop a plan at any time, and a new product always needs a new review.',
             `You can pause, change, or cancel your plan at any time from Portal › Subscriptions, or by emailing ${SUPPORT_EMAIL}. There is no cancellation fee, no minimum term, and no requirement to call anyone. Cancelling stops all future charges; it does not refund a supply the pharmacy has already prepared. See our Refund Policy.`,
           ],

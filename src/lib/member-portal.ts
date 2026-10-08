@@ -12,7 +12,8 @@ import { supabaseConfigured } from '@/lib/env';
 import { getLiveProducts } from '@/lib/catalog';
 import { paymentsOwed } from '@/lib/refills';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
-import { shippingPriceFor } from '@/lib/shipping';
+import { perCycleCents } from '@/lib/order-rules';
+import { getShippingSettings } from '@/lib/shipping-settings';
 import { repliesWaiting } from '@/lib/member-view';
 import { memberSamples, SAMPLE_PLANS, SAMPLE_THREADS } from '@/lib/dev-member-samples';
 
@@ -29,6 +30,7 @@ export async function loadSubscriptions(userId: string): Promise<Subscription[]>
   if (error || !data) return [];
 
   const live = new Map((await getLiveProducts()).map((p) => [p.id, p]));
+  const ship = (await getShippingSettings()).pricePerShipment;
   // Plans paused by a declined refill read as that, not as a pause the member chose.
   const declined = new Set(
     (await paymentsOwed(userId).catch(() => [])).filter((o) => o.refill).map((o) => o.productId),
@@ -42,6 +44,7 @@ export async function loadSubscriptions(userId: string): Promise<Subscription[]>
       cycleLabel: product?.cycleLength ?? '',
       cadenceLabel: r.cadence_label ?? '',
       perMonth: Math.round((r.per_cycle_cents ?? 0) / 100),
+      nextShipmentIso: r.next_shipment_date ? String(r.next_shipment_date).slice(0, 10) : null,
       nextBillingIso: r.next_billing_date ? String(r.next_billing_date).slice(0, 10) : null,
       nextBillingDate: r.next_billing_date
         ? new Date(r.next_billing_date).toLocaleDateString('en-US', {
@@ -54,15 +57,14 @@ export async function loadSubscriptions(userId: string): Promise<Subscription[]>
       image: product?.image ?? '/images/9.jpg',
       swatch: product?.swatch ?? '#1a1a1a',
       declined: r.status === 'paused' && declined.has(String(r.product_id)),
-      // The plans changeSubscriptionPlanAction can switch to, priced the way it prices them.
+      // The plans changeSubscriptionPlanAction can switch to, at the renewal
+      // price: the plan plus shipping on every box in the cycle.
       tiers: product
-        ? cadenceTiersForProduct(product)
-            .filter((t) => t.key !== 'once')
-            .map((t) => ({
-              key: t.key as PlanKey,
-              label: t.label,
-              perCycle: Math.round(t.total) + shippingPriceFor(product),
-            }))
+        ? cadenceTiersForProduct(product, ship).map((t) => ({
+            key: t.key as PlanKey,
+            label: t.label,
+            perCycle: perCycleCents(t.total, t.key, ship) / 100,
+          }))
         : [],
     } as Subscription;
   });

@@ -4,7 +4,7 @@
  * isolation.
  */
 
-import type { Cadence, CartItem } from '@/lib/cartTypes';
+import { cartCadence, type Cadence, type CartItem } from '@/lib/cartTypes';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { intakeProductIds } from '@/lib/intake-rules';
 import { MAX_LINE_QUANTITY, TERMINAL_ORDER } from '@/lib/order-rules';
@@ -49,7 +49,8 @@ export function intakeCovers(answers: Record<string, unknown>, productId: string
 /**
  * One line per product, quantity 1. A prescription's amount is set by its
  * plan, not by ordering several, and one product can't be on two plans at
- * once: the newest line for a product wins.
+ * once: the newest line for a product wins. Every cart read passes through
+ * here, so a legacy 'once' line becomes monthly (cartCadence).
  */
 export function oneEach(items: CartItem[]): CartItem[] {
   const latest = new Map<string, CartItem>();
@@ -57,7 +58,9 @@ export function oneEach(items: CartItem[]): CartItem[] {
     const prev = latest.get(it.productId);
     if (!prev || (it.addedAt ?? 0) >= (prev.addedAt ?? 0)) latest.set(it.productId, it);
   }
-  return items.filter((it) => latest.get(it.productId) === it).map((it) => ({ ...it, quantity: 1 }));
+  return items
+    .filter((it) => latest.get(it.productId) === it)
+    .map((it) => ({ ...it, cadence: cartCadence(it.cadence), quantity: 1 }));
 }
 
 /** The cart with one line moved to another plan, merged into that plan's line if there is one. */

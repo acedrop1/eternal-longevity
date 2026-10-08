@@ -109,7 +109,7 @@ export function BuyBar({
           </Link>
         ) : (
           <button type="button" onClick={onAddToCart} className={ctaCls}>
-            {active.key === 'once' ? 'Buy once' : 'Add to cart'}
+            Add to cart
           </button>
         )}
       </div>

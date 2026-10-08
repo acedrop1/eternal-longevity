@@ -10,6 +10,8 @@
  * prices exist for every row.
  */
 
+import { cadenceTiersForProduct, defaultTier, type ShopProduct } from '@/lib/shopProducts';
+
 /**
  * Also list rows whose product isn't live yet, as "Coming soon" with no price,
  * linking to the assessment. Off until the payment processor clears the
@@ -33,13 +35,11 @@ export interface LineupItem {
 }
 
 /**
- * The "from $X/mo" price for a product: its cheapest plan per month (the
- * 6-month plan, else quarterly). Lives here, not in shopProducts, so the menu
- * and tiles can use it without pulling the whole catalogue into the bundle.
+ * The "from $X/mo" price for a product: its cheapest offered plan per month
+ * (the 12-month plan where it has one), the same plan its page opens on.
  */
-export function fromPrice(pricing: { quarterly: number; sixMonth?: number }): number {
-  const q = Math.round(pricing.quarterly / 3);
-  return pricing.sixMonth ? Math.min(q, Math.round(pricing.sixMonth / 6)) : q;
+export function fromPrice(p: ShopProduct): number {
+  return defaultTier(cadenceTiersForProduct(p)).perMonth;
 }
 
 export interface Category {

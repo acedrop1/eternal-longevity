@@ -7,7 +7,7 @@ import {
   SUPPORT_EMAIL,
   SERVICE_AREA,
 } from '@/lib/site';
-import { SHIPPING_PRICE } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
 
 export const metadata: Metadata = pageMeta(
   '/legal/shipping',
@@ -21,7 +21,11 @@ export const metadata: Metadata = pageMeta(
  * it" is one of the two dispute reasons that actually go to arbitration. Every
  * window below is a commitment, so keep them honest rather than flattering.
  */
-export default function ShippingPage() {
+// The shipping price is edited in Admin → Settings; pick up a change within minutes.
+export const revalidate = 300;
+
+export default async function ShippingPage() {
+  const { pricePerShipment: per, firstOrderFree } = await getShippingSettings();
   return (
     <LegalLayout
       title="Shipping & Delivery Policy"
@@ -49,8 +53,13 @@ export default function ShippingPage() {
         {
           heading: 'Shipping Cost',
           paragraphs: [
-            `Shipping is charged per shipment and set by the medication, not chosen at checkout: $${SHIPPING_PRICE.OVERNIGHT} for overnight cold-chain (temperature-sensitive medications) and $${SHIPPING_PRICE['2_DAY']} for 2-day service (everything else). The amount is shown on the product page and at checkout before you place your order.`,
-            'Every shipment is charged shipping, including each refill on a plan. Each renewal charge is the plan price plus shipping for that shipment, and the checkout authorization states the combined amount.',
+            per === 0
+              ? 'Shipping is free on every box, 2-day and overnight cold-chain alike.'
+              : `Shipping is $${per} per box, the same for 2-day service and for overnight cold-chain (temperature-sensitive medications). The method is set by the medication, not chosen at checkout.${
+                  firstOrderFree ? ' Your first order ships free: the first box of your first paid order carries no shipping charge.' : ''
+                } The amount is shown at checkout before you place your order.`,
+            `Every other box is charged shipping, including each refill on a plan. Each renewal charge is the plan price plus shipping for its boxes, and the checkout authorization states the combined amount.`,
+            'A 12-month plan is billed once a year and ships in two boxes, the first when it is approved and the second about six months later. Shipping for both boxes is charged with the year (less the free first box on a first order).',
             'Refills on an active plan ship on their scheduled date on the same prescription, without a new review, and follow the same preparation and shipping timeline.',
           ],
         },

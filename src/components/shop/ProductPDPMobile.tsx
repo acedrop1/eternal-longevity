@@ -7,11 +7,13 @@ import { Check } from 'lucide-react';
 import { cadenceTiersForProduct, defaultTier, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, ctaTarget, useCtaOffscreen } from './BuyBar';
-import { billedEvery, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine } from './pdpParts';
-import { shippingPriceFor } from '@/lib/shipping';
+import { billedLine, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine, shippingNote } from './pdpParts';
+import type { ShippingSettings } from '@/lib/shipping-settings';
 
 interface ProductPDPMobileProps {
   product: ShopProduct;
+  /** Shipping price and first-order rule (getShippingSettings, read on the server page). */
+  shipping: ShippingSettings;
   /**
    * When set, CTAs link here instead of adding to cart. The public
    * storefront points it at the assessment.
@@ -28,9 +30,9 @@ interface ProductPDPMobileProps {
  * CTA is off screen; "Change" scrolls back to the plan picker and flashes the
  * selected row. Hidden from md, where ProductPDP takes over.
  */
-export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPMobileProps) {
+export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPMobileProps) {
   const { addItem } = useCart();
-  const tiers = cadenceTiersForProduct(product);
+  const tiers = cadenceTiersForProduct(product, shipping.pricePerShipment);
   const initialTier = defaultTier(tiers);
   const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(initialTier.key);
   const active = tiers.find((t) => t.key === selectedTier) ?? initialTier;
@@ -73,10 +75,9 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
         <div className="shrink-0 text-right tabular-nums">
           <p className="flex items-baseline justify-end gap-1.5">
             <span className="text-[30px] font-semibold leading-none tracking-[-0.04em]">${active.perMonth}</span>
-            {active.key !== 'once' && <span className="text-[14px] text-ink-soft">/mo</span>}
+            <span className="text-[14px] text-ink-soft">/mo</span>
           </p>
           <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
-          <span className="mt-1 block text-[11px] text-ink/65">+ ${shippingPriceFor(product)} shipping</span>
         </div>
       </div>
 
@@ -107,10 +108,9 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
           </button>
         )}
         {pickPlan && <p className="mt-2.5 text-center text-[12px] text-ink/65 tabular-nums">
-          {active.key === 'once'
-            ? `One-time · $${active.total} · ${shippingLine(product)} · no subscription`
-            : `Billed $${active.total} ${billedEvery(active)} · ${shippingLine(product)} · cancel anytime`}
+          {billedLine(active)} · {shippingLine(product)} · {active.key === 'annual' ? 'cancel before your next yearly billing' : 'cancel anytime'}
         </p>}
+        <p className="mt-1 text-center text-[12px] text-ink/65 tabular-nums">{shippingNote(shipping)}</p>
       </div>
 
       {/* Below the fold: what the chosen plan includes, then the rest. */}
@@ -137,7 +137,7 @@ export function ProductPDPMobile({ product, ctaHref, ctaLabel = 'Start assessmen
       </div>
 
       <div className="mt-16">
-        <ProductDetails product={product} ordering={!ctaHref} />
+        <ProductDetails product={product} shipping={shipping} ordering={!ctaHref} />
       </div>
 
       {/* Room for the buy bar, so the last row is never trapped under it. */}

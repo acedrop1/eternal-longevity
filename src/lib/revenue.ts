@@ -33,7 +33,13 @@ export function monthlyRecurringCents(subs: { per_cycle_cents: number | null; ca
     subs.reduce((sum, s) => {
       const cents = s.per_cycle_cents ?? 0;
       const label = (s.cadence_label ?? '').toLowerCase();
-      const months = label.includes('quarter') ? 3 : label.startsWith('6') ? 6 : label.includes('annual') ? 12 : 1;
+      const months = label.includes('quarter')
+        ? 3
+        : label.startsWith('6')
+          ? 6
+          : label.startsWith('12') || label.includes('annual')
+            ? 12
+            : 1;
       return sum + cents / months;
     }, 0),
   );

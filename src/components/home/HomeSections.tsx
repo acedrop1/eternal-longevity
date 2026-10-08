@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowUpRight, FlaskConical, Plus, ShieldCheck, Sparkle, Stethoscope, Truck } from 'lucide-react';
 import { getLiveProducts, type CatalogProduct } from '@/lib/catalog';
 import { FAQS, withPrices } from '@/lib/faq';
+import { getShippingSettings } from '@/lib/shipping-settings';
 import { LIST_DRAFTS, countLabel, fromPrice, listedCategories, listedItems } from '@/lib/lineup';
 import { CategoryTile } from '@/components/lineup/Lineup';
 import { cn } from '@/lib/utils';
@@ -83,7 +84,7 @@ export function Swipe({ children, className }: { children: React.ReactNode; clas
   );
 }
 
-const perMonth = (p: CatalogProduct) => fromPrice(p.pricing);
+const perMonth = (p: CatalogProduct) => fromPrice(p);
 
 /** The lineup categories as listed publicly (see LIST_DRAFTS), empty ones included. */
 const listed = async () => listedCategories((await getLiveProducts()).map((p) => p.id));
@@ -563,7 +564,8 @@ const PICK = [
 ];
 
 export async function HomeFAQ() {
-  const faqs = withPrices(FAQS, await getLiveProducts());
+  const [live, shipping] = await Promise.all([getLiveProducts(), getShippingSettings()]);
+  const faqs = withPrices(FAQS, live, shipping);
   const items = PICK.map((q) => faqs.find((f) => f.q === q)).filter((f) => f !== undefined);
   return (
     <section className="relative overflow-hidden bg-white px-5 pb-16 md:px-10 md:pb-24">

@@ -7,10 +7,10 @@ import { AdminPageHeader, headerButton } from '@/components/admin/IndexTable';
 import { AdminProductsIndex, type ProductRowView } from '@/components/admin/AdminProductsIndex';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalog, getPharmacyEntries } from '@/lib/catalog';
-import { SHOP_CATEGORIES } from '@/lib/shopProducts';
+import { SHOP_CATEGORIES, offersTwelveMonth } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
 import { planEconomics } from '@/lib/profit';
-import { shippingPriceFor } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
 
 export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,7 @@ export default async function AdminProductsPage() {
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const [products, pharmacy] = await Promise.all([getCatalog(), getPharmacyEntries()]);
+  const [products, pharmacy, shipping] = await Promise.all([getCatalog(), getPharmacyEntries(), getShippingSettings()]);
   const note = STORE_NOTE[catalogStore()];
   const live = products.filter((p) => p.status === 'live').length;
 
@@ -37,20 +37,22 @@ export default async function AdminProductsPage() {
     status: p.status,
     category: SHOP_CATEGORIES.find((c) => c.key === p.category)?.label ?? p.category,
     monthly: p.pricing.monthly,
-    from: fromPrice(p.pricing),
+    from: fromPrice(p),
     hasSku: Boolean(pharmacy[p.id]?.sku),
-    // Admin only (this page redirects everyone else): profit on each plan, from lib/profit.
+    // Admin only (this page redirects everyone else): profit on each plan, from lib/profit,
+    // at the renewal price (every box pays shipping; a 12-month plan ships 2).
     plans: pharmacy[p.id]?.unitCost
       ? (
           [
-            ['Monthly', p.pricing.monthly, 1],
-            ['3-mo', p.pricing.quarterly, 3],
-            ['6-mo', p.pricing.sixMonth ?? 0, 6],
+            ['Monthly', p.pricing.monthly, 1, 1],
+            ['3-mo', p.pricing.quarterly, 3, 1],
+            ['6-mo', p.pricing.sixMonth ?? 0, 6, 1],
+            ['12-mo', offersTwelveMonth(p) ? p.pricing.annual : 0, 12, 2],
           ] as const
         )
           .filter(([, price]) => price > 0)
-          .map(([label, price, months]) => {
-            const e = planEconomics(price, shippingPriceFor(p), months, { ...pharmacy[p.id], storage: p.storage });
+          .map(([label, price, months, shipments]) => {
+            const e = planEconomics(price, shipping.pricePerShipment, months, { ...pharmacy[p.id], storage: p.storage }, { shipments });
             return { label, profit: e.profit, margin: e.margin };
           })
       : [],

@@ -8,7 +8,7 @@ import {
   type CadenceTier,
   type ShopProduct,
 } from '@/lib/shopProducts';
-import { shippingPriceFor } from '@/lib/shipping';
+import type { ShippingSettings } from '@/lib/shipping-settings';
 import { ALL_ITEMS } from '@/lib/lineup';
 import { FDA_DISCLAIMER, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPORT_HOURS } from '@/lib/site';
 
@@ -66,13 +66,23 @@ export function ProductImage({
   );
 }
 
-/** "monthly", "every 3 months", "every 6 months". */
-export const billedEvery = (t: CadenceTier) =>
-  t.key === 'monthly' ? 'monthly' : `every ${t.key === 'sixMonth' ? 6 : 3} months`;
+/** "Billed $149 monthly", "Billed $402 every 3 months", "Billed $1248 once a year · ships every 6 months". */
+export const billedLine = (t: CadenceTier) =>
+  t.key === 'annual'
+    ? `Billed $${t.total} once a year · ships every 6 months`
+    : `Billed $${t.total} ${t.key === 'monthly' ? 'monthly' : `every ${t.key === 'sixMonth' ? 6 : 3} months`}`;
+
+/** "Free shipping on your first order · $20 per box after" (Admin → Settings). */
+export const shippingNote = (s: ShippingSettings) =>
+  s.pricePerShipment === 0
+    ? 'Free shipping'
+    : s.firstOrderFree
+      ? `Free shipping on your first order · $${s.pricePerShipment} per box after`
+      : `$${s.pricePerShipment} shipping per box`;
 
 /** "$149/mo billed monthly" beside a longer plan's lower rate: a labelled comparison, not a strike-through sale price. */
 export function MonthlyRate({ product, active, className }: { product: ShopProduct; active: CadenceTier; className?: string }) {
-  if (active.key === 'monthly' || active.key === 'once' || active.perMonth >= product.pricing.monthly) return null;
+  if (active.key === 'monthly' || active.perMonth >= product.pricing.monthly) return null;
   return <span className={cn('text-ink/60', className)}>vs ${product.pricing.monthly}/mo billed monthly</span>;
 }
 
@@ -80,27 +90,22 @@ export function MonthlyRate({ product, active, className }: { product: ShopProdu
 export const coldChain = (p: ShopProduct) => p.storage === 'refrigerated';
 const STORAGE_LABEL = { refrigerated: 'Refrigerated 2–8°C', room: 'Room temperature' } as const;
 const storageLabel = (p: ShopProduct) => (p.storage ? STORAGE_LABEL[p.storage] : 'Store as directed on the label');
-/** "Overnight cold-chain shipping $40" / "Shipping $30 (2-day)" (lib/shipping has the price). */
-export const shippingLine = (p: ShopProduct) =>
-  coldChain(p) ? `Overnight cold-chain shipping $${shippingPriceFor(p)}` : `Shipping $${shippingPriceFor(p)} (2-day)`;
+/** How it ships; the price is the same either way (shippingNote). */
+export const shippingLine = (p: ShopProduct) => (coldChain(p) ? 'Overnight cold-chain shipping' : '2-day shipping');
 
 /** Headline price for the selected plan, with the monthly-plan rate labelled beside it when it's higher. */
-export function PriceBlock({ product, active }: { product: ShopProduct; active: CadenceTier }) {
+export function PriceBlock({ product, active, shipping }: { product: ShopProduct; active: CadenceTier; shipping: ShippingSettings }) {
   return (
     <div>
       <p className="flex flex-wrap items-baseline gap-x-2 tabular-nums">
         <span className="text-[40px] font-semibold leading-none tracking-[-0.04em]">${active.perMonth}</span>
-        {active.key !== 'once' && <span className="text-[17px] text-ink-soft">/mo</span>}
+        <span className="text-[17px] text-ink-soft">/mo</span>
         <MonthlyRate product={product} active={active} className="text-[14px]" />
       </p>
       <p className="mt-2 text-[14px] text-ink-soft tabular-nums">
-        {active.key === 'once'
-          ? `One-time · $${active.total} · no subscription`
-          : `Billed $${active.total} ${billedEvery(active)} · cancel anytime`}
+        {billedLine(active)} · {active.key === 'annual' ? 'cancel before your next yearly billing' : 'cancel anytime'}
       </p>
-      <p className="mt-0.5 text-[14px] text-ink-soft tabular-nums">
-        + ${shippingPriceFor(product)} shipping{active.key === 'once' ? '' : ' each shipment'}
-      </p>
+      <p className="mt-0.5 text-[14px] text-ink-soft tabular-nums">{shippingNote(shipping)}</p>
     </div>
   );
 }
@@ -146,7 +151,7 @@ export function PlanSegments({
             <span className="text-[13px] font-medium">{t.label}</span>
             <span className="mt-0.5 text-[15px] font-semibold tabular-nums">
               ${t.perMonth}
-              {t.key !== 'once' && <span className={cn('text-[11px] font-normal', on ? 'text-white/70' : 'text-ink/65')}>/mo</span>}
+              <span className={cn('text-[11px] font-normal', on ? 'text-white/70' : 'text-ink/65')}>/mo</span>
             </span>
           </button>
         );
@@ -210,11 +215,9 @@ export function PlanOptions({
               <span className="shrink-0 text-right tabular-nums">
                 <span className="block text-[16px] font-semibold">
                   ${t.perMonth}
-                  {t.key !== 'once' && <span className="text-[13px] font-normal text-ink-soft">/mo</span>}
+                  <span className="text-[13px] font-normal text-ink-soft">/mo</span>
                 </span>
-                <span className="block text-[12px] text-ink/65">
-                  {t.key === 'once' ? 'no subscription' : `$${t.total} billed`}
-                </span>
+                <span className="block text-[12px] text-ink/65">${t.total} billed</span>
               </span>
             </button>
           );
@@ -291,7 +294,15 @@ function Spec({ label, value }: { label: string; value: string }) {
  * open by default: they stay on the page, not behind a click.
  * `ordering` adds the member cart flow (the public page has <HowItWorks /> instead).
  */
-export function ProductDetails({ product, ordering = false }: { product: ShopProduct; ordering?: boolean }) {
+export function ProductDetails({
+  product,
+  shipping,
+  ordering = false,
+}: {
+  product: ShopProduct;
+  shipping: ShippingSettings;
+  ordering?: boolean;
+}) {
   const categoryLabel =
     ALL_ITEMS.find((x) => x.item.live === product.id)?.category.name ??
     SHOP_CATEGORIES.find((c) => c.key === product.category)?.label ??
@@ -322,9 +333,11 @@ export function ProductDetails({ product, ordering = false }: { product: ShopPro
           <Row title="Shipping">
             <p>
               {coldChain(product)
-                ? `Overnight cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging: $${shippingPriceFor(product)} per shipment.`
-                : `2-day shipping from our licensed 503A pharmacy: $${shippingPriceFor(product)} per shipment.`}{' '}
-              Each plan renewal ships again and is charged shipping again. Tracking is available in your portal once your order ships.
+                ? 'Overnight cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
+                : '2-day shipping from our licensed 503A pharmacy.'}{' '}
+              {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12-month plan ships in
+              two boxes six months apart, with the second box&rsquo;s shipping billed with the year. Tracking is
+              available in your portal once your order ships.
             </p>
           </Row>
           {ordering && (

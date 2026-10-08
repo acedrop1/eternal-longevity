@@ -8,7 +8,7 @@
  */
 
 import { createHash, timingSafeEqual } from 'crypto';
-import { monthsPerCycle } from '@/lib/order-rules';
+import { monthsPerShipment } from '@/lib/order-rules';
 import type { PharmacyItem } from '@/lib/pharmacy-catalog';
 
 /* --------------------------------- orders --------------------------------- */
@@ -109,9 +109,12 @@ export function allergiesFrom(answers: Record<string, unknown>): string | undefi
   return undefined;
 }
 
-/** Units on the order: a month's supply × the months a shipment covers × the line quantity. */
+/**
+ * Units on the order: a month's supply × the months this box covers × the
+ * line quantity. A 12-month plan ships two 6-month boxes, so 6, not 12.
+ */
 export function pharmacyQuantity(item: Pick<PharmacyItem, 'quantity'>, cadence: string, lineQty: number): number {
-  return Math.max(1, item.quantity) * monthsPerCycle(cadence) * Math.max(1, lineQty);
+  return Math.max(1, item.quantity) * monthsPerShipment(cadence) * Math.max(1, lineQty);
 }
 
 export type PayloadError = 'sku_missing' | 'no_directions' | 'patient_incomplete' | 'no_address' | 'no_npi';

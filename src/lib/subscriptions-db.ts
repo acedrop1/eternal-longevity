@@ -2,7 +2,7 @@
 
 /**
  * Member subscription self-service: change the billing plan (monthly /
- * quarterly / 6-month), pause, resume, cancel, skip a cycle. Ownership is
+ * quarterly / 6-month / 12-month where the product offers it), pause, resume, cancel, skip a cycle. Ownership is
  * always checked as the caller through RLS, so a member can only touch their
  * own rows. Dosage and product are NOT editable here — clinical changes go
  * through the prescriber.
@@ -15,20 +15,21 @@ import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getLiveProduct } from '@/lib/catalog';
-import { shippingPriceFor } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
 import {
   addMonthsIso,
   cadenceOfLabel,
   memberMoveFrom,
   monthsPerCycle,
+  monthsPerShipment,
+  perCycleCents,
   refillsBetween,
 } from '@/lib/order-rules';
 
 type Result = { ok: boolean; error?: string };
 
-export type PlanKey = 'monthly' | 'quarterly' | 'sixMonth';
-// 'once' is a tier too, but a one-time order is not a plan to switch onto.
-const PLAN_KEYS: string[] = ['monthly', 'quarterly', 'sixMonth'];
+export type PlanKey = 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
+const PLAN_KEYS: string[] = ['monthly', 'quarterly', 'sixMonth', 'annual'];
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -44,7 +45,7 @@ async function ownSubscription(subId: string) {
   const db = await createSupabaseServerClient();
   const { data } = await db
     .from('subscriptions')
-    .select('id, product_id, status, cadence_label, next_billing_date, prescription_id')
+    .select('id, product_id, status, cadence_label, next_billing_date, prescription_id, next_shipment_date')
     .eq('id', subId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -61,7 +62,13 @@ async function prescriptionFor(id: string | null) {
   return data;
 }
 
-/** Switch a subscription to a different billing cadence. */
+/**
+ * Switch a subscription to a different billing cadence. Takes effect at the
+ * next billing date: nothing is charged now and the date stays. Leaving a
+ * 12-month plan mid-year keeps its paid second box (next_shipment_date).
+ * The 12-month plan is only a choice where the product offers it (its tier
+ * exists only then).
+ */
 export async function changeSubscriptionPlanAction(
   subId: string,
   plan: PlanKey
@@ -75,7 +82,8 @@ export async function changeSubscriptionPlanAction(
 
   const product = await getLiveProduct(sub.product_id);
   if (!product) return { ok: false, error: 'Product no longer available.' };
-  const tier = cadenceTiersForProduct(product).find((t) => t.key === plan);
+  const { pricePerShipment } = await getShippingSettings();
+  const tier = cadenceTiersForProduct(product, pricePerShipment).find((t) => t.key === plan);
   if (!tier) return { ok: false, error: 'Invalid plan.' };
 
   const admin = createSupabaseAdminClient();
@@ -83,8 +91,8 @@ export async function changeSubscriptionPlanAction(
     .from('subscriptions')
     .update({
       cadence_label: tier.label,
-      // Every renewal ships, so the per-cycle charge includes shipping.
-      per_cycle_cents: Math.round(tier.total * 100) + shippingPriceFor(product) * 100,
+      // Plan + shipping on every box of the cycle, as renewSubscription bills it.
+      per_cycle_cents: perCycleCents(tier.total, plan, pricePerShipment),
     })
     .eq('id', sub.id);
   if (error) return { ok: false, error: error.message };
@@ -93,18 +101,17 @@ export async function changeSubscriptionPlanAction(
    * Refills were counted for the plan the prescription was written on. A
    * monthly plan moved to quarterly would otherwise keep eleven refills it can
    * never use; quarterly moved to monthly would run out months early. Recount
-   * the shipments that still fit before it expires on the new cadence.
+   * the boxes that still fit before it expires on the new cadence, plus a
+   * 12-month plan's second box if it is still owed.
    */
   const rx = await prescriptionFor(sub.prescription_id);
   if (rx?.expires_at) {
     await admin
       .from('prescriptions')
       .update({
-        refills_remaining: refillsBetween(
-          sub.next_billing_date ?? today(),
-          rx.expires_at,
-          monthsPerCycle(plan),
-        ),
+        refills_remaining:
+          refillsBetween(sub.next_billing_date ?? today(), rx.expires_at, monthsPerShipment(plan)) +
+          (sub.next_shipment_date ? 1 : 0),
       })
       .eq('id', rx.id);
   }

@@ -3,8 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { FAQS, FAQ_CATEGORIES, withPrices, type FAQCategory } from '@/lib/faq';
-import { useCatalog } from '@/components/catalog/CatalogProvider';
+import { FAQ_CATEGORIES, type FAQ, type FAQCategory } from '@/lib/faq';
 import { CARD_GLASS } from '@/components/lineup/Lineup';
 import { cn } from '@/lib/utils';
 
@@ -16,10 +15,9 @@ const FILTERS: Filter[] = ['All', ...FAQ_CATEGORIES];
  * category pills on the left, frosted rows on the right (the page puts an
  * Aura behind this for the glass to catch).
  */
-export function FAQBrowser({ children }: { children: ReactNode }) {
+export function FAQBrowser({ faqs, children }: { faqs: FAQ[]; children: ReactNode }) {
   const [filter, setFilter] = useState<Filter>('All');
   const reduce = useReducedMotion();
-  const faqs = withPrices(FAQS, useCatalog().products);
   const items = filter === 'All' ? faqs : faqs.filter((f) => f.category === filter);
 
   return (

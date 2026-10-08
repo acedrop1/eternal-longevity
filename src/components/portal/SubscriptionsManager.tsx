@@ -35,6 +35,8 @@ export interface Subscription {
   /** 'Oct 30, 2026' for display, and the stored 'YYYY-MM-DD'. */
   nextBillingDate: string;
   nextBillingIso: string | null;
+  /** 12-month plans: when the paid second box ships ('YYYY-MM-DD'), null once it has. */
+  nextShipmentIso?: string | null;
   /** Straight from the database. The page re-renders after every action. */
   status: Status;
   image: string;
@@ -54,13 +56,15 @@ const STATUS_THEME: Record<Status, { label: string; tone: Tone }> = {
   canceled: { label: 'Cancelled', tone: 'muted' },
 };
 
-/** The plan key a stored cadence label ('Monthly', 'Quarterly', '6-month', 'Annual') stands for. */
-const planOf = (label: string): PlanKey | 'annual' => {
-  const l = label.toLowerCase();
-  return l.startsWith('6') ? 'sixMonth' : l.includes('quarter') ? 'quarterly' : l.includes('annual') ? 'annual' : 'monthly';
+/** The plan key a stored cadence label ('Monthly', 'Quarterly', '6-month', '12-month') stands for. */
+const planOf = (label: string) => cadenceOfLabel(label, 'monthly') as PlanKey;
+const PER: Record<PlanKey, string> = { monthly: '/mo', quarterly: '/3 mo', sixMonth: '/6 mo', annual: '/yr' };
+const EVERY: Record<PlanKey, string> = {
+  monthly: 'every month',
+  quarterly: 'every 3 months',
+  sixMonth: 'every 6 months',
+  annual: 'billed yearly · ships every 6 months',
 };
-const PER: Record<PlanKey | 'annual', string> = { monthly: '/mo', quarterly: '/3 mo', sixMonth: '/6 mo', annual: '/yr' };
-const EVERY: Record<PlanKey, string> = { monthly: 'every month', quarterly: 'every 3 months', sixMonth: 'every 6 months' };
 
 const CANCEL_REASONS = [
   'It’s too expensive',
@@ -178,7 +182,10 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
           const declined = isPaused && Boolean(s.declined);
           const pending = busy === s.id;
           const note = notice[s.id];
+          const annual = planOf(s.cadenceLabel) === 'annual';
           const per = PER[planOf(s.cadenceLabel)];
+          // A 12-month plan's next box: the paid second box if still owed, else the next year's first.
+          const nextBox = s.nextShipmentIso ?? (annual ? s.nextBillingIso : null);
 
           return (
             <article key={s.id} className={cn(panel, 'p-4 transition-opacity sm:p-6', isCancelled && 'opacity-60')}>
@@ -194,6 +201,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                   <p className="mt-0.5 text-[15px] text-ink/70">
                     {s.cadenceLabel} plan{s.cycleLabel ? ` · ${s.cycleLabel}` : ''}
                   </p>
+                  {annual && <p className="mt-0.5 text-[15px] text-ink/70">Billed yearly · ships every 6 months</p>}
                 </div>
               </div>
 
@@ -212,13 +220,21 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                   </dd>
                 </div>
                 <div className="px-4 py-3">
-                  <dt className="text-[14px] font-medium text-ink/70">Per refill</dt>
+                  <dt className="text-[14px] font-medium text-ink/70">{annual ? 'Per year' : 'Per refill'}</dt>
                   <dd className="mt-0.5 text-[17px] font-semibold tabular-nums text-ink">
                     ${s.perMonth}
                     <span className="text-[15px] font-normal text-ink/70">{per}</span>
                   </dd>
                 </div>
               </dl>
+
+              {/* Shown on any plan with a box still owed: a member who left a 12-month plan mid-year still gets box 2. */}
+              {(isActive || isPaused) && nextBox && (annual || s.nextShipmentIso) && (
+                <p className="mt-3 text-[15px] text-ink/80">
+                  Next box ships around <span className="font-semibold tabular-nums text-ink">{shortDate(nextBox)}</span>
+                  {s.nextShipmentIso ? ', already paid for.' : '.'}
+                </p>
+              )}
 
               {(isCancelled || declined || isPaused) && (
                 <p className="mt-3 text-[15px] leading-relaxed text-ink/80">
@@ -272,7 +288,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                         type="button"
                         disabled={pending}
                         onClick={() =>
-                          setChanging({ sub: s, pick: (planOf(s.cadenceLabel) === 'annual' ? 'monthly' : planOf(s.cadenceLabel)) as PlanKey })
+                          setChanging({ sub: s, pick: planOf(s.cadenceLabel) })
                         }
                         className={cn(btnSecondary, 'flex-1 sm:flex-none')}
                       >
@@ -343,6 +359,9 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
             <p className={sheetCopy}>
               Nothing is charged today. Your new plan starts with your next refill
               {changing.sub.nextBillingIso ? ` on ${shortDate(changing.sub.nextBillingIso)}` : ''}.
+              {changing.sub.nextShipmentIso
+                ? ` The second box of your current year still ships around ${shortDate(changing.sub.nextShipmentIso)}.`
+                : ''}
             </p>
             <fieldset className="mt-5 space-y-2">
               <legend className="sr-only">Plan</legend>

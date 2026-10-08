@@ -6,9 +6,11 @@
  * Cold-chain products go overnight, everything else two-day. `storage` is the
  * product's own field (Admin → Products); unset counts as room temperature.
  *
- * Price is the pharmacy's charge to us plus $5 (2-day $25, overnight $35).
- * Charged once per order (one product, one shipment) and again on every
- * renewal, because every renewal ships again.
+ * One price for every shipment, 2-day or overnight cold-chain: $20 (the
+ * pharmacy charges us $25 / $35; the plan prices carry the rest). A
+ * member's first order ships free (firstOrderFree). After that every box
+ * pays: renewals, and the second box of a 12-month plan (charged up front
+ * with the year, see shipmentsPerCycle in lib/shopProducts).
  */
 
 export type ShippingMethod = '2_DAY' | 'OVERNIGHT';
@@ -20,7 +22,7 @@ export function shippingMethodFor(storage: Storage): ShippingMethod {
 }
 
 /** Whole dollars per shipment. */
-export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 30, OVERNIGHT: 40 };
+export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 20, OVERNIGHT: 20 };
 
 /** What the pharmacy charges us per shipment, whole dollars. Admin-only (profit, lib/profit). */
 export const SHIPPING_COST: Record<ShippingMethod, number> = { '2_DAY': 25, OVERNIGHT: 35 };
@@ -29,6 +31,17 @@ export const SHIPPING_LABEL: Record<ShippingMethod, string> = {
   '2_DAY': '2-day shipping',
   OVERNIGHT: 'Overnight, cold-chain',
 };
+
+/**
+ * Shipping on one order, in cents: per box, with the first box of a member's
+ * first order free. `shipments` is boxes in this billing cycle (2 for a
+ * 12-month plan), `firstOrder` whether the member has never had an order
+ * paid before. Checkout, the server and renewals all charge through this.
+ */
+export function shippingChargeCents(input: { pricePerShipment: number; shipments: number; firstOrder: boolean }): number {
+  const paidBoxes = Math.max(0, input.shipments - (input.firstOrder ? 1 : 0));
+  return paidBoxes * input.pricePerShipment * 100;
+}
 
 /** What one shipment of this product costs the customer, in whole dollars. */
 export function shippingPriceFor(product: { storage?: Storage } | null | undefined): number {

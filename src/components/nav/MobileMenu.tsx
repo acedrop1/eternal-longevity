@@ -189,7 +189,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                           <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold backdrop-blur">Rx</span>
                         </span>
                         <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em]">{p.name}</span>
-                        <span className="block text-[12px] text-ink-soft">from ${fromPrice(p.pricing)}/mo</span>
+                        <span className="block text-[12px] text-ink-soft">from ${fromPrice(p)}/mo</span>
                       </Link>
                     ))}
                   </div>

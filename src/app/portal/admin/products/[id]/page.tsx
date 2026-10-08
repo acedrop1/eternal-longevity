@@ -6,6 +6,8 @@ import { AdminProductEditor } from '@/components/admin/AdminProductEditor';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import type { ProductInput } from '@/lib/product-actions';
+import { offersTwelveMonth } from '@/lib/shopProducts';
+import { getShippingSettings } from '@/lib/shipping-settings';
 
 export const metadata: Metadata = { title: 'Edit product' };
 export const dynamic = 'force-dynamic';
@@ -33,6 +35,7 @@ const BLANK: ProductInput = {
   sideEffects: [],
   contraindications: [],
   pricing: { monthly: 199, quarterly: 540, sixMonth: 1020, annual: 2040 },
+  twelveMonthPlan: false,
   image: '',
   popular: false,
   fdaApproved: false,
@@ -68,6 +71,7 @@ export default async function AdminProductPage({ params }: PageProps) {
       sideEffects: p.sideEffects,
       contraindications: p.contraindications,
       pricing: p.pricing,
+      twelveMonthPlan: offersTwelveMonth(p),
       image: p.image,
       popular: Boolean(p.popular),
       fdaApproved: Boolean(p.fdaApproved),
@@ -77,7 +81,7 @@ export default async function AdminProductPage({ params }: PageProps) {
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} storage={storage} />
+      <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} storage={storage} shipping={await getShippingSettings()} />
     </PortalShell>
   );
 }

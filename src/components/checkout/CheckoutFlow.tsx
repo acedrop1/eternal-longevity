@@ -19,8 +19,8 @@ import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
 import { SERVICE_AREA_OR, SITE_NAME } from '@/lib/site';
 import { monthsPerCycle } from '@/lib/order-rules';
-import { shippingLabelFor, shippingPriceFor } from '@/lib/shipping';
-import { cadenceTiersForProduct } from '@/lib/shopProducts';
+import { shippingChargeCents, shippingLabelFor } from '@/lib/shipping';
+import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -45,8 +45,8 @@ interface ShippingForm {
 /**
  * The pharmacy ships each order overnight cold-chain (refrigerated products)
  * or 2-day (everything else); the product decides, not the member, so there is
- * no tier to pick. The price per shipment is in lib/shipping, the same number
- * the server charges. Left as a list so a choice can come back without
+ * no tier to pick. The price per box comes from the server (Admin → Settings),
+ * the same number placeOrder charges. Left as a list so a choice can come back without
  * rewiring the section.
  */
 const SHIPPING_OPTIONS = [
@@ -80,6 +80,10 @@ interface CheckoutFlowProps {
   savedCard?: string | null;
   /** Cart products the member already has (lib/held-products): flagged up front, not at Place order. */
   held?: Record<string, 'order' | 'plan'>;
+  /** Whole dollars per box (getShippingSettings). */
+  pricePerShipment: number;
+  /** The basket's first box ships free (lib/first-box firstBoxFree), as placeOrder will charge it. */
+  firstBoxFree: boolean;
 }
 
 // ============================================================================
@@ -195,6 +199,8 @@ export function CheckoutFlow({
   paymentAccountId,
   savedCard,
   held = {},
+  pricePerShipment,
+  firstBoxFree,
 }: CheckoutFlowProps) {
   const router = useRouter();
   const {
@@ -406,37 +412,45 @@ export function CheckoutFlow({
 
   const lines = useMemo(
     () =>
-      resolvedItems.map((it) => ({
+      resolvedItems.map((it, i) => ({
         key: `${it.productId}-${it.cadence}`,
         productId: it.productId,
         cadence: it.cadence,
         name: it.product.name,
-        tiers: cadenceTiersForProduct(it.product),
-        cadenceLabel: it.cadence === 'once' ? 'One-time purchase' : `${it.cadenceLabel} billing`,
+        tiers: cadenceTiersForProduct(it.product, pricePerShipment),
+        cadenceLabel: `${it.cadenceLabel} billing`,
         qty: it.quantity,
         perMonth: it.perMonth,
         total: it.total * it.quantity,
-        // One shipment per order, and every renewal ships again.
-        shipping: shippingPriceFor(it.product),
+        // Each item is its own order: one box, two for a 12-month plan, all
+        // charged now. The basket's first line takes the free first box, as
+        // placeOrder prices it. Every renewal pays for its boxes.
+        shipments: shipmentsPerCycle(it.cadence),
+        shipping:
+          shippingChargeCents({
+            pricePerShipment,
+            shipments: shipmentsPerCycle(it.cadence),
+            firstOrder: firstBoxFree && i === 0,
+          }) / 100,
+        renewalShipping: pricePerShipment * shipmentsPerCycle(it.cadence),
         shippingLabel: shippingLabelFor(it.product),
         sub: it.product.cycleLength,
         image: it.product.image,
         swatch: it.product.swatch,
         shot: it.product.shot,
       })),
-    [resolvedItems],
+    [resolvedItems, pricePerShipment, firstBoxFree],
   );
 
   const subtotal = cartSubtotal;
   const heldLines = lines.filter((l) => held[l.productId]);
   // What each renewal charges: the plan and its shipping, at full price (a code is this order only).
-  const recurring = lines.filter((l) => l.cadence !== 'once');
   const renewalNote =
-    recurring.length === 1
-      ? ` Renewals are $${recurring[0].total + recurring[0].shipping} every ${
-          monthsPerCycle(recurring[0].cadence) === 1 ? 'month' : `${monthsPerCycle(recurring[0].cadence)} months`
+    lines.length === 1
+      ? ` Renewals are $${lines[0].total + lines[0].renewalShipping} every ${
+          monthsPerCycle(lines[0].cadence) === 1 ? 'month' : `${monthsPerCycle(lines[0].cadence)} months`
         }.`
-      : recurring.length > 1
+      : lines.length > 1
         ? ' Renewals are at full price.'
         : '';
   // Each item is its own order and shipment; the server prices it the same way.
@@ -448,7 +462,7 @@ export function CheckoutFlow({
   // The promo comes off the items only, and off shipping only when the code
   // waives it (lib/shipping orderTotalCents).
   const freeShipping = Boolean(promo?.ok && promo.includesShipping);
-  const shippingPrice = freeShipping ? 'Free' : `$${shippingCost}`;
+  const shippingPrice = freeShipping || shippingCost === 0 ? 'Free' : `$${shippingCost}`;
   // Rounded to cents: a percent discount leaves float dust (0.9899999…).
   const total = Math.round((Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax) * 100) / 100;
   const totalText = Number.isInteger(total) ? String(total) : total.toFixed(2);
@@ -889,7 +903,7 @@ export function CheckoutFlow({
                             >
                               {l.tiers.map((t) => (
                                 <option key={t.key} value={t.key}>
-                                  {t.key === 'once' ? 'One-time purchase' : `${t.label} billing`} · ${t.total}
+                                  {t.label} billing · ${t.total}
                                 </option>
                               ))}
                             </select>
@@ -902,7 +916,8 @@ export function CheckoutFlow({
                             {l.sub} · Qty {l.qty}
                           </div>
                           <div className="mt-0.5 text-[13px] text-ink/65">
-                            {l.shippingLabel} ${l.shipping}
+                            {l.shippingLabel}
+                            {l.shipments > 1 ? ' · 2 boxes' : ''} · {l.shipping ? `$${l.shipping}` : 'Free'}
                           </div>
                           {held[l.productId] && (
                             <p className="mt-1.5 text-[13px] leading-snug text-red-700">
@@ -1570,16 +1585,14 @@ export function CheckoutFlow({
               <span>
                 If my prescriber approves, I authorize {SITE_NAME} to charge the
                 card I saved ${totalText} for this order.{' '}
-                {discount > 0 || freeShipping ? 'After that, renewals are at full price:' : 'After that:'}
+                {discount > 0 || freeShipping || firstBoxFree ? 'After that, renewals are at full price:' : 'After that:'}
                 {lines.map((l) => {
                   const n = monthsPerCycle(l.cadence);
                   return (
                     <span key={l.key} className="mt-1 block pl-3">
                       · {l.name}
                       {l.qty > 1 ? ` ×${l.qty}` : ''}:{' '}
-                      {l.cadence === 'once'
-                        ? 'a single charge, included above. It does not renew.'
-                        : `$${l.total} + $${l.shipping} shipping = $${l.total + l.shipping} every ${n === 1 ? 'month' : `${n} months`}, automatically, until I cancel.`}
+                      {`$${l.total} + $${l.renewalShipping} shipping = $${l.total + l.renewalShipping} every ${n === 1 ? 'month' : `${n} months`}${l.shipments > 1 ? ' (shipped in two boxes, six months apart)' : ''}, automatically, until I cancel.`}
                     </span>
                   );
                 })}

@@ -62,6 +62,11 @@ export interface ShopProduct {
    * (new admin products, or unsure) reads "Store as directed on the label".
    */
   storage?: 'refrigerated' | 'room';
+  /**
+   * Offer the 12-month plan (Admin → Products). Unset falls back to
+   * TWELVE_MONTH_PLAN, the oral solids it was launched on.
+   */
+  twelveMonthPlan?: boolean;
   /** Human-readable cycle, e.g. "12-week cycle" */
   cycleLength: string;
   /** Whole-dollar totals per billing cycle. Per-month prices derive from these. */
@@ -74,7 +79,11 @@ export interface ShopProduct {
      * product simply has no 6-month plan.
      */
     sixMonth?: number;
-    annual: number; // stored only, never offered to customers (12 × the 6-month rate)
+    /**
+     * Billed every 12 months: 12 × the plan's 12-month rate. Offered only
+     * where offersTwelveMonth(product) is true; stored but unused elsewhere.
+     */
+    annual: number;
   };
   /** Background swatch gradient for the card hero */
   swatch: string;
@@ -397,7 +406,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'sq',
     cycleLength: 'As-needed dosing',
-    pricing: { monthly: 219, quarterly: 615, sixMonth: 1170, annual: 2340 },
+    pricing: { monthly: 219, quarterly: 591, sixMonth: 1050, annual: 2340 },
     swatch: 'linear-gradient(180deg, #4a5042 0%, #000000 100%)',
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/9.jpg'],
@@ -611,7 +620,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'sq',
     cycleLength: 'Schedule set by your prescriber',
-    pricing: { monthly: 149, quarterly: 417, sixMonth: 810, annual: 1620 },
+    pricing: { monthly: 149, quarterly: 402, sixMonth: 714, annual: 1620 },
     swatch: 'linear-gradient(180deg, #3d4560 0%, #000000 100%)',
     image: '/images/5.jpg',
     gallery: ['/images/5.jpg', '/images/9.jpg', '/images/14.jpg', '/images/7.jpg'],
@@ -694,7 +703,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'sq',
     cycleLength: 'Schedule set by your prescriber',
-    pricing: { monthly: 149, quarterly: 387, sixMonth: 654, annual: 1308 },
+    pricing: { monthly: 149, quarterly: 402, sixMonth: 714, annual: 1308 },
     swatch: 'linear-gradient(180deg, #35555c 0%, #000000 100%)',
     image: '/images/9.jpg',
     gallery: ['/images/9.jpg', '/images/5.jpg', '/images/14.jpg', '/images/12.jpg'],
@@ -944,7 +953,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'nasal',
     cycleLength: '30-day supply',
-    pricing: { monthly: 119, quarterly: 315, sixMonth: 534, annual: 1068 },
+    pricing: { monthly: 151, quarterly: 408, sixMonth: 726, annual: 1068 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/nad-nasal.jpg',
     shot: true,
@@ -987,7 +996,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'im',
     cycleLength: '30-day supply',
-    pricing: { monthly: 89, quarterly: 225, sixMonth: 354, annual: 708 },
+    pricing: { monthly: 89, quarterly: 240, sixMonth: 426, annual: 708 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/mic-b12.jpg',
     shot: true,
@@ -1029,7 +1038,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 79, quarterly: 216, sixMonth: 414, annual: 828 },
+    pricing: { monthly: 95, quarterly: 258, sixMonth: 462, annual: 924 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/methylene-blue.jpg',
     shot: true,
@@ -1075,7 +1084,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: 'As-needed dosing · 8 troches a month',
-    pricing: { monthly: 49, quarterly: 135, sixMonth: 252, annual: 504 },
+    pricing: { monthly: 49, quarterly: 132, sixMonth: 234, annual: 408 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/sildenafil-tadalafil.jpg',
     shot: true,
@@ -1123,7 +1132,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: 'As-needed dosing · 8 doses a month',
-    pricing: { monthly: 32, quarterly: 90, sixMonth: 180, annual: 360 },
+    pricing: { monthly: 38, quarterly: 102, sixMonth: 180, annual: 324 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/sildenafil.jpg',
     shot: true,
@@ -1171,7 +1180,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 89, quarterly: 237, sixMonth: 414, annual: 828 },
+    pricing: { monthly: 89, quarterly: 240, sixMonth: 426, annual: 744 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/oxytocin.jpg',
     shot: true,
@@ -1217,7 +1226,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 149, quarterly: 357, sixMonth: 594, annual: 1188 },
+    pricing: { monthly: 149, quarterly: 402, sixMonth: 714, annual: 1248 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/enclomiphene.jpg',
     shot: true,
@@ -1260,7 +1269,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 89, quarterly: 237, sixMonth: 432, annual: 864 },
+    pricing: { monthly: 89, quarterly: 240, sixMonth: 426, annual: 864 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/hrt-cream.jpg',
     shot: true,
@@ -1310,7 +1319,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 79, quarterly: 225, sixMonth: 432, annual: 864 },
+    pricing: { monthly: 79, quarterly: 213, sixMonth: 378, annual: 660 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/fin-min-capsule.jpg',
     shot: true,
@@ -1357,7 +1366,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 89, quarterly: 255, sixMonth: 480, annual: 960 },
+    pricing: { monthly: 89, quarterly: 240, sixMonth: 426, annual: 960 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/fin-min-foam.jpg',
     shot: true,
@@ -1403,7 +1412,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 99, quarterly: 276, sixMonth: 510, annual: 1020 },
+    pricing: { monthly: 99, quarterly: 267, sixMonth: 474, annual: 1020 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/min-12-fin.jpg',
     shot: true,
@@ -1449,7 +1458,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 99, quarterly: 267, sixMonth: 480, annual: 960 },
+    pricing: { monthly: 99, quarterly: 267, sixMonth: 474, annual: 960 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/fin-min-tret.jpg',
     shot: true,
@@ -1495,7 +1504,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 85, quarterly: 255, sixMonth: 510, annual: 1020 },
+    pricing: { monthly: 85, quarterly: 231, sixMonth: 408, annual: 780 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/finasteride.jpg',
     shot: true,
@@ -1540,7 +1549,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 85, quarterly: 255, sixMonth: 510, annual: 1020 },
+    pricing: { monthly: 85, quarterly: 231, sixMonth: 408, annual: 780 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/oral-minoxidil.jpg',
     shot: true,
@@ -1584,7 +1593,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 69, quarterly: 186, sixMonth: 330, annual: 660 },
+    pricing: { monthly: 69, quarterly: 186, sixMonth: 330, annual: 576 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/spironolactone.jpg',
     shot: true,
@@ -1630,7 +1639,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/tretinoin.jpg',
     shot: true,
@@ -1673,7 +1682,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/glow-cream.jpg',
     shot: true,
@@ -1715,7 +1724,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 49, quarterly: 141, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/clear-skin-cream.jpg',
     shot: true,
@@ -1758,7 +1767,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/brightening.jpg',
     shot: true,
@@ -1800,7 +1809,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/even-tone-cream.jpg',
     shot: true,
@@ -1843,7 +1852,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'topical',
     cycleLength: '30-day supply',
-    pricing: { monthly: 48, quarterly: 138, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 59, quarterly: 168, sixMonth: 318, annual: 540 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/hq-free.jpg',
     shot: true,
@@ -1884,7 +1893,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'oral',
     cycleLength: '30-day supply',
-    pricing: { monthly: 49, quarterly: 138, sixMonth: 270, annual: 540 },
+    pricing: { monthly: 49, quarterly: 132, sixMonth: 234, annual: 408 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/clear-skin-capsules.jpg',
     shot: true,
@@ -1959,9 +1968,38 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
   ).slice(0, limit);
 }
 
+/**
+ * 12-month plans: oral solids only (tablets, capsules, troches). Compounded
+ * oral solids usually carry a 180-day beyond-use date, so the year is billed
+ * once and shipped in two 6-month boxes (see lib/annual-shipments). Creams,
+ * injectables and sprays keep shorter plans.
+ */
+export const TWELVE_MONTH_PLAN: ReadonlySet<string> = new Set([
+  'sildenafil',
+  'sildenafil-tadalafil',
+  'finasteride',
+  'oral-minoxidil',
+  'fin-min-capsule',
+  'enclomiphene',
+  'spironolactone',
+  'clear-skin-capsules',
+  'methylene-blue',
+  'oxytocin',
+]);
+
+/** Whether this product sells a 12-month plan: its own setting, else the launch list. */
+export function offersTwelveMonth(p: Pick<ShopProduct, 'id' | 'twelveMonthPlan'>): boolean {
+  return p.twelveMonthPlan ?? TWELVE_MONTH_PLAN.has(p.id);
+}
+
+/** Boxes shipped per billing cycle: a 12-month plan ships twice. */
+export function shipmentsPerCycle(cadence: string): number {
+  return cadence === 'annual' ? 2 : 1;
+}
+
 /** Cadence helper. Return per-month price and discount label. */
 export interface CadenceTier {
-  key: 'monthly' | 'quarterly' | 'sixMonth' | 'once';
+  key: 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
   label: string;
   description: string;
   total: number;
@@ -1971,20 +2009,49 @@ export interface CadenceTier {
   breakdown: string[];
 }
 
-export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
+/**
+ * `shipPrice` is the per-box shipping the customer pays (Admin → Settings;
+ * see lib/shipping-settings). It only feeds the "Save $X" figures, so a
+ * caller without settings at hand may leave the default.
+ */
+export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shippingPriceFor(p)): CadenceTier[] {
   const m = p.pricing.monthly;
   const q = p.pricing.quarterly;
-  const qPerMonth = Math.round(q / 3);
   const s = p.pricing.sixMonth;
+  const y = offersTwelveMonth(p) ? p.pricing.annual : 0;
   // What a longer plan saves against ordering monthly, shipping included:
-  // monthly orders each ship (and charge shipping) on their own; a 3- or
-  // 6-month plan ships once.
-  const ship = shippingPriceFor(p);
-  const saved = (months: number, total: number) => m * months + ship * months - (total + ship);
-  const qSaved = saved(3, q);
-  const sSaved = s ? saved(6, s) : 0;
+  // every monthly order ships (and pays shipping) on its own, a 3- or 6-month
+  // plan ships once, a 12-month plan twice.
+  const ship = shipPrice;
+  const saved = (months: number, total: number, shipments: number) => m * months + ship * months - (total + ship * shipments);
   const saveLine = (dollars: number, months: number) =>
     `Save $${dollars} vs. ${months} monthly orders, shipping included`;
+  const common = [
+    'Ships on the same prescription until it expires',
+    'Adjust your refill date whenever you like',
+    'Pause or cancel before the next billing date',
+    'Ongoing prescriber messaging throughout',
+  ];
+  const plan = (
+    key: CadenceTier['key'],
+    label: string,
+    months: number,
+    total: number,
+    billing: string,
+    shipping: string,
+    shipments = 1,
+  ): CadenceTier => {
+    const dollars = saved(months, total, shipments);
+    return {
+      key,
+      label,
+      description: `${billing} · ${shipping}`,
+      total,
+      perMonth: Math.round(total / months),
+      saveLabel: dollars > 0 ? `Save $${dollars}` : undefined,
+      breakdown: [...(dollars > 0 ? [saveLine(dollars, months)] : []), `${billing}, ${shipping.toLowerCase()}`, ...common],
+    };
+  };
   // Monthly stays first: callers fall back to tiers[0] for an unknown cadence.
   return [
     {
@@ -1993,73 +2060,20 @@ export function cadenceTiersForProduct(p: ShopProduct): CadenceTier[] {
       description: 'Billed monthly · Cancel anytime',
       total: m,
       perMonth: m,
-      breakdown: [
-        'Billed monthly, shipped monthly',
-        'Ships on the same prescription until it expires',
-        'Adjust your refill date whenever you like',
-        'Pause or cancel before the next billing date',
-        'Ongoing prescriber messaging throughout',
-      ],
+      breakdown: ['Billed monthly, shipped monthly', ...common],
     },
-    {
-      key: 'quarterly',
-      label: 'Quarterly',
-      description: 'Billed every 3 months · Ships every 3 months',
-      total: q,
-      perMonth: qPerMonth,
-      saveLabel: qSaved > 0 ? `Save $${qSaved}` : undefined,
-      breakdown: [
-        ...(qSaved > 0 ? [saveLine(qSaved, 3)] : []),
-        'Billed every 3 months, shipped every 3 months',
-        'Ships on the same prescription until it expires',
-        'Adjust your refill date whenever you like',
-        'Pause or cancel before the next billing date',
-        'Ongoing prescriber messaging throughout',
-      ],
-    },
-    ...(s
-      ? [
-          {
-            key: 'sixMonth' as const,
-            label: '6-month',
-            description: 'Billed every 6 months · Ships every 6 months',
-            total: s,
-            perMonth: Math.round(s / 6),
-            saveLabel: sSaved > 0 ? `Save $${sSaved}` : undefined,
-            breakdown: [
-              ...(sSaved > 0 ? [saveLine(sSaved, 6)] : []),
-              'Billed every 6 months, shipped every 6 months',
-              'Ships on the same prescription until it expires',
-              'Adjust your refill date whenever you like',
-              'Pause or cancel before the next billing date',
-              'Ongoing prescriber messaging throughout',
-            ],
-          },
-        ]
-      : []),
-    {
-      key: 'once',
-      label: 'One-time',
-      description: 'A single order · No subscription',
-      // ponytail: flat $20 premium over the monthly rate; tune per product if
-      // merch ever wants finer control.
-      total: m + 20,
-      perMonth: m + 20,
-      breakdown: [
-        'One order, one charge, nothing recurring',
-        'Reviewed by a prescriber like any other order',
-        'Order again whenever you want more',
-      ],
-    },
+    plan('quarterly', 'Quarterly', 3, q, 'Billed every 3 months', 'Ships every 3 months'),
+    ...(s ? [plan('sixMonth', '6-month', 6, s, 'Billed every 6 months', 'Ships every 6 months')] : []),
+    ...(y ? [plan('annual', '12-month', 12, y, 'Billed every 12 months', 'Ships every 6 months', 2)] : []),
   ];
 }
 
 /**
  * The plan a product page opens on: the lowest per-month price, the shorter
- * plan on a tie (a 6-month plan that saves nothing is not the default).
+ * plan on a tie (a longer plan that saves nothing is not the default).
  */
 export function defaultTier(tiers: CadenceTier[]): CadenceTier {
-  return tiers.filter((t) => t.key !== 'once').reduce((a, b) => (b.perMonth < a.perMonth ? b : a));
+  return tiers.reduce((a, b) => (b.perMonth < a.perMonth ? b : a));
 }
 
 /**

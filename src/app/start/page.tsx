@@ -14,7 +14,8 @@ import { intakeCovers } from '@/lib/purchase-rules';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
-import { shippingPriceFor } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { shippingNote } from '@/components/shop/pdpParts';
 
 export const metadata: Metadata = pageMeta(
   '/start',
@@ -43,11 +44,12 @@ export default async function StartPage({ searchParams }: StartPageProps) {
 
   // Everything live the assessment can recommend, priced as the product pages price it.
   const what = new Map(ALL_ITEMS.map(({ item: i }) => [i.live ?? i.slug, i.what]));
+  const shipSettings = await getShippingSettings();
   const offers: Record<string, Offer> = Object.fromEntries(
     (await getLiveProducts())
       .filter((p) => Object.prototype.hasOwnProperty.call(PRODUCT_CATEGORY, p.id))
       .map((p) => {
-        const tiers = cadenceTiersForProduct(p);
+        const tiers = cadenceTiersForProduct(p, shipSettings.pricePerShipment);
         return [
           p.id,
           {
@@ -63,7 +65,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
               p.id === requested?.id && tiers.some((t) => t.key === plan)
                 ? (plan as (typeof tiers)[number]['key'])
                 : defaultTier(tiers).key,
-            shipping: shippingPriceFor(p),
+            shipping: shippingNote(shipSettings),
           },
         ];
       }),

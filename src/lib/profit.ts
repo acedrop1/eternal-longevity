@@ -8,7 +8,8 @@
  * Per order:
  *   revenue        = total charged − tax
  *   product cost   = Σ lines unitCost × units per 30 days × months in the plan × line quantity
- *   pharmacy ship  = SHIPPING_COST for the order's method (overnight if any line is cold-chain)
+ *   pharmacy ship  = SHIPPING_COST per box (overnight if any line in the box is cold-chain); a
+ *                    12-month line ships two boxes, both paid for with the year
  *   processing fee = the charge's real fee as the card processor reports it, else the
  *                    PROCESSING_FEE_* estimate of the total
  *   refunds        = what the card processor says was refunded on the charge
@@ -22,8 +23,8 @@
  * has no product or shipping cost; the processor keeps its fee on a refund.
  */
 
-import { TERMINAL_ORDER, monthsPerCycle } from './order-rules';
-import { SHIPPING_COST } from './shipping';
+import { TERMINAL_ORDER, monthsPerShipment } from './order-rules';
+import { SHIPPING_COST, shippingChargeCents } from './shipping';
 
 /** What one product costs us: per pharmacy unit, units per 30 days, and how it ships. */
 export interface CostInfo {
@@ -92,9 +93,14 @@ export function estimateProcessingFeeCents(chargedCents: number): number {
 /** Old name, still imported by the profit check. */
 export const estimateStripeFeeCents = estimateProcessingFeeCents;
 
-/** Pharmacy units in one line: units per 30 days × months in the plan × line quantity. */
+/**
+ * Pharmacy units in one line: units per 30 days × months in one box × line
+ * quantity. An order row is one box: a 12-month plan's order carries the
+ * first 6-month box and the month-6 box is its own $0 order
+ * (lib/annual-shipments), so each is costed at 6 months, not 12.
+ */
 export function lineUnits(line: Pick<EconLine, 'cadence' | 'quantity'>, cost: Pick<CostInfo, 'quantity'>): number {
-  return Math.max(1, cost.quantity) * monthsPerCycle(line.cadence) * Math.max(1, line.quantity);
+  return Math.max(1, cost.quantity) * monthsPerShipment(line.cadence) * Math.max(1, line.quantity);
 }
 
 export function lineCostCents(line: Pick<EconLine, 'productId' | 'cadence' | 'quantity'>, costs: CostTable): number {
@@ -106,8 +112,9 @@ export function productCostCents(lines: Pick<EconLine, 'productId' | 'cadence' |
   return lines.reduce((sum, l) => sum + lineCostCents(l, costs), 0);
 }
 
-/** One shipment per order; overnight when any line is cold-chain. */
-export function shippingCostCents(lines: Pick<EconLine, 'productId'>[], costs: CostTable): number {
+/** What shipping this order's box cost us. */
+export function shippingCostCents(lines: (Pick<EconLine, 'productId'> & { cadence?: string })[], costs: CostTable): number {
+  // One order is one box (see lineUnits): overnight if anything in it is cold.
   if (!lines.length) return 0;
   const cold = lines.some((l) => costs[l.productId]?.storage === 'refrigerated');
   return SHIPPING_COST[cold ? 'OVERNIGHT' : '2_DAY'] * 100;
@@ -144,16 +151,25 @@ export function orderEconomics(o: EconOrder, costs: CostTable): Economics {
 
 /* ------------------------------ one plan ------------------------------ */
 
-/** One plan of a product, as Products shows it. Dollars in, cents out. */
+/**
+ * One plan of a product, as Products shows it. Dollars in, cents out.
+ * `shippingPriceDollars` is what the customer pays per box (Admin → Settings);
+ * `shipments` boxes per cycle (2 for a 12-month plan, all charged up front);
+ * `firstOrder` frees the first box, as on a member's first paid order.
+ */
 export function planEconomics(
   priceDollars: number,
   shippingPriceDollars: number,
   months: number,
   cost: CostInfo,
+  opts: { shipments?: number; firstOrder?: boolean } = {},
 ): { charged: number; productCost: number; shippingCost: number; stripeFee: number; profit: number; margin: number | null } {
-  const charged = Math.round((priceDollars + shippingPriceDollars) * 100);
+  const shipments = opts.shipments ?? 1;
+  const charged =
+    Math.round(priceDollars * 100) +
+    shippingChargeCents({ pricePerShipment: shippingPriceDollars, shipments, firstOrder: Boolean(opts.firstOrder) });
   const productCost = Math.round(cost.unitCost * 100 * Math.max(1, cost.quantity) * months);
-  const shippingCost = SHIPPING_COST[cost.storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY'] * 100;
+  const shippingCost = SHIPPING_COST[cost.storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY'] * 100 * shipments;
   const stripeFee = estimateProcessingFeeCents(charged);
   const profit = charged - productCost - shippingCost - stripeFee;
   return { charged, productCost, shippingCost, stripeFee, profit, margin: charged > 0 ? profit / charged : null };

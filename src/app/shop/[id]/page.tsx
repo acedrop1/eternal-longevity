@@ -14,6 +14,7 @@ import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { heldProductsFor } from '@/lib/held-products';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
+import { getShippingSettings } from '@/lib/shipping-settings';
 
 /**
  * The one shop, for visitors and members alike. The button fits who is
@@ -63,7 +64,7 @@ export default async function PublicProductPage({ params }: PageProps) {
   const live = await getLiveProduct(id);
   if (!live) notFound();
   const product = toShopProduct(live);
-  const cta = await ctaFor(product.id);
+  const [cta, shipping] = await Promise.all([ctaFor(product.id), getShippingSettings()]);
 
   const relatedLive = (await getLiveProducts()).filter((p) => p.id !== product.id).slice(0, 3);
   const related = relatedLive.map(toShopProduct);
@@ -82,9 +83,9 @@ export default async function PublicProductPage({ params }: PageProps) {
             <span className="text-ink">{product.name}</span>
           </nav>
 
-          <ProductPDPMobile product={product} ctaHref={cta.href} ctaLabel={cta.label} />
+          <ProductPDPMobile product={product} shipping={shipping} ctaHref={cta.href} ctaLabel={cta.label} />
           <div className="hidden md:block">
-            <ProductPDP product={product} related={related} basePath="/shop" ctaHref={cta.href} ctaLabel={cta.label} />
+            <ProductPDP product={product} shipping={shipping} related={related} basePath="/shop" ctaHref={cta.href} ctaLabel={cta.label} />
           </div>
         </section>
 

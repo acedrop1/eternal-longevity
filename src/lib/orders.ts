@@ -26,6 +26,7 @@ export type { OrderStatus };
 export interface OrderLine {
   productId: string;
   productName: string;
+  /** 'once' only on orders from before one-time purchases were retired; new orders never carry it. */
   cadence: 'monthly' | 'quarterly' | 'sixMonth' | 'annual' | 'once';
   cadenceLabel: string;
   quantity: number;

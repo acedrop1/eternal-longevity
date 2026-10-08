@@ -10,6 +10,10 @@
       "schedule": "0 16 * * *"
     },
     {
+      "path": "/api/cron/annual-shipments",
+      "schedule": "30 13 * * *"
+    },
+    {
       "path": "/api/cron/renewals",
       "schedule": "0 14 * * *"
     },

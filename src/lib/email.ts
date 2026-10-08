@@ -485,6 +485,15 @@ const moneyRow = (label: string, cents: number) => `<tr>
         ).toFixed(2)}</td>
       </tr>`;
 
+/** The shipping line: "Free" when nothing was charged for it (a first order's box). */
+const shippingRow = (cents: number) =>
+  cents > 0
+    ? moneyRow('Shipping', cents)
+    : `<tr>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;">Shipping</td>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;" align="right">Free</td>
+      </tr>`;
+
 /** Sent to the customer once payment succeeds. */
 export function orderConfirmationEmail(input: {
   firstName: string;
@@ -508,7 +517,7 @@ export function orderConfirmationEmail(input: {
       </tr>`,
     )
     .join('') +
-    moneyRow('Shipping', input.shipping) +
+    shippingRow(input.shipping) +
     (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
     subject: `You’re all set: ${orderRef(input.orderNumber)} is confirmed`,
@@ -906,7 +915,7 @@ export function orderReceivedEmail(input: {
       </tr>`,
     )
     .join('') +
-    moneyRow('Shipping', input.shipping) +
+    shippingRow(input.shipping) +
     (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
     subject: `We’ve got your order: ${orderRef(input.orderNumber)}`,

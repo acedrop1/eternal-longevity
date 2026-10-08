@@ -16,6 +16,7 @@ import { fromPrice } from '@/lib/lineup';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, ctaTarget, useCtaOffscreen } from './BuyBar';
 import { Disclosure, PlanOptions, PriceBlock, ProductDetails, ProductImage, shippingLine } from './pdpParts';
+import type { ShippingSettings } from '@/lib/shipping-settings';
 
 interface ProductPDPProps {
   /** Route prefix for shop links. '/shop' on the public storefront. */
@@ -29,6 +30,8 @@ interface ProductPDPProps {
   /** Label for the ctaHref button. Default: Start assessment. */
   ctaLabel?: string;
   product: ShopProduct;
+  /** Shipping price and first-order rule (getShippingSettings, read on the server page). */
+  shipping: ShippingSettings;
   /** Kept for callers; related products render through <RelatedProducts />. */
   related: ShopProduct[];
 }
@@ -38,8 +41,8 @@ interface ProductPDPProps {
  * right, then details and safety information. The sticky offset reads
  * --pdp-sticky-top so the public page can clear its taller fixed header.
  */
-export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPProps) {
-  const tiers = cadenceTiersForProduct(product);
+export function ProductPDP({ product, shipping, ctaHref, ctaLabel = 'Start assessment' }: ProductPDPProps) {
+  const tiers = cadenceTiersForProduct(product, shipping.pricePerShipment);
   const initialTier = defaultTier(tiers);
   const [selectedTier, setSelectedTier] = useState<CadenceTier['key']>(initialTier.key);
   const active = tiers.find((t) => t.key === selectedTier) ?? initialTier;
@@ -80,7 +83,7 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
           <p className="mt-4 max-w-[540px] text-[15px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
           <div className="mt-6">
-            <PriceBlock product={product} active={active} />
+            <PriceBlock product={product} active={active} shipping={shipping} />
           </div>
 
           {pickPlan && (
@@ -104,7 +107,7 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
                 onClick={() => addItem(product.id, selectedTier)}
                 className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
               >
-                {active.key === 'once' ? 'Buy once' : 'Subscribe'}
+                Subscribe
               </button>
             )}
           </div>
@@ -126,7 +129,7 @@ export function ProductPDP({ product, ctaHref, ctaLabel = 'Start assessment' }: 
         </div>
       </section>
 
-      <ProductDetails product={product} ordering={!ctaHref} />
+      <ProductDetails product={product} shipping={shipping} ordering={!ctaHref} />
 
       <BuyBar
         product={product}
@@ -171,7 +174,7 @@ export function RelatedProducts({ related, basePath }: { related: ShopProduct[];
               name: r.name,
               tagline: r.tagline,
               image: r.image,
-              price: { was: r.pricing.monthly, now: fromPrice(r.pricing) },
+              price: { was: r.pricing.monthly, now: fromPrice(r) },
               href: `${basePath}/${r.id}`,
               preview: false,
             }}

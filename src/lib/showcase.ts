@@ -30,7 +30,7 @@ const DEV = process.env.NODE_ENV === 'development';
 
 const priceOf = (p: ShopProduct) => ({
   was: p.pricing.monthly,
-  now: fromPrice(p.pricing),
+  now: fromPrice(p),
 });
 
 const sermorelin = getAnyShopProduct('sermorelin');

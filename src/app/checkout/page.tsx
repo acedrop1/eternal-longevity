@@ -12,6 +12,8 @@ import { loadCart } from '@/lib/profile-db';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { heldProductsFor } from '@/lib/held-products';
 import { getAnyShopProduct } from '@/lib/shopProducts';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { firstBoxFree } from '@/lib/first-box';
 
 export const metadata: Metadata = {
   title: 'Checkout',
@@ -107,10 +109,13 @@ export default async function CheckoutPage() {
    * The account is created here on a first checkout rather than on save, so
    * the card field can link this session's fraud signals to it (Frame.init).
    */
-  const [prefill, savedCard, paymentAccountId] = await Promise.all([
+  // Shipping is shown exactly as placeOrder will charge it (lib/first-box).
+  const [prefill, savedCard, paymentAccountId, shipSettings, freeBox] = await Promise.all([
     checkoutPrefill(user.id),
     cards ? savedCardFor(user.id) : null,
     cards ? frameAccountFor(user.id).catch(() => null) : null,
+    getShippingSettings(),
+    firstBoxFree(user.id),
   ]);
 
   return (
@@ -126,6 +131,8 @@ export default async function CheckoutPage() {
         held={held}
         cardsEnabled={cards}
         paymentAccountId={paymentAccountId ?? undefined}
+        pricePerShipment={shipSettings.pricePerShipment}
+        firstBoxFree={freeBox}
       />
     </main>
   );

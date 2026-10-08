@@ -659,6 +659,8 @@ export type Database = {
           last_charged_at: string | null;
           created_at: string;
           updated_at: string;
+          next_shipment_date: string | null;
+          next_shipment_order_id: string | null;
         };
         Insert: {
           id?: string;
@@ -674,6 +676,8 @@ export type Database = {
           last_charged_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          next_shipment_date?: string | null;
+          next_shipment_order_id?: string | null;
         };
         Update: {
           id?: string;
@@ -689,6 +693,8 @@ export type Database = {
           last_charged_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          next_shipment_date?: string | null;
+          next_shipment_order_id?: string | null;
         };
         Relationships: [];
       };

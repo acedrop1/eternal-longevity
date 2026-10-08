@@ -8,6 +8,7 @@ import { FAQBrowser } from '@/components/faq/FAQBrowser';
 import { ArrowDot, Aura, GLASS, Swipe } from '@/components/home/HomeSections';
 import { cn } from '@/lib/utils';
 import { FAQS, withPrices } from '@/lib/faq';
+import { getShippingSettings } from '@/lib/shipping-settings';
 import { getLiveProducts, toShopProduct } from '@/lib/catalog';
 
 export const metadata: Metadata = pageMeta(
@@ -43,7 +44,9 @@ const QUICK_LINKS = [
 const H2 = 'text-[36px] font-semibold leading-[1] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]';
 
 export default async function FAQPage() {
-  const faqs = withPrices(FAQS, (await getLiveProducts()).map(toShopProduct));
+  const [live, shipping] = await Promise.all([getLiveProducts(), getShippingSettings()]);
+  // Prices filled on the server (live catalogue + Admin → Settings) and handed to the browser.
+  const faqs = withPrices(FAQS, live.map(toShopProduct), shipping);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -58,7 +61,7 @@ export default async function FAQPage() {
         <section className="relative overflow-hidden px-5 pb-16 pt-44 md:px-10 md:pb-24 md:pt-52">
           <Aura mix="dusk" className="opacity-60" />
           <div className="relative">
-            <FAQBrowser>
+            <FAQBrowser faqs={faqs}>
               <h1 className="text-[48px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[80px]">
                 Questions, <Swipe>answered.</Swipe>
               </h1>

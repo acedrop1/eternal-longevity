@@ -67,7 +67,7 @@ export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: 
         <span className="mt-0.5 block truncate text-[13px] text-ink-soft">{item.what}</span>
         <span className="mt-1 block text-[12px] text-ink/60">
           {FORM_LABEL[item.form]}
-          {live && ` · from $${fromPrice(live.pricing)}/mo`}
+          {live && ` · from $${fromPrice(live)}/mo`}
         </span>
       </span>
     </Link>
@@ -92,7 +92,7 @@ export function LineupCard({ item, tint }: { item: LineupItem; tint: string }) {
         {live ? (
           <>
             <span className="text-[11px] text-ink-soft md:text-[13px]">from</span>
-            <span className="text-[13px] font-semibold md:text-[17px]">${fromPrice(live.pricing)}</span>
+            <span className="text-[13px] font-semibold md:text-[17px]">${fromPrice(live)}</span>
             <span className="text-[11px] text-ink-soft md:text-[13px]">/mo</span>
           </>
         ) : (

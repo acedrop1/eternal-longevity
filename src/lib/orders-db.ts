@@ -35,9 +35,11 @@ import {
 import { getSession } from '@/lib/auth-server';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
-import { cadenceTiersForProduct } from '@/lib/shopProducts';
+import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
 import { getLiveProducts } from '@/lib/catalog';
-import { orderTotalCents, shippingPriceFor } from '@/lib/shipping';
+import { orderTotalCents, shippingChargeCents } from '@/lib/shipping';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { FIRST_BOX_FREE, firstBoxFree } from '@/lib/first-box';
 import { checkPromoAction } from '@/lib/promo-db';
 import { redeemPromo } from '@/lib/promo-redeem';
 import {
@@ -410,9 +412,10 @@ async function placeOrder(input: {
    * edited request can't set its own price, and a price changed in
    * Admin → Products applies from the next order.
    */
+  const shipSettings = await getShippingSettings();
   const lines: OrderLine[] = input.lines.map((l) => {
     const product = live.get(l.productId)!;
-    const tiers = cadenceTiersForProduct(product);
+    const tiers = cadenceTiersForProduct(product, shipSettings.pricePerShipment);
     const tier = tiers.find((t) => t.key === l.cadence) ?? tiers[0];
     return {
       ...l,
@@ -465,13 +468,16 @@ async function placeOrder(input: {
 
   /*
    * Shipping and tax are set here, not taken from the request. Shipping is per
-   * order (one product, one shipment) at the product's price (lib/shipping),
-   * and the promo never touches it. No sales tax is charged: prescription
+   * box at the price in Admin → Settings (one box per order, two for a
+   * 12-month plan, both charged now). A member's first order ships its first
+   * box free: the first line of the basket takes it (lib/first-box), the rest
+   * pay. The promo only touches shipping when it waives it. No sales tax is charged: prescription
    * drugs are exempt in every state we serve (NJ, NY, PA, MI). If a taxable
    * item is ever sold, compute it here (with a tax-rate service) rather
    * than trusting a number the browser sent.
    */
   const cartTaxCents = 0;
+  const freeBox = await firstBoxFree(user.id);
 
   // Tax and the promo belong to the basket, so they are split across it by
   // value, and the rounding remainder lands on the last order.
@@ -493,7 +499,12 @@ async function placeOrder(input: {
 
   for (const [i, line] of lines.entries()) {
     const subtotalCents = lineSubtotal(line);
-    const shippingCents = shippingPriceFor(live.get(line.productId)) * 100;
+    const firstOrder = freeBox && i === 0;
+    const shippingCents = shippingChargeCents({
+      pricePerShipment: shipSettings.pricePerShipment,
+      shipments: shipmentsPerCycle(line.cadence),
+      firstOrder,
+    });
     const taxCents = share(cartTaxCents, i);
     const itemDiscountCents = share(cartDiscountCents, i);
     const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents, discountCents: itemDiscountCents, freeShipping });
@@ -554,6 +565,10 @@ async function placeOrder(input: {
       'Nothing charged. Your prescriber is reviewing.',
       'pending-admin',
     );
+    // Marks the order that took the free box, so another open order can't (lib/first-box).
+    if (firstOrder) {
+      await appendUpdate(order.id, 'System', 'system', FIRST_BOX_FREE, 'Free shipping on your first order.');
+    }
 
     created.push(orderNumber);
     bookedTotalCents += totalCents;

@@ -36,7 +36,7 @@ import type { Json } from '@/lib/database.types';
 import { orderRef as orderLabel } from '@/lib/format';
 import { getPrescriber } from '@/lib/prescriber';
 import { BUSINESS_LEGAL_NAME } from '@/lib/site';
-import { TERMINAL_ORDER } from '@/lib/order-rules';
+import { TERMINAL_ORDER, monthsPerShipment } from '@/lib/order-rules';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import { getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import { shippingMethodFor } from '@/lib/shipping';
@@ -97,7 +97,7 @@ export async function autoSubmitToPharmacy(
       : Promise.resolve({ data: null }),
     db
       .from('order_items')
-      .select('product_id, product_name, quantity, cadence_label')
+      .select('product_id, product_name, quantity, cadence, cadence_label')
       .eq('order_id', order.id),
   ]);
 
@@ -178,7 +178,9 @@ export async function autoSubmitToPharmacy(
     }
   }
 
-  const cadence = items?.[0]?.cadence_label ?? 'First cycle';
+  // A 12-month plan ships 6 months a box; say so to whoever places it by hand.
+  const line = items?.[0];
+  const cadence = `${line?.cadence_label ?? 'First cycle'}${line?.cadence === 'annual' ? ` · ${monthsPerShipment('annual')}-month box` : ''}`;
   const { error: insErr } = await db.from('fulfillment_orders').insert({
     order_ref: orderRef,
     user_id: order.user_id,
@@ -190,7 +192,7 @@ export async function autoSubmitToPharmacy(
     prescriber_name: doctor.full_name,
     prescriber_npi: doctor.npi,
     // The lines as the board has always stored them; product_id was only for the lookup above.
-    items: (items ?? []).map(({ product_id: _id, ...line }) => line) as unknown as Json,
+    items: (items ?? []).map(({ product_id: _id, cadence: _c, ...l }) => l) as unknown as Json,
     cycle_label: refill ? `Refill · ${cadence}` : cadence,
     submitted_at: new Date().toISOString(),
   });

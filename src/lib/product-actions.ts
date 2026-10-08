@@ -14,7 +14,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getSession } from './auth-server';
 import { recordAudit } from './prescriber';
-import { DELIVERY_LABEL, NEVER_LIVE, type DeliveryForm, type ShopCategory, type ShopProduct } from './shopProducts';
+import { DELIVERY_LABEL, NEVER_LIVE, offersTwelveMonth, type DeliveryForm, type ShopCategory, type ShopProduct } from './shopProducts';
 import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, pharmacyEntryFor, writeRow, type ProductStatus } from './catalog';
 import { cleanPharmacy, type StoredPharmacy } from './pharmacy-catalog';
 import { createSupabaseAdminClient } from './supabase/admin';
@@ -35,8 +35,10 @@ export interface ProductInput {
   whatsIncluded: string[];
   sideEffects: string[];
   contraindications: string[];
-  /** sixMonth 0 or missing: the product has no 6-month plan. */
+  /** sixMonth 0 or missing: the product has no 6-month plan. annual is the 12-month price, required only with twelveMonthPlan. */
   pricing: { monthly: number; quarterly: number; sixMonth?: number; annual: number };
+  /** Sell the 12-month plan (billed once a year, ships every 6 months). */
+  twelveMonthPlan: boolean;
   image: string;
   popular: boolean;
   fdaApproved: boolean;
@@ -96,11 +98,14 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     monthly: price(input.pricing?.monthly),
     quarterly: price(input.pricing?.quarterly),
     sixMonth: input.pricing?.sixMonth ? price(input.pricing.sixMonth) : undefined,
-    annual: price(input.pricing?.annual),
+    // Kept when the 12-month plan is off (unused until it is turned back on); 0 when empty.
+    annual: input.pricing?.annual ? price(input.pricing.annual) : 0,
   };
-  if (!pricing.monthly || !pricing.quarterly || !pricing.annual || pricing.sixMonth === null) {
+  const twelveMonthPlan = Boolean(input.twelveMonthPlan);
+  if (!pricing.monthly || !pricing.quarterly || pricing.annual === null || pricing.sixMonth === null) {
     return { ok: false, message: 'Prices are whole dollars between $1 and $10,000.' };
   }
+  if (twelveMonthPlan && !pricing.annual) return { ok: false, message: 'Set a 12-month price, or turn the 12-month plan off.' };
 
   const pharmacy = cleanPharmacy(input.pharmacy);
   if (!pharmacy.ok) return { ok: false, message: pharmacy.message };
@@ -137,6 +142,7 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     sideEffects: lists.sideEffects!,
     contraindications: lists.contraindications!,
     pricing: { monthly: pricing.monthly, quarterly: pricing.quarterly, sixMonth: pricing.sixMonth, annual: pricing.annual },
+    twelveMonthPlan,
     image,
     // A photo set here is a product shot (shown full strength, no text over
     // it); an untouched photo keeps whatever treatment it had.
@@ -176,7 +182,8 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
         ['Monthly price', was ? `$${was.pricing.monthly}` : null, `$${data.pricing.monthly}`],
         ['Quarterly price', was ? `$${was.pricing.quarterly}` : null, `$${data.pricing.quarterly}`],
         ['6-month price', was?.pricing.sixMonth ? `$${was.pricing.sixMonth}` : null, data.pricing.sixMonth ? `$${data.pricing.sixMonth}` : ''],
-        ['Annual price', was ? `$${was.pricing.annual}` : null, `$${data.pricing.annual}`],
+        ['12-month plan', was ? (offersTwelveMonth(was) ? 'On' : 'Off') : null, twelveMonthPlan ? 'On' : 'Off'],
+        ['12-month price', was?.pricing.annual ? `$${was.pricing.annual}` : null, data.pricing.annual ? `$${data.pricing.annual}` : ''],
         ['Photo', was?.image, data.image],
         ['Category', was?.category, data.category],
         ['Short description', was?.shortDescription, data.shortDescription],

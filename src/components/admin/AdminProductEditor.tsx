@@ -14,7 +14,7 @@ import { SectionCard, StatusBadge, headerButton, secondaryButton } from '@/compo
 import { DetailHeader, detailGrid } from '@/components/admin/DetailHeader';
 import { PRODUCT_STATUS } from '@/components/admin/AdminProductsIndex';
 import { PROCESSING_FEE_FIXED_CENTS, PROCESSING_FEE_PCT, planEconomics } from '@/lib/profit';
-import { SHIPPING_PRICE, shippingMethodFor } from '@/lib/shipping';
+import type { ShippingSettings } from '@/lib/shipping-settings';
 import { formatMoney } from '@/lib/format';
 
 /**
@@ -57,11 +57,14 @@ export function AdminProductEditor({
   initial,
   canSave,
   storage,
+  shipping,
 }: {
   initial: ProductInput;
   canSave: boolean;
   /** The product's storage: picks the shipping method for the margin table. */
   storage?: 'refrigerated' | 'room';
+  /** What the customer pays per box (Admin → Settings), for the margin table. */
+  shipping: ShippingSettings;
 }) {
   const router = useRouter();
   const [p, setP] = useState<ProductInput>(initial);
@@ -90,21 +93,25 @@ export function AdminProductEditor({
   const quarterlySave = p.pricing.monthly ? Math.round((1 - p.pricing.quarterly / (p.pricing.monthly * 3)) * 100) : 0;
   const sixMonth = p.pricing.sixMonth ?? 0;
   const sixMonthSave = p.pricing.monthly ? Math.round((1 - sixMonth / (p.pricing.monthly * 6)) * 100) : 0;
+  const annual = p.pricing.annual;
+  const annualSave = p.pricing.monthly ? Math.round((1 - annual / (p.pricing.monthly * 12)) * 100) : 0;
+  const ship = shipping.pricePerShipment;
   const goingLive = p.status === 'live' && baseline.status !== 'live';
   const unit = unitWord(p.pharmacy);
   const monthCost = p.pharmacy.unitCost * Math.max(1, p.pharmacy.quantity);
-  const method = shippingMethodFor(storage);
+  // At the renewal price: every box pays shipping. A 12-month plan ships 2 boxes, both charged with the year.
   const plans = (
     [
-      ['Monthly', p.pricing.monthly, 1],
-      ['Quarterly', p.pricing.quarterly, 3],
-      ['6-month', sixMonth, 6],
+      ['Monthly', p.pricing.monthly, 1, 1],
+      ['Quarterly', p.pricing.quarterly, 3, 1],
+      ['6-month', sixMonth, 6, 1],
+      ['12-month', p.twelveMonthPlan ? annual : 0, 12, 2],
     ] as const
   )
     .filter(([, price]) => price > 0)
-    .map(([label, price, months]) => ({
+    .map(([label, price, months, shipments]) => ({
       label,
-      ...planEconomics(price, SHIPPING_PRICE[method], months, { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage }),
+      ...planEconomics(price, ship, months, { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage }, { shipments }),
     }));
   const dirty = p.isNew || JSON.stringify(p) !== JSON.stringify(baseline);
 
@@ -270,7 +277,7 @@ export function AdminProductEditor({
 
           <SectionCard title="Pricing" description="Whole dollars. The server charges these, not what a browser sends.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Monthly" hint={`One-time order: $${p.pricing.monthly + 20}`}>
+              <Field label="Monthly" hint={`Plus $${ship} shipping per box`}>
                 <Money value={p.pricing.monthly} onChange={(v) => setPrice('monthly', v)} />
               </Field>
               <Field
@@ -285,15 +292,30 @@ export function AdminProductEditor({
               >
                 <Money value={sixMonth} onChange={(v) => setPrice('sixMonth', v)} />
               </Field>
-              <Field label="Annual" hint="Stored only; customers are offered 1, 3 and 6-month plans.">
-                <Money value={p.pricing.annual} onChange={(v) => setPrice('annual', v)} />
-              </Field>
+              <div className="sm:col-span-2">
+                <Check
+                  checked={p.twelveMonthPlan}
+                  onChange={(v) => set('twelveMonthPlan', v)}
+                  label="12-month plan"
+                  body="Billed once a year, shipped in two 6-month boxes. Suits oral solids with a 180-day shelf life."
+                />
+              </div>
+              {p.twelveMonthPlan && (
+                <Field
+                  label="12-month price (billed once a year, ships every 6 months)"
+                  hint={annual ? `$${Math.round(annual / 12)}/mo${annualSave > 0 ? ` · saves ${annualSave}%` : ''} · plus $${ship * 2} shipping for the 2 boxes` : 'Required while the 12-month plan is on.'}
+                >
+                  <Money value={annual} onChange={(v) => setPrice('annual', v)} />
+                </Field>
+              )}
             </div>
           </SectionCard>
 
           <SectionCard
             title="Margin by plan"
-            description={`Admin only. Charged = plan price + $${SHIPPING_PRICE[method]} shipping the customer pays. Processing fee estimated at ${(PROCESSING_FEE_PCT * 100).toFixed(1)}% + ${PROCESSING_FEE_FIXED_CENTS}¢.`}
+            description={`Admin only. Charged = plan price + $${ship} shipping per box (12-month: 2 boxes, both charged up front). ${
+              shipping.firstOrderFree && ship > 0 ? `First order: shipping free on the first box, so it charges $${ship} less. ` : ''
+            }Processing fee estimated at ${(PROCESSING_FEE_PCT * 100).toFixed(1)}% + ${PROCESSING_FEE_FIXED_CENTS}¢.`}
             flush
           >
             {p.pharmacy.unitCost > 0 ? (
@@ -362,7 +384,7 @@ export function AdminProductEditor({
                   onChange={(e) => setRx('sku', e.target.value.replace(/\s/g, ''))}
                 />
               </Field>
-              <Field label="Units per 30-day supply" hint="A 3- or 6-month plan ships that many months at once.">
+              <Field label="Units per 30-day supply" hint="A 3- or 6-month plan ships that many months at once; a 12-month plan ships 6 months at a time.">
                 <input
                   className={cn(input, 'tabular-nums')}
                   inputMode="numeric"

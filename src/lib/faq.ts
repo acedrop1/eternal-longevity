@@ -1,14 +1,11 @@
-import type { ShopProduct } from '@/lib/shopProducts';
+import { offersTwelveMonth, type ShopProduct } from '@/lib/shopProducts';
 import { SERVICE_AREA } from '@/lib/site';
-import { SHIPPING_PRICE } from '@/lib/shipping';
-
-const TWO_DAY = `$${SHIPPING_PRICE['2_DAY']}`;
-const OVERNIGHT = `$${SHIPPING_PRICE.OVERNIGHT}`;
 
 /*
- * The pricing answer quotes live prices, which admins edit in Admin →
- * Products. FAQS carries {{monthly}} / {{quarterly}} / {{sixMonth}} placeholders and
- * withPrices() fills them from the live catalogue wherever FAQs render.
+ * The pricing answers quote live prices, which admins edit in Admin →
+ * Products and Admin → Settings. FAQS carries {{monthly}} / {{quarterly}} /
+ * {{sixMonth}} / {{annual}} / {{shipping}} placeholders and withPrices() fills
+ * them from the live catalogue and the shipping settings wherever FAQs render.
  */
 const range = (xs: number[]) => {
   if (!xs.length) return 'varies';
@@ -17,7 +14,19 @@ const range = (xs: number[]) => {
   return lo === hi ? `$${lo}` : `$${lo}–$${hi}`;
 };
 
-export function withPrices(faqs: FAQ[], live: ShopProduct[]): FAQ[] {
+export function withPrices(
+  faqs: FAQ[],
+  live: ShopProduct[],
+  shipping: { pricePerShipment: number; firstOrderFree: boolean },
+): FAQ[] {
+  const per = shipping.pricePerShipment;
+  const shipLine =
+    per === 0
+      ? 'Shipping is free'
+      : shipping.firstOrderFree
+        ? `Your first order ships free; after that shipping is $${per} per box, 2-day or overnight cold-chain alike`
+        : `Shipping is $${per} per box, 2-day or overnight cold-chain alike`;
+  const annual = range(live.flatMap((p) => (offersTwelveMonth(p) && p.pricing.annual ? [Math.round(p.pricing.annual / 12)] : [])));
   const monthly = range(live.map((p) => p.pricing.monthly));
   const quarterly = range(live.map((p) => Math.round(p.pricing.quarterly / 3)));
   const sixMonth = range(live.flatMap((p) => (p.pricing.sixMonth ? [Math.round(p.pricing.sixMonth / 6)] : [])));
@@ -26,7 +35,9 @@ export function withPrices(faqs: FAQ[], live: ShopProduct[]): FAQ[] {
     a: f.a
       .replaceAll('{{monthly}}', monthly)
       .replaceAll('{{quarterly}}', quarterly)
-      .replaceAll('{{sixMonth}}', sixMonth),
+      .replaceAll('{{sixMonth}}', sixMonth)
+      .replaceAll('{{annual}}', annual)
+      .replaceAll('{{shipping}}', shipLine),
   }));
 }
 
@@ -117,7 +128,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'How much does treatment cost?',
-    a: `Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The quarterly plan brings that down to {{quarterly}} a month, billed every three months, and the 6-month plan to {{sixMonth}} a month, billed every six months. A one-time order is also available. Shipping is ${TWO_DAY} (2-day) or ${OVERNIGHT} (overnight cold-chain) per shipment, depending on the product, and each renewal ships and is charged shipping again. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.`,
+    a: 'Pricing depends on the product. On the monthly plan it runs {{monthly}} a month. The 3-month plan brings that down to {{quarterly}} a month, billed every three months, and the 6-month plan to {{sixMonth}} a month, billed every six months. Tablets and capsules also have a 12-month plan at {{annual}} a month, billed once a year and shipped in two boxes six months apart. {{shipping}}, and each renewal pays shipping on its boxes. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.',
   },
   {
     category: 'Pricing',
@@ -132,7 +143,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What is your refund policy?',
-    a: "If the prescriber declines, you are not charged. Once the pharmacy has prepared or shipped your medication we can't refund it, because compounded medications can't be re-dispensed. If a shipment arrives damaged, contact us within 7 days and we'll replace it at no cost.",
+    a: "If the prescriber declines, you are not charged. Once the pharmacy has prepared or shipped your medication we can't refund it, because compounded medications can't be re-dispensed. On a 12-month plan, the second box ships unless you cancel before it's sent; cancel before then and we refund the unshipped second box, prorated. If a shipment arrives damaged, contact us within 7 days and we'll replace it at no cost.",
   },
 
   // === Safety ===
@@ -154,7 +165,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How are medications shipped?',
-    a: `Temperature-sensitive medications ship overnight cold-chain in insulated packaging (${OVERNIGHT} per shipment); others ship 2-day (${TWO_DAY} per shipment). Every shipment is charged shipping, renewals included. You'll get a tracking number when your order ships.`,
+    a: "Temperature-sensitive medications ship overnight cold-chain in insulated packaging; others ship 2-day. {{shipping}}. Renewals pay shipping on each box, and a 12-month plan's second box is billed with the year. You'll get a tracking number when your order ships.",
   },
   {
     category: 'Safety',
