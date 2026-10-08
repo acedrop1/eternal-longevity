@@ -78,11 +78,12 @@ export interface Economics {
   closed: boolean;
 }
 
-// ponytail: Frame's public card rate (framepayments.com/pricing, 2026-10-07).
-// Risk-priced accounts can differ: replace with the contracted rate once
-// Frame confirms it. Only orders without a recorded fee use this estimate.
-export const PROCESSING_FEE_PCT = 0.02;
-export const PROCESSING_FEE_FIXED_CENTS = 39;
+// ponytail: Frame contract (2026-10-07): 3.25% + 30¢, or 2.95% + 30¢ on all
+// volume in a month over $150k. Charges record Frame's actual fee, so this
+// only fills orders without one, at the base tier (conservative). Make it
+// month-aware if many orders end up estimated.
+export const PROCESSING_FEE_PCT = 0.0325;
+export const PROCESSING_FEE_FIXED_CENTS = 30;
 
 /** Estimated card processing fee. Nothing charged, no fee. */
 export function estimateProcessingFeeCents(chargedCents: number): number {
