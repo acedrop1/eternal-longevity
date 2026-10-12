@@ -996,7 +996,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     delivery: 'im',
     cycleLength: '30-day supply',
-    pricing: { monthly: 89, quarterly: 240, sixMonth: 426, annual: 708 },
+    pricing: { monthly: 119, quarterly: 321, sixMonth: 570, annual: 948 },
     swatch: 'linear-gradient(180deg, #2a2a2a 0%, #000000 100%)',
     image: '/brand/products/mic-b12.jpg',
     shot: true,
