@@ -178,7 +178,7 @@ export async function autoSubmitToPharmacy(
     }
   }
 
-  // A 12-month plan ships 6 months a box; say so to whoever places it by hand.
+  // A 12 month plan ships 6 months a box; say so to whoever places it by hand.
   const line = items?.[0];
   const cadence = `${line?.cadence_label ?? 'First cycle'}${line?.cadence === 'annual' ? ` · ${monthsPerShipment('annual')}-month box` : ''}`;
   const { error: insErr } = await db.from('fulfillment_orders').insert({

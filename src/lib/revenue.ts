@@ -33,7 +33,7 @@ export function monthlyRecurringCents(subs: { per_cycle_cents: number | null; ca
     subs.reduce((sum, s) => {
       const cents = s.per_cycle_cents ?? 0;
       const label = (s.cadence_label ?? '').toLowerCase();
-      const months = label.includes('quarter')
+      const months = label.includes('quarter') || label.startsWith('3')
         ? 3
         : label.startsWith('6')
           ? 6

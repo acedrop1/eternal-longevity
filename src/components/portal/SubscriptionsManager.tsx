@@ -21,7 +21,7 @@ import {
   type PlanKey,
 } from '@/lib/subscriptions-db';
 import { useConfirm } from '@/components/ui/useConfirm';
-import { addMonthsIso, cadenceOfLabel, monthsPerCycle } from '@/lib/order-rules';
+import { addMonthsIso, cadenceOfLabel, monthsPerCycle, planName } from '@/lib/order-rules';
 import { shortDate } from '@/lib/member-view';
 
 export interface Subscription {
@@ -35,7 +35,7 @@ export interface Subscription {
   /** 'Oct 30, 2026' for display, and the stored 'YYYY-MM-DD'. */
   nextBillingDate: string;
   nextBillingIso: string | null;
-  /** 12-month plans: when the paid second box ships ('YYYY-MM-DD'), null once it has. */
+  /** 12 month plans: when the paid second box ships ('YYYY-MM-DD'), null once it has. */
   nextShipmentIso?: string | null;
   /** Straight from the database. The page re-renders after every action. */
   status: Status;
@@ -56,7 +56,7 @@ const STATUS_THEME: Record<Status, { label: string; tone: Tone }> = {
   canceled: { label: 'Cancelled', tone: 'muted' },
 };
 
-/** The plan key a stored cadence label ('Monthly', 'Quarterly', '6-month', '12-month') stands for. */
+/** The plan key a stored cadence label (old 'Monthly'… or current '1 month plan'…) stands for. */
 const planOf = (label: string) => cadenceOfLabel(label, 'monthly') as PlanKey;
 const PER: Record<PlanKey, string> = { monthly: '/mo', quarterly: '/3 mo', sixMonth: '/6 mo', annual: '/yr' };
 const EVERY: Record<PlanKey, string> = {
@@ -184,7 +184,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
           const note = notice[s.id];
           const annual = planOf(s.cadenceLabel) === 'annual';
           const per = PER[planOf(s.cadenceLabel)];
-          // A 12-month plan's next box: the paid second box if still owed, else the next year's first.
+          // A 12 month plan's next box: the paid second box if still owed, else the next year's first.
           const nextBox = s.nextShipmentIso ?? (annual ? s.nextBillingIso : null);
 
           return (
@@ -199,7 +199,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                     {s.productName}
                   </h2>
                   <p className="mt-0.5 text-[15px] text-ink/70">
-                    {s.cadenceLabel} plan{s.cycleLabel ? ` · ${s.cycleLabel}` : ''}
+                    {planName(s.cadenceLabel)}{s.cycleLabel ? ` · ${s.cycleLabel}` : ''}
                   </p>
                   {annual && <p className="mt-0.5 text-[15px] text-ink/70">Billed yearly · ships every 6 months</p>}
                 </div>
@@ -228,7 +228,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                 </div>
               </dl>
 
-              {/* Shown on any plan with a box still owed: a member who left a 12-month plan mid-year still gets box 2. */}
+              {/* Shown on any plan with a box still owed: a member who left a 12 month plan mid-year still gets box 2. */}
               {(isActive || isPaused) && nextBox && (annual || s.nextShipmentIso) && (
                 <p className="mt-3 text-[15px] text-ink/80">
                   Next box ships around <span className="font-semibold tabular-nums text-ink">{shortDate(nextBox)}</span>

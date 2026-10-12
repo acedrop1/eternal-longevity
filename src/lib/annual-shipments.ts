@@ -1,9 +1,9 @@
 import 'server-only';
 
 /**
- * The second box of a 12-month plan.
+ * The second box of a 12 month plan.
  *
- * A 12-month plan is billed once and shipped in two 6-month boxes. Box 1 goes
+ * A 12 month plan is billed once and shipped in two 6-month boxes. Box 1 goes
  * with the charge (first order or renewal); billing it sets
  * subscriptions.next_shipment_date six months out, and next_shipment_order_id
  * to the order that paid for the year (lib/refills, migration 0028).
@@ -175,7 +175,7 @@ export async function shipSecondBox(subscriptionId: string): Promise<BoxOutcome>
     db.from('prescriptions').update({ refills_remaining: (rx!.refills_remaining ?? 1) - 1 }).eq('id', rx!.id),
     db.from('order_updates').insert({
       order_id: order.id,
-      label: 'Second box of your 12-month plan',
+      label: 'Second box of your 12 month plan',
       body: 'Already paid for with your year, so nothing was charged. It’s being sent to the pharmacy now, and you’ll get tracking when it ships.',
       author: 'System',
       author_role: 'system',

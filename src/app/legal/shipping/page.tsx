@@ -59,7 +59,7 @@ export default async function ShippingPage() {
                   firstOrderFree ? ' Your first order ships free: the first box of your first paid order carries no shipping charge.' : ''
                 } The amount is shown at checkout before you place your order.`,
             `Every other box is charged shipping, including each refill on a plan. Each renewal charge is the plan price plus shipping for its boxes, and the checkout authorization states the combined amount.`,
-            'A 12-month plan is billed once a year and ships in two boxes, the first when it is approved and the second about six months later. Shipping for both boxes is charged with the year (less the free first box on a first order).',
+            'A 12 month plan is billed once a year and ships in two boxes, the first when it is approved and the second about six months later. Shipping for both boxes is charged with the year (less the free first box on a first order).',
             'Refills on an active plan ship on their scheduled date on the same prescription, without a new review, and follow the same preparation and shipping timeline.',
           ],
         },

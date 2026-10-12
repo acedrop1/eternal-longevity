@@ -99,13 +99,13 @@ export function AdminProductEditor({
   const goingLive = p.status === 'live' && baseline.status !== 'live';
   const unit = unitWord(p.pharmacy);
   const monthCost = p.pharmacy.unitCost * Math.max(1, p.pharmacy.quantity);
-  // At the renewal price: every box pays shipping. A 12-month plan ships 2 boxes, both charged with the year.
+  // At the renewal price: every box pays shipping. A 12 month plan ships 2 boxes, both charged with the year.
   const plans = (
     [
-      ['Monthly', p.pricing.monthly, 1, 1],
-      ['Quarterly', p.pricing.quarterly, 3, 1],
-      ['6-month', sixMonth, 6, 1],
-      ['12-month', p.twelveMonthPlan ? annual : 0, 12, 2],
+      ['1 month plan', p.pricing.monthly, 1, 1],
+      ['3 month plan', p.pricing.quarterly, 3, 1],
+      ['6 month plan', sixMonth, 6, 1],
+      ['12 month plan', p.twelveMonthPlan ? annual : 0, 12, 2],
     ] as const
   )
     .filter(([, price]) => price > 0)
@@ -277,18 +277,18 @@ export function AdminProductEditor({
 
           <SectionCard title="Pricing" description="Whole dollars. The server charges these, not what a browser sends.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Monthly" hint={`Plus $${ship} shipping per box`}>
+              <Field label="1 month plan" hint={`Plus $${ship} shipping per box`}>
                 <Money value={p.pricing.monthly} onChange={(v) => setPrice('monthly', v)} />
               </Field>
               <Field
-                label="Quarterly (billed every 3 months)"
+                label="3 month plan (billed every 3 months)"
                 hint={`$${quarterlyPerMonth}/mo${quarterlySave > 0 ? ` · saves ${quarterlySave}%` : ''}`}
               >
                 <Money value={p.pricing.quarterly} onChange={(v) => setPrice('quarterly', v)} />
               </Field>
               <Field
-                label="6-month (billed every 6 months)"
-                hint={sixMonth ? `$${Math.round(sixMonth / 6)}/mo${sixMonthSave > 0 ? ` · saves ${sixMonthSave}%` : ''}` : 'Leave empty for no 6-month plan.'}
+                label="6 month plan (billed every 6 months)"
+                hint={sixMonth ? `$${Math.round(sixMonth / 6)}/mo${sixMonthSave > 0 ? ` · saves ${sixMonthSave}%` : ''}` : 'Leave empty for no 6 month plan.'}
               >
                 <Money value={sixMonth} onChange={(v) => setPrice('sixMonth', v)} />
               </Field>
@@ -296,14 +296,14 @@ export function AdminProductEditor({
                 <Check
                   checked={p.twelveMonthPlan}
                   onChange={(v) => set('twelveMonthPlan', v)}
-                  label="12-month plan"
+                  label="12 month plan"
                   body="Billed once a year, shipped in two 6-month boxes. Suits oral solids with a 180-day shelf life."
                 />
               </div>
               {p.twelveMonthPlan && (
                 <Field
-                  label="12-month price (billed once a year, ships every 6 months)"
-                  hint={annual ? `$${Math.round(annual / 12)}/mo${annualSave > 0 ? ` · saves ${annualSave}%` : ''} · plus $${ship * 2} shipping for the 2 boxes` : 'Required while the 12-month plan is on.'}
+                  label="12 month plan price (billed once a year, ships every 6 months)"
+                  hint={annual ? `$${Math.round(annual / 12)}/mo${annualSave > 0 ? ` · saves ${annualSave}%` : ''} · plus $${ship * 2} shipping for the 2 boxes` : 'Required while the 12 month plan is on.'}
                 >
                   <Money value={annual} onChange={(v) => setPrice('annual', v)} />
                 </Field>
@@ -384,7 +384,7 @@ export function AdminProductEditor({
                   onChange={(e) => setRx('sku', e.target.value.replace(/\s/g, ''))}
                 />
               </Field>
-              <Field label="Units per 30-day supply" hint="A 3- or 6-month plan ships that many months at once; a 12-month plan ships 6 months at a time.">
+              <Field label="Units per 30-day supply" hint="A 3- or 6 month plan ships that many months at once; a 12 month plan ships 6 months at a time.">
                 <input
                   className={cn(input, 'tabular-nums')}
                   inputMode="numeric"

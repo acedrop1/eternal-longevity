@@ -85,7 +85,7 @@ export function AdminSettings({
 
       <SettingsRow
         title="Shipping"
-        description="What customers pay per box, 2-day and overnight alike. A 12-month plan ships two boxes and pays for both up front."
+        description="What customers pay per box, 2-day and overnight alike. A 12 month plan ships two boxes and pays for both up front."
       >
         <SectionCard>
           <ShippingForm initial={shipping} />
@@ -179,7 +179,7 @@ function ShippingForm({ initial }: { initial: ShippingSettings }) {
           <span>
             <span className="block text-[14px] font-medium text-ink">First order ships free</span>
             <span className="block text-[13px] leading-snug text-ink/60">
-              A member&apos;s first paid order ships its first box free. Renewals and the second box of a 12-month plan still pay.
+              A member&apos;s first paid order ships its first box free. Renewals and the second box of a 12 month plan still pay.
             </span>
           </span>
         </label>

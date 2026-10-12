@@ -3,7 +3,7 @@
  * subscriptions, separate from the 4 signature protocols. This is what
  * /shop displays.
  *
- * Sold as a subscription (1, 3 or 6-month plans, per the Product & Pricing
+ * Sold as a subscription (1, 3 or 6 month plans, per the Product & Pricing
  * Plan) or a one-time purchase.
  */
 
@@ -63,7 +63,7 @@ export interface ShopProduct {
    */
   storage?: 'refrigerated' | 'room';
   /**
-   * Offer the 12-month plan (Admin → Products). Unset falls back to
+   * Offer the 12 month plan (Admin → Products). Unset falls back to
    * TWELVE_MONTH_PLAN, the oral solids it was launched on.
    */
   twelveMonthPlan?: boolean;
@@ -76,7 +76,7 @@ export interface ShopProduct {
     /**
      * Billed every 6 months: 6 × the plan's 6-month rate. Optional because
      * admin rows saved before it existed carry no value; without it the
-     * product simply has no 6-month plan.
+     * product simply has no 6 month plan.
      */
     sixMonth?: number;
     /**
@@ -1969,7 +1969,7 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
 }
 
 /**
- * 12-month plans: oral solids only (tablets, capsules, troches). Compounded
+ * 12 month plans: oral solids only (tablets, capsules, troches). Compounded
  * oral solids usually carry a 180-day beyond-use date, so the year is billed
  * once and shipped in two 6-month boxes (see lib/annual-shipments). Creams,
  * injectables and sprays keep shorter plans.
@@ -1987,12 +1987,12 @@ export const TWELVE_MONTH_PLAN: ReadonlySet<string> = new Set([
   'oxytocin',
 ]);
 
-/** Whether this product sells a 12-month plan: its own setting, else the launch list. */
+/** Whether this product sells a 12 month plan: its own setting, else the launch list. */
 export function offersTwelveMonth(p: Pick<ShopProduct, 'id' | 'twelveMonthPlan'>): boolean {
   return p.twelveMonthPlan ?? TWELVE_MONTH_PLAN.has(p.id);
 }
 
-/** Boxes shipped per billing cycle: a 12-month plan ships twice. */
+/** Boxes shipped per billing cycle: a 12 month plan ships twice. */
 export function shipmentsPerCycle(cadence: string): number {
   return cadence === 'annual' ? 2 : 1;
 }
@@ -2021,7 +2021,7 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
   const y = offersTwelveMonth(p) ? p.pricing.annual : 0;
   // What a longer plan saves against ordering monthly, shipping included:
   // every monthly order ships (and pays shipping) on its own, a 3- or 6-month
-  // plan ships once, a 12-month plan twice.
+  // plan ships once, a 12 month plan twice.
   const ship = shipPrice;
   const saved = (months: number, total: number, shipments: number) => m * months + ship * months - (total + ship * shipments);
   const saveLine = (dollars: number, months: number) =>
@@ -2056,15 +2056,15 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
   return [
     {
       key: 'monthly',
-      label: 'Monthly',
-      description: 'Billed monthly · Cancel anytime',
+      label: '1 month plan',
+      description: 'Billed and shipped every month · Cancel anytime',
       total: m,
       perMonth: m,
-      breakdown: ['Billed monthly, shipped monthly', ...common],
+      breakdown: ['Billed and shipped every month', ...common],
     },
-    plan('quarterly', 'Quarterly', 3, q, 'Billed every 3 months', 'Ships every 3 months'),
-    ...(s ? [plan('sixMonth', '6-month', 6, s, 'Billed every 6 months', 'Ships every 6 months')] : []),
-    ...(y ? [plan('annual', '12-month', 12, y, 'Billed every 12 months', 'Ships every 6 months', 2)] : []),
+    plan('quarterly', '3 month plan', 3, q, 'Billed every 3 months', 'Ships every 3 months'),
+    ...(s ? [plan('sixMonth', '6 month plan', 6, s, 'Billed every 6 months', 'Ships every 6 months')] : []),
+    ...(y ? [plan('annual', '12 month plan', 12, y, 'Billed every 12 months', 'Ships every 6 months', 2)] : []),
   ];
 }
 

@@ -95,7 +95,7 @@ export const estimateStripeFeeCents = estimateProcessingFeeCents;
 
 /**
  * Pharmacy units in one line: units per 30 days × months in one box × line
- * quantity. An order row is one box: a 12-month plan's order carries the
+ * quantity. An order row is one box: a 12 month plan's order carries the
  * first 6-month box and the month-6 box is its own $0 order
  * (lib/annual-shipments), so each is costed at 6 months, not 12.
  */
@@ -154,7 +154,7 @@ export function orderEconomics(o: EconOrder, costs: CostTable): Economics {
 /**
  * One plan of a product, as Products shows it. Dollars in, cents out.
  * `shippingPriceDollars` is what the customer pays per box (Admin → Settings);
- * `shipments` boxes per cycle (2 for a 12-month plan, all charged up front);
+ * `shipments` boxes per cycle (2 for a 12 month plan, all charged up front);
  * `firstOrder` frees the first box, as on a member's first paid order.
  */
 export function planEconomics(

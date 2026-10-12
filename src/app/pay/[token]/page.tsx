@@ -4,6 +4,7 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { getOrderByPayToken } from '@/lib/pay-on-approval';
 import { PayForm } from '@/components/pay/PayForm';
+import { planName } from '@/lib/order-rules';
 import { cardOnFile, frameAccountFor, paymentsConfigured } from '@/lib/payments';
 
 export const metadata: Metadata = {
@@ -121,7 +122,7 @@ export default async function PayPage({ params }: PayPageProps) {
                 </dl>
                 <div className="flex items-baseline justify-between">
                   <span className="text-[15px] text-ink-soft">
-                    Due today · {order.cadenceLabel} plan
+                    Due today · {planName(order.cadenceLabel)}
                   </span>
                   <span className="text-[28px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
                     ${(order.totalCents / 100).toFixed(2)}

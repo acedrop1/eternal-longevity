@@ -36,7 +36,7 @@ export interface LineupItem {
 
 /**
  * The "from $X/mo" price for a product: its cheapest offered plan per month
- * (the 12-month plan where it has one), the same plan its page opens on.
+ * (the 12 month plan where it has one), the same plan its page opens on.
  */
 export function fromPrice(p: ShopProduct): number {
   return defaultTier(cadenceTiersForProduct(p)).perMonth;

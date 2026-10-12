@@ -80,10 +80,10 @@ export const shippingNote = (s: ShippingSettings) =>
       ? `Free shipping on your first order · $${s.pricePerShipment} per box after`
       : `$${s.pricePerShipment} shipping per box`;
 
-/** "$149/mo billed monthly" beside a longer plan's lower rate: a labelled comparison, not a strike-through sale price. */
+/** "vs $149/mo on the 1 month plan" beside a longer plan's lower rate: a labelled comparison, not a strike-through sale price. */
 export function MonthlyRate({ product, active, className }: { product: ShopProduct; active: CadenceTier; className?: string }) {
   if (active.key === 'monthly' || active.perMonth >= product.pricing.monthly) return null;
-  return <span className={cn('text-ink/60', className)}>vs ${product.pricing.monthly}/mo billed monthly</span>;
+  return <span className={cn('text-ink/60', className)}>vs ${product.pricing.monthly}/mo on the 1 month plan</span>;
 }
 
 /** Storage and shipping for a product (see ShopProduct.storage). */
@@ -335,7 +335,7 @@ export function ProductDetails({
               {coldChain(product)
                 ? 'Overnight cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
                 : '2-day shipping from our licensed 503A pharmacy.'}{' '}
-              {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12-month plan ships in
+              {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12 month plan ships in
               two boxes six months apart, with the second box&rsquo;s shipping billed with the year. Tracking is
               available in your portal once your order ships.
             </p>

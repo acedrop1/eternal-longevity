@@ -14,7 +14,7 @@
  *   defaultSig  — the directions Dr. Elder approves for this product. Only a
  *                 prefill: he can edit it per prescription, and what he signs
  *                 is what is sent.
- *   quantity    — units for ONE month of supply. A 3- or 6-month plan ships
+ *   quantity    — units for ONE month of supply. A 3- or 6 month plan ships
  *                 that many months in one package, so the order carries
  *                 quantity × months (see pharmacyQuantity).
  *   unitCost    — what the pharmacy charges us per unit, in dollars, priced

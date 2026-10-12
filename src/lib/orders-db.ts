@@ -80,7 +80,7 @@ function mapLine(row: OrderRow): OrderLine {
     productId: String(row.product_id ?? ''),
     productName: String(row.product_name ?? ''),
     cadence: (row.cadence as OrderLine['cadence']) ?? 'monthly',
-    cadenceLabel: String(row.cadence_label ?? 'Monthly'),
+    cadenceLabel: String(row.cadence_label ?? '1 month plan'),
     quantity: Number(row.quantity ?? 1),
     perCycle: centsToDollars(row.unit_price_cents),
     image: String(row.image ?? '/images/9.jpg'),
@@ -469,7 +469,7 @@ async function placeOrder(input: {
   /*
    * Shipping and tax are set here, not taken from the request. Shipping is per
    * box at the price in Admin → Settings (one box per order, two for a
-   * 12-month plan, both charged now). A member's first order ships its first
+   * 12 month plan, both charged now). A member's first order ships its first
    * box free: the first line of the basket takes it (lib/first-box), the rest
    * pay. The promo only touches shipping when it waives it. No sales tax is charged: prescription
    * drugs are exempt in every state we serve (NJ, NY, PA, MI). If a taxable

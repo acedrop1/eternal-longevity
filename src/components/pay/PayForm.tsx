@@ -13,6 +13,7 @@
 import { useRef, useState } from 'react';
 import { confirm3ds, FrameCardField, type FrameCardHandle } from '@/components/payments/FrameCardField';
 import { finishPaymentAction, payOrderAction } from '@/lib/checkout-payment-actions';
+import { planName } from '@/lib/order-rules';
 
 const TRY_AGAIN = 'We could not process that payment. Please try again.';
 
@@ -149,7 +150,7 @@ export function PayForm({
           order {orderNumber}
           {recurring ? (
             <>
-              , on the <strong className="font-medium text-ink">{cadenceLabel.toLowerCase()} plan</strong>.
+              , on the <strong className="font-medium text-ink">{planName(cadenceLabel)}</strong>.
               Refills ship on this same prescription and are charged to this
               card, shipping included, on that schedule, without a new review, until I cancel, my
               prescriber pauses or stops the plan, or the prescription runs

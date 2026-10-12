@@ -9,7 +9,7 @@
  * One price for every shipment, 2-day or overnight cold-chain: $20 (the
  * pharmacy charges us $25 / $35; the plan prices carry the rest). A
  * member's first order ships free (firstOrderFree). After that every box
- * pays: renewals, and the second box of a 12-month plan (charged up front
+ * pays: renewals, and the second box of a 12 month plan (charged up front
  * with the year, see shipmentsPerCycle in lib/shopProducts).
  */
 
@@ -35,7 +35,7 @@ export const SHIPPING_LABEL: Record<ShippingMethod, string> = {
 /**
  * Shipping on one order, in cents: per box, with the first box of a member's
  * first order free. `shipments` is boxes in this billing cycle (2 for a
- * 12-month plan), `firstOrder` whether the member has never had an order
+ * 12 month plan), `firstOrder` whether the member has never had an order
  * paid before. Checkout, the server and renewals all charge through this.
  */
 export function shippingChargeCents(input: { pricePerShipment: number; shipments: number; firstOrder: boolean }): number {

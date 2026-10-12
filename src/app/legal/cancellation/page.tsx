@@ -33,7 +33,7 @@ export default function CancellationPage() {
           paragraphs: [
             `Cancelling stops future renewals. It does not reverse a cycle that has already been billed and shipped, because a compounded preparation cannot be re-dispensed once it leaves the pharmacy.`,
             `If you cancel after a renewal has been billed but before the pharmacy has shipped it, you get a full refund of that renewal.`,
-            `A 12-month plan is billed once a year and ships in two boxes about six months apart. You can cancel anytime before the next annual billing, and it will not renew. The second box of a year you have already paid for ships unless you cancel before it is sent; cancel before then and we refund the unshipped second box, prorated. The first box is not refundable once compounding begins.`,
+            `A 12 month plan is billed once a year and ships in two boxes about six months apart. You can cancel anytime before the next annual billing, and it will not renew. The second box of a year you have already paid for ships unless you cancel before it is sent; cancel before then and we refund the unshipped second box, prorated. The first box is not refundable once compounding begins.`,
           ],
         },
         {

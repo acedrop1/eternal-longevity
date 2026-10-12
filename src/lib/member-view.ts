@@ -8,7 +8,7 @@
 
 import type { Order } from '@/lib/orders';
 import { isFailedRefill, trackingUrl } from '@/lib/orders';
-import { TERMINAL_ORDER } from '@/lib/order-rules';
+import { TERMINAL_ORDER, planName } from '@/lib/order-rules';
 
 /* ------------------------------ order tracker ----------------------------- */
 
@@ -102,7 +102,7 @@ export function orderCard(o: Order, image: string, overnight: boolean): Treatmen
     key: `order-${o.id}`,
     name: o.lines.map((l) => l.productName).join(' + ') || 'Your order',
     // Orders from before plans-only still say 'once': they keep their label.
-    plan: o.lines[0] && o.lines[0].cadence !== 'once' ? `${o.lines[0].cadenceLabel} plan` : 'One-time order',
+    plan: o.lines[0] && o.lines[0].cadence !== 'once' ? planName(o.lines[0].cadenceLabel) : 'One-time order',
     image,
     tone: 'ok' as TreatmentCard['tone'],
   };
@@ -145,7 +145,7 @@ export function planCard(s: PlanLike): TreatmentCard {
   const base = {
     key: `plan-${s.id}`,
     name: s.productName,
-    plan: `${s.cadenceLabel} plan`,
+    plan: planName(s.cadenceLabel),
     image: s.image,
     tone: 'ok' as TreatmentCard['tone'],
     cta: { label: 'Manage plan', href: '/portal/subscriptions' },

@@ -7,7 +7,7 @@ import { orderRef } from '@/lib/format';
 import { SITE_URL } from '@/lib/site';
 
 /**
- * Ship the second box of every 12-month plan that is due (lib/annual-shipments).
+ * Ship the second box of every 12 month plan that is due (lib/annual-shipments).
  * Charges nothing. Runs daily before /api/cron/renewals, which waits on a
  * plan whose box 2 is still owed. Triggered by vercel.json.
  */
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ skipped: 'supabase_not_configured' });
   }
 
-  // ponytail: one batch of 200 a day; loop like the renewals cron if 12-month plans ever outgrow it.
+  // ponytail: one batch of 200 a day; loop like the renewals cron if 12 month plans ever outgrow it.
   const outcomes: BoxOutcome[] = [];
   for (const id of await dueSecondBoxIds()) {
     try {
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         to: SUPPORT_EMAIL,
         subject: `${problems.length} 12-month ${problems.length === 1 ? 'box' : 'boxes'} did not ship today`,
         html: noticeEmail({
-          eyebrow: '12-month plans',
+          eyebrow: '12 month plans',
           heading: `${problems.length} second ${problems.length === 1 ? 'box needs' : 'boxes need'} a look`,
           body: 'These members paid for a year. Plans needing review are paused until someone acts; nothing was charged.',
           rows: problems.map((o) => [

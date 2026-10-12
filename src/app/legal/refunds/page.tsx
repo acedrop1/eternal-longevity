@@ -54,7 +54,7 @@ export default function RefundsPage() {
           heading: 'Subscriptions',
           paragraphs: [
             'You may pause or cancel a plan at any time from Portal › Subscriptions. A renewal that has already been billed and shipped is not refundable. If you cancel after a renewal is billed but before the pharmacy ships, you are eligible for a full refund of the renewal charge.',
-            'A 12-month plan is billed once a year, up front, and ships in two boxes about six months apart. The first box follows the rules above: not refundable once compounding begins. The second box ships unless you cancel before it is sent; if you cancel before it ships, we refund the unshipped second box on a prorated basis, including its shipping. Once the second box has been sent to the pharmacy for compounding it is not refundable.',
+            'A 12 month plan is billed once a year, up front, and ships in two boxes about six months apart. The first box follows the rules above: not refundable once compounding begins. The second box ships unless you cancel before it is sent; if you cancel before it ships, we refund the unshipped second box on a prorated basis, including its shipping. Once the second box has been sent to the pharmacy for compounding it is not refundable.',
             'Pricing changes communicated by email at least 30 days in advance apply to renewals processed after the change date.',
           ],
         },

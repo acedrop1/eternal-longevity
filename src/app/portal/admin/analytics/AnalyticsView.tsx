@@ -294,7 +294,7 @@ export function AnalyticsView(p: Props) {
             ['New and returning customers', 'Customers with an order in the range. New: their first-ever paid order is in the range. Returning: they had paid before it (refills count as returning).'],
             ['est.', `An order paid before costs were recorded (or with the fee still on its way from the processor) is worked out at read time from today’s costs and ${FEE_RATE}.`],
             ['Compared with', 'A range from the 1st of a month is compared with the same days of the month before; year to date with the same dates last year; anything else with the same number of days just before it.'],
-            ['By product', 'Units are plans sold (a 3-month plan is 1). Product cost is by line; shipping, fees and refunds are split across an order’s lines by what each line charged.'],
+            ['By product', 'Units are plans sold (a 3 month plan is 1). Product cost is by line; shipping, fees and refunds are split across an order’s lines by what each line charged.'],
           ].map(([k, v]) => (
             <div key={k}>
               <dt className="font-semibold text-ink">{k}</dt>

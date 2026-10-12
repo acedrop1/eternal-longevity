@@ -116,7 +116,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
       {/* Below the fold: what the chosen plan includes, then the rest. */}
       <div className="mt-10 rounded-shell bg-milk p-5">
         <p className="text-[13px] font-medium text-ink/65">Compounded by a licensed 503A pharmacy</p>
-        <p className="mt-4 text-[15px] font-semibold tracking-[-0.01em]">{active.label} plan includes</p>
+        <p className="mt-4 text-[15px] font-semibold tracking-[-0.01em]">{active.label} includes</p>
         <ul className="mt-3 space-y-2">
           {active.breakdown.map((line) => (
             <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">

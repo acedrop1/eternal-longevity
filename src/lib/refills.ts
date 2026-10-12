@@ -42,7 +42,7 @@ export const PRESCRIPTION_MONTHS = 12;
 
 /**
  * Refills a cadence earns inside one prescription, after the first box. One
- * refill per box: a 12-month plan's second 6-month box is its one refill.
+ * refill per box: a 12 month plan's second 6-month box is its one refill.
  */
 export function refillsFor(cadence: string): number {
   // Legacy one-time orders (no longer sold) signed after the switch: nothing recurs.
@@ -152,11 +152,11 @@ export async function writePrescriptionForOrder(
     product_name: items.map((i) => i.product_name).join(' + '),
     prescription_id: rx.id,
     status: 'active',
-    cadence_label: String(items[0].cadence_label ?? 'Monthly'),
+    cadence_label: String(items[0].cadence_label ?? '1 month plan'),
     per_cycle_cents: perCycleCents(planCents / 100, cadence, pricePerShipment),
     next_billing_date: isoDate(addMonths(now, monthsPerCycle(cadence))),
     last_charged_at: now.toISOString(),
-    // 12-month plan: box 2 in six months, once this order is paid (lib/annual-shipments).
+    // 12 month plan: box 2 in six months, once this order is paid (lib/annual-shipments).
     ...(annual && {
       next_shipment_date: addMonthsIso(isoDate(now), monthsPerShipment(cadence)),
       next_shipment_order_id: order.id,
@@ -167,7 +167,7 @@ export async function writePrescriptionForOrder(
 }
 
 /**
- * Where a refill (or a 12-month plan's second box) ships: where they live now.
+ * Where a refill (or a 12 month plan's second box) ships: where they live now.
  * The primary address on their account wins over the last order's, so a
  * member who moves between cycles gets it at the new address. Null shipTo
  * when there is no address in a state we serve.
@@ -332,7 +332,7 @@ export async function renewSubscription(
    * per-cycle amount (set at signing, and again when the member switches
    * plan, at that day's prices). Only a plan with nothing stored is priced
    * now: the plan's price plus shipping on every box of the cycle at today's
-   * rate (Admin → Settings); a 12-month plan pays both boxes up front.
+   * rate (Admin → Settings); a 12 month plan pays both boxes up front.
    */
   const { pricePerShipment } = await getShippingSettings();
   const plan = cadenceTiersForProduct(product, pricePerShipment).find((t) => t.key === cadence);
@@ -395,7 +395,7 @@ export async function renewSubscription(
     quantity: 1,
     unit_price_cents: split.subtotalCents,
     cadence,
-    cadence_label: sub.cadence_label ?? 'Monthly',
+    cadence_label: sub.cadence_label ?? '1 month plan',
   });
 
   /*
@@ -451,7 +451,7 @@ export async function renewSubscription(
       .from('subscriptions')
       .update({
         last_charged_at: new Date().toISOString(),
-        // 12-month plan: box 2 in six months, once this charge is confirmed paid.
+        // 12 month plan: box 2 in six months, once this charge is confirmed paid.
         ...(shipmentsPerCycle(cadence) > 1 && {
           next_shipment_date: addMonthsIso(today, monthsPerShipment(cadence)),
           next_shipment_order_id: order.id,

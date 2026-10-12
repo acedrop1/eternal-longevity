@@ -65,8 +65,8 @@ async function prescriptionFor(id: string | null) {
 /**
  * Switch a subscription to a different billing cadence. Takes effect at the
  * next billing date: nothing is charged now and the date stays. Leaving a
- * 12-month plan mid-year keeps its paid second box (next_shipment_date).
- * The 12-month plan is only a choice where the product offers it (its tier
+ * 12 month plan mid-year keeps its paid second box (next_shipment_date).
+ * The 12 month plan is only a choice where the product offers it (its tier
  * exists only then).
  */
 export async function changeSubscriptionPlanAction(
@@ -102,7 +102,7 @@ export async function changeSubscriptionPlanAction(
    * monthly plan moved to quarterly would otherwise keep eleven refills it can
    * never use; quarterly moved to monthly would run out months early. Recount
    * the boxes that still fit before it expires on the new cadence, plus a
-   * 12-month plan's second box if it is still owed.
+   * 12 month plan's second box if it is still owed.
    */
   const rx = await prescriptionFor(sub.prescription_id);
   if (rx?.expires_at) {

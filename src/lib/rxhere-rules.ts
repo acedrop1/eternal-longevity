@@ -111,7 +111,7 @@ export function allergiesFrom(answers: Record<string, unknown>): string | undefi
 
 /**
  * Units on the order: a month's supply × the months this box covers × the
- * line quantity. A 12-month plan ships two 6-month boxes, so 6, not 12.
+ * line quantity. A 12 month plan ships two 6-month boxes, so 6, not 12.
  */
 export function pharmacyQuantity(item: Pick<PharmacyItem, 'quantity'>, cadence: string, lineQty: number): number {
   return Math.max(1, item.quantity) * monthsPerShipment(cadence) * Math.max(1, lineQty);

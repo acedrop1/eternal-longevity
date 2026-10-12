@@ -80,14 +80,14 @@ export function shippingAddressError(a: unknown): string | null {
 
 /* ---------------------------------- plans --------------------------------- */
 
-/** Months one billing cycle covers. A 12-month plan bills once a year. */
+/** Months one billing cycle covers. A 12 month plan bills once a year. */
 export function monthsPerCycle(cadence: string): number {
   if (cadence === 'annual') return 12;
   return cadence === 'sixMonth' ? 6 : cadence === 'quarterly' ? 3 : 1;
 }
 
 /**
- * Months one box covers: the cycle split over its boxes. A 12-month plan
+ * Months one box covers: the cycle split over its boxes. A 12 month plan
  * ships two 6-month boxes, so the pharmacy is sent 6 months at a time.
  */
 export function monthsPerShipment(cadence: string): number {
@@ -96,7 +96,7 @@ export function monthsPerShipment(cadence: string): number {
 
 /**
  * What one renewal charges, in cents: the plan's total plus shipping on
- * every box in the cycle (a renewal never ships free; a 12-month plan pays
+ * every box in the cycle (a renewal never ships free; a 12 month plan pays
  * both boxes up front). `planDollars` is the tier total, whole dollars.
  */
 export function perCycleCents(planDollars: number, cadence: string, pricePerShipment: number): number {
@@ -109,7 +109,7 @@ export function perCycleCents(planDollars: number, cadence: string, pricePerShip
 /**
  * Whether a prescription covers the next `boxes` shipments, `monthsApart`
  * apart, starting today: a refill for each, and still in date on the last.
- * A renewal checks the whole cycle (both boxes of a 12-month plan), so a year
+ * A renewal checks the whole cycle (both boxes of a 12 month plan), so a year
  * is never billed on a prescription that cannot ship its second box.
  */
 export function rxCovers(
@@ -131,12 +131,26 @@ export function rxCovers(
  */
 export function cadenceOfLabel(label: string | null, fallback: string): string {
   const l = (label ?? '').toLowerCase();
-  // '12-month' before '1…'/'6…'; 'Annual' on rows written before it was renamed.
+  // Current names are '1 month plan' … '12 month plan'; older rows say
+  // 'Monthly', 'Quarterly', '6-month', '12-month' or 'Annual'. '12…' first, before '1…'.
   if (l.startsWith('12') || l.startsWith('annual')) return 'annual';
   if (l.startsWith('6')) return 'sixMonth';
-  if (l.startsWith('quarter')) return 'quarterly';
-  if (l.startsWith('month')) return 'monthly';
+  if (l.startsWith('3') || l.startsWith('quarter')) return 'quarterly';
+  if (l.startsWith('1') || l.startsWith('month')) return 'monthly';
   return fallback;
+}
+
+/** What members see for a plan: '1 month plan' … '12 month plan', whatever a stored row calls it. */
+export const PLAN_NAME: Record<string, string> = {
+  monthly: '1 month plan',
+  quarterly: '3 month plan',
+  sixMonth: '6 month plan',
+  annual: '12 month plan',
+};
+
+/** A stored cadence label (old or new wording) as the plan's current name. One-time and unknown labels pass through. */
+export function planName(label: string | null): string {
+  return PLAN_NAME[cadenceOfLabel(label, '')] ?? (label || 'Plan');
 }
 
 /** YYYY-MM-DD plus whole months, clamped to the month's last day (Jan 31 → Feb 28). */

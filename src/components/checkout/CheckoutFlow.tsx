@@ -422,7 +422,7 @@ export function CheckoutFlow({
         qty: it.quantity,
         perMonth: it.perMonth,
         total: it.total * it.quantity,
-        // Each item is its own order: one box, two for a 12-month plan, all
+        // Each item is its own order: one box, two for a 12 month plan, all
         // charged now. The basket's first line takes the free first box, as
         // placeOrder prices it. Every renewal pays for its boxes.
         shipments: shipmentsPerCycle(it.cadence),

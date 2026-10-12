@@ -44,7 +44,7 @@ export interface PayableOrder {
   /** Part of totalCents. */
   shippingCents: number;
   items: { name: string; qty: number }[];
-  /** 'Monthly' | 'Quarterly' | '6-month' | 'Annual' | 'One-time' — drives the billing consent copy. */
+  /** '1 month plan' … '12 month plan' (older rows: 'Monthly', 'Quarterly', '6-month', 'Annual', 'One-time'). Drives the billing consent copy. */
   cadenceLabel: string;
   alreadyPaid: boolean;
 }
@@ -181,7 +181,7 @@ export async function getOrderByPayToken(token: string): Promise<PayableOrder | 
       name: i.product_name,
       qty: i.quantity ?? 1,
     })),
-    cadenceLabel: items?.[0]?.cadence_label ?? 'Monthly',
+    cadenceLabel: items?.[0]?.cadence_label ?? '1 month plan',
     alreadyPaid: Boolean(order.paid_confirmed_at),
   };
 }
