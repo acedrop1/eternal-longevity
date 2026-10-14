@@ -91,7 +91,7 @@ export const META_PIXEL_ID = '946533478113851';
  * Meta domain verification code (Business Suite → Brand safety → Domains →
  * etlongevity.com → meta-tag). Empty leaves the tag out.
  */
-export const META_DOMAIN_VERIFICATION = '';
+export const META_DOMAIN_VERIFICATION = 'oaurukvj1ttj6qi58q0v2f828oxd01';
 
 /**
  * Exactly what a member sees on their card statement — the descriptor set on
