@@ -150,40 +150,54 @@ export function AdPixel() {
   if (!ready || !open || !META_PIXEL_ID) return null;
   if (!reopened && !isMarketing(pathname)) return null;
 
+  const btn = 'inline-flex h-11 w-full items-center justify-center rounded-full px-6 text-[14px] font-semibold transition-colors md:w-[200px]';
+  const link = 'underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
+
   return (
     <div
       role="dialog"
-      aria-label="Cookie choices"
-      className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-[560px] rounded-[18px] bg-white p-4 text-ink shadow-[0_12px_40px_rgba(0,0,0,0.16)] ring-1 ring-ink/10 md:bottom-5 md:p-5"
+      aria-labelledby="cookie-choices-title"
+      className="fixed inset-x-2 bottom-2 z-[60] rounded-shell bg-white text-ink shadow-[0_-8px_48px_rgba(17,17,17,0.14)] ring-1 ring-ink/10 md:inset-x-4 md:bottom-4"
     >
-      {gpc.current ? (
-        <p className="text-[14px] leading-snug">
-          Your browser sends a Global Privacy Control signal, so advertising cookies stay off. Nothing to choose here.
-        </p>
-      ) : (
-        <p className="text-[14px] leading-snug">
-          May we use one advertising cookie (Meta) on our marketing pages to measure our ads? It never runs on your
-          assessment, checkout or member portal, and we never share health information.{' '}
-          <Link href="/legal/cookies" className="underline decoration-ink/30 underline-offset-[3px]">
-            Cookie Notice
-          </Link>
-        </p>
-      )}
-      <div className="mt-3 flex gap-2">
-        {gpc.current ? (
-          <button type="button" onClick={() => setOpen(false)} className="rounded-full bg-ink px-5 py-2 text-[14px] font-semibold text-white">
-            OK
-          </button>
-        ) : (
-          <>
-            <button type="button" onClick={() => decide('granted')} className="rounded-full bg-ink px-5 py-2 text-[14px] font-semibold text-white">
-              Accept
+      <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:gap-10 md:px-10 md:py-6">
+        <div className="min-w-0 flex-1">
+          <h2 id="cookie-choices-title" className="flex items-center gap-2 text-[17px] font-semibold tracking-[-0.02em] md:text-[19px]">
+            <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-butter-deep" />
+            Your privacy choices
+          </h2>
+          {gpc.current ? (
+            <p className="mt-1.5 max-w-[80ch] text-[13.5px] leading-relaxed text-ink/70">
+              Your browser sends a Global Privacy Control signal, so our advertising cookie stays off. There is nothing you need to do.
+            </p>
+          ) : (
+            <p className="mt-1.5 max-w-[80ch] text-[13.5px] leading-relaxed text-ink/70">
+              With your OK, we use one advertising cookie from Meta on our marketing pages to measure our ads. It never runs
+              on your assessment, checkout or member portal, and we never share your health information. You can change this
+              any time under Cookie Choices in the footer.
+            </p>
+          )}
+          <p className="mt-2 text-[13px] font-medium text-ink/80">
+            <Link href="/legal/cookies" className={link}>Cookie Notice</Link>
+            <span aria-hidden className="mx-2 text-ink/30">·</span>
+            <Link href="/legal/privacy" className={link}>Privacy Policy</Link>
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2 md:flex-col">
+          {gpc.current ? (
+            <button type="button" onClick={() => setOpen(false)} className={`${btn} bg-butter hover:bg-butter-deep`}>
+              OK
             </button>
-            <button type="button" onClick={() => decide('denied')} className="rounded-full bg-milk px-5 py-2 text-[14px] font-semibold text-ink">
-              Decline
-            </button>
-          </>
-        )}
+          ) : (
+            <>
+              <button type="button" onClick={() => decide('granted')} className={`${btn} bg-butter hover:bg-butter-deep`}>
+                Accept
+              </button>
+              <button type="button" onClick={() => decide('denied')} className={`${btn} bg-white ring-1 ring-inset ring-ink/25 hover:bg-milk`}>
+                Decline
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
