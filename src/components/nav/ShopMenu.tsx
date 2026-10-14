@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import { CategoryTile, LineupRow, useListedCategories } from '@/components/lineup/Lineup';
+import { LineupRow, useListedCategories } from '@/components/lineup/Lineup';
 import { countLabel, listedItems } from '@/lib/lineup';
 import { cn } from '@/lib/utils';
 
@@ -59,7 +59,10 @@ export function ShopMenu({ open, onClose }: { open: boolean; onClose: () => void
 
         <div className="flex flex-col gap-3">
           {cat ? (
-            <CategoryTile c={cat} className="min-h-[220px] flex-1" sizes="300px" />
+            <Link href={`/treatments/${cat.slug}`} onClick={onClose} className="group flex min-h-[220px] flex-1 flex-col justify-end rounded-shell bg-butter p-5">
+              <span className="text-[28px] font-semibold leading-none tracking-[-0.04em]">{cat.name}</span>
+              <span className="mt-2 text-[13px] text-ink/70">{countLabel(cat.items.length)} · {cat.line}</span>
+            </Link>
           ) : (
             <Link href="/shop" onClick={onClose} className="group flex min-h-[220px] flex-1 flex-col justify-end rounded-shell bg-butter p-5">
               <span className="text-[28px] font-semibold leading-none tracking-[-0.04em]">Shop all</span>

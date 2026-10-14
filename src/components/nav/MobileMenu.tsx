@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight, ChevronDown } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
-import { LineupRow, useListedCategories } from '@/components/lineup/Lineup';
+import { useListedCategories } from '@/components/lineup/Lineup';
 import { countLabel, fromPrice } from '@/lib/lineup';
 import { cn } from '@/lib/utils';
 import { SERVICE_AREA_SHORT } from '@/lib/site';
@@ -30,7 +30,6 @@ interface MobileMenuProps {
  */
 export function MobileMenu({ links, light = true, home = null }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
-  const [openCat, setOpenCat] = useState<string | null>(null);
   const top = useCatalog().products.filter((p) => p.category !== 'metabolic');
   const categories = useListedCategories().filter((c) => c.items.length);
   // The header's height changes (announcement bar and category strip fold
@@ -135,46 +134,20 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
               {/* Hims' category list; each opens into rhode-style product rows. */}
               <nav aria-label="Shop by category" className="px-3 pt-3">
                 <p className="px-2 pb-2 text-[13px] font-medium text-ink/60">Shop by category</p>
-                {categories.map((c) => {
-                  const expanded = openCat === c.slug;
-                  return (
-                    <div key={c.slug} className="border-b border-black/5 last:border-0">
-                      <button
-                        type="button"
-                        onClick={() => setOpenCat(expanded ? null : c.slug)}
-                        aria-expanded={expanded}
-                        className="flex w-full items-center gap-3 px-2 py-3 text-left"
-                      >
-                        <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-inner bg-milk">
-                          <Image src={c.image} alt="" fill sizes="48px" className="object-cover" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[22px] font-semibold leading-none tracking-[-0.04em]">{c.name}</span>
-                          <span className="mt-1 block truncate text-[13px] text-ink-soft">{countLabel(c.items.length)} · {c.line}</span>
-                        </span>
-                        <ChevronDown
-                          aria-hidden
-                          className={cn('h-5 w-5 shrink-0 text-ink/60 transition-transform duration-300', expanded && 'rotate-180')}
-                          strokeWidth={1.8}
-                        />
-                      </button>
-                      {expanded && (
-                        <div className="flex flex-col gap-2 rounded-inner bg-milk p-2 mb-3">
-                          {c.items.map((item) => (
-                            <LineupRow key={item.slug} item={item} tint={c.tint} onNavigate={() => setOpen(false)} />
-                          ))}
-                          <Link
-                            href={`/treatments/${c.slug}`}
-                            onClick={() => setOpen(false)}
-                            className="mt-1 block rounded-full py-3 text-center text-[14px] font-semibold ring-1 ring-ink/80"
-                          >
-                            Shop all {c.name.toLowerCase()}
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {categories.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/treatments/${c.slug}`}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 border-b border-black/5 px-2 py-3.5 last:border-0"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[22px] font-semibold leading-none tracking-[-0.04em]">{c.name}</span>
+                      <span className="mt-1 block truncate text-[13px] text-ink-soft">{countLabel(c.items.length)} · {c.line}</span>
+                    </span>
+                    <ArrowUpRight aria-hidden className="h-5 w-5 shrink-0 text-ink/55" strokeWidth={1.8} />
+                  </Link>
+                ))}
               </nav>
 
               {/* Top treatments: what's live, with the real product shots. */}

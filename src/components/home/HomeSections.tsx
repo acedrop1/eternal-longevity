@@ -78,7 +78,7 @@ export function Sticker({ children, className }: { children: React.ReactNode; cl
 export function Swipe({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span className={cn('relative inline-block', className)}>
-      <span aria-hidden className="absolute inset-x-[-0.08em] bottom-[0.06em] top-[0.52em] -z-0 -rotate-1 rounded-[0.2em] bg-butter" />
+      <span aria-hidden className="absolute inset-x-[-0.08em] bottom-[0.06em] top-[0.52em] -z-0 rounded-[0.2em] bg-butter" />
       <span className="relative">{children}</span>
     </span>
   );
@@ -131,7 +131,7 @@ export async function HomeHero() {
             <h1 className="text-[50px] font-semibold leading-[0.92] tracking-[-0.05em] md:text-[96px]">
               Longevity,
               <br />
-              <span className="inline-block -rotate-2 rounded-inner bg-white/20 px-3 pb-2 pt-0.5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/35 backdrop-blur-xl backdrop-saturate-150 md:rounded-shell md:px-4">
+              <span className="inline-block rounded-inner bg-white/20 px-3 pb-2 pt-0.5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/35 backdrop-blur-xl backdrop-saturate-150 md:rounded-shell md:px-4">
                 prescribed.
               </span>
             </h1>
@@ -261,7 +261,7 @@ export async function BestSellers() {
       <div className="relative mx-auto">
         <div className="mb-8 flex items-end justify-between gap-6 md:mb-12">
           <div>
-            <Sticker className="mb-4 rotate-[-3deg]">Rx only · made for you</Sticker>
+            <Sticker className="mb-4">Rx only · made for you</Sticker>
             <h2 className="text-[40px] font-semibold leading-none tracking-[-0.05em] text-ink md:text-[64px]">
               The <Swipe>it</Swipe> list
             </h2>
@@ -374,7 +374,7 @@ export function Campaign() {
         <h2 className="text-[40px] font-semibold leading-[1] tracking-[-0.05em] text-ink md:text-[64px]">
           Made for <Swipe>real life.</Swipe>
         </h2>
-        <Sticker className="rotate-[-3deg]">For adults 18+</Sticker>
+        <Sticker>For adults 18+</Sticker>
       </div>
       <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-2 [scrollbar-width:none] md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-10 [&::-webkit-scrollbar]:hidden">
         {CAMPAIGN.map((c) => (
@@ -418,7 +418,7 @@ export function Beliefs() {
         <div className="grid gap-3 md:grid-cols-3 md:gap-5">
           <Link href="/start" className="group relative block aspect-[4/5] overflow-hidden rounded-shell bg-milk md:row-span-2 md:aspect-auto">
             <Image src="/brand/hero-man.jpg" alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover object-[40%_center] transition-transform duration-700 group-hover:scale-[1.04]" />
-            <Sticker className="absolute right-4 top-4 rotate-[5deg]">Longevity</Sticker>
+            <Sticker className="absolute right-4 top-4">Longevity</Sticker>
             <div className="absolute inset-x-4 bottom-4 flex items-center justify-between">
               <Tag>Care led by a physician</Tag>
               <ArrowDot />
@@ -480,7 +480,7 @@ export function HowItWorks() {
             <h2 className="text-[40px] font-semibold leading-none tracking-[-0.05em] text-ink md:text-[64px]">
               Three steps. <Swipe>That&apos;s it.</Swipe>
             </h2>
-            <Sticker className="rotate-[4deg]">No waiting rooms</Sticker>
+            <Sticker>No waiting rooms</Sticker>
           </div>
           <ol className="grid gap-3 md:grid-cols-3 md:gap-5">
             {STEPS.map((s, i) => (
@@ -532,7 +532,7 @@ export function PhysicianCard() {
         <div className="relative flex flex-col justify-between gap-10 overflow-hidden rounded-shell bg-milk p-6 md:p-12">
           <Aura mix="bloom" className="opacity-80" />
           <div className="relative">
-            <Sticker className="rotate-[-3deg]">Our physician</Sticker>
+            <Sticker>Our physician</Sticker>
             <p className="mt-8 text-[32px] font-semibold leading-[1.04] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[52px]">
               Every prescription is decided by a <Swipe>physician</Swipe>, not a bot.
             </p>
