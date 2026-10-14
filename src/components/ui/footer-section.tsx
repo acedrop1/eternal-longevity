@@ -47,7 +47,7 @@ export const footerLinks: FooterSection[] = [
       { title: 'Terms of Service', href: '/legal/terms' },
       { title: 'Privacy Policy', href: '/legal/privacy' },
       { title: 'Cookie Notice', href: '/legal/cookies' },
-      { title: 'Cookie Choices', href: '/legal/cookies#cookie-choices' },
+      { title: 'Your Privacy Choices', href: '/legal/cookies#cookie-choices' },
       { title: 'Informed Consent', href: '/legal/consent' },
       { title: 'Refund Policy', href: '/legal/refunds' },
       { title: 'Cancellation Policy', href: '/legal/cancellation' },

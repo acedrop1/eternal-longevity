@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { META_PIXEL_ID } from '@/lib/site';
 
 /**
- * Meta Pixel, consent-first and marketing pages only.
+ * Advertising and analytics tags (Meta Pixel today; add others here), consent-first,
+ * marketing pages only.
  *
  * Telehealth pixels are where the big privacy cases came from (GoodRx,
  * BetterHelp, Cerebral), so the rules here are deliberately narrow:
@@ -97,7 +98,7 @@ export function AdPixel() {
     setReopened(fromLink);
     setOpen(c === null || fromLink);
     setReady(true);
-    // The footer's "Cookie Choices" link reopens this. Next's Link changes the
+    // The footer's "Your Privacy Choices" link reopens this. Next's Link changes the
     // hash with pushState (no hashchange event), so listen for the click.
     const onClick = (e: MouseEvent) => {
       if ((e.target as Element | null)?.closest?.(`a[href$="${CHOICES_HASH}"]`)) {
@@ -167,13 +168,15 @@ export function AdPixel() {
           </h2>
           {gpc.current ? (
             <p className="mt-1.5 max-w-[80ch] text-[13.5px] leading-relaxed text-ink/70">
-              Your browser sends a Global Privacy Control signal, so our advertising cookie stays off. There is nothing you need to do.
+              Your browser sends a Global Privacy Control signal, so our advertising and analytics tags stay off. There is nothing you need to do.
             </p>
           ) : (
             <p className="mt-1.5 max-w-[80ch] text-[13.5px] leading-relaxed text-ink/70">
-              With your OK, we use one advertising cookie from Meta on our marketing pages to measure our ads. It never runs
-              on your assessment, checkout or member portal, and we never share your health information. You can change this
-              any time under Cookie Choices in the footer.
+              We and our advertising and analytics partners use cookies and similar tracking technologies to collect data
+              about you and how you use our site, measure and personalize ads, and improve our services. This may include
+              sensitive health information, such as the treatment pages you view. By clicking &ldquo;I consent,&rdquo; you
+              agree that we may process this information for analytics and advertising. We never share your intake answers,
+              prescriptions or medical records.
             </p>
           )}
           <p className="mt-2 text-[13px] font-medium text-ink/80">
@@ -190,10 +193,10 @@ export function AdPixel() {
           ) : (
             <>
               <button type="button" onClick={() => decide('granted')} className={`${btn} bg-butter hover:bg-butter-deep`}>
-                Accept
+                I consent
               </button>
               <button type="button" onClick={() => decide('denied')} className={`${btn} bg-white ring-1 ring-inset ring-ink/25 hover:bg-milk`}>
-                Decline
+                I do not consent
               </button>
             </>
           )}

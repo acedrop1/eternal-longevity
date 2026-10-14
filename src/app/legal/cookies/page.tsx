@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = pageMeta(
   '/legal/cookies',
   'Cookie Notice',
-  'The cookies and browser storage this site uses, the third-party services that set their own at checkout, and the one optional advertising cookie we ask about first.',
+  'The cookies and browser storage this site uses, the third-party services that set their own at checkout, and the optional advertising and analytics technologies we ask about first.',
 );
 
 export default function CookiesPage() {
@@ -19,7 +19,7 @@ export default function CookiesPage() {
     <LegalLayout
       title="Cookie Notice"
       effective="October 2026"
-      lead={`We keep very little in your browser. Most of what we store is there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own. On our marketing pages we also ask whether we may use one advertising cookie, Meta's, to measure our ads. Nothing about it loads unless you say yes.`}
+      lead={`We keep very little in your browser. Most of what we store is there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own. On our marketing pages we also ask whether we and our advertising and analytics partners may use tracking technologies. None of them load unless you consent.`}
       sections={[
         {
           heading: `What We Set`,
@@ -59,35 +59,34 @@ export default function CookiesPage() {
           ],
         },
         {
-          heading: `Advertising Cookie (Optional)`,
+          heading: `Advertising and Analytics (Optional)`,
           paragraphs: [
-            `On our marketing pages (home, shop, treatment and product pages, About, FAQ, Compliance and Contact) we ask whether we may use the Meta Pixel, an advertising cookie from Meta Platforms. If you choose Accept, it lets us count visits from our ads and tell Meta when someone taps through to start an assessment, so we can measure and improve our advertising. If you choose Decline, or never choose, it does not load.`,
-            `Even with your consent, it is limited:`,
+            `On our marketing pages (home, shop, treatment and product pages, About, FAQ, Compliance and Contact) we ask for your consent before we or our advertising and analytics partners, such as Meta and Google, use cookies, pixels and similar tracking technologies. With your consent, they collect information about you and your visit, including the pages you view, links you click, your browser and device, and your IP address. This may include sensitive health information, such as the fact that you viewed a page about a particular treatment. We and our partners use it to measure and improve our advertising, personalize ads you see on other sites and apps, and improve our services. If you do not consent, these technologies do not load.`,
+            `Even with your consent, there are limits:`,
           ],
           bullets: [
-            `It never loads on your assessment, checkout, payment, sign-in or member portal pages. If it was loaded earlier in your visit, opening one of those pages reloads the page so no Meta code runs there.`,
-            `We never send Meta your health answers, your conditions, your prescriptions, what you ordered, or your name, email or phone number.`,
-            `Meta does receive the address of the marketing page you are on (which can include a product page) and standard browser details, as with any website pixel. Meta's own privacy policy governs what it does with them.`,
-            `We do not run Google Analytics, TikTok, or any other analytics or advertising tag.`,
+            `They never load on your assessment, checkout, payment, sign-in or member portal pages. If one was loaded earlier in your visit, opening one of those pages reloads the page so no partner code runs there.`,
+            `We never send partners your intake answers, prescriptions, medical records, or your name, email or phone number.`,
+            `Each partner's own privacy policy governs what it does with the information it collects.`,
           ],
         },
         {
           heading: `Your Choice`,
           paragraphs: [
-            `You can change your mind at any time with the "Cookie Choices" link in the footer of every page. If you withdraw consent, the pixel stops loading straight away. Your choice is saved in your browser's local storage (as el_ad_consent).`,
+            `You can change your mind at any time with the "Your Privacy Choices" link in the footer of every page. If you withdraw consent, these technologies stop loading straight away. Your choice is saved in your browser's local storage (as el_ad_consent).`,
             `The strictly necessary cookies and storage above cannot be switched off without breaking sign-in and checkout. Your browser can still block or clear them for any site, including this one.`,
           ],
         },
         {
           heading: `Global Privacy Control and Do Not Track`,
           paragraphs: [
-            `If your browser sends a Global Privacy Control signal, we treat it as Decline: the advertising cookie never loads and we do not ask. We do not track you across other sites ourselves.`,
+            `If your browser sends a Global Privacy Control signal, we treat it as a decline: our advertising and analytics technologies never load and we do not ask. We do not track you across other sites ourselves.`,
           ],
         },
         {
           heading: `If This Changes`,
           paragraphs: [
-            `If we add any other analytics or advertising tool, we will update this page first and ask for your consent before it loads. Health information will not be shared with advertising platforms in any case.`,
+            `If we add or change advertising or analytics partners, we will update this page. They will only ever load with your consent, and never on your assessment, checkout or member portal.`,
           ],
         },
         {
