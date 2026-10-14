@@ -163,7 +163,7 @@ function CategoryStrip({ glass, onPhoto }: { glass: string; onPhoto: boolean }) 
   // Categories with something listed, plus the one being viewed.
   const cats = useListedCategories().filter((c) => c.items.length || pathname === `/treatments/${c.slug}`);
   const items = [
-    { label: 'Shop all', href: '/shop', img: '/brand/family.jpg' },
+    { label: 'Shop all', href: '/shop', img: '/brand/hero-home-mobile.jpg' },
     ...cats.map((c) => ({ label: c.name, href: `/treatments/${c.slug}`, img: c.image })),
   ];
 

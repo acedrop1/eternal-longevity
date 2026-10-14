@@ -131,7 +131,7 @@ export async function HomeHero() {
             <h1 className="text-[50px] font-semibold leading-[0.92] tracking-[-0.05em] md:text-[96px]">
               Longevity,
               <br />
-              <span className="inline-block rounded-inner bg-white/20 px-3 pb-2 pt-0.5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/35 backdrop-blur-xl backdrop-saturate-150 md:rounded-shell md:px-4">
+              <span className="mt-3 inline-block rounded-inner bg-white/20 px-3 pb-2 pt-0.5 md:mt-5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-white/35 backdrop-blur-xl backdrop-saturate-150 md:rounded-shell md:px-4">
                 prescribed.
               </span>
             </h1>
