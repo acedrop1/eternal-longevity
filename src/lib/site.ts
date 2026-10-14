@@ -81,6 +81,19 @@ export const SUPPORT_HOURS = 'Mon–Fri, 9a–6p ET';
 export const GOOGLE_REVIEW_URL = '';
 
 /**
+ * Meta Pixel ("Eternal Longevity Pixel" in Business Suite → Datasets). Not a
+ * secret: it ships in page source. Loads only after consent, on marketing
+ * pages (components/analytics/AdPixel). Empty turns it off.
+ */
+export const META_PIXEL_ID = '946533478113851';
+
+/**
+ * Meta domain verification code (Business Suite → Brand safety → Domains →
+ * etlongevity.com → meta-tag). Empty leaves the tag out.
+ */
+export const META_DOMAIN_VERIFICATION = '';
+
+/**
  * Exactly what a member sees on their card statement — the descriptor set on
  * the Frame merchant account, verbatim. No per-charge suffix is attached, so
  * this page never promises a string that doesn't appear on a statement.

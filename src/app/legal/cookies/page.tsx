@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = pageMeta(
   '/legal/cookies',
   'Cookie Notice',
-  'The cookies and browser storage this site uses, the third-party services that set their own at checkout, and the tracking we deliberately do not do.',
+  'The cookies and browser storage this site uses, the third-party services that set their own at checkout, and the one optional advertising cookie we ask about first.',
 );
 
 export default function CookiesPage() {
@@ -19,7 +19,7 @@ export default function CookiesPage() {
     <LegalLayout
       title="Cookie Notice"
       effective="October 2026"
-      lead={`This is a short page because we keep very little in your browser. We run no analytics and no advertising pixels on this site. The few things we do store are there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own, described below.`}
+      lead={`We keep very little in your browser. Most of what we store is there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own. On our marketing pages we also ask whether we may use one advertising cookie, Meta's, to measure our ads. Nothing about it loads unless you say yes.`}
       sections={[
         {
           heading: `What We Set`,
@@ -59,28 +59,35 @@ export default function CookiesPage() {
           ],
         },
         {
-          heading: `What We Do Not Set`,
+          heading: `Advertising Cookie (Optional)`,
           paragraphs: [
-            `We do not run Google Analytics, a Meta pixel, TikTok, or any other advertising or analytics tag. We do not build advertising profiles, we do not run retargeting, and we never share health information — or the fact that you visited a particular product page — with an advertising network.`,
-            `This is worth stating plainly because the largest privacy enforcement actions in consumer telehealth have been about exactly that practice.`,
+            `On our marketing pages (home, shop, treatment and product pages, About, FAQ, Compliance and Contact) we ask whether we may use the Meta Pixel, an advertising cookie from Meta Platforms. If you choose Accept, it lets us count visits from our ads and tell Meta when someone taps through to start an assessment, so we can measure and improve our advertising. If you choose Decline, or never choose, it does not load.`,
+            `Even with your consent, it is limited:`,
+          ],
+          bullets: [
+            `It never loads on your assessment, checkout, payment, sign-in or member portal pages. If it was loaded earlier in your visit, opening one of those pages reloads the page so no Meta code runs there.`,
+            `We never send Meta your health answers, your conditions, your prescriptions, what you ordered, or your name, email or phone number.`,
+            `Meta does receive the address of the marketing page you are on (which can include a product page) and standard browser details, as with any website pixel. Meta's own privacy policy governs what it does with them.`,
+            `We do not run Google Analytics, TikTok, or any other analytics or advertising tag.`,
           ],
         },
         {
-          heading: `Managing Cookies`,
+          heading: `Your Choice`,
           paragraphs: [
-            `Because what we store is needed for the site to work, there is no consent banner — blocking it signs you out and breaks checkout. Your browser can block or clear cookies and site storage for any site, including this one, through its own settings.`,
+            `You can change your mind at any time with the "Cookie Choices" link in the footer of every page. If you withdraw consent, the pixel stops loading straight away. Your choice is saved in your browser's local storage (as el_ad_consent).`,
+            `The strictly necessary cookies and storage above cannot be switched off without breaking sign-in and checkout. Your browser can still block or clear them for any site, including this one.`,
           ],
         },
         {
-          heading: `Do Not Track`,
+          heading: `Global Privacy Control and Do Not Track`,
           paragraphs: [
-            `We do not track you across sites for analytics or advertising, so a Do Not Track signal has nothing to change about our behaviour.`,
+            `If your browser sends a Global Privacy Control signal, we treat it as Decline: the advertising cookie never loads and we do not ask. We do not track you across other sites ourselves.`,
           ],
         },
         {
           heading: `If This Changes`,
           paragraphs: [
-            `If we ever add analytics, we will update this page and put a consent banner in front of it before anything loads. Health information will not be shared with advertising platforms in any case.`,
+            `If we add any other analytics or advertising tool, we will update this page first and ask for your consent before it loads. Health information will not be shared with advertising platforms in any case.`,
           ],
         },
         {

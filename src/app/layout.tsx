@@ -3,6 +3,7 @@ import { Geist } from 'next/font/google';
 import {
   BUSINESS_ADDRESS,
   BUSINESS_LEGAL_NAME,
+  META_DOMAIN_VERIFICATION,
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_URL,
@@ -10,6 +11,7 @@ import {
   SUPPORT_PHONE,
 } from '@/lib/site';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
+import { AdPixel } from '@/components/analytics/AdPixel';
 import './globals.css';
 import { CatalogProvider } from '@/components/catalog/CatalogProvider';
 import { getLiveProducts, toShopProduct } from '@/lib/catalog';
@@ -85,6 +87,7 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },
+  ...(META_DOMAIN_VERIFICATION ? { other: { 'facebook-domain-verification': META_DOMAIN_VERIFICATION } } : {}),
   robots: {
     index: true,
     follow: true,
@@ -135,6 +138,7 @@ export default async function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD).replace(/</g, '\\u003c') }} />
         <SmoothScroll />
         <CatalogProvider products={products}>{children}</CatalogProvider>
+        <AdPixel />
       </body>
     </html>
   );

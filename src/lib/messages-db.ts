@@ -14,6 +14,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { getPrescriber } from '@/lib/prescriber';
+import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 import { shouldNotifyReply } from '@/lib/prescriber-view';
 
@@ -130,6 +131,10 @@ async function notifyStaffOfReply(userId: string, channel: MessageChannel): Prom
         },
       }),
     });
+    // Same nudge by text to the prescriber; no patient details (no BAA for SMS).
+    if (prescriber?.phone) {
+      await sendSms(prescriber.phone, `Eternal Longevity: a patient replied. ${SITE_URL}/portal/doctor/messages`);
+    }
   } catch {
     // The message is saved either way; the notice is best effort.
   }
@@ -233,7 +238,7 @@ export async function replyMessageAction(
   if (error) return { ok: false, error: error.message };
 
   // The member hears there is something to read; what it says stays in the portal.
-  const { data: member } = await db.from('profiles').select('email').eq('id', userId).maybeSingle();
+  const { data: member } = await db.from('profiles').select('email, phone').eq('id', userId).maybeSingle();
   if (member?.email) {
     try {
       await sendEmail({
@@ -249,6 +254,12 @@ export async function replyMessageAction(
     } catch {
       // The reply is saved either way.
     }
+  }
+  if (member?.phone) {
+    await sendSms(
+      member.phone,
+      `Eternal Longevity: you have a new message from your care team. Sign in to read it: ${SITE_URL}/portal/messages?thread=${channel}`,
+    );
   }
 
   revalidatePath('/portal/doctor/messages');

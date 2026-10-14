@@ -19,7 +19,7 @@ export default function PharmacyFulfillmentPage() {
     <LegalLayout
       title="Pharmacy Fulfillment"
       effective="September 2026"
-      lead={`You should be able to check who made your medication without taking our word for it. This page names the pharmacy, explains the rules it operates under, and tells you how to verify its licence in about a minute.`}
+      lead={`You should be able to check who made your medication without taking our word for it. This page explains who fills your prescription, where to find the pharmacy’s name (on your medication label), the rules it operates under, and how to verify its licence in about a minute.`}
       sections={[
         {
           heading: `Who Fills Your Prescription`,
