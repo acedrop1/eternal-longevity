@@ -39,7 +39,7 @@ import { captureLeadAction } from '@/lib/lead-actions';
 import { assessmentSignInAction } from '@/lib/auth-actions';
 import { saveAssessmentDraftAction } from '@/lib/assessment-drafts';
 import { LEAD_CONSENT } from '@/lib/followups';
-import { readAttribution, track } from '@/lib/attribution';
+import { readAttribution, readQuiz, track } from '@/lib/attribution';
 import { cn } from '@/lib/utils';
 import { loginHref } from '@/lib/safe-next';
 
@@ -521,7 +521,7 @@ export function IntakeWizard({
     // Files can't cross a server action; uploads are already stored by path.
     const payload: Answers = {
       ...Object.fromEntries(Object.entries(a).filter(([, v]) => !(v instanceof File))),
-      ...(mode === 'pre' ? { entryProductId: entryProduct, entryCategory: category, _attribution: readAttribution() } : {}),
+      ...(mode === 'pre' ? { entryProductId: entryProduct, entryCategory: category, _attribution: readAttribution(), _quiz: readQuiz() } : {}),
       ...(mode === 'visit' && product ? { requestedProduct: product.name, requestedProductId: product.id } : {}),
       ...(mode === 'visit' && visitProducts?.length ? { visitProductIds: visitProducts.map((p) => p.id) } : {}),
     };

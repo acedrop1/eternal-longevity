@@ -18,7 +18,8 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from './supabase/admin';
-import { passwordResetEmail, sendEmail } from './email';
+import { passwordResetEmail, sendEmail, signupWelcomeEmail } from './email';
+import { SIGNUP_CONSENT } from './followups';
 import { SITE_URL } from './site';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
 import {
@@ -207,6 +208,36 @@ export async function signupAction(formData: FormData): Promise<void> {
 
   if (!email.includes('@') || !passwordValid(password)) {
     redirect('/signup?error=invalid');
+  }
+
+  /*
+   * Made the same way as an account from the assessment: confirmed, signed in,
+   * and greeted with our own welcome email instead of Supabase's unbranded
+   * "confirm your email". The consent shown under the button is kept on the
+   * account; the signup reminders (recovery cron) rely on it.
+   */
+  if (supabaseAdminConfigured()) {
+    const admin = createSupabaseAdminClient();
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        ...(fullName ? { full_name: fullName } : {}),
+        reminders_consent: { at: new Date().toISOString(), version: SIGNUP_CONSENT.version, text: SIGNUP_CONSENT.text },
+      },
+    });
+    if (createErr || !created.user) redirect('/signup?error=taken');
+    if (fullName) await admin.from('profiles').update({ full_name: fullName }).eq('id', created.user.id);
+
+    const msg = signupWelcomeEmail({ firstName: fullName.split(/\s+/)[0] || undefined });
+    await sendEmail({ to: email, subject: msg.subject, html: msg.html }).catch(() => undefined);
+
+    const supabase = await createSupabaseServerClient();
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInErr) redirect('/login');
+    await stampNewSession();
+    redirect('/portal');
   }
 
   const supabase = await createSupabaseServerClient();

@@ -23,6 +23,7 @@ import {
   renewalFailedMemberEmail,
   renewalFailedTeamEmail,
   shippedEmail,
+  signupWelcomeEmail,
   unfinishedVisitEmail,
   visitCompleteEmail,
   welcomeEmail,
@@ -56,6 +57,9 @@ const notice = (subject: string, n: Parameters<typeof noticeEmail>[0]) => () => 
 
 export const EMAIL_TEMPLATES: TemplateEntry[] = [
   // --- Patient, in the order of their journey ---
+  { id: 'signup-welcome', audience: 'Patient', name: 'Welcome: your account is ready', when: 'Right after someone creates an account at /signup (not through the assessment).', build: () => signupWelcomeEmail({ firstName: 'Sam' }) },
+  { id: 'signup-1', audience: 'Patient', name: 'Start your assessment (1 of 2)', when: 'Made an account at /signup but never started the assessment: 1 day later.', build: () => followupEmail({ stage: 'signup', step: 0, firstName: 'Sam', url: `${SITE_URL}/start` }) },
+  { id: 'signup-2', audience: 'Patient', name: 'Start your assessment (2 of 2)', when: '3 days after signup, if still not started. Last one.', build: () => followupEmail({ stage: 'signup', step: 1, firstName: 'Sam', url: `${SITE_URL}/start` }) },
   { id: 'lead-1', audience: 'Patient', name: 'Finish your assessment (1 of 3)', when: 'Left their email in the assessment but made no account: about 1 hour, then 1 and 3 days later.', build: () => followupEmail({ stage: 'lead', step: 0, firstName: 'Sam', url: `${SITE_URL}/start` }) },
   { id: 'plan-1', audience: 'Patient', name: 'Your plan is ready (1 of 3)', when: 'Finished the assessment but didn’t check out: about 2 hours, then 1 and 3 days later.', build: () => followupEmail({ stage: 'plan', step: 0, firstName: 'Sam', url: `${SITE_URL}/checkout` }) },
   { id: 'cart', audience: 'Patient', name: 'Still thinking it over? (cart)', when: 'A returning member left something in their cart for a day (once).', build: () => abandonedCartEmail({ ...P, items: [{ name: 'Finasteride + Minoxidil', cadence: '12 month plan' }], cartUrl: `${SITE_URL}/checkout` }) },

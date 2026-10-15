@@ -666,6 +666,8 @@ export async function approveOrderAction(
 export async function denyOrderAction(
   orderNumber: string,
   note: string,
+  /** False: cancel quietly, so admin can write the member their own email. */
+  notify = true,
 ): Promise<ActionResult & { refunded?: boolean; refundError?: string; cancelByHand?: boolean }> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
@@ -701,7 +703,7 @@ export async function denyOrderAction(
     'Our team cancelled this order.',
   );
 
-  if (order?.member_email) {
+  if (notify && order?.member_email) {
     const msg = orderCancelledByTeamEmail({
       firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
       orderNumber,

@@ -8,6 +8,7 @@ import { loadMarketing } from '@/lib/marketing-data';
 import { NOTE_STEP, RECOMMEND_STEP, STEPS } from '@/lib/intakeSchema';
 import { PRODUCT_CATEGORY, buildCategorySteps } from '@/lib/intake-categories';
 import { SITE_URL } from '@/lib/site';
+import { CATEGORIES } from '@/lib/lineup';
 import { MarketingView } from './MarketingView';
 
 export const metadata: Metadata = { title: 'Marketing' };
@@ -62,6 +63,7 @@ export default async function MarketingPage({
         before={before.totals}
         stepLabels={stepLabels}
         siteUrl={SITE_URL}
+        pages={[...new Set(['/', '/hair', '/shop', '/start', ...CATEGORIES.map((c) => `/treatments/${c.slug}`), ...now.byPage.map((r) => r.path)])]}
       />
     </PortalShell>
   );

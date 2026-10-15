@@ -906,6 +906,32 @@ export type Database = {
         Update: { sent_at?: string };
         Relationships: [];
       };
+      // Migration 0031.
+      message_log: {
+        Row: {
+          id: number;
+          channel: 'email' | 'sms';
+          recipient: string;
+          subject: string | null;
+          body: string | null;
+          status: 'sent' | 'failed';
+          error: string | null;
+          provider_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          channel: 'email' | 'sms';
+          recipient: string;
+          subject?: string | null;
+          body?: string | null;
+          status: 'sent' | 'failed';
+          error?: string | null;
+          provider_id?: string | null;
+          created_at?: string;
+        };
+        Update: { status?: 'sent' | 'failed' };
+        Relationships: [];
+      };
       // Migration 0016.
       waitlist: {
         Row: { id: string; email: string; source: string; created_at: string };

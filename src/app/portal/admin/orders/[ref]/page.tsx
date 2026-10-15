@@ -11,6 +11,8 @@ import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 import type { Order } from '@/lib/orders';
 import { economicsForOrder } from '@/lib/profit-data';
 import type { Economics } from '@/lib/profit';
+import { MessageLog } from '@/components/admin/MessageLog';
+import { messagesTo } from '@/lib/message-log';
 
 export async function generateMetadata({ params }: { params: Promise<{ ref: string }> }): Promise<Metadata> {
   const ref = decodeURIComponent((await params).ref);
@@ -62,10 +64,15 @@ export default async function OrderPage({ params }: { params: Promise<{ ref: str
   // Profit is admin-only: worked out here, on the server, and never for the prescriber.
   const orderNumber = order?.id ?? board?.orderNumber;
   const profit: Economics | null = admin && orderNumber ? await economicsForOrder(orderNumber).catch(() => null) : null;
+  // Admin only: everything sent to this customer from a minute before the order on.
+  const messages = admin && order ? await messagesTo([order.memberEmail], new Date(order.placedAt - 60_000).toISOString()) : null;
 
   return (
     <PortalShell user={user} nav={admin ? ADMIN_NAV : DOCTOR_NAV}>
-      <OrderDetail board={board} order={order ?? undefined} extras={extras} admin={admin} profit={profit} />
+      <div className="space-y-5">
+        <OrderDetail board={board} order={order ?? undefined} extras={extras} admin={admin} profit={profit} />
+        {messages && <MessageLog messages={messages} description="Everything we emailed or texted this customer since this order was placed. Links are removed." />}
+      </div>
     </PortalShell>
   );
 }

@@ -124,7 +124,7 @@ const PRIMARY: Category[] = [
       { slug: 'brightening', name: 'Brightening cream', what: 'Even-looking tone: hydroquinone 4% + vitamin C', form: 'cream', live: 'brightening', image: '/brand/products/brightening.jpg' },
       { slug: 'even-tone-cream', name: 'Even tone cream', what: 'Hydroquinone 8% formula', form: 'cream', live: 'even-tone-cream', image: '/brand/products/even-tone-cream.jpg' },
       { slug: 'hq-free', name: 'Hydroquinone-free brightening', what: 'Kojic acid + vitamin C + hyaluronic acid', form: 'cream', live: 'hq-free', badge: 'New', image: '/brand/products/hq-free.jpg' },
-      { slug: 'clear-skin-capsules', name: 'Clear skin capsules', what: 'Doxycycline 50 mg, prescribed off-label', form: 'capsule', live: 'clear-skin-capsules', image: '/brand/products/clear-skin-capsules.jpg' },
+      { slug: 'clear-skin-capsules', name: 'Oral Acne Rx', what: 'Doxycycline 50 mg, prescribed off-label', form: 'capsule', live: 'clear-skin-capsules', image: '/brand/products/clear-skin-capsules.jpg' },
     ],
     also: ['spironolactone'],
   },

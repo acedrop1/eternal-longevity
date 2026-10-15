@@ -67,6 +67,7 @@ export function CancelOrder({
   const router = useRouter();
   const [open, setOpen] = useState(startOpen);
   const [reason, setReason] = useState('');
+  const [notify, setNotify] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // What the cancel left for a person to do (refund failed, cancel in the pharmacy portal).
@@ -112,8 +113,8 @@ export function CancelOrder({
         Why are you cancelling?
       </div>
       <p className="mb-3 text-xs leading-relaxed text-ink/65">
-        The member is emailed this sentence and anything charged is refunded
-        in full. It is not recorded as a clinical decision.
+        Anything charged is refunded in full. It is not recorded as a
+        clinical decision.
       </p>
       <textarea
         aria-label="Reason for cancelling"
@@ -126,6 +127,13 @@ export function CancelOrder({
         placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
         className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-red-500/40"
       />
+      <label className="mt-3 flex items-start gap-2 text-[14px] text-ink/80">
+        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-1 accent-red-700" />
+        <span>
+          Email the member that we cancelled it, with this reason.
+          <span className="block text-[13px] text-ink/60">Untick to cancel quietly and write them yourself from their member record.</span>
+        </span>
+      </label>
       {error && (
         <p className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-sm text-red-700">
           {error}
@@ -140,7 +148,7 @@ export function CancelOrder({
             setBusy(true);
             setError(null);
             try {
-              const res = await denyOrderAction(order.id, reason.trim());
+              const res = await denyOrderAction(order.id, reason.trim(), notify);
               if (res.ok) {
                 setOpen(false);
                 setReason('');

@@ -13,6 +13,7 @@ import { BUSINESS_ADDRESS, BUSINESS_LEGAL_NAME, SITE_URL } from '@/lib/site';
 import { orderRef } from '@/lib/format';
 import { trackingUrl } from '@/lib/orders';
 import type { Stage } from '@/lib/followups';
+import { logMessage } from '@/lib/message-log';
 
 let cached: Resend | null = null;
 
@@ -67,13 +68,13 @@ export async function sendEmail(
       replyTo: input.replyTo ?? SUPPORT_EMAIL,
       headers: input.headers,
     });
-    if (error) return { ok: false, error: error.message };
-    return { ok: true, id: data?.id };
+    const res: SendEmailResult = error ? { ok: false, error: error.message } : { ok: true, id: data?.id };
+    await logMessage({ channel: 'email', to: input.to, subject: input.subject, body: input.html, ok: res.ok, error: res.error, providerId: res.id });
+    return res;
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : 'unknown error',
-    };
+    const msg = err instanceof Error ? err.message : 'unknown error';
+    await logMessage({ channel: 'email', to: input.to, subject: input.subject, body: input.html, ok: false, error: msg });
+    return { ok: false, error: msg };
   }
 }
 
@@ -1233,6 +1234,22 @@ export function checkinFollowUpInternalEmail(input: {
 
 const NOTHING_CHARGED = 'Nothing is charged unless your physician approves.';
 
+/** Sent once when someone makes an account at /signup, before any assessment. Transactional. */
+export function signupWelcomeEmail(input: { firstName?: string }): { subject: string; html: string } {
+  const hi = input.firstName ? `Hi ${input.firstName},` : 'Hi there,';
+  return {
+    subject: 'Welcome to Eternal Longevity',
+    html: noticeEmail({
+      eyebrow: 'Welcome',
+      heading: 'Your account is ready.',
+      body: `${hi} next is a short assessment: a few minutes of questions about your health and goals. A licensed physician reviews it and decides whether treatment is right for you.`,
+      next: NOTHING_CHARGED,
+      cta: { label: 'Start your assessment', href: `${SITE_URL}/start` },
+      preheader: 'Your account is ready. Start your assessment in a few minutes.',
+    }),
+  };
+}
+
 /**
  * Every follow-up step, one template. Subjects and bodies never name a
  * product or a condition — an inbox is not always only its owner's to read —
@@ -1289,6 +1306,35 @@ export function followupEmail(input: {
           eyebrow: 'Last reminder',
           heading: 'Your assessment is still waiting.',
           body: `${hi} whenever you’re ready, you can finish in a few minutes. This is the last reminder we’ll send about it.`,
+          next: NOTHING_CHARGED,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+    ];
+    return steps[Math.min(step, steps.length - 1)];
+  }
+
+  if (input.stage === 'signup') {
+    const cta = { label: 'Start your assessment', href: input.url };
+    const steps = [
+      {
+        subject: 'Your assessment takes a few minutes',
+        html: noticeEmail({
+          eyebrow: 'Your account',
+          heading: 'Ready when you are.',
+          body: `${hi} your account is set up. The next step is a short assessment, and a licensed physician reviews it once you finish.`,
+          next: NOTHING_CHARGED,
+          cta,
+          unsubscribeUrl: u,
+        }),
+      },
+      {
+        subject: 'Still thinking it over?',
+        html: noticeEmail({
+          eyebrow: 'Last reminder',
+          heading: 'Your account is still waiting.',
+          body: `${hi} whenever you’re ready, the assessment takes a few minutes. This is the last reminder we’ll send about it.`,
           next: NOTHING_CHARGED,
           cta,
           unsubscribeUrl: u,

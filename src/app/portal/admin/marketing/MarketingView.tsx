@@ -26,6 +26,8 @@ interface Props {
   before: MarketingTotals;
   stepLabels: Record<string, string>;
   siteUrl: string;
+  /** Suggestions for the link builder: landing pages, category pages, and any page that got visits. */
+  pages: string[];
 }
 
 const money = (cents: number) => (cents < 0 ? `−${formatMoney(-cents)}` : formatMoney(cents));
@@ -33,7 +35,6 @@ const rate = (num: number, den: number) => (den > 0 ? `${((num / den) * 100).toF
 const int = (n: number) => n.toLocaleString('en-US');
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const BLUE = '#2a78d6';
-const HAIR_GOAL: Record<string, string> = { stop: 'Stop hair loss', regrow: 'Regrow hair', both: 'Both' };
 
 /** Ready-made link tags: the source names the reports group by. */
 const LINK_PRESETS = [
@@ -44,7 +45,41 @@ const LINK_PRESETS = [
   { label: 'Influencer / partner', source: 'partner', medium: 'referral', campaign: '' },
   { label: 'Custom', source: '', medium: '', campaign: '' },
 ];
-const DESTINATIONS = ['/', '/hair', '/treatments/hair', '/shop', '/start'];
+
+/** Label | Finished | Paid | Conv. | Net sales: shared by the category and quiz tables. */
+function MoneyTable({ first, rows, empty }: { first: string; empty: string; rows: { key: string; label: string; completes: number; orders: number; revenue: number }[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[520px] text-[14px] tabular-nums">
+        <thead>
+          <tr className="bg-milk text-left text-[13px] text-ink/70">
+            <th className="px-4 py-2 font-semibold">{first}</th>
+            <th className="px-4 py-2 text-right font-semibold">Finished</th>
+            <th className="px-4 py-2 text-right font-semibold">Paid orders</th>
+            <th className="px-4 py-2 text-right font-semibold">Paid / finished</th>
+            <th className="px-4 py-2 text-right font-semibold">Net sales</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 && empty && (
+            <tr>
+              <td colSpan={5} className="border-t border-ink/10 px-4 py-6 text-center text-ink/65">{empty}</td>
+            </tr>
+          )}
+          {rows.map((r) => (
+            <tr key={r.key}>
+              <td className={plainTd}>{r.label}</td>
+              <td className={cn(plainTd, 'text-right')}>{int(r.completes)}</td>
+              <td className={cn(plainTd, 'text-right')}>{int(r.orders)}</td>
+              <td className={cn(plainTd, 'text-right')}>{rate(r.orders, r.completes)}</td>
+              <td className={cn(plainTd, 'text-right')}>{money(r.revenue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function MarketingView(p: Props) {
   const router = useRouter();
@@ -255,38 +290,43 @@ export function MarketingView(p: Props) {
         </SectionCard>
       </div>
 
-      {/* Hair path: /hair's first question, carried into the hair assessment. */}
-      <SectionCard title="Hair assessments by goal" description="People who answered “What are your hair goals?” on the /hair page: finished assessments and paid orders." flush>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-[14px] tabular-nums">
-            <thead>
-              <tr className="bg-milk text-left text-[13px] text-ink/70">
-                <th className="px-4 py-2 font-semibold">Answer</th>
-                <th className="px-4 py-2 text-right font-semibold">Finished</th>
-                <th className="px-4 py-2 text-right font-semibold">Paid orders</th>
-                <th className="px-4 py-2 text-right font-semibold">Net sales</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.data.hairPath.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="border-t border-ink/10 px-4 py-6 text-center text-ink/65">No hair assessments in this range.</td>
-                </tr>
-              )}
-              {p.data.hairPath.map((r) => (
-                <tr key={r.answer}>
-                  <td className={plainTd}>{HAIR_GOAL[r.answer] ?? r.answer}</td>
-                  <td className={cn(plainTd, 'text-right')}>{int(r.completes)}</td>
-                  <td className={cn(plainTd, 'text-right')}>{int(r.orders)}</td>
-                  <td className={cn(plainTd, 'text-right')}>{money(r.revenue)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Every category and every landing-page quiz, whatever we add next: nothing here is per-product code. */}
+      <SectionCard title="Sales by category" description="Finished assessments by the category they started in; paid orders by what was bought." flush>
+        <MoneyTable
+          first="Category"
+          empty="No assessments or orders in this range."
+          rows={p.data.byCategory.map((r) => ({ key: r.category, label: r.category, completes: r.completes, orders: r.orders, revenue: r.revenue }))}
+        />
       </SectionCard>
 
-      <LinkBuilder siteUrl={p.siteUrl} />
+      <SectionCard
+        title="Landing page quiz answers"
+        description="What people picked in a landing page’s quick questions (e.g. /hair), and how many went on to finish and pay. Any new landing page with a quiz shows up here on its own."
+        flush
+      >
+        {p.data.quiz.length === 0 ? (
+          <p className="px-4 py-6 text-center text-[14px] text-ink/65">No quiz answers in this range.</p>
+        ) : (
+          [...new Set(p.data.quiz.map((r) => `${r.page}\u0000${r.question}`))].map((k) => {
+            const [page, question] = k.split('\u0000');
+            const rows = p.data.quiz.filter((r) => r.page === page && r.question === question);
+            return (
+              <div key={k} className="border-t border-ink/10 first:border-t-0">
+                <p className="px-4 pt-3 text-[13px] text-ink/60">
+                  <span className="font-semibold text-ink">{page}</span> · {question}
+                </p>
+                <MoneyTable
+                  first="Answer"
+                  empty=""
+                  rows={rows.map((r) => ({ key: r.answer, label: r.answer, completes: r.completes, orders: r.orders, revenue: r.revenue }))}
+                />
+              </div>
+            );
+          })
+        )}
+      </SectionCard>
+
+      <LinkBuilder siteUrl={p.siteUrl} pages={p.pages} />
 
       <SectionCard title="How tracking works">
         <dl className="grid gap-x-8 gap-y-3 text-[14px] leading-relaxed md:grid-cols-2">
@@ -372,7 +412,7 @@ function DayBars({ days }: { days: MarketingData['byDay'] }) {
   );
 }
 
-function LinkBuilder({ siteUrl }: { siteUrl: string }) {
+function LinkBuilder({ siteUrl, pages }: { siteUrl: string; pages: string[] }) {
   const [preset, setPreset] = useState(0);
   const [dest, setDest] = useState('/');
   const [source, setSource] = useState(LINK_PRESETS[0].source);
@@ -384,7 +424,9 @@ function LinkBuilder({ siteUrl }: { siteUrl: string }) {
   if (slug(source)) q.set('utm_source', slug(source));
   if (slug(medium)) q.set('utm_medium', slug(medium));
   if (slug(campaign)) q.set('utm_campaign', slug(campaign));
-  const url = `${siteUrl.replace(/\/$/, '')}${dest}${q.toString() ? `?${q}` : ''}`;
+  // Whatever was typed or pasted, as a path on our site.
+  const path = `/${dest.trim().replace(/^https?:\/\/[^/]+/, '').replace(/^\/+/, '').split(/[?#]/)[0]}`;
+  const url = `${siteUrl.replace(/\/$/, '')}${path}${q.toString() ? `?${q}` : ''}`;
   return (
     <SectionCard
       title="Link builder"
@@ -413,13 +455,19 @@ function LinkBuilder({ siteUrl }: { siteUrl: string }) {
         </label>
         <label>
           <span className={fieldLabel}>Page</span>
-          <select className={fieldInput} value={dest} onChange={(e) => setDest(e.target.value)}>
-            {DESTINATIONS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
+          {/* Pick one, or type any page: a new landing page needs no change here. */}
+          <input
+            className={fieldInput}
+            list="link-pages"
+            value={dest}
+            onChange={(e) => setDest(e.target.value)}
+            placeholder="/hair"
+          />
+          <datalist id="link-pages">
+            {pages.map((d) => (
+              <option key={d} value={d} />
             ))}
-          </select>
+          </datalist>
         </label>
         <label>
           <span className={fieldLabel}>Source</span>

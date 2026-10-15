@@ -2,11 +2,12 @@
  * Who is due which follow-up email. Pure: no I/O, no server imports, so the
  * recovery cron and a plain assertion script share the same rules.
  *
- * Four sequences, each a handful of steps timed from an anchor:
+ * Five sequences, each a handful of steps timed from an anchor:
  *   lead   — email given, no account yet            (marketing)
  *   plan   — assessment done, no order placed       (marketing)
  *   photos — order placed, hair/skin photos missing (transactional)
  *   pay    — approved, card failed, pay link open   (transactional)
+ *   signup — account made at /signup, no assessment  (marketing)
  *
  * The cron runs once a day, so a step goes out on the first run at least N
  * hours after the anchor. Only the latest step whose time has come is sent
@@ -14,21 +15,22 @@
  * first), and nobody gets more than one follow-up in any 20-hour window.
  */
 
-export type Stage = 'pay' | 'photos' | 'plan' | 'lead';
+export type Stage = 'pay' | 'photos' | 'plan' | 'lead' | 'signup';
 
 /** Hours after the anchor at which each step becomes due. */
 export const STEP_HOURS: Record<Stage, readonly number[]> = {
   lead: [1, 24, 72],
+  signup: [24, 72],
   plan: [2, 24, 72],
   photos: [2, 24, 72],
   pay: [24, 72],
 };
 
 /** Stages that need consent and honour unsubscribe. */
-export const MARKETING: readonly Stage[] = ['lead', 'plan'];
+export const MARKETING: readonly Stage[] = ['lead', 'plan', 'signup'];
 
 /** Most urgent first: when one person is due two, this one wins the day. */
-const PRIORITY: readonly Stage[] = ['pay', 'photos', 'plan', 'lead'];
+const PRIORITY: readonly Stage[] = ['pay', 'photos', 'plan', 'lead', 'signup'];
 
 /** Older than this and the sequence is over, sent or not. */
 export const MAX_AGE_HOURS = 14 * 24;
@@ -40,6 +42,12 @@ export const GAP_HOURS = 20;
 export const LEAD_CONSENT = {
   version: 'v1',
   text: 'We’ll email you about your assessment. You can unsubscribe anytime.',
+} as const;
+
+/** What /signup shows under the button. Stored verbatim in the account's metadata. */
+export const SIGNUP_CONSENT = {
+  version: 'v1',
+  text: 'We’ll email you about your account and assessment. You can unsubscribe anytime.',
 } as const;
 
 export interface Candidate {

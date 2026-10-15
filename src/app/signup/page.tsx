@@ -12,6 +12,7 @@ import {
 import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
+import { SIGNUP_CONSENT } from '@/lib/followups';
 
 export const metadata: Metadata = {
   ...pageMeta('/signup', 'Create account', 'Create your Eternal Longevity account to start an assessment and track your care.'),
@@ -124,6 +125,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <SubmitButton pendingLabel="Creating your account…">
           Create account →
         </SubmitButton>
+
+        <p className="-mt-3 text-center text-[13px] text-ink/65">{SIGNUP_CONSENT.text}</p>
 
         <p className="text-[13px] leading-relaxed text-ink/65">
           Creating an account doesn&apos;t place an order. Every protocol is

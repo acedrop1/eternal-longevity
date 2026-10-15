@@ -108,3 +108,51 @@ export function track(kind: SiteEventKind, extra: { step?: string; path?: string
     }
   } catch {}
 }
+
+/**
+ * A landing page's quick quiz (e.g. /hair's three questions), as the visitor
+ * answered it: page plus question → answer, in plain words. Any landing page
+ * calls saveQuiz before opening the assessment; the assessment sends it with
+ * the intake (answers._quiz) and Admin → Marketing breaks sales down by it.
+ */
+export interface QuizAnswers {
+  page: string;
+  answers: Record<string, string>;
+}
+
+const QUIZ_KEY = 'el_quiz';
+const text = (v: unknown, n: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, n) : '');
+
+/** A safe copy, or null: up to 8 questions, short plain text. */
+export function cleanQuiz(x: unknown): QuizAnswers | null {
+  if (!x || typeof x !== 'object') return null;
+  const q = x as Record<string, unknown>;
+  const page = clip(q.page, 120);
+  const answers: Record<string, string> = {};
+  if (q.answers && typeof q.answers === 'object') {
+    for (const [k, v] of Object.entries(q.answers as Record<string, unknown>).slice(0, 8)) {
+      const key = text(k, 120);
+      const val = text(v, 80);
+      if (key && val) answers[key] = val;
+    }
+  }
+  return page && Object.keys(answers).length ? { page, answers } : null;
+}
+
+/** Browser: remember this quiz for the assessment that follows. */
+export function saveQuiz(quiz: QuizAnswers): void {
+  try {
+    localStorage.setItem(QUIZ_KEY, JSON.stringify({ ...quiz, at: Date.now() }));
+  } catch {}
+}
+
+/** Browser: the last quiz answered here in the past 30 days, or null. */
+export function readQuiz(): QuizAnswers | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(QUIZ_KEY) ?? 'null');
+    if (!raw || Date.now() - Number(raw.at) > DAYS_30) return null;
+    return cleanQuiz(raw);
+  } catch {
+    return null;
+  }
+}

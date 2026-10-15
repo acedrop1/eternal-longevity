@@ -27,6 +27,7 @@ import { TOKEN_TTL_DAYS } from '@/lib/pay-on-approval';
  *   photos — order placed, hair/skin photos still missing
  *   plan   — assessment done, no order placed
  *   lead   — email given at the assessment, no account yet
+ *   signup — account made at /signup, assessment never started
  * then the two older one-shot nudges:
  *   visit  — signup done, medical questions never answered (legacy flow)
  *   cart   — a returning member left a cart (first-timers are the plan stage)
@@ -209,6 +210,57 @@ async function planCandidates(
   return { list, owned };
 }
 
+/**
+ * Accounts made at /signup that never started an assessment: two reminders,
+ * a day and three days in. Only accounts that carry the consent /signup records
+ * (an assessment account always has an intake, so it never gets here).
+ */
+async function signupCandidates(db: Db, since: string): Promise<Followup[]> {
+  const { data: profiles } = await db
+    .from('profiles')
+    .select('id, email, full_name, account_status, notification_prefs, unsubscribe_token, created_at')
+    .eq('role', 'member')
+    .gt('created_at', since)
+    .limit(MAX_PER_RUN);
+  if (!profiles?.length) return [];
+  const { data: intakes } = await db
+    .from('intake_submissions')
+    .select('user_id')
+    .in('user_id', profiles.map((p) => p.id));
+  const started = new Set((intakes ?? []).map((i) => i.user_id));
+  const emails = profiles.map((p) => (p.email ?? '').toLowerCase()).filter(Boolean);
+  const { data: optedOut } = emails.length
+    ? await db.from('leads').select('email').in('email', emails).not('unsubscribed_at', 'is', null)
+    : { data: [] };
+  const leadUnsub = new Set((optedOut ?? []).map((l) => l.email));
+
+  const list: Followup[] = [];
+  for (const p of profiles) {
+    if (!p.email) continue;
+    const movedOn = started.has(p.id);
+    // ponytail: one auth lookup per not-yet-started account; fine at signup volume, a profiles column if it grows.
+    const consented = movedOn
+      ? false
+      : Boolean((await db.auth.admin.getUserById(p.id)).data.user?.user_metadata?.reminders_consent);
+    if (!movedOn && !consented) continue;
+    const prefs = (p.notification_prefs ?? {}) as Record<string, unknown>;
+    list.push({
+      stage: 'signup',
+      ref: p.id,
+      email: p.email,
+      anchor: p.created_at,
+      lastStep: -1,
+      movedOn,
+      suspended: p.account_status !== 'active',
+      unsubscribed: prefs.reminders === false || leadUnsub.has(p.email.toLowerCase()) || !p.unsubscribe_token,
+      firstName: firstNameOf(p.full_name, ''),
+      url: `${SITE_URL}/start`,
+      unsubscribeUrl: unsubscribeUrl(p.unsubscribe_token),
+    });
+  }
+  return list;
+}
+
 /** The earliest open order per member, while its hair/skin photos are missing. */
 async function photoCandidates(db: Db, since: string): Promise<Followup[]> {
   const { data: orders } = await db
@@ -312,14 +364,15 @@ async function runFollowups(
 ): Promise<{ sent: Record<string, number>; skipped: number; planOwned: Set<string> }> {
   const since = new Date(now - MAX_AGE_HOURS * HOUR).toISOString();
   const nowIso = new Date(now).toISOString();
-  const [pay, photos, plan, lead] = await Promise.all([
+  const [pay, photos, plan, lead, signup] = await Promise.all([
     payCandidates(db, nowIso),
     photoCandidates(db, since),
     planCandidates(db, since),
     leadCandidates(db, since, nowIso),
+    signupCandidates(db, since),
   ]);
-  const all = [...pay, ...photos, ...plan.list, ...lead];
-  const sent: Record<string, number> = { pay: 0, photos: 0, plan: 0, lead: 0 };
+  const all = [...pay, ...photos, ...plan.list, ...lead, ...signup];
+  const sent: Record<string, number> = { pay: 0, photos: 0, plan: 0, lead: 0, signup: 0 };
   let skipped = 0;
   if (!all.length) return { sent, skipped, planOwned: plan.owned };
   await withLastSteps(db, all);

@@ -1884,7 +1884,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   },
   {
     id: 'clear-skin-capsules',
-    name: 'Clear Skin Capsules',
+    name: 'Oral Acne Rx',
     tagline: 'Doxycycline 50 mg',
     category: 'skin-hair',
     shortDescription:

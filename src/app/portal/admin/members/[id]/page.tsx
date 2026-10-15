@@ -24,6 +24,8 @@ import { STATUS_LABEL, type OrderStatus } from '@/lib/orders';
 import { reviewForMember, type PatientReview } from '@/lib/clinical-review';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { CategoryAnswers } from '@/components/doctor/CategoryAnswers';
+import { MessageLog } from '@/components/admin/MessageLog';
+import { messagesTo } from '@/lib/message-log';
 
 export const metadata: Metadata = {
   title: 'Member record',
@@ -308,6 +310,7 @@ export default async function MemberDetailPage({ params }: PageProps) {
   const { id } = await params;
   const detail = await loadDetail(id);
   if (!detail) notFound();
+  const messages = await messagesTo([detail.email, detail.phone]);
 
   const sample = !supabaseAdminConfigured() && process.env.NODE_ENV === 'development';
   const spent = detail.orders.reduce((n, o) => n + o.total, 0);
@@ -454,6 +457,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                 </ol>
               )}
             </SectionCard>
+
+            <MessageLog messages={messages} description="Everything we emailed or texted this member, with what it said. Links are removed." />
 
             <div id="email-member" className="scroll-mt-24">
               <SectionCard title="Send an email">

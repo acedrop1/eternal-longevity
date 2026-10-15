@@ -509,38 +509,53 @@ export function HowItWorks({ href = '/start' }: { href?: string }) {
 /*  Physician                                                                  */
 /* -------------------------------------------------------------------------- */
 
+/** What Dr. Elder reviews: the site's own categories, not claimed specialties. */
+const PHYSICIAN_TAGS = ['Hair & skin', 'Sexual health', 'Hormones', 'Longevity'];
+
 export function PhysicianCard() {
   return (
     <section className="bg-white px-3 py-16 md:px-5 md:py-24">
-      <div className="mx-auto grid gap-3 md:grid-cols-[5fr_7fr] md:gap-5">
-        {/* Dr. Elder cut out of his studio backdrop and set on the brand's own surface (milk + butter/peach/lilac
-            glows), whole and never cropped, fading into the tile at the waist. */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-shell bg-milk md:aspect-auto md:min-h-[640px]">
-          <Aura mix="sunrise" />
-          <Image
-            src="/brand/dr-elder-cutout.webp"
-            alt="Dr. Bader Elder, DO"
-            fill
-            sizes="(max-width: 768px) 100vw, 42vw"
-            className="object-contain object-bottom pt-6 [mask-image:linear-gradient(to_bottom,#000_78%,transparent)]"
-          />
-          <div className={cn('absolute bottom-4 left-4 w-fit rounded-inner px-4 py-3', GLASS)}>
-            <p className="text-[18px] font-semibold tracking-[-0.02em] text-ink">Dr. Bader Elder, DO</p>
-            <p className="mt-0.5 text-[13px] text-ink-soft">Licensed in {SERVICE_AREA_SHORT}</p>
+      <div className="mx-auto grid max-w-[1180px] items-center gap-10 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-16">
+        {/* Hims-style doctor card: warm sand panel, photo left, role and focus areas right; name and bio below. */}
+        <div>
+          <div className="relative grid aspect-[16/10] grid-cols-[46%_1fr] overflow-hidden rounded-[22px] bg-[radial-gradient(120%_90%_at_100%_0%,#F7F3EF_0%,transparent_60%),linear-gradient(180deg,#EFE9E3_0%,#E6DCD2_100%)]">
+            <div className="relative">
+              <Image
+                src="/brand/dr-elder-cutout.webp"
+                alt="Dr. Bader Elder, DO"
+                fill
+                sizes="(max-width: 768px) 46vw, 240px"
+                className="object-cover object-[50%_6%] pt-4"
+              />
+            </div>
+            <div className="flex flex-col justify-center pr-5 md:pr-7">
+              <p className="text-[15px] font-semibold leading-snug tracking-[-0.01em] text-ink md:text-[17px]">
+                Prescriber of record, Eternal Longevity
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {PHYSICIAN_TAGS.map((t) => (
+                  <li key={t} className="border-l-2 border-[#C9705F] pl-2 text-[12px] leading-tight text-ink-soft md:text-[13px]">
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+          <p className="mt-4 text-[17px] font-semibold tracking-[-0.01em] text-ink">Dr. Bader Elder, DO</p>
+          <p className="mt-1.5 max-w-[460px] text-[14px] leading-relaxed text-ink-soft">
+            Licensed in {SERVICE_AREA_SHORT}. Dr. Elder reviews every assessment himself and decides whether treatment is right for you.
+          </p>
         </div>
-        <div className="relative flex flex-col justify-between gap-10 overflow-hidden rounded-shell bg-milk p-6 md:p-12">
-          <Aura mix="bloom" className="opacity-80" />
-          <div className="relative">
-            <Sticker>Our physician</Sticker>
-            <p className="mt-8 text-[32px] font-semibold leading-[1.04] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[52px]">
-              Every prescription is decided by a <Swipe>physician</Swipe>, not a bot.
-            </p>
-            <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-ink-soft">
-              If a treatment isn&apos;t right for you, you&apos;re never charged. Questions go straight to your prescriber through the portal.
-            </p>
-          </div>
-          <Link href="/about" className={cn('group relative flex w-fit items-center gap-2 rounded-full py-1.5 pl-4 pr-1.5 text-[14px] font-medium text-ink', GLASS)}>
+
+        <div>
+          <Sticker>Our physician</Sticker>
+          <p className="mt-6 text-[32px] font-semibold leading-[1.04] tracking-[-0.045em] text-ink [text-wrap:balance] md:text-[48px]">
+            Every prescription is decided by a <Swipe>physician</Swipe>, not a bot.
+          </p>
+          <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-ink-soft">
+            If a treatment isn&apos;t right for you, you&apos;re never charged. Questions go straight to your prescriber through the portal.
+          </p>
+          <Link href="/about" className="group mt-8 flex w-fit items-center gap-2 rounded-full bg-milk py-1.5 pl-4 pr-1.5 text-[14px] font-medium text-ink">
             About us
             <ArrowDot className="h-7 w-7 bg-white" />
           </Link>

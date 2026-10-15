@@ -68,7 +68,7 @@ import { intakeStateFor, latestIntakeAnswers } from './intake-status';
 import { assessmentInput, visitInput } from './intake-input';
 import { loginHref } from './safe-next';
 import { sendSms } from '@/lib/sms';
-import { cleanAttribution } from '@/lib/attribution';
+import { cleanAttribution, cleanQuiz } from '@/lib/attribution';
 
 /**
  * Is there already an account on this address?
@@ -77,13 +77,17 @@ import { cleanAttribution } from '@/lib/attribution';
  * before filling in a health history they would only lose. Returns false on any
  * failure — this is a convenience, and the submit path holds the real guard.
  */
-/** Where they came from (Admin → Marketing): the link, cleaned, and /hair's quiz answer. Dropped if not usable. */
+/** Where they came from (Admin → Marketing): the link and any landing-page quiz, cleaned. Dropped if not usable. */
 function keepAttribution(answers: Record<string, unknown>): void {
   const a = cleanAttribution(answers._attribution);
   if (a) answers._attribution = a;
   else delete answers._attribution;
   // /hair's quiz goal, kept for Admin → Marketing (not asked in the assessment).
   if (!['stop', 'regrow', 'both'].includes(answers.hr_goal as string)) delete answers.hr_goal;
+  // A landing page's quick quiz, in words (lib/attribution saveQuiz).
+  const quiz = cleanQuiz(answers._quiz);
+  if (quiz) answers._quiz = quiz;
+  else delete answers._quiz;
 }
 
 /** What a member reads on an order closed by their safety-check answers. */

@@ -10,6 +10,7 @@
 import 'server-only';
 import twilio from 'twilio';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logMessage } from '@/lib/message-log';
 
 let cached: ReturnType<typeof twilio> | null = null;
 
@@ -54,12 +55,12 @@ export async function sendSms(
       from: process.env.TWILIO_FROM_NUMBER,
       body,
     });
+    await logMessage({ channel: 'sms', to, body, ok: true, providerId: message.sid });
     return { ok: true, sid: message.sid };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : 'unknown error',
-    };
+    const error = err instanceof Error ? err.message : 'unknown error';
+    await logMessage({ channel: 'sms', to, body, ok: false, error });
+    return { ok: false, error };
   }
 }
 

@@ -18,7 +18,7 @@ export default function PrivacyPage() {
     <LegalLayout
       title="Privacy Policy"
       effective="October 2026"
-      lead="Your health information is sensitive. This policy explains what we collect, why, who we share it with, and your rights. Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) is a telehealth medical practice, and it also serves as our Notice of Privacy Practices."
+      lead="Your health information is sensitive. This policy explains what we collect, why, who we share it with, and your rights. Eternal Longevity LLC (“Eternal Longevity,” “we,” “us”) connects you with a licensed physician for online care."
       sections={[
         {
           heading: 'Information We Collect',
@@ -58,18 +58,10 @@ export default function PrivacyPage() {
           ],
         },
         {
-          heading: 'Notice of Privacy Practices',
+          heading: 'HIPAA',
           paragraphs: [
-            'We use and disclose your protected health information for treatment (for example, sending your prescription to the pharmacy), payment (for example, charging your card), and health-care operations (for example, quality review and support), and as required or permitted by law. Any other use, including marketing, needs your written permission, which you can revoke at any time.',
-            'You have the right to:',
-          ],
-          bullets: [
-            'See and get a copy of your health record.',
-            'Ask us to correct your record.',
-            'Ask us to limit what we use or share, or to contact you in a particular way.',
-            'Get a list of certain disclosures we have made.',
-            'Get a paper copy of this notice.',
-            'File a complaint with us, or with the U.S. Department of Health and Human Services Office for Civil Rights. We will not retaliate against you for filing a complaint.',
+            'Eternal Longevity is not a “covered entity” under the Health Insurance Portability and Accountability Act (HIPAA). HIPAA does not apply simply because health information is involved, and it may not apply to your use of our service.',
+            'We still protect your health information as this policy describes and as the privacy and data-security laws of the states we serve require. We never sell your intake answers, prescriptions or medical records, and we never use them for advertising.',
           ],
         },
         {

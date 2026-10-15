@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { LoadingDots } from '@/components/ui/LoadingDots';
 import { cn } from '@/lib/utils';
+import { saveQuiz } from '@/lib/attribution';
 
 /*
  * /hair's three quick questions, as on Hims' hair landing page (goal,
@@ -58,6 +59,16 @@ export function HairQuiz({ className }: { className?: string }) {
   useEffect(() => router.prefetch('/start?category=hair'), [router]);
 
   const go = (answers: Record<string, string>) => {
+    // In words, for Admin → Marketing's quiz breakdown.
+    saveQuiz({
+      page: window.location.pathname,
+      answers: Object.fromEntries(
+        QUESTIONS.flatMap((qq) => {
+          const o = qq.options.find((x) => x.value === answers[qq.key]);
+          return o ? [[qq.label, o.label]] : [];
+        }),
+      ),
+    });
     const qs = new URLSearchParams({ category: 'hair' });
     for (const k of ['goal', 'format']) if (answers[k]) qs.set(k, answers[k]);
     startLeaving(() => router.push(`/start?${qs}`));
