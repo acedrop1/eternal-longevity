@@ -27,6 +27,10 @@ export interface SourceRow {
 export interface PageRow {
   path: string;
   sessions: number;
+  /** Finished assessments and paid orders credited to this landing page (the page of their tagged visit). */
+  completes: number;
+  orders: number;
+  revenue: number;
 }
 
 export interface StepRow {
@@ -148,7 +152,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
           if (d) d.sessions++;
           bump(src, med, camp, (r) => r.sessions++);
           const p = str(e.path) || '/';
-          const pr = pages.get(p) ?? { path: p, sessions: 0 };
+          const pr = pages.get(p) ?? { path: p, sessions: 0, completes: 0, orders: 0, revenue: 0 };
           pr.sessions++;
           pages.set(p, pr);
         } else if (kind === 'start') {
@@ -165,7 +169,13 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
     }
 
     // Finished assessments, and each member's first tagged source.
-    const firstSource = new Map<string, { source: string; medium: string; campaign: string }>();
+    const firstSource = new Map<string, { source: string; medium: string; campaign: string; landing: string }>();
+    const page = (p: string) => {
+      const key = p || '/';
+      let r = pages.get(key);
+      if (!r) pages.set(key, (r = { path: key, sessions: 0, completes: 0, orders: 0, revenue: 0 }));
+      return r;
+    };
     const firstHair = new Map<string, string>();
     try {
       const intakes = await readAll((from) =>
@@ -177,7 +187,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
       );
       for (const i of intakes) {
         const a = (i.attr ?? null) as Row | null;
-        const src = { source: str(a?.source) || 'direct', medium: str(a?.medium), campaign: str(a?.campaign) };
+        const src = { source: str(a?.source) || 'direct', medium: str(a?.medium), campaign: str(a?.campaign), landing: str(a?.landing) };
         const uid = str(i.user_id);
         if (uid && a && !firstSource.has(uid)) firstSource.set(uid, src);
         const tr = str(i.goal);
@@ -188,6 +198,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
         const d = days.get(day);
         if (d) d.completes++;
         bump(src.source, src.medium, src.campaign, (r) => r.completes++);
+        if (src.landing) page(src.landing).completes++;
         if (tr) hairRow(tr).completes++;
       }
     } catch (err) {
@@ -215,6 +226,10 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
         d.orders++;
         d.revenue += e.net;
       }
+      if (src?.landing) {
+        page(src.landing).orders++;
+        page(src.landing).revenue += e.net;
+      }
       bump(src?.source ?? 'untracked', src?.medium ?? '', src?.campaign ?? '', (r) => {
         r.orders++;
         r.revenue += e.net;
@@ -228,7 +243,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
     totals,
     bySource: [...sources.values()].sort(byValue),
     byCampaign: [...campaigns.values()].sort(byValue),
-    byPage: [...pages.values()].sort((a, b) => b.sessions - a.sessions).slice(0, 25),
+    byPage: [...pages.values()].sort((a, b) => b.revenue - a.revenue || b.sessions - a.sessions).slice(0, 25),
     steps: [...steps.entries()].map(([step, reached]) => ({ step, reached })).sort((a, b) => b.reached - a.reached),
     byDay: [...days.values()],
     hairPath: [...hair.values()].sort((a, b) => b.completes - a.completes),

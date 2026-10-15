@@ -187,27 +187,35 @@ export function MarketingView(p: Props) {
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Landing pages */}
-        <SectionCard title="Sessions by landing page" description="The first page of each visit." flush>
+        <SectionCard
+          title="Landing pages: visits and sales"
+          description="Sessions by first page. Finished and paid are credited to the page of the member’s tagged visit (kept 30 days in their browser)."
+          flush
+        >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-[14px] tabular-nums">
+            <table className="w-full min-w-[520px] text-[14px] tabular-nums">
               <thead>
                 <tr className="bg-milk text-left text-[13px] text-ink/70">
                   <th className="px-4 py-2 font-semibold">Page</th>
                   <th className="px-4 py-2 text-right font-semibold">Sessions</th>
-                  <th className="px-4 py-2 text-right font-semibold">Share</th>
+                  <th className="px-4 py-2 text-right font-semibold">Finished</th>
+                  <th className="px-4 py-2 text-right font-semibold">Paid</th>
+                  <th className="px-4 py-2 text-right font-semibold">Net sales</th>
                 </tr>
               </thead>
               <tbody>
                 {p.data.byPage.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="border-t border-ink/10 px-4 py-6 text-center text-ink/65">No visits yet in this range.</td>
+                    <td colSpan={5} className="border-t border-ink/10 px-4 py-6 text-center text-ink/65">No visits yet in this range.</td>
                   </tr>
                 )}
                 {p.data.byPage.map((r) => (
                   <tr key={r.path}>
                     <td className={plainTd}>{r.path}</td>
                     <td className={cn(plainTd, 'text-right')}>{int(r.sessions)}</td>
-                    <td className={cn(plainTd, 'text-right')}>{rate(r.sessions, t.sessions)}</td>
+                    <td className={cn(plainTd, 'text-right')}>{int(r.completes)}</td>
+                    <td className={cn(plainTd, 'text-right')}>{int(r.orders)}</td>
+                    <td className={cn(plainTd, 'text-right')}>{money(r.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
