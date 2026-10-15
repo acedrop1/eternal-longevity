@@ -9,6 +9,7 @@
  */
 import 'server-only';
 import twilio from 'twilio';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 let cached: ReturnType<typeof twilio> | null = null;
 
@@ -71,4 +72,22 @@ export async function sendVerificationCode(
     to,
     `Your Eternal Longevity verification code is ${code}. It expires in 10 minutes.`,
   );
+}
+
+/**
+ * Member text alerts are opt-in: the unticked "sms_alerts" box on the intake
+ * consents step (Text Messaging Terms, /legal/text-messages). Reads the
+ * member's most recent intake. STOP replies are handled by Twilio itself.
+ */
+export async function memberTextsAllowed(db: SupabaseClient, userId: string | null | undefined): Promise<boolean> {
+  if (!userId) return false;
+  const { data } = await db
+    .from('intake_submissions')
+    .select('answers')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const consents = (data?.answers as { consents?: Record<string, unknown> } | null)?.consents;
+  return consents?.sms_alerts === true;
 }

@@ -22,6 +22,8 @@ export interface LegalLayoutProps {
   sections: LegalSection[];
   /** Sibling legal pages for cross-linking at the bottom */
   related?: { label: string; href: string }[];
+  /** Optional visual block shown between the lead and the sections. */
+  children?: React.ReactNode;
 }
 
 const link = 'underline decoration-ink/30 underline-offset-[3px] transition-colors hover:decoration-ink';
@@ -31,7 +33,7 @@ const link = 'underline decoration-ink/30 underline-offset-[3px] transition-colo
  * measure, with every legal document listed in a sticky sidebar on desktop.
  * Content is data-driven; pass in sections and we render them consistently.
  */
-export function LegalLayout({ title, effective, lead, sections, related = [] }: LegalLayoutProps) {
+export function LegalLayout({ title, effective, lead, sections, related = [], children }: LegalLayoutProps) {
   // Stable anchor ids, so deep links to a section keep working.
   const slug = (s: string) =>
     s
@@ -61,6 +63,8 @@ export function LegalLayout({ title, effective, lead, sections, related = [] }: 
                 </p>
                 <p className="mt-6 text-[18px] leading-[1.6] text-ink-soft md:text-[20px]">{lead}</p>
               </header>
+
+              {children}
 
               <div className="max-w-[68ch] border-t border-ink/10">
                 {sections.map((s) => (

@@ -205,7 +205,7 @@ export const STEPS: Step[] = [
     heading: 'A few quick facts.',
     body: 'The prescriber uses this in his review.',
     smsDisclaimer:
-      'By entering your phone number and continuing, you agree that Eternal Longevity may call or text you about your care and account: verifying your number, questions from your prescriber, order and shipping updates, and account security. These are not marketing messages. Marketing texts are sent only if you tick the separate, optional box later. Message and data rates may apply. Message frequency varies. Reply HELP for help or STOP to opt out.',
+      'We use your number to verify it and to reach you about your care if needed. Text alerts are optional: you can turn them on with the separate, unticked box at the end of your assessment. See our Text Messaging Terms (etlongevity.com/legal/text-messages).',
     fields: [
       {
         id: 'first_name',
@@ -350,6 +350,7 @@ export const STEPS: Step[] = [
       'All information provided is accurate and complete to the best of my knowledge.',
       'I consent to have my information reviewed by the prescribing physician, who will decide whether to prescribe. He may decline or ask me for more information.',
       'I understand this is asynchronous telehealth, without a physical exam, and that it is not for emergencies. In an emergency I will call 911.',
+      'I understand the physician will review my history, answers and any photos or records before treating me, and will provide care online only if he determines he can meet the same standard of care as an in-person visit. If he cannot, he will tell me and direct me to in-person care. After treatment he is available for follow-up through my member portal, or will refer me to another provider.',
       'I understand that compounded medications are not FDA-approved, that results vary, and that treatment carries risks, including side effects.',
       'I understand that I may be contacted for follow-up or clarification about my care or my order.',
       'I understand that no payment is taken when I submit this form. At checkout I save a card, which is charged only if the prescriber approves.',
@@ -422,7 +423,7 @@ export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> 
   },
 };
 
-export const CONSENT_VERSION = '2026-09';
+export const CONSENT_VERSION = '2026-10';
 
 export const CONSENT_ITEMS = [
   {
@@ -432,10 +433,10 @@ export const CONSENT_ITEMS = [
       'I have read and agree to the Telehealth Informed Consent (etlongevity.com/legal/consent) and the statements above, and I consent to receive care through telehealth.',
   },
   {
-    id: 'sms',
+    id: 'sms_alerts',
     required: false,
     label:
-      'Optional: I agree to receive recurring marketing text messages from Eternal Longevity at the number provided, which may be sent using automated technology. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to cancel.',
+      'Optional: Yes, text me account alerts from Eternal Longevity at the mobile number I provided: sign-in codes, messages from my care team, order and shipping updates, and account notices. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to cancel. Consent is not a condition of purchase. See our Text Messaging Terms and Privacy Policy.',
   },
   {
     id: 'research',

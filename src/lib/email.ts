@@ -527,6 +527,7 @@ export function orderConfirmationEmail(input: {
        <p style="${P}">${
          input.total > 0 ? 'Payment went through and your' : 'Your code covered this one in full, so nothing was charged. Your'
        } order is headed to our partner pharmacy, where it&rsquo;s prepared just for you.</p>
+       <p style="${P}">Your prescriber reviewed your history and determined he could meet the same standard of care as an in-person visit through this online visit. You can message him any time from your member portal.</p>
        ${nextStep('We&rsquo;ll email your tracking number the moment it ships.')}
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          ${rows}

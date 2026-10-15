@@ -20,7 +20,7 @@ import 'server-only';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { deliveredEmail, sendEmail, shippedEmail } from '@/lib/email';
-import { sendSms } from '@/lib/sms';
+import { memberTextsAllowed, sendSms } from '@/lib/sms';
 
 export type FulfillmentStep = 'placed' | 'shipped' | 'delivered';
 export type ActorRole = 'admin' | 'doctor' | 'pharmacy';
@@ -180,7 +180,7 @@ export async function advanceFulfillment(input: {
                 : deliveredEmail({ firstName, orderRef: ref });
             await sendEmail({ to: email, subject: msg.subject, html: msg.html });
           }
-          if (step === 'shipped' && patient?.phone) {
+          if (step === 'shipped' && patient?.phone && (await memberTextsAllowed(db, userId))) {
             await sendSms(
               patient.phone,
               `Your Eternal Longevity order ${ref} has shipped. ${carrier} tracking: ${tracking}`,

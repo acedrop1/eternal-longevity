@@ -78,6 +78,12 @@ export default function PrivacyPage() {
           ],
         },
         {
+          heading: 'Text Messages',
+          paragraphs: [
+            'If you opt in to text alerts, we use your mobile number only to send the account and care messages described in our Text Messaging Terms. No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Text messaging originator opt-in data and consent will not be shared with any third parties. Reply STOP to any message to opt out.',
+          ],
+        },
+        {
           heading: 'Data Security',
           paragraphs: [
             'We use administrative, physical, and technical safeguards to protect your information. Information in transit is encrypted using TLS, and information at rest is encrypted. Access to health information is limited to staff with a clinical or operational need.',

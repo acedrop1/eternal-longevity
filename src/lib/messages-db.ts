@@ -14,7 +14,7 @@ import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { getPrescriber } from '@/lib/prescriber';
-import { sendSms } from '@/lib/sms';
+import { memberTextsAllowed, sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 import { shouldNotifyReply } from '@/lib/prescriber-view';
 
@@ -255,7 +255,7 @@ export async function replyMessageAction(
       // The reply is saved either way.
     }
   }
-  if (member?.phone) {
+  if (member?.phone && (await memberTextsAllowed(db, userId))) {
     await sendSms(
       member.phone,
       `Eternal Longevity: you have a new message from your care team. Sign in to read it: ${SITE_URL}/portal/messages?thread=${channel}`,

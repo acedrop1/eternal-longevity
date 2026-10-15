@@ -19,7 +19,7 @@ export default function ConsentPolicyPage() {
   return (
     <LegalLayout
       title="Telehealth Informed Consent"
-      effective="September 2026"
+      effective="October 2026"
       lead="Eternal Longevity is a telehealth medical practice. This consent explains how our care works, what it can and cannot do, and your rights. You agree to it when you check the acknowledgement box in your intake."
       sections={[
         {
@@ -28,6 +28,8 @@ export default function ConsentPolicyPage() {
             `Our care is asynchronous: you complete a written medical intake online, and Dr. Bader Elder, DO, a physician licensed in ${SERVICE_AREA}, reviews it later rather than in a live visit. He decides whether a treatment is appropriate for you. He may prescribe, decline, or ask you for more information before deciding.`,
             'When he prescribes, a physician–patient relationship exists between you and Dr. Elder for that treatment. Prescriptions are dispensed by a state-licensed 503A compounding pharmacy. Refills on a plan ship on the same prescription until it expires or runs out of refills; the prescriber can pause or stop a plan at any time, and a new product needs a new review.',
             `We serve only patients located in ${SERVICE_AREA_OR}, and you must be 18 or older.`,
+            'Your visit uses asynchronous store-and-forward telehealth: your medical history, answers, and any photos, lab results or records you share are sent securely to the prescriber. Before treating you, he reviews them and decides whether he can meet the same standard of care as he would in an in-person visit. He provides care online only if he can; if he cannot, he will tell you and direct you to in-person care. This is not a prescription from a questionnaire alone: he may message you with questions, ask for photos or records, or decline.',
+            'The prescriber’s name, professional credentials and contact information are shown on our site and in your member portal, and you can message him through the portal. After treatment he remains available for follow-up through the portal, or will refer you to another provider, including one near you when in-person care is medically necessary.',
           ],
         },
         {
