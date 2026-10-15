@@ -688,22 +688,34 @@ export function abandonedCartEmail(input: {
  * an intent, and are blocked on a step they may not realise is outstanding.
  */
 /** The member finished the health questions that follow checkout. */
-export function visitCompleteEmail(input: { firstName: string; ordered: boolean }): { subject: string; html: string } {
+export function visitCompleteEmail(input: {
+  firstName: string;
+  ordered: boolean;
+  /** The orders now with Dr. Elder: reference and total if approved (cents). */
+  orders?: { ref: string; totalCents: number }[];
+}): { subject: string; html: string } {
+  const orders = input.orders ?? [];
+  const rows = orders.map((o) => `<tr>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;">${escapeHtml(orderRef(o.ref))}</td>
+        <td style="padding:12px 20px;border-bottom:1px solid ${HAIRLINE};color:${INK};font-size:14px;" align="right">$${(o.totalCents / 100).toFixed(2)} if approved</td>
+      </tr>`).join('');
   return {
     subject: input.ordered ? 'Thanks. Dr. Elder is reviewing your order' : 'Thanks. Your health questions are in',
     html: shell(
-      `<div style="${EYEBROW}">HEALTH QUESTIONS RECEIVED</div>
+      `<div style="${EYEBROW}">${input.ordered ? 'ORDER RECEIVED' : 'HEALTH QUESTIONS RECEIVED'}</div>
        <h1 style="${H1}">Thanks, ${escapeHtml(input.firstName)}. You&rsquo;re all set.</h1>
        <p style="${P}">${
          input.ordered
-           ? 'Dr. Elder is reviewing your answers and your order now. He may message you in your portal if he has a question.'
+           ? 'Your order is in and Dr. Elder is reviewing your answers now. He may message you in your portal if he has a question.'
            : 'Your answers are saved. Check out when you&rsquo;re ready, and Dr. Elder will review your order.'
        } <strong style="color:${INK};">You haven&rsquo;t been charged.</strong></p>
+       ${rows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">${rows}</table>` : ''}
        ${nextStep(
          input.ordered
-           ? 'If he approves, your card is charged and your treatment ships. We&rsquo;ll email your tracking. If not, you pay nothing.'
+           ? 'If he approves, your card is charged and your treatment ships. We&rsquo;ll email your receipt and tracking. If not, you pay nothing.'
            : 'You&rsquo;re charged only if he approves your treatment.',
        )}
+       <p style="${P}">Your portal is ready: sign in any time to track your order and message your care team.</p>
        ${button(input.ordered ? 'View your order' : 'Go to checkout', `${SITE_URL}${input.ordered ? '/portal/orders' : '/checkout'}`)}`,
       { preheader: input.ordered ? 'Dr. Elder is reviewing your order. Nothing charged yet.' : 'Your answers are saved. Nothing charged.' },
     ),

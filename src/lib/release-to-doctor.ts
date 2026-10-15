@@ -269,13 +269,13 @@ export async function pageDoctors(
  * The member just answered the health questions: every order of theirs that
  * was waiting on them goes to the prescriber now (and he is told).
  */
-export async function releaseHeldOrders(userId: string): Promise<number> {
-  if (!supabaseAdminConfigured()) return 0;
+export async function releaseHeldOrders(userId: string): Promise<string[]> {
+  if (!supabaseAdminConfigured()) return [];
   const db = createSupabaseAdminClient();
   const { data } = await db.from('orders').select('order_number').eq('user_id', userId).eq('status', 'awaiting-visit');
   for (const o of data ?? []) await releaseToDoctor(o.order_number);
   revalidatePath('/portal/doctor');
-  return data?.length ?? 0;
+  return (data ?? []).map((o) => o.order_number);
 }
 
 /**

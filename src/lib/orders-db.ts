@@ -580,8 +580,11 @@ async function placeOrder(input: {
   // spent; hand it back here if that ever happens outside a database outage.
   if (!created.length) return { ok: false, error: 'insert_failed' };
 
-  // One email for the basket, however many orders it became.
-  if (user.email) {
+  // One email for the basket, however many orders it became. Not when the
+  // health questions follow: then their one email comes once those are done
+  // (visitCompleteEmail), so checkout doesn't send three emails in five minutes.
+  const healthQuestions = (await intakeStateFor(user.id)) === 'awaiting_visit';
+  if (user.email && !healthQuestions) {
     const msg = orderReceivedEmail({
       firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'there',
       orderNumber: created.join(', '),
@@ -593,7 +596,6 @@ async function placeOrder(input: {
       shipping: bookedShippingCents,
       discount: bookedDiscountCents,
       total: bookedTotalCents,
-      healthQuestions: (await intakeStateFor(user.id)) === 'awaiting_visit',
     });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }

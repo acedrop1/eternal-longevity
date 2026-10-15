@@ -39,7 +39,6 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import {
-  intakeConfirmationEmail,
   intakeReceivedTeamEmail,
   noticeEmail,
   sendEmail,
@@ -352,22 +351,11 @@ export async function submitIntakeAction(
   }
 
   // --- live mode: notify (best-effort, never blocks the response) ---------
-  const firstName =
-    typeof answers.first_name === 'string' && answers.first_name.trim()
-      ? answers.first_name.trim()
-      : 'there';
-
-  const patient = intakeConfirmationEmail(firstName);
+  // No patient email here: they go straight to checkout and the health
+  // questions, and get one email once those are done (visitCompleteEmail).
+  // Stopping here instead is covered by the plan-stage follow-ups.
   const team = intakeReceivedTeamEmail(caseId, email, fullName);
-
-  await Promise.allSettled([
-    sendEmail({ to: email, subject: patient.subject, html: patient.html }),
-    sendEmail({
-      to: SUPPORT_EMAIL,
-      subject: team.subject,
-      html: team.html,
-    }),
-  ]);
+  await sendEmail({ to: SUPPORT_EMAIL, subject: team.subject, html: team.html }).catch(() => undefined);
 
   // Chosen plan into their cart, then signed in and on to checkout.
   if (userId) await saveChosenToCart(createSupabaseAdminClient(), userId, plan);
@@ -685,10 +673,18 @@ export async function submitVisitAction(
   await syncProfileFromAnswers(db, user.id, merged);
   // Their order was waiting on these answers: it goes to the prescriber now.
   const released = await releaseHeldOrders(user.id);
-  // Confirm to the member (best effort: the visit is saved either way).
+  // Confirm to the member (best effort: the visit is saved either way). Their
+  // only email at order time, so it carries the order summary.
   if (user.email) {
     const first = typeof merged.first_name === 'string' && merged.first_name.trim() ? merged.first_name.trim() : 'there';
-    const msg = visitCompleteEmail({ firstName: first, ordered: released > 0 });
+    const { data: summary } = released.length
+      ? await db.from('orders').select('order_number, total_cents').in('order_number', released)
+      : { data: [] };
+    const msg = visitCompleteEmail({
+      firstName: first,
+      ordered: released.length > 0,
+      orders: (summary ?? []).map((o) => ({ ref: o.order_number, totalCents: o.total_cents })),
+    });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html }).catch(() => undefined);
   }
   return { ok: true, caseId: intake.case_id };

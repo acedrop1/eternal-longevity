@@ -9,7 +9,6 @@ import {
   deliveredEmail,
   followupEmail,
   intakeClosedByTeamEmail,
-  intakeConfirmationEmail,
   intakeNeedsInfoEmail,
   intakeReceivedTeamEmail,
   newVisitForDoctorEmail,
@@ -58,12 +57,11 @@ const notice = (subject: string, n: Parameters<typeof noticeEmail>[0]) => () => 
 export const EMAIL_TEMPLATES: TemplateEntry[] = [
   // --- Patient, in the order of their journey ---
   { id: 'lead-1', audience: 'Patient', name: 'Finish your assessment (1 of 3)', when: 'Left their email in the assessment but made no account: about 1 hour, then 1 and 3 days later.', build: () => followupEmail({ stage: 'lead', step: 0, firstName: 'Sam', url: `${SITE_URL}/start` }) },
-  { id: 'welcome', audience: 'Patient', name: 'Welcome, account ready', when: 'Right after they finish the assessment and set a password.', build: () => intakeConfirmationEmail('Sam') },
   { id: 'plan-1', audience: 'Patient', name: 'Your plan is ready (1 of 3)', when: 'Finished the assessment but didn’t check out: about 2 hours, then 1 and 3 days later.', build: () => followupEmail({ stage: 'plan', step: 0, firstName: 'Sam', url: `${SITE_URL}/checkout` }) },
   { id: 'cart', audience: 'Patient', name: 'Still thinking it over? (cart)', when: 'A returning member left something in their cart for a day (once).', build: () => abandonedCartEmail({ ...P, items: [{ name: 'Finasteride + Minoxidil', cadence: '12 month plan' }], cartUrl: `${SITE_URL}/checkout` }) },
-  { id: 'order-received', audience: 'Patient', name: 'We’ve got your order (+ health questions)', when: 'The moment they place an order.', build: () => orderReceivedEmail({ ...P, orderNumber: REF, items: ITEMS, shipping: 2000, discount: 2000, total: 66000, healthQuestions: true }) },
+  { id: 'order-received', audience: 'Patient', name: 'We’ve got your order', when: 'Only for an order that doesn’t need the health questions (rare). Normally their one order email is “Thanks, Dr. Elder is reviewing”.', build: () => orderReceivedEmail({ ...P, orderNumber: REF, items: ITEMS, shipping: 2000, discount: 2000, total: 66000, healthQuestions: false }) },
   { id: 'visit-reminder', audience: 'Patient', name: 'Your order is waiting on a few health questions', when: 'Ordered but didn’t answer the health questions: up to 3 (about 2 hours, 1 day, 3 days).', build: () => unfinishedVisitEmail({ ...P, visitUrl: `${U}/visit` }) },
-  { id: 'visit-complete', audience: 'Patient', name: 'Thanks, Dr. Elder is reviewing your order', when: 'Right after they answer the health questions.', build: () => visitCompleteEmail({ ...P, ordered: true }) },
+  { id: 'visit-complete', audience: 'Patient', name: 'Thanks, Dr. Elder is reviewing your order', when: 'Their one email at order time: right after they answer the health questions (after paying).', build: () => visitCompleteEmail({ ...P, ordered: true, orders: [{ ref: REF, totalCents: 68000 }] }) },
   { id: 'prescriber-message', audience: 'Patient', name: 'You have a message from your prescriber', when: 'Dr. Elder asks a question, asks for photos, or declines. (Wording lives in lib/orders-db.ts.)', build: notice('You have a message from your prescriber', { eyebrow: 'Your care team', heading: 'You have a message from your prescriber', body: 'Sign in to read it and reply. We keep it in your portal rather than in email, for your privacy.', cta: { label: 'Read it in your portal', href: `${U}/messages?thread=doctor` } }) },
   { id: 'needs-info', audience: 'Patient', name: 'One more thing before your review', when: 'Admin asks the patient for more information on their assessment.', build: () => intakeNeedsInfoEmail({ ...P, portalUrl: `${U}/messages?thread=support`, inThread: true, note: '' }) },
   { id: 'pay-now', audience: 'Patient', name: 'You’re approved. One quick step on payment', when: 'Approved, but the card failed or there’s no card on file (then 2 reminders).', build: () => approvedPayNowEmail({ ...P, orderNumber: REF, total: 68000, payUrl: `${SITE_URL}/pay/sample` }) },
