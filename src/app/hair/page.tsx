@@ -5,6 +5,7 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { Aura, Swipe } from '@/components/home/HomeSections';
 import { HairQuiz, QuizStickyBar } from '@/components/hair/HairQuiz';
+import { FadeIn } from '@/components/ui/FadeIn';
 import { getLiveProducts } from '@/lib/catalog';
 import { fromPrice, listedCategories, type Form } from '@/lib/lineup';
 import { pageMeta } from '@/lib/seo';
@@ -65,7 +66,7 @@ export default async function HairPage() {
         {/* Hero, as on Hims: the promise and the photo on one side, the quiz on the other. */}
         <section className="px-3 pt-24 md:px-5 md:pt-28">
           <div className="mx-auto grid gap-3 md:grid-cols-2 md:gap-5">
-            <div className="relative overflow-hidden rounded-shell bg-milk px-5 pb-5 pt-6 md:px-10 md:pb-10 md:pt-12">
+            <div className="anim-hero relative overflow-hidden rounded-shell bg-milk px-5 pb-5 pt-6 md:px-10 md:pb-10 md:pt-12">
               <Aura mix="sunrise" />
               <div className="relative">
                 <p className="text-[13px] font-medium text-ink-soft">Prescribed by a licensed physician · {SERVICE_AREA_SHORT}</p>
@@ -96,7 +97,7 @@ export default async function HairPage() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center gap-4 px-1 py-2 md:px-6">
+            <div className="anim-hero flex flex-col items-center justify-center gap-4 px-1 py-2 [animation-delay:150ms] md:px-6">
               <HairQuiz />
               {/* Small print, as on Hims: compounded notice, the claim's footnote, the before/after note (sheet lines 2, 3, 11). */}
               <div className="max-w-[480px] space-y-2 text-center text-[12px] leading-relaxed text-ink-soft">
@@ -112,7 +113,7 @@ export default async function HairPage() {
 
         {/* The two formats, priced from the live catalogue. */}
         {formats.length > 0 && (
-          <section className="mx-auto max-w-5xl px-5 pt-20 md:px-10 md:pt-28">
+          <FadeIn as="section" className="mx-auto max-w-5xl px-5 pt-20 md:px-10 md:pt-28">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <h2 className="text-[30px] font-semibold leading-none tracking-[-0.045em] text-ink md:text-[40px]">Treatment options</h2>
               <p className="max-w-[340px] text-[15px] text-ink-soft">Pick what fits your routine. Your physician confirms what&apos;s right for you.</p>
@@ -133,11 +134,11 @@ export default async function HairPage() {
                 </Link>
               ))}
             </div>
-          </section>
+          </FadeIn>
         )}
 
         {/* What every plan includes (Hims: "Choose our chews and get"). */}
-        <section className="mx-auto max-w-xl px-5 pt-20 md:pt-28">
+        <FadeIn as="section" className="mx-auto max-w-xl px-5 pt-20 md:pt-28">
           <h2 className="text-center text-[30px] font-semibold leading-none tracking-[-0.045em] text-ink md:text-[40px]">Every plan includes</h2>
           <ul className="mt-8 divide-y divide-ink/10 rounded-shell bg-milk px-5">
             {INCLUDED.map((x) => (
@@ -152,10 +153,10 @@ export default async function HairPage() {
               Get started
             </Link>
           </div>
-        </section>
+        </FadeIn>
 
         {/* How it works, in one row (Hims: "Hims makes it simple"). */}
-        <section className="mx-auto max-w-5xl px-5 pb-20 pt-20 md:px-10 md:pb-28 md:pt-28">
+        <FadeIn as="section" className="mx-auto max-w-5xl px-5 pb-20 pt-20 md:px-10 md:pb-28 md:pt-28">
           <h2 className="text-[30px] font-semibold leading-none tracking-[-0.045em] text-ink md:text-[40px]">
             Simple from <Swipe>start to finish.</Swipe>
           </h2>
@@ -170,7 +171,7 @@ export default async function HairPage() {
               </li>
             ))}
           </ul>
-        </section>
+        </FadeIn>
 
         <QuizStickyBar />
       </main>

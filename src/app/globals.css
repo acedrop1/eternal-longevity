@@ -157,6 +157,10 @@
   0%   { transform: translate(-50%, -10%) scale(1);   opacity: 0.7; }
   100% { transform: translate(-50%, 10%)  scale(1.1); opacity: 1; }
 }
+@keyframes riseSoft {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 @keyframes breathe {
   0%, 100% { opacity: 0.25; transform: scale(0.85); }
   50%      { opacity: 1;    transform: scale(1); }
@@ -189,9 +193,14 @@
   .anim-marquee { animation: marquee 20s linear infinite; }
   /* Loading states: fade in after a beat (a fast load never flashes), then breathe. */
   .anim-loading { animation: fadeIn 400ms ease-out 150ms both; }
+  /* Assessment answers: arrive a beat after the question. */
+  .anim-answers { animation: riseSoft 500ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both; }
+  /* Landing hero on load. */
+  .anim-hero { animation: riseSoft 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
   .anim-breathe { animation: breathe 1.2s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
     .anim-breathe { animation: none; opacity: 0.6; }
+    .anim-answers, .anim-hero { animation: none; }
   }
   /* Faster scroll on mobile — the strip is shorter so it needs to move
      quicker to read as "alive" on small screens. */

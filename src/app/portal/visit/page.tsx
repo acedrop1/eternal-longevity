@@ -120,7 +120,8 @@ export default async function VisitPage({
 
   return (
     <PortalShell user={user} nav={nav}>
-      <div>
+      <div className="[&:has([data-visit-done])_.visit-intro]:hidden">
+      <div className="visit-intro">
         <PageHeader
           title={ordered ? 'Your order is in. A few quick questions for Dr. Elder.' : 'A few quick questions for Dr. Elder.'}
           intro={`${ordered ? 'Nothing has been charged. ' : ''}These health questions take about 2 minutes, and Dr. Elder reviews your ${visit?.productName ?? 'order'} as soon as they’re done. You’re charged only if he approves.`}
@@ -146,6 +147,7 @@ export default async function VisitPage({
         // Answered before checkout; the health questions depend on it (pregnancy).
         seed={typeof onFile.sex === 'string' ? { sex: onFile.sex } : undefined}
       />
+      </div>
     </PortalShell>
   );
 }

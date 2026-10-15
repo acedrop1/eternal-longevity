@@ -671,7 +671,8 @@ export function IntakeWizard({
           : 'Your account is ready. Log in to choose your plan at checkout. Your physician reviews your answers before anything ships.';
     return (
       <Shell progressPct={100} compact={compact} onLeave={requestLeave}>
-        <div className="text-center max-w-xl mx-auto">
+        {/* data-visit-done: the visit page hides its "questions needed" header once this shows. */}
+        <div className="anim-hero text-center max-w-xl mx-auto" data-visit-done>
           <div className="mb-6 inline-grid h-12 w-12 place-items-center rounded-full bg-butter text-ink">
             <Check aria-hidden className="h-6 w-6" strokeWidth={2.5} />
           </div>
@@ -803,9 +804,10 @@ export function IntakeWizard({
       <motion.div
         key={screen.key}
         ref={stepRef}
-        initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+        // Calm, premium pace (Hims-like): each screen eases up and in.
+        initial={reduceMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
       {restored === screen.key && (
         <div
@@ -903,7 +905,8 @@ export function IntakeWizard({
 
       {/* Fields */}
       {/* scroll-mb keeps a focused input clear of the sticky action bar. */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-5 [&_input]:scroll-mb-32 [&_textarea]:scroll-mb-32">
+      {/* Answers follow the question by a beat. */}
+      <div className="anim-answers grid grid-cols-2 gap-x-3 gap-y-5 [&_input]:scroll-mb-32 [&_textarea]:scroll-mb-32">
         {fields.map((f) => {
           const error = errorFor(f);
           // Carrier rules want the SMS disclosure beside the number.
@@ -992,8 +995,7 @@ export function IntakeWizard({
                   id="sms-note"
                   className="cursor-pointer list-none text-[12px] leading-relaxed text-ink/65 marker:hidden [&::-webkit-details-marker]:hidden"
                 >
-                  By continuing you agree to receive calls and texts from us. Message
-                  and data rates may apply. Reply STOP to opt out.{' '}
+                  Text updates are optional: you can turn them on with the unticked box at the end.{' '}
                   <span className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px]">Read in full</span>
                 </summary>
                 <p className="mt-2 text-[12px] leading-relaxed text-ink/65">{sms}</p>
@@ -1219,6 +1221,16 @@ const BTN_SECONDARY =
 
 /** '03 / BODY SNAPSHOT' -> 'Body snapshot'; 'SAFETY SCREEN · X' -> 'Safety screen'
  *  (the product name is already in the heading and the banner). */
+/** The words above the progress bar: encouraging, never a count. */
+function cheer(pct: number, last: boolean): string {
+  if (last) return 'Last step';
+  if (pct < 15) return 'Let’s get started';
+  if (pct < 40) return 'Off to a great start';
+  if (pct < 65) return 'You’re doing great';
+  if (pct < 85) return 'Almost there';
+  return 'Nearly done';
+}
+
 function sectionName(eyebrow: string) {
   const s = eyebrow.replace(/^\d+\s*\/\s*/, '').split(' · ')[0].trim();
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -1245,7 +1257,8 @@ function Shell({
   /** ✕ / logo: leave (a path, or the page they came from). */
   onLeave?: (to?: string) => void;
 }) {
-  const stepLabel = stepIdx !== undefined && total !== undefined ? `Step ${stepIdx + 1} of ${total}` : null;
+  // No "Step 3 of 15": a count makes it feel long. A few calm words that move with the bar instead.
+  const stepLabel = stepIdx !== undefined && total !== undefined ? cheer(progressPct, stepIdx + 1 === total) : null;
   const bar = (
     <div
       role="progressbar"
@@ -1257,7 +1270,7 @@ function Shell({
       className="h-1.5 w-full overflow-hidden rounded-full bg-milk"
     >
       <div
-        className="h-full rounded-full bg-butter-deep transition-[width] duration-500 ease-out motion-reduce:transition-none"
+        className="h-full rounded-full bg-butter-deep transition-[width] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
         style={{ width: `${progressPct}%` }}
       />
     </div>
@@ -1270,10 +1283,7 @@ function Shell({
     return (
       <div onKeyDown={onKeyDown} className="relative mx-auto flex w-full max-w-2xl flex-col overflow-x-clip pb-0 pt-2 text-ink">
         <div className="mb-6 py-1">
-          <div className="mb-2.5 flex items-center justify-between text-[13px] font-medium tabular-nums text-ink/65">
-            <span>{stepLabel ?? 'Complete'}</span>
-            <span>{progressPct}%</span>
-          </div>
+          <p className="mb-2.5 text-[13px] font-medium text-ink/65">{stepLabel ?? 'All done'}</p>
           {bar}
         </div>
         <div className="px-1 pb-4">{children}</div>
@@ -1303,7 +1313,7 @@ function Shell({
             {/* Deeper than butter so the logo reads on white, as in the site header. */}
             <Wordmark href={null} className="text-[24px] text-[#F2D060] md:text-[28px]" />
           </button>
-          <span className="text-[13px] font-medium tabular-nums text-ink/65">{stepLabel}</span>
+          <span key={stepLabel} className="anim-route text-[13px] font-medium text-ink/65">{stepLabel}</span>
           <button
             type="button"
             onClick={() => onLeave?.()}
