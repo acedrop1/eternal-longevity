@@ -42,6 +42,10 @@ export interface ProductInput {
   image: string;
   popular: boolean;
   fdaApproved: boolean;
+  /** Offer as an add-on at checkout, with its one-line pitch and the treatment areas it follows. */
+  addon: boolean;
+  addonPitch: string;
+  addonFor: string[];
   /** The pharmacy mapping. Blank SKU: the order is placed by hand. */
   pharmacy: { sku: string; quantity: number; defaultSig: string; name: string; strength: string; size: string; dosageForm: string; unitCost: number };
 }
@@ -54,6 +58,8 @@ export interface ProductResult {
 
 const CATEGORIES: ShopCategory[] = ['recovery', 'growth', 'metabolic', 'cognitive', 'sexual', 'longevity', 'immune', 'skin-hair'];
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+/** Intake treatment areas an add-on can follow (CategoryKey). */
+const ADDON_AREAS = ['longevity', 'sexual-health', 'hormones', 'hair', 'skin'];
 
 function cleanList(xs: unknown, max = 12): string[] | null {
   if (!Array.isArray(xs)) return null;
@@ -152,6 +158,9 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     requiresReview: true,
     popular: Boolean(input.popular) || undefined,
     fdaApproved: Boolean(input.fdaApproved) || undefined,
+    addon: Boolean(input.addon) || undefined,
+    addonPitch: text(input.addonPitch, 120) || undefined,
+    addonFor: Array.isArray(input.addonFor) ? input.addonFor.filter((c) => ADDON_AREAS.includes(c)) : undefined,
     pharmacy: pharmacy.value,
   };
 
@@ -185,6 +194,9 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
         ['12 month plan', was ? (offersTwelveMonth(was) ? 'On' : 'Off') : null, twelveMonthPlan ? 'On' : 'Off'],
         ['12-month price', was?.pricing.annual ? `$${was.pricing.annual}` : null, data.pricing.annual ? `$${data.pricing.annual}` : ''],
         ['Photo', was?.image, data.image],
+        ['Add-on at checkout', was ? (was.addon ? 'On' : 'Off') : null, data.addon ? 'On' : 'Off'],
+        ['Add-on line', was?.addonPitch, data.addonPitch ?? ''],
+        ['Add-on shown with', join(was?.addonFor), join(data.addonFor)],
         ['Category', was?.category, data.category],
         ['Short description', was?.shortDescription, data.shortDescription],
         ['Description', was?.longDescription, data.longDescription],

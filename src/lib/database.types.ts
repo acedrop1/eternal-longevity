@@ -37,7 +37,9 @@ export type OrderStatus =
   | 'denied-admin'
   | 'assigned'
   | 'signed'
-  | 'declined-clinical';
+  | 'declined-clinical'
+  // Placed before the health questions were answered — migration 0030.
+  | 'awaiting-visit';
 export type SubscriptionStatus =
   | 'active'
   | 'paused'

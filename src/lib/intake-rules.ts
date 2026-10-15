@@ -65,6 +65,7 @@ export function zipInState(zip: unknown, state: unknown): boolean {
 const REQUIRED_MSG: Record<string, string> = {
   state: 'Choose your state.',
   email: 'Enter your email.',
+  medications: 'List what you take, or go back and choose No.',
   first_name: 'Enter your first name.',
   last_name: 'Enter your last name.',
   dob: 'Enter your date of birth.',

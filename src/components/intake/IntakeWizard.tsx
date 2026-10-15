@@ -12,6 +12,7 @@ import {
   KNOCKOUT_MESSAGES,
   PLAN_FIELD,
   PRODUCT_KNOCKOUT,
+  PRODUCT_SCREEN_FIELD,
   buildAssessmentSteps,
   buildVisitSteps,
   isCategoryKey,
@@ -38,6 +39,7 @@ import { captureLeadAction } from '@/lib/lead-actions';
 import { assessmentSignInAction } from '@/lib/auth-actions';
 import { saveAssessmentDraftAction } from '@/lib/assessment-drafts';
 import { LEAD_CONSENT } from '@/lib/followups';
+import { readAttribution, track } from '@/lib/attribution';
 import { cn } from '@/lib/utils';
 import { loginHref } from '@/lib/safe-next';
 
@@ -174,6 +176,8 @@ interface IntakeWizardProps {
   draft?: { answers: Answers; screen: string | null };
   /** Pre only: renewing a plan whose prescription ran its term (/start?renew=). */
   renewal?: boolean;
+  /** Pre only: answers already chosen on a landing page (/hair). Pre-filled, still shown. */
+  seed?: Answers;
 }
 
 /** One id per visit session: the storage folder for its photos and files. */
@@ -193,12 +197,13 @@ export function IntakeWizard({
   member,
   draft,
   renewal = false,
+  seed,
 }: IntakeWizardProps = {}) {
   const compact = mode !== 'pre';
   // The screen's heading is the page's H1 on /start; the portal page has its own.
   const Heading = compact ? 'h2' : 'h1';
   const [status, setStatus] = useState<WizardStatus>({ kind: 'in-progress', key: '' });
-  const [answers, setAnswers] = useState<Answers>(() => ({ ...(member?.prefill ?? {}) }));
+  const [answers, setAnswers] = useState<Answers>(() => ({ ...(seed ?? {}), ...(member?.prefill ?? {}) }));
   /** The latest answers, for auto-advance timers and uploads that finish later. */
   const answersRef = useRef<Answers>(answers);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -219,8 +224,13 @@ export function IntakeWizard({
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastIdx = useRef(0);
   const [leaveTo, setLeaveTo] = useState('/');
+  const [leaveEmail, setLeaveEmail] = useState('');
+  const [leaveError, setLeaveError] = useState('');
+  const [leaving, startLeaving] = useTransition();
   const saves = mode === 'pre' && !member;
   const entryProduct = product && PRODUCT_CATEGORY[product.id] ? product.id : undefined;
+  /** The leave dialog asks for an email when a signed-out visitor hasn't given one yet. */
+  const askEmail = saves && !(typeof answers.email === 'string' && answers.email.includes('@'));
   const storageKey = storageKeyFor(entryProduct ?? category);
 
   const ctx = useMemo<AssessmentContext>(
@@ -289,6 +299,8 @@ export function IntakeWizard({
         a = Object.fromEntries(Object.entries(a).filter(([k]) => asked.has(k)));
         if (!Object.keys(a).length) return;
       }
+      // This visit's landing-page answers (/hair) still apply under the saved ones.
+      a = { ...(seed ?? {}), ...a };
       const list = screensOf(stepsFor(a), a);
       const gap = list.findIndex((s) => !validateFields(s.fields, a).ok);
       const at = list[gap === -1 ? list.length - 1 : gap];
@@ -310,7 +322,7 @@ export function IntakeWizard({
   // Signed in with an unfinished run from here: resume it on the screen they left.
   useEffect(() => {
     if (mode !== 'pre' || !member || !draft || !Object.keys(draft.answers).length) return;
-    const a = { ...(member.prefill ?? {}), ...draft.answers };
+    const a = { ...(seed ?? {}), ...(member.prefill ?? {}), ...draft.answers };
     const list = screensOf(stepsFor(a), a);
     const at =
       list.find((s) => s.key === draft.screen) ??
@@ -360,7 +372,7 @@ export function IntakeWizard({
 
   function startOver() {
     clearSaved();
-    const fresh = { ...(member?.prefill ?? {}) };
+    const fresh = { ...(seed ?? {}), ...(member?.prefill ?? {}) };
     answersRef.current = fresh;
     setAnswers(fresh);
     setTouched({});
@@ -381,6 +393,15 @@ export function IntakeWizard({
    */
   const draftEntry = entryProduct ?? category ?? 'general';
   const screenKey = status.kind === 'in-progress' ? screen?.key ?? null : null;
+  // Admin → Marketing: anonymous screen-by-screen counts, so drop-off shows (assessment only).
+  const tracked = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (mode !== 'pre' || !screenKey) return;
+    if (!tracked.current.size) track('start');
+    if (tracked.current.has(screenKey)) return;
+    tracked.current.add(screenKey);
+    track('step', { step: screenKey });
+  }, [mode, screenKey]);
   useEffect(() => {
     if (mode !== 'pre' || !member || !screenKey) return;
     const own = Object.entries(answers).filter(([k, v]) => !(v instanceof File) && !(k in (member.prefill ?? {})));
@@ -424,7 +445,8 @@ export function IntakeWizard({
   function setField(id: string, v: unknown): Answers {
     const prev = answersRef.current;
     const next: Answers = { ...prev, [id]: typeof v === 'function' ? v(prev[id]) : v };
-    pruneHidden(stepsFor(next), next, member?.known);
+    // Answers carried in (seed: the landing page, or sex from before checkout in the visit) are context, never pruned.
+    pruneHidden(stepsFor(next), next, [...(member?.known ?? []), ...Object.keys(seed ?? {})]);
     answersRef.current = next;
     setAnswers(next);
     return next;
@@ -444,8 +466,9 @@ export function IntakeWizard({
     if (!cur) return;
     const result = validateFields(cur.fields, a);
     if (result.knockout) {
+      // In the visit nothing closes until they confirm on the knockout screen
+      // (a mis-tap can go Back); the server still declines a submitted knockout.
       setStatus({ kind: 'knockout', key: result.knockout, from: cur.key });
-      if (mode === 'visit') void declineVisitAction(result.knockout);
       return;
     }
     if (!result.ok) {
@@ -498,7 +521,7 @@ export function IntakeWizard({
     // Files can't cross a server action; uploads are already stored by path.
     const payload: Answers = {
       ...Object.fromEntries(Object.entries(a).filter(([, v]) => !(v instanceof File))),
-      ...(mode === 'pre' ? { entryProductId: entryProduct, entryCategory: category } : {}),
+      ...(mode === 'pre' ? { entryProductId: entryProduct, entryCategory: category, _attribution: readAttribution() } : {}),
       ...(mode === 'visit' && product ? { requestedProduct: product.name, requestedProductId: product.id } : {}),
       ...(mode === 'visit' && visitProducts?.length ? { visitProductIds: visitProducts.map((p) => p.id) } : {}),
     };
@@ -510,6 +533,7 @@ export function IntakeWizard({
             : await submitIntakeAction(payload)
           : await submitVisitAction(payload);
       if (res.ok) {
+        if (mode === 'pre') track('complete');
         if (saves) clearSaved();
         const choice = a[PLAN_FIELD] as { productId: string; cadence: Cadence } | undefined;
         if (mode === 'pre' && choice && res.next === '/checkout') {
@@ -573,6 +597,11 @@ export function IntakeWizard({
             {msg.title}
           </Heading>
           <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">{msg.body}</p>
+          {mode === 'visit' && (
+            <div className="mb-8 rounded-inner bg-milk px-4 py-3 text-[14px] leading-relaxed text-ink-soft">
+              Tapped the wrong answer? Go back and change it. Otherwise we&rsquo;ll close your order. You haven&rsquo;t been charged.
+            </div>
+          )}
           {status.key === 'out_of_state' && (
             <ul aria-label="States we serve" className="mb-8 flex flex-wrap justify-center gap-2">
               {SERVICEABLE_STATES.map((st) => (
@@ -586,7 +615,21 @@ export function IntakeWizard({
             <button onClick={handleBack} className={BTN_SECONDARY}>
               {status.key === 'out_of_state' ? 'Change state' : 'Back'}
             </button>
-            {status.key === 'out_of_state' ? (
+            {mode === 'visit' ? (
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() =>
+                  startTransition(async () => {
+                    await declineVisitAction(status.key);
+                    router.push('/portal');
+                  })
+                }
+                className={cn(BTN_PRIMARY, 'disabled:opacity-60')}
+              >
+                {isPending ? 'Closing…' : 'Close my order'}
+              </button>
+            ) : status.key === 'out_of_state' ? (
               <Link href="/contact" className={BTN_PRIMARY}>
                 Tell me when you launch
               </Link>
@@ -619,12 +662,12 @@ export function IntakeWizard({
   // === Submitted screen ===
   if (status.kind === 'submitted') {
     const title =
-      mode === 'media' ? 'Thank you. Your physician has them.' : mode === 'visit' ? 'Your visit is complete.' : "That's it. You're in.";
+      mode === 'media' ? 'Thank you. Your physician has them.' : mode === 'visit' ? 'You’re all set.' : "That's it. You're in.";
     const body =
       mode === 'media'
         ? 'They go with your answers to your physician, who will review and either issue or decline your prescription. Nothing is charged unless it is approved.'
         : mode === 'visit'
-          ? 'Your licensed prescriber will review your visit and either issue or decline your prescription. Nothing ships, and nothing is charged, until it is approved.'
+          ? 'Dr. Elder is reviewing your answers now and may message you if he has a question. You’re charged only if he approves, and then your treatment ships.'
           : 'Your account is ready. Log in to choose your plan at checkout. Your physician reviews your answers before anything ships.';
     return (
       <Shell progressPct={100} compact={compact} onLeave={requestLeave}>
@@ -648,7 +691,9 @@ export function IntakeWizard({
   const isLast = idx === screens.length - 1;
   const auto = isAuto(screen);
   // A question on its own screen becomes the heading; the step's heading sets the scene once.
-  const solo = split && fields.length === 1 && fields[0].label ? fields[0] : null;
+  // The product safety check also reads as one big question with its list under it.
+  const solo =
+    (split || fields[0]?.id.startsWith(PRODUCT_SCREEN_FIELD)) && fields.length === 1 && fields[0].label ? fields[0] : null;
   const [question, ...detail] = solo ? solo.label.split('\n\n') : [];
   const typedIds = fields
     .filter((f) => ['text-short', 'email', 'date', 'number', 'password'].includes(f.type))
@@ -702,7 +747,7 @@ export function IntakeWizard({
         ? 'Continue to checkout →'
         : mode === 'media'
           ? 'Send to your physician →'
-          : 'Submit visit →'
+          : 'Send to Dr. Elder →'
     : 'Continue →';
 
   const backButton = idx > 0 && (
@@ -784,7 +829,7 @@ export function IntakeWizard({
       )}
       {product && mode !== 'media' && (
         <p className="mb-4 flex w-fit max-w-full items-baseline gap-x-2 rounded-full bg-butter-soft px-3 py-1.5 ring-1 ring-butter-deep/40 md:mb-6 md:gap-x-3 md:px-4 md:py-2">
-          <span className="flex-none text-[12px] font-medium text-ink/65 md:text-[13px]">Starting</span>
+          <span className="flex-none text-[12px] font-medium text-ink/65 md:text-[13px]">{mode === 'visit' ? 'Your order' : 'Starting'}</span>
           <span className="truncate text-[14px] font-semibold text-ink md:text-[15px]">{product.name}</span>
           <span className="hidden truncate text-[13px] text-ink/65 md:inline">{product.tagline}</span>
         </p>
@@ -804,10 +849,25 @@ export function IntakeWizard({
           {solo ? (
             <>
               {first && <p className="mb-2 max-w-xl text-[15px] leading-relaxed text-ink-soft">{step.heading}</p>}
-              <Heading className={cn(H2, detail.length ? 'mb-3' : 'mb-6')}>{question}</Heading>
-              {detail.length > 0 && (
-                <p className="mb-6 max-w-xl whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">{detail.join('\n\n')}</p>
-              )}
+              <Heading className={cn(H2, detail.length ? 'mb-4' : 'mb-6')}>{question}</Heading>
+              {detail.map((block, i) => {
+                const items = block.split('\n');
+                // "• " lines (the safety check) read as a clean list, not a paragraph.
+                return items.every((l) => l.startsWith('• ')) ? (
+                  <ul key={i} className="mb-6 max-w-xl divide-y divide-ink/10 rounded-shell bg-milk px-4 md:px-5">
+                    {items.map((l) => (
+                      <li key={l} className="flex items-start gap-3 py-3 text-[15px] leading-snug text-ink">
+                        <span aria-hidden className="mt-[7px] h-1.5 w-1.5 flex-none rounded-full bg-ink/50" />
+                        {l.slice(2)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p key={i} className="mb-6 max-w-xl whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">
+                    {block}
+                  </p>
+                );
+              })}
             </>
           ) : (
             <>
@@ -910,6 +970,14 @@ export function IntakeWizard({
                 {error}
               </p>
             )}
+            {f.why && (
+              <details className="group mt-3">
+                <summary className="cursor-pointer list-none text-[13px] font-medium text-ink/70 underline decoration-ink/30 underline-offset-[3px] marker:hidden hover:text-ink [&::-webkit-details-marker]:hidden">
+                  Why we ask
+                </summary>
+                <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-ink-soft">{f.why}</p>
+              </details>
+            )}
             {step.isEmailCapture && f.type === 'email' && (
               <p className="mt-2 text-[12px] leading-relaxed text-ink/65">
                 {LEAD_CONSENT.text}{' '}
@@ -972,15 +1040,67 @@ export function IntakeWizard({
         <h2 id="leave-title" className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em]">
           Leave your assessment?
         </h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-          {saves
-            ? 'We’ll save your details so you can pick up where you left off. Health answers are never saved on this device.'
-            : member
-              ? 'We’ll save your answers. Pick up from your dashboard anytime.'
-              : 'Your answers so far will be lost.'}
-        </p>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={() => leaveRef.current?.close()} className={cn(BTN_PRIMARY, 'sm:flex-1')}>
+        {askEmail ? (
+          /* No email yet: offer to send them a link to finish (a lead, same consent as the email step). */
+          <form
+            className="mt-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const email = leaveEmail.trim().toLowerCase();
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return setLeaveError('Enter a valid email address.');
+              setLeaveError('');
+              startLeaving(async () => {
+                const leadCategory = category ?? (isCategoryKey(answers.goal_category) ? answers.goal_category : undefined);
+                const res = await captureLeadAction({ email, productId: entryProduct, category: leadCategory, consent: true }).catch(() => null);
+                if (!res?.ok) return setLeaveError('That didn’t save. Check the address and try again.');
+                // Saved now, not on the next render: the page is about to change.
+                const next = setField('email', email);
+                try {
+                  const keep = Object.fromEntries(Object.entries(next).filter(([k]) => SAVED.has(k)));
+                  window.localStorage.setItem(storageKey, JSON.stringify({ answers: keep, savedAt: Date.now() }));
+                } catch {
+                  // Private mode: the emailed link still starts them in the right place.
+                }
+                leaveRef.current?.close();
+                router.push(leaveTo);
+              });
+            }}
+          >
+            <p className="text-[15px] leading-relaxed text-ink-soft">
+              Leave your email and we&rsquo;ll send you a link to finish your assessment later. It only takes a few minutes.
+            </p>
+            <input
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              aria-label="Email"
+              placeholder="you@example.com"
+              value={leaveEmail}
+              onChange={(e) => setLeaveEmail(e.target.value)}
+              className="mt-4 w-full min-w-0 rounded-inner bg-milk px-4 py-3.5 text-[16px] text-ink placeholder:text-ink/55 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ink/20"
+            />
+            {leaveError && <p className="mt-2 text-[13px] text-red-600">{leaveError}</p>}
+            <p className="mt-2 text-[12px] leading-relaxed text-ink/65">
+              {LEAD_CONSENT.text}{' '}
+              <Link href="/legal/privacy" className="font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
+                Privacy Policy
+              </Link>
+            </p>
+            <button type="submit" disabled={leaving} className={cn(BTN_PRIMARY, 'mt-4 w-full disabled:opacity-60')}>
+              {leaving ? 'Saving…' : 'Email me a link'}
+            </button>
+          </form>
+        ) : (
+          <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
+            {saves
+              ? 'We’ll save your details so you can pick up where you left off. Health answers are never saved on this device.'
+              : member
+                ? 'We’ll save your answers. Pick up from your dashboard anytime.'
+                : 'Your answers so far will be lost.'}
+          </p>
+        )}
+        <div className={cn('flex flex-col gap-2 sm:flex-row', askEmail ? 'mt-2' : 'mt-6')}>
+          <button type="button" onClick={() => leaveRef.current?.close()} className={cn(askEmail ? BTN_SECONDARY : BTN_PRIMARY, 'sm:flex-1')}>
             Keep going
           </button>
           <button
@@ -991,7 +1111,7 @@ export function IntakeWizard({
             }}
             className={cn(BTN_SECONDARY, 'sm:flex-1')}
           >
-            Leave
+            {askEmail ? 'Leave without saving' : 'Leave'}
           </button>
         </div>
       </dialog>

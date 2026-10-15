@@ -32,6 +32,7 @@ export default function PrivacyPage() {
             'Account: password (stored hashed), sign-in and security factors, and login history.',
             'Payment: billing address and card brand and last four digits. Full card numbers are handled by our payment processor and are never stored on our servers.',
             'Technical: IP address and browser and device details, recorded in server and security logs.',
+            'Site usage: which of our public pages were visited and which tagged link brought the visit, counted anonymously on our own servers, and, when you complete an assessment, the link that brought you saved with it so we know which of our campaigns reach patients.',
           ],
         },
         {

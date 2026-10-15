@@ -44,8 +44,10 @@ import {
   noticeEmail,
   sendEmail,
   SUPPORT_EMAIL,
+  visitCompleteEmail,
 } from '@/lib/email';
 import { LIMITS, allow } from './rate-limit';
+import { declineHeldOrders, releaseHeldOrders } from './release-to-doctor';
 import {
   ageFromDob,
   consentsComplete,
@@ -67,6 +69,7 @@ import { intakeStateFor, latestIntakeAnswers } from './intake-status';
 import { assessmentInput, visitInput } from './intake-input';
 import { loginHref } from './safe-next';
 import { sendSms } from '@/lib/sms';
+import { cleanAttribution } from '@/lib/attribution';
 
 /**
  * Is there already an account on this address?
@@ -75,6 +78,19 @@ import { sendSms } from '@/lib/sms';
  * before filling in a health history they would only lose. Returns false on any
  * failure — this is a convenience, and the submit path holds the real guard.
  */
+/** Where they came from (Admin → Marketing): the link, cleaned, and /hair's quiz answer. Dropped if not usable. */
+function keepAttribution(answers: Record<string, unknown>): void {
+  const a = cleanAttribution(answers._attribution);
+  if (a) answers._attribution = a;
+  else delete answers._attribution;
+  // /hair's quiz goal, kept for Admin → Marketing (not asked in the assessment).
+  if (!['stop', 'regrow', 'both'].includes(answers.hr_goal as string)) delete answers.hr_goal;
+}
+
+/** What a member reads on an order closed by their safety-check answers. */
+const SAFETY_DECLINE =
+  'Your answers to the safety questions mean this treatment isn\u2019t right for you, so your order was closed. Nothing was charged. Message your care team with any questions.';
+
 export async function emailHasAccountAction(email: string): Promise<boolean> {
   // This answers "does this person have an account here" to anyone who asks,
   // about a medical practice. Throttled rather than removed: the intake wizard
@@ -198,6 +214,7 @@ export async function submitIntakeAction(
   }
   // Which products are assessed, photo requests and uploads are the server's to set.
   assessmentInput(answers);
+  keepAttribution(answers);
   const email = answers.email;
   if (typeof email !== 'string' || !email.includes('@')) {
     return { ok: false, error: 'A valid email is required.' };
@@ -315,8 +332,9 @@ export async function submitIntakeAction(
       email,
       user_id: userId,
       answers: answers as unknown as Json,
-      // Every question is answered; only photos (hair, skin) or labs can follow in the portal.
-      status: 'submitted',
+      // The health questions come right after checkout (the portal visit); until then
+      // the order waits and the prescriber sees nothing (lib/release-to-doctor).
+      status: 'awaiting_visit',
     });
     if (error) {
       console.error('[intake] insert failed:', error.message);
@@ -380,6 +398,7 @@ export async function submitMemberAssessmentAction(
   delete answers.account;
   delete answers.email;
   assessmentInput(answers);
+  keepAttribution(answers);
 
   const onFile = await latestIntakeAnswers(user.id);
   const { ctx, live } = await assessmentFor(answers, knownAnswerIds(onFile));
@@ -417,7 +436,8 @@ export async function submitMemberAssessmentAction(
     email: user.email,
     user_id: user.id,
     answers: merged as unknown as Json,
-    status: 'submitted',
+    // Health questions follow checkout, as for a new member.
+    status: 'awaiting_visit',
   });
   if (error) {
     console.error('[intake] member insert failed:', error.message);
@@ -476,15 +496,16 @@ export async function getPendingVisit(): Promise<PendingVisit | null> {
   const user = await getSession();
   if (!user || !supabaseAdminConfigured()) return null;
   const db = createSupabaseAdminClient();
+  // The newest intake only: an older one left open (a different product,
+  // never bought) is superseded and must not send them to a visit.
   const { data } = await db
     .from('intake_submissions')
-    .select('id, answers')
+    .select('id, answers, status')
     .eq('user_id', user.id)
-    .eq('status', 'awaiting_visit')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!data) return null;
+  if (!data || data.status !== 'awaiting_visit') return null;
   const a = (data.answers ?? {}) as Record<string, unknown>;
   return {
     intakeId: data.id,
@@ -631,7 +652,8 @@ export async function submitVisitAction(
   };
   // What this visit asked about is what it covers; the server records it.
   const asked = products.map((p) => p.id);
-  merged.assessedProductIds = asked;
+  // Keep what earlier intakes covered; add what this visit asked about.
+  merged.assessedProductIds = [...new Set([...intakeProductIds(onFile), ...asked])];
   if (!asked.includes(merged.requestedProductId as string) && products[0]) {
     merged.requestedProductId = products[0].id;
     merged.requestedProduct = products[0].name;
@@ -644,10 +666,7 @@ export async function submitVisitAction(
   // The wizard stops a knockout in the browser; this stops one sent without it.
   const knockout = firstKnockout(merged);
   if (knockout) {
-    await db
-      .from('intake_submissions')
-      .update({ status: 'declined', review_notes: `Safety screen: ${knockout}` })
-      .eq('id', intake.id);
+    await closeForKnockout(db, user.id, knockout);
     return { ok: false, knockout };
   }
   if (problem) return { ok: false, error: problem };
@@ -664,17 +683,40 @@ export async function submitVisitAction(
   if (error) return { ok: false, error: 'Could not save your visit. Try again.' };
 
   await syncProfileFromAnswers(db, user.id, merged);
+  // Their order was waiting on these answers: it goes to the prescriber now.
+  const released = await releaseHeldOrders(user.id);
+  // Confirm to the member (best effort: the visit is saved either way).
+  if (user.email) {
+    const first = typeof merged.first_name === 'string' && merged.first_name.trim() ? merged.first_name.trim() : 'there';
+    const msg = visitCompleteEmail({ firstName: first, ordered: released > 0 });
+    await sendEmail({ to: user.email, subject: msg.subject, html: msg.html }).catch(() => undefined);
+  }
   return { ok: true, caseId: intake.case_id };
 }
 
-/** A knockout during the visit closes the intake as clinically declined. */
+/**
+ * The member confirmed a safety answer that rules the treatment out. A
+ * product's own contraindication closes only their waiting order (they can
+ * still be treated for something else); a general one (cancer, pregnancy,
+ * organ disease, age) also closes the intake, as before.
+ */
 export async function declineVisitAction(knockoutKey: string): Promise<void> {
   const user = await getSession();
   if (!user || !supabaseAdminConfigured()) return;
-  const db = createSupabaseAdminClient();
-  await db
-    .from('intake_submissions')
-    .update({ status: 'declined', review_notes: `Safety screen: ${knockoutKey}` })
-    .eq('user_id', user.id)
-    .eq('status', 'awaiting_visit');
+  await closeForKnockout(createSupabaseAdminClient(), user.id, knockoutKey);
+}
+
+async function closeForKnockout(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string,
+  knockoutKey: string,
+): Promise<void> {
+  if (knockoutKey !== 'product_contraindication') {
+    await db
+      .from('intake_submissions')
+      .update({ status: 'declined', review_notes: `Safety screen: ${knockoutKey}` })
+      .eq('user_id', userId)
+      .eq('status', 'awaiting_visit');
+  }
+  await declineHeldOrders(userId, SAFETY_DECLINE);
 }

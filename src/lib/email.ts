@@ -367,8 +367,8 @@ export function intakeConfirmationEmail(firstName: string): {
            <div style="${EYEBROW}">WHAT HAPPENS NEXT</div>
            <p style="margin:0 0 12px;"><strong style="color:${INK};">1. Finish checkout.</strong><br/>
            Your card is saved, not charged. You&rsquo;re only charged if a licensed physician approves your treatment.</p>
-           <p style="margin:0 0 12px;"><strong style="color:${INK};">2. Add anything your physician needs.</strong><br/>
-           Some treatments need a couple of photos. If yours does, your portal will show it.</p>
+           <p style="margin:0 0 12px;"><strong style="color:${INK};">2. Answer a few health questions.</strong><br/>
+           Right after checkout, about 2 minutes. Your physician reviews them and may message you with a question.</p>
            <p style="margin:0;"><strong style="color:${INK};">3. Your treatment ships discreetly.</strong><br/>
            Tracking is added to your order the moment it leaves the pharmacy.</p>
          </td></tr>
@@ -687,18 +687,43 @@ export function abandonedCartEmail(input: {
  * Worth more than the cart nudge: they already gave us an email, a history and
  * an intent, and are blocked on a step they may not realise is outstanding.
  */
+/** The member finished the health questions that follow checkout. */
+export function visitCompleteEmail(input: { firstName: string; ordered: boolean }): { subject: string; html: string } {
+  return {
+    subject: input.ordered ? 'Thanks. Dr. Elder is reviewing your order' : 'Thanks. Your health questions are in',
+    html: shell(
+      `<div style="${EYEBROW}">HEALTH QUESTIONS RECEIVED</div>
+       <h1 style="${H1}">Thanks, ${escapeHtml(input.firstName)}. You&rsquo;re all set.</h1>
+       <p style="${P}">${
+         input.ordered
+           ? 'Dr. Elder is reviewing your answers and your order now. He may message you in your portal if he has a question.'
+           : 'Your answers are saved. Check out when you&rsquo;re ready, and Dr. Elder will review your order.'
+       } <strong style="color:${INK};">You haven&rsquo;t been charged.</strong></p>
+       ${nextStep(
+         input.ordered
+           ? 'If he approves, your card is charged and your treatment ships. We&rsquo;ll email your tracking. If not, you pay nothing.'
+           : 'You&rsquo;re charged only if he approves your treatment.',
+       )}
+       ${button(input.ordered ? 'View your order' : 'Go to checkout', `${SITE_URL}${input.ordered ? '/portal/orders' : '/checkout'}`)}`,
+      { preheader: input.ordered ? 'Dr. Elder is reviewing your order. Nothing charged yet.' : 'Your answers are saved. Nothing charged.' },
+    ),
+  };
+}
+
 export function unfinishedVisitEmail(input: {
   firstName: string;
   visitUrl: string;
+  /** The third and final reminder. */
+  last?: boolean;
 }): { subject: string; html: string } {
   return {
-    subject: 'You’re one step from a prescriber',
+    subject: 'Your order is waiting on a few health questions',
     html: shell(
       `<h1 style="${H1}">Almost there, ${escapeHtml(input.firstName)}.</h1>
-       <p style="${P}">Your account is set up, but a prescriber can&rsquo;t review anything until the medical questions are answered. It&rsquo;s four short screens and takes about a minute.</p>
-       ${nextStep('Nothing is charged for completing it, and nothing is charged unless a prescriber approves your treatment.')}
-       ${button('Finish your visit', input.visitUrl)}
-       <p style="${NOTE}font-size:12px;">Changed your mind? You can ignore this. We won&rsquo;t send another.</p>`,
+       <p style="${P}">Your order is in, but Dr. Elder can&rsquo;t review it until you answer a few quick health questions. It takes about 2 minutes.</p>
+       ${nextStep('Nothing has been charged. You&rsquo;re charged only if Dr. Elder approves your treatment.')}
+       ${button('Answer the questions', input.visitUrl)}
+       <p style="${NOTE}font-size:12px;">${input.last ? 'This is our last reminder. Changed your mind? Ignore this and nothing is charged.' : 'Changed your mind? Ignore this and nothing is charged.'}</p>`,
     ),
   };
 }
@@ -902,7 +927,10 @@ export function orderReceivedEmail(input: {
   shipping: number;
   discount: number;
   total: number;
+  /** The health questions that follow checkout are still to answer; the order waits on them. */
+  healthQuestions?: boolean;
 }): { subject: string; html: string } {
+  const hq = input.healthQuestions === true;
   const rows = input.items
     .map(
       // No drug names in member email; the portal has the detail.
@@ -923,7 +951,11 @@ export function orderReceivedEmail(input: {
     html: shell(
       `<div style="${EYEBROW}">ORDER RECEIVED</div>
        <h1 style="${H1}">Thanks, ${escapeHtml(input.firstName)}. Your order is in.</h1>
-       <p style="${P}">Your prescriber is reviewing your visit now. <strong style="color:${INK};">You haven&rsquo;t been charged.</strong></p>
+       <p style="${P}">${
+         hq
+           ? 'One more step: answer a few quick health questions (about 2 minutes) so your prescriber can review your order.'
+           : 'Your prescriber is reviewing your visit now.'
+       } <strong style="color:${INK};">You haven&rsquo;t been charged.</strong></p>
        ${nextStep('If your treatment is approved, we&rsquo;ll email you a receipt. If it isn&rsquo;t, you pay nothing.')}
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          ${rows}
@@ -934,11 +966,11 @@ export function orderReceivedEmail(input: {
            ).toFixed(2)}</td>
          </tr>
        </table>
-       ${button('View your order', `${SITE_URL}/portal/orders`)}
+       ${hq ? button('Answer the questions', `${SITE_URL}/portal/visit`) : button('View your order', `${SITE_URL}/portal/orders`)}
        <p style="${NOTE}">Order reference <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
        )}</strong>. Questions? Just reply to this email.</p>`,
-      { preheader: 'Your prescriber is reviewing it now. Nothing charged yet.' },
+      { preheader: hq ? 'One more step: a few health questions. Nothing charged yet.' : 'Your prescriber is reviewing it now. Nothing charged yet.' },
     ),
   };
 }

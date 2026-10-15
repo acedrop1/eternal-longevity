@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { getSession, loginUrl } from '@/lib/auth-server';
-import { intakeStateFor } from '@/lib/intake-status';
+import { assessmentDone, intakeStateFor } from '@/lib/intake-status';
 import { checkoutPrefill } from '@/lib/checkout-prefill';
 import { cardOnFile, frameAccountFor, paymentsConfigured } from '@/lib/payments';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
@@ -14,6 +14,9 @@ import { heldProductsFor } from '@/lib/held-products';
 import { getAnyShopProduct } from '@/lib/shopProducts';
 import { getShippingSettings } from '@/lib/shipping-settings';
 import { firstBoxFree } from '@/lib/first-box';
+import { getLiveProducts } from '@/lib/catalog';
+import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
+import { intakeProductIds } from '@/lib/intake-rules';
 
 export const metadata: Metadata = {
   title: 'Checkout',
@@ -41,7 +44,8 @@ export default async function CheckoutPage() {
    * the medical visit first rather than letting them fill in an address and a
    * card only to be rejected by the server at the end.
    */
-  if ((await intakeStateFor(user.id)) !== 'submitted') {
+  const intakeState = await intakeStateFor(user.id);
+  if (!assessmentDone(intakeState)) {
     redirect('/portal/visit');
   }
 
@@ -53,12 +57,18 @@ export default async function CheckoutPage() {
    * (an order on its way, a plan) are flagged on their lines up front too.
    */
   let held: Record<string, 'order' | 'plan'> = {};
+  let answers: Record<string, unknown> = {};
+  let holding = new Map<string, 'order' | 'plan'>();
+  let cartIds: string[] = [];
   if (supabaseAdminConfigured()) {
-    const [{ items }, answers, holding] = await Promise.all([
+    const [{ items }, onFile, holds] = await Promise.all([
       loadCart(),
       latestIntakeAnswers(user.id),
       heldProductsFor(user.id),
     ]);
+    answers = onFile;
+    holding = holds;
+    cartIds = items.map((i) => i.productId);
     held = Object.fromEntries([...holding].filter(([id]) => items.some((i) => i.productId === id)));
     const owed = [...new Set(items.map((i) => i.productId))]
       .filter((id) => !intakeCovers(answers, id))
@@ -101,6 +111,28 @@ export default async function CheckoutPage() {
   }
 
   /*
+   * Add-ons (Admin → Products → Add-on at checkout): live, needing no new
+   * questions from this member (intakeCovers, so placeOrder accepts them), not
+   * something they already have, and meant for a treatment area they're here
+   * for. Demo has no intake, so only products with no questions qualify.
+   */
+  const areas = new Set<string>(
+    [
+      ...[...intakeProductIds(answers), ...cartIds].map((id): string => PRODUCT_CATEGORY[id] ?? ''),
+      ...[answers.entryCategory, answers.goal_category].filter((v): v is string => typeof v === 'string'),
+    ].filter(Boolean),
+  );
+  const addons = (await getLiveProducts())
+    .filter(
+      (p) =>
+        p.addon &&
+        intakeCovers(answers, p.id) &&
+        !holding.has(p.id) &&
+        (!p.addonFor?.length || p.addonFor.some((a) => areas.has(a))),
+    )
+    .map((p) => p.id);
+
+  /*
    * They gave us a phone and a ZIP during the intake. Asking for them again at
    * checkout is asking someone to prove they meant it.
    */
@@ -133,6 +165,8 @@ export default async function CheckoutPage() {
         paymentAccountId={paymentAccountId ?? undefined}
         pricePerShipment={shipSettings.pricePerShipment}
         firstBoxFree={freeBox}
+        addons={addons}
+        healthNext={intakeState === 'awaiting_visit'}
       />
     </main>
   );

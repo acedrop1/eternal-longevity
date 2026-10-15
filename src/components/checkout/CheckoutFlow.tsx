@@ -11,16 +11,18 @@ import {
 } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ShieldCheck, Stethoscope, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
 import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
-import { SERVICE_AREA_OR, SITE_NAME } from '@/lib/site';
+import { SERVICE_AREA_OR, SITE_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/site';
 import { monthsPerCycle } from '@/lib/order-rules';
 import { shippingChargeCents, shippingLabelFor } from '@/lib/shipping';
-import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
+import { cadenceTiersForProduct, shipmentsPerCycle, type CadenceTier } from '@/lib/shopProducts';
+import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { cityForZip } from '@/lib/njZips';
 import {
   usePlacesAutocomplete,
@@ -84,7 +86,14 @@ interface CheckoutFlowProps {
   pricePerShipment: number;
   /** The basket's first box ships free (lib/first-box firstBoxFree), as placeOrder will charge it. */
   firstBoxFree: boolean;
+  /** Products offered as "Add to your order" (Admin → Products → Add-on), already vetted for this member. */
+  addons?: string[];
+  /** The health questions come right after this checkout (intake 'awaiting_visit'). */
+  healthNext?: boolean;
 }
+
+/** Lines in one checkout (order-rules MAX_ORDER_LINES): no add-on offer beyond it. */
+const MAX_LINES = 5;
 
 // ============================================================================
 // Input formatters
@@ -201,6 +210,8 @@ export function CheckoutFlow({
   held = {},
   pricePerShipment,
   firstBoxFree,
+  addons = [],
+  healthNext = false,
 }: CheckoutFlowProps) {
   const router = useRouter();
   const {
@@ -209,8 +220,10 @@ export function CheckoutFlow({
     hydrated,
     removeItem,
     setCadence,
+    addItem,
     clear: clearCart,
   } = useCart();
+  const { products: catalog } = useCatalog();
   const { placeOrder } = useOrders();
   const {
     profile,
@@ -466,6 +479,18 @@ export function CheckoutFlow({
   // Rounded to cents: a percent discount leaves float dust (0.9899999…).
   const total = Math.round((Math.max(0, subtotal - discount) + (freeShipping ? 0 : shippingCost) + tax) * 100) / 100;
   const totalText = Number.isInteger(total) ? String(total) : total.toFixed(2);
+  // What the chosen plans save against monthly orders, shipping included: the
+  // same "Save $X" the product page and the assessment show for that plan.
+  const planSavings = lines.reduce((s, l) => s + (l.tiers.find((x) => x.key === l.cadence)?.saved ?? 0) * l.qty, 0);
+  // Add-on cards: offered products not already in the basket, on the first line's plan when they have it.
+  const addonOffers = catalog
+    .filter((p) => addons.includes(p.id) && !lines.some((l) => l.productId === p.id))
+    .map((p) => {
+      const tiers = cadenceTiersForProduct(p, pricePerShipment);
+      const tier = tiers.find((x) => x.key === lines[0]?.cadence) ?? tiers[0];
+      return { product: p, tier };
+    })
+    .filter((o) => o.tier);
 
   // A discount is priced on the basket it was applied to: re-price it when a plan or line changes.
   useEffect(() => {
@@ -795,7 +820,7 @@ export function CheckoutFlow({
         {/* ============ ORDER SUMMARY ============
             First in DOM so it appears at top on mobile (as a collapsible card),
             but lg:order-2 puts it in the right column on desktop. */}
-        <aside className="lg:order-2">
+        <aside className="min-w-0 lg:order-2">
           <div className="lg:sticky lg:top-8">
             <div className="overflow-hidden rounded-shell bg-milk">
               {/* Compact mobile header. Tap to expand. Hidden on lg+ where the
@@ -834,8 +859,9 @@ export function CheckoutFlow({
                   </span>
                 </span>
                 <span className="flex flex-shrink-0 items-center gap-2">
-                  <span className="text-[16px] font-semibold text-ink tabular-nums">
-                    ${totalText}
+                  <span className="text-right leading-tight">
+                    <span className="block text-[16px] font-semibold text-ink tabular-nums">$0 today</span>
+                    <span className="block text-[12px] text-ink/65 tabular-nums">${totalText} if approved</span>
                   </span>
                   <svg
                     width="14"
@@ -895,26 +921,17 @@ export function CheckoutFlow({
                             {l.name}
                           </div>
                           {l.tiers.length > 1 ? (
-                            <select
-                              aria-label={`Plan for ${l.name}`}
+                            <PlanPicker
+                              name={l.name}
+                              tiers={l.tiers}
                               value={l.cadence}
-                              onChange={(e) => setCadence(l.productId, l.cadence, e.target.value as Cadence)}
-                              className="mt-1 w-full max-w-[260px] rounded-full bg-white py-1 pl-3 pr-2 text-[16px] font-medium text-ink ring-1 ring-ink/10 focus:outline-none focus:ring-2 focus:ring-ink/20 lg:text-[13px]"
-                            >
-                              {l.tiers.map((t) => (
-                                <option key={t.key} value={t.key}>
-                                  {t.label} billing · ${t.total}
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(next) => setCadence(l.productId, l.cadence, next)}
+                            />
                           ) : (
                             <div className="mt-0.5 text-[13px] font-medium text-ink/60">
                               {l.cadenceLabel}
                             </div>
                           )}
-                          <div className="mt-0.5 text-[13px] text-ink/65">
-                            {l.sub} · Qty {l.qty}
-                          </div>
                           <div className="mt-0.5 text-[13px] text-ink/65">
                             {l.shippingLabel}
                             {l.shipments > 1 ? ' · 2 boxes' : ''} · {l.shipping ? `$${l.shipping}` : 'Free'}
@@ -973,6 +990,20 @@ export function CheckoutFlow({
                   <span className="font-medium text-ink">Prescription required</span>
                   <span>· 503A compounded</span>
                 </div>
+                <ul className="-mt-2 mb-5 space-y-1.5 text-[13px] text-ink/75">
+                  {[
+                    'Physician review included',
+                    'Message your physician any time',
+                    firstBoxFree ? 'Your first box ships free' : 'Discreet, tracked shipping',
+                  ].map((b) => (
+                    <li key={b} className="flex items-center gap-2">
+                      <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-none text-emerald-700">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
 
                 <div className="space-y-2 border-t border-ink/10 pt-4 text-[15px]">
                   <SummaryRow label="Subtotal" value={`$${subtotal}`} />
@@ -1028,19 +1059,15 @@ export function CheckoutFlow({
                   )}
 
                   <div className="my-2 h-px bg-ink/10" />
-                  <SummaryRow
-                    label="Total if approved"
-                    value={`$${totalText}`}
-                    emphasis
-                  />
+                  <SummaryRow label="Due today" value="$0" emphasis />
+                  <SummaryRow label="Charged only if approved" value={`$${totalText}`} />
+                  {planSavings > 0 && (
+                    <p className="text-right text-[13px] font-medium text-emerald-700">
+                      You&apos;re saving ${Number.isInteger(planSavings) ? planSavings : planSavings.toFixed(2)} vs. monthly orders
+                    </p>
+                  )}
                 </div>
 
-                <div className="mt-5 rounded-inner bg-butter-soft px-4 py-3 text-[13px] leading-relaxed text-ink/70 ring-1 ring-butter-deep/40">
-                  <span className="font-semibold text-ink">
-                    Nothing is charged today.
-                  </span>{' '}
-                  You only pay if your prescriber approves your treatment.
-                </div>
 
               </div>
             </div>
@@ -1048,12 +1075,73 @@ export function CheckoutFlow({
         </aside>
 
         {/* ============ LEFT. FORM SECTIONS ============ */}
-        <div className="lg:order-1 space-y-3">
+        <div className="min-w-0 space-y-3 lg:order-1">
           <h1
-            className="mb-6 text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]"
+            className="text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance] md:text-[56px]"
           >
-            Start your cycle.
+            Almost done{defaultName.trim() ? `, ${defaultName.trim().split(/\s+/)[0]}` : ''}.
           </h1>
+          <ul className="mb-6 mt-4 space-y-3 rounded-shell bg-butter-soft p-4 ring-1 ring-butter-deep/40 md:p-5">
+            {(
+              [
+                [Wallet, <><span className="font-semibold text-ink">Place your order. $0 today.</span> Nothing is charged now.</>],
+                [
+                  Stethoscope,
+                  healthNext ? (
+                    <><span className="font-semibold text-ink">Answer a few health questions.</span> About 2 minutes, right after you order. Your physician reviews them and may message you.</>
+                  ) : (
+                    <><span className="font-semibold text-ink">Your physician reviews your answers.</span> They may message you with a few questions first.</>
+                  ),
+                ],
+                [ShieldCheck, <><span className="font-semibold text-ink">Charged only if approved.</span> Then your treatment ships. If it isn&apos;t approved, you pay nothing.</>],
+              ] as const
+            ).map(([Icon, s], n) => (
+              <li key={n} className="flex items-start gap-3 text-[15px] leading-snug text-ink-soft">
+                <span className="grid h-7 w-7 flex-none place-items-center rounded-full bg-white text-ink ring-1 ring-butter-deep/50">
+                  <Icon className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+
+          {hydrated && addonOffers.length > 0 && lines.length > 0 && lines.length < MAX_LINES && (
+            <section aria-labelledby="addons-title" className="mb-3 rounded-shell bg-milk p-4 md:p-5">
+              <h2 id="addons-title" className="text-[17px] font-semibold tracking-[-0.02em] text-ink">
+                Add to your order
+              </h2>
+              <p className="mt-0.5 text-[13px] text-ink/65">
+                Optional. Your physician reviews it with the rest of your order, and it bills only if approved.
+              </p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {addonOffers.slice(0, 4).map(({ product: a, tier }) => (
+                  <li key={a.id} className="flex items-center gap-3 rounded-inner bg-white p-3 ring-1 ring-ink/10">
+                    <span
+                      className="relative h-14 w-14 flex-none overflow-hidden rounded-thumb bg-milk-deep"
+                      style={a.shot ? undefined : { background: a.swatch }}
+                    >
+                      <Image src={a.image} alt="" fill sizes="56px" className={a.shot ? 'object-cover' : 'object-cover opacity-50'} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold text-ink">{a.name}</span>
+                      {a.addonPitch && <span className="block text-[12.5px] leading-snug text-ink/65">{a.addonPitch}</span>}
+                      <span className="mt-0.5 block text-[12.5px] font-medium text-ink tabular-nums">
+                        ${tier.perMonth}/mo · {tier.label}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addItem(a.id, tier.key, { quiet: true })}
+                      className="flex-none rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink ring-1 ring-ink/20 transition-colors hover:bg-butter"
+                      aria-label={`Add ${a.name} to your order`}
+                    >
+                      Add
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* === SECTION 1. EMAIL === */}
           <Section
@@ -1534,11 +1622,15 @@ export function CheckoutFlow({
               </div>
             )}
 
-            <div className="mt-4 flex items-baseline justify-between border-t border-ink/10 pt-4">
-              <span className="text-[15px] text-ink/60">Total if approved</span>
-              <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-ink">
-                ${totalText}
-              </span>
+            <div className="mt-4 space-y-1.5 border-t border-ink/10 pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[17px] font-semibold text-ink">Due today</span>
+                <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-ink">$0</span>
+              </div>
+              <div className="flex items-baseline justify-between text-[15px] text-ink/65">
+                <span>Charged only if your physician approves</span>
+                <span className="tabular-nums">${totalText}</span>
+              </div>
             </div>
 
             <label className="mt-5 flex cursor-pointer gap-3 rounded-inner bg-milk px-4 py-4 text-[14px] leading-relaxed text-ink-soft">
@@ -1618,7 +1710,7 @@ export function CheckoutFlow({
                   className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/20 border-t-ink"
                 />
               )}
-              {isPaying ? 'Placing order…' : 'Place order'}
+              {isPaying ? 'Placing order…' : 'Place order · $0 due today'}
             </button>
             {heldLines.length > 0 && !payError && (
               <p role="alert" className="mt-3 text-center text-[14px] text-red-600">
@@ -1643,8 +1735,9 @@ export function CheckoutFlow({
               </p>
             )}
             <p className="mt-3 text-center text-[13px] leading-relaxed text-ink/65">
-              Placing an order costs nothing. You can pause or cancel between
-              cycles at any time.
+              Placing an order costs nothing today. You can pause or cancel a plan any time in your portal, or
+              by contacting {SUPPORT_EMAIL} or {SUPPORT_PHONE}; cancelling before a renewal date stops that charge.
+              Secure, encrypted checkout.
             </p>
           </Section>
         </div>
@@ -1851,5 +1944,89 @@ function SaveToggle({
       </span>
       <span className="text-[15px] text-ink">{label}</span>
     </button>
+  );
+}
+
+/**
+ * The plan choice on a checkout line: price per month, the 1 month price
+ * crossed out on longer plans, and the saving. The cheapest plan per month is
+ * marked "Best value" (true by arithmetic; "Most popular" waits until sales
+ * data backs it). Choosing one moves the line (setCadence).
+ */
+function PlanPicker({
+  name,
+  tiers,
+  value,
+  onChange,
+}: {
+  name: string;
+  tiers: CadenceTier[];
+  value: Cadence;
+  onChange: (next: Cadence) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const monthly = tiers.find((x) => x.key === 'monthly');
+  const chosen = tiers.find((x) => x.key === value) ?? tiers[0];
+  const cheapest = tiers.reduce<CadenceTier | undefined>((b, x) => (!b || x.perMonth < b.perMonth ? x : b), undefined);
+  const best = cheapest && monthly && cheapest.perMonth < monthly.perMonth ? cheapest : undefined;
+  // Chosen in the assessment already: show it, and let them change it.
+  if (!open) {
+    const pct = monthly && chosen.key !== 'monthly' && monthly.perMonth > 0 ? Math.round((1 - chosen.perMonth / monthly.perMonth) * 100) : 0;
+    return (
+      <div className="mt-0.5 text-[13px] text-ink/70">
+        <span className="font-medium text-ink">{chosen.label}</span> · ${chosen.perMonth}/mo
+        {pct > 0 && <span className="font-medium text-emerald-700"> · Save {pct}%</span>}{' '}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="ml-1 font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+          aria-label={`Change plan for ${name}`}
+        >
+          Change
+        </button>
+      </div>
+    );
+  }
+  return (
+    <fieldset className="mt-2 space-y-1.5">
+      <legend className="sr-only">Plan for {name}</legend>
+      {tiers.map((t) => {
+        const on = t.key === value;
+        const pct = monthly && t.key !== 'monthly' && monthly.perMonth > 0 ? Math.round((1 - t.perMonth / monthly.perMonth) * 100) : 0;
+        return (
+          <label
+            key={t.key}
+            className={cn(
+              'flex cursor-pointer items-center gap-2.5 rounded-inner px-3 py-2 ring-1 transition-colors',
+              on ? 'bg-butter-soft ring-butter-deep' : 'bg-white ring-ink/10 hover:bg-milk',
+            )}
+          >
+            <input
+              type="radio"
+              name={`plan-${name}`}
+              className="h-4 w-4 flex-none accent-ink"
+              checked={on}
+              onChange={() => {
+                onChange(t.key);
+                setOpen(false);
+              }}
+            />
+            <span className="min-w-0 flex-1 text-[13px] font-medium text-ink">
+              {t.label}
+              {best?.key === t.key && (
+                <span className="ml-1.5 inline-block rounded-full bg-ink px-1.5 py-[1px] align-[1px] text-[10px] font-semibold text-white">
+                  Best value
+                </span>
+              )}
+            </span>
+            <span className="text-right text-[13px] tabular-nums">
+              {pct > 0 && monthly && <s className="mr-1 text-ink/45">${monthly.perMonth}</s>}
+              <span className="font-semibold text-ink">${t.perMonth}/mo</span>
+              {pct > 0 && <span className="block text-[11px] font-medium text-emerald-700">Save {pct}%</span>}
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
   );
 }

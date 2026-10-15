@@ -256,6 +256,7 @@ export function FieldRenderer({
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
+          maxLength={2000}
           rows={4}
           className={cn(input, 'resize-none')}
         />

@@ -39,6 +39,9 @@ const BLANK: ProductInput = {
   image: '',
   popular: false,
   fdaApproved: false,
+  addon: false,
+  addonPitch: '',
+  addonFor: [],
   pharmacy: { sku: '', quantity: 1, defaultSig: '', name: '', strength: '', size: '', dosageForm: '', unitCost: 0 },
 };
 
@@ -75,6 +78,9 @@ export default async function AdminProductPage({ params }: PageProps) {
       image: p.image,
       popular: Boolean(p.popular),
       fdaApproved: Boolean(p.fdaApproved),
+      addon: Boolean(p.addon),
+      addonPitch: p.addonPitch ?? '',
+      addonFor: p.addonFor ?? [],
       pharmacy: { ...rx, sku: rx.sku ?? '', defaultSig: rx.defaultSig ?? '' },
     };
   }

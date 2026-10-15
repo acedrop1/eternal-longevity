@@ -4,7 +4,7 @@ import type { IntakeProduct } from '@/lib/intakeSchema';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 
 /** Orders the prescriber has not decided yet. */
-const OPEN_ORDER_STATUSES = ['pending', 'pending-admin', 'assigned'] as const;
+const OPEN_ORDER_STATUSES = ['pending', 'awaiting-visit', 'pending-admin', 'assigned'] as const;
 
 /**
  * The products a member's visit covers, primary first, without repeats:

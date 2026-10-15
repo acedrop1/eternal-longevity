@@ -111,6 +111,17 @@ export interface ShopProduct {
    * storefront at /shop.
    */
   fdaApproved?: boolean;
+  /**
+   * Upsell: offer this product as an "Add to your order" card at checkout
+   * (Admin → Products → Add-on). Shown only to members it needs no new
+   * questions from, and only after the treatment areas in addonFor (empty =
+   * any). It is still prescribed and approved like any other line.
+   */
+  addon?: boolean;
+  /** One line on the add-on card, e.g. "Supports healthy hair between doses." */
+  addonPitch?: string;
+  /** Intake treatment areas this add-on is offered with ('hair', 'skin', …); empty = all. */
+  addonFor?: string[];
 }
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
@@ -2005,6 +2016,8 @@ export interface CadenceTier {
   total: number;
   perMonth: number;
   saveLabel?: string;
+  /** Dollars saved against monthly orders, shipping included (0 for monthly). */
+  saved: number;
   /** What the plan actually includes, shown under the selected option. */
   breakdown: string[];
 }
@@ -2049,6 +2062,7 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
       total,
       perMonth: Math.round(total / months),
       saveLabel: dollars > 0 ? `Save $${dollars}` : undefined,
+      saved: Math.max(0, dollars),
       breakdown: [...(dollars > 0 ? [saveLine(dollars, months)] : []), `${billing}, ${shipping.toLowerCase()}`, ...common],
     };
   };
@@ -2060,6 +2074,7 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
       description: 'Billed and shipped every month · Cancel anytime',
       total: m,
       perMonth: m,
+      saved: 0,
       breakdown: ['Billed and shipped every month', ...common],
     },
     plan('quarterly', '3 month plan', 3, q, 'Billed every 3 months', 'Ships every 3 months'),

@@ -470,7 +470,7 @@ const STEPS = [
   { title: 'Delivered to your door', body: 'Made to order by a licensed 503A pharmacy and shipped to you, tracked.' },
 ];
 
-export function HowItWorks() {
+export function HowItWorks({ href = '/start' }: { href?: string }) {
   return (
     <section id="how-it-works" className="scroll-mt-24 bg-white px-3 md:px-5">
       <div className="relative mx-auto overflow-hidden rounded-shell bg-milk px-5 py-16 md:px-10 md:py-24">
@@ -494,7 +494,7 @@ export function HowItWorks() {
             ))}
           </ol>
           <div className="mt-10 flex justify-center">
-            <Link href="/start" className="group flex items-center gap-2 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
+            <Link href={href} className="group flex items-center gap-2 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
               Start your assessment
               <ArrowDot className="bg-butter ring-0" />
             </Link>
@@ -602,7 +602,7 @@ export async function HomeFAQ() {
 /*  Closing band                                                               */
 /* -------------------------------------------------------------------------- */
 
-export function ClosingBand() {
+export function ClosingBand({ href = '/start' }: { href?: string }) {
   return (
     <section className="bg-white px-3 pb-3 md:px-5 md:pb-5">
       <div className="relative mx-auto overflow-hidden rounded-shell bg-butter-soft px-5 pb-6 pt-10 md:px-12 md:pt-16">
@@ -612,7 +612,7 @@ export function ClosingBand() {
             <h2 className="text-[34px] font-semibold leading-none tracking-[-0.05em] text-ink md:text-[52px]">Ready when you are.</h2>
             <p className="mt-3 text-[15px] text-ink-soft">Five minutes online. Reviewed by a physician. Nothing charged unless approved.</p>
           </div>
-          <Link href="/start" className="group flex w-fit shrink-0 items-center gap-3 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
+          <Link href={href} className="group flex w-fit shrink-0 items-center gap-3 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
             Start your assessment
             <ArrowDot className="h-9 w-9 bg-butter ring-0" />
           </Link>

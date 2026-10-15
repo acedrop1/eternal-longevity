@@ -39,7 +39,8 @@ interface CartAPI extends CartState {
   itemCount: number;
   /** False until the saved cart has loaded: an empty cart before then means nothing yet. */
   hydrated: boolean;
-  addItem: (productId: string, cadence: Cadence) => void;
+  /** quiet: don't open the cart drawer (checkout add-ons). */
+  addItem: (productId: string, cadence: Cadence, opts?: { quiet?: boolean }) => void;
   removeItem: (productId: string, cadence: Cadence) => void;
   setQuantity: (productId: string, cadence: Cadence, qty: number) => void;
   /** Move a line to another plan, merging with that plan's line if there is one. */
@@ -144,7 +145,7 @@ export function CartProvider({
     }
   }, [state.drawerOpen, hydrated]);
 
-  const addItem = useCallback((productId: string, cadence: Cadence) => {
+  const addItem = useCallback((productId: string, cadence: Cadence, opts?: { quiet?: boolean }) => {
     setState((s) => {
       const existing = s.items.find(
         (it) => it.productId === productId && it.cadence === cadence
@@ -156,7 +157,7 @@ export function CartProvider({
             ...s.items.filter((it) => it.productId !== productId),
             { productId, cadence, quantity: 1, addedAt: Date.now() },
           ];
-      return { items: next, drawerOpen: true };
+      return { items: next, drawerOpen: !opts?.quiet };
     });
   }, []);
 

@@ -105,6 +105,7 @@ export function getPhysicianName(_id?: string): string | null {
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'RECEIVED',
   'pending-admin': 'IN REVIEW',
+  'awaiting-visit': 'WAITING ON HEALTH QUESTIONS',
   'denied-admin': 'CLOSED BY TEAM',
   assigned: 'WITH PRESCRIBER',
   // Approved, not paid. Payment lands as 'paid'.
@@ -127,6 +128,7 @@ export function statusLabel(status: string): string {
 export const MEMBER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Under review',
   'pending-admin': 'Under review',
+  'awaiting-visit': 'Health questions needed',
   'denied-admin': 'Cancelled',
   assigned: 'With your prescriber',
   signed: 'Approved: payment needed',
@@ -152,6 +154,7 @@ export function memberStatusLabel(order: Pick<Order, 'status' | 'updates'>): str
 export const STATUS_TONE: Record<OrderStatus, Tone> = {
   pending: 'neutral',
   'pending-admin': 'neutral',
+  'awaiting-visit': 'warn',
   'denied-admin': 'error',
   assigned: 'gold',
   signed: 'warn',

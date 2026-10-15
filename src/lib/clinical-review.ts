@@ -279,11 +279,12 @@ function buildReview(input: {
       },
       {
         label: 'Medications, supplements and herbals',
-        value: str(a, 'medications'),
-        flag: str(a, 'medications') !== '—',
+        value: a.meds_any === 'no' ? 'None reported' : str(a, 'medications'),
+        flag: a.meds_any !== 'no' && str(a, 'medications') !== '—',
       },
       { label: 'Drug allergies', value: allergies.text, flag: allergies.flag },
       { label: 'Allergy detail', value: str(a, 'allergies_detail') },
+      { label: 'Note for the physician', value: str(a, 'provider_note'), flag: str(a, 'provider_note') !== '—' },
       // One screen per product in the visit: the first is `product_contraindications`,
       // each extra one `product_contraindications__<productId>`.
       ...Object.keys(a)

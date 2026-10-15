@@ -80,7 +80,63 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
     .maybeSingle();
 
   if (!order) return { ok: false, error: 'not_found' };
-  if (order.status !== 'pending-admin') return { ok: true };
+  if (order.status !== 'pending-admin' && order.status !== 'awaiting-visit') return { ok: true };
+
+  /*
+   * The health questions come right after checkout (the portal visit). Until
+   * they are answered there is nothing for the prescriber to review, so the
+   * order waits as 'awaiting-visit': not in his queue, never charged.
+   * submitVisitAction calls this again once they are in.
+   */
+  if (order.user_id) {
+    const { data: intake, error: intakeErr } = await db
+      .from('intake_submissions')
+      .select('status')
+      .eq('user_id', order.user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    // Fail closed: unsure whether the health questions are done, so it stays put
+    // (pending-admin) and the hourly sweep retries.
+    if (intakeErr) return { ok: false, error: intakeErr.message };
+    if (intake?.status === 'awaiting_visit') {
+      if (order.status === 'pending-admin') {
+        const { data: held } = await db
+          .from('orders')
+          .update({ status: 'awaiting-visit' })
+          .eq('id', order.id)
+          .eq('status', 'pending-admin')
+          .select('id');
+        if (held?.length) {
+          await db.from('order_updates').insert({
+            order_id: order.id,
+            label: 'Waiting on health questions',
+            body: 'Sent to the prescriber once the member answers the health questions.',
+            author: 'System',
+            author_role: 'system',
+            status_change: 'awaiting-visit',
+          });
+          // The team hears about every order the moment it is placed; the prescriber only once it's reviewable.
+          const who = order.member_name ?? 'A member';
+          await sendEmail({
+            to: SUPPORT_EMAIL,
+            subject: `New order placed — ${orderRef(order.order_number)}`,
+            html: noticeEmail({
+              eyebrow: 'New order',
+              heading: `${who} placed an order`,
+              body: 'It is waiting on their health questions (asked right after checkout). It goes to the prescriber the moment they finish. Nothing is charged until he signs.',
+              rows: [
+                ['Order', orderRef(order.order_number)],
+                ['Member', who],
+              ],
+              cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
+            }),
+          }).catch(() => undefined);
+        }
+      }
+      return { ok: true };
+    }
+  }
 
   /*
    * No payment gate here. Checkout saves a card and reserves nothing, so the
@@ -100,7 +156,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
       admin_note: notes.length ? notes.join(' ') : null,
     })
     .eq('id', order.id)
-    .eq('status', 'pending-admin')
+    .in('status', ['pending-admin', 'awaiting-visit'])
     .select('id');
   if (moveErr) {
     console.error('[release-to-doctor] update failed:', moveErr.message);
@@ -133,7 +189,10 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order`,
-        body: 'It has gone straight to the prescriber. Nothing is charged until he signs.',
+        body:
+          order.status === 'awaiting-visit'
+            ? 'They finished their health questions, so it is with the prescriber now. Nothing is charged until he signs.'
+            : 'It has gone straight to the prescriber. Nothing is charged until he signs.',
         rows: [
           ['Order', orderRef(order.order_number)],
           ['Member', memberName],
@@ -204,4 +263,44 @@ export async function pageDoctors(
       }
     }
   }
+}
+
+/**
+ * The member just answered the health questions: every order of theirs that
+ * was waiting on them goes to the prescriber now (and he is told).
+ */
+export async function releaseHeldOrders(userId: string): Promise<number> {
+  if (!supabaseAdminConfigured()) return 0;
+  const db = createSupabaseAdminClient();
+  const { data } = await db.from('orders').select('order_number').eq('user_id', userId).eq('status', 'awaiting-visit');
+  for (const o of data ?? []) await releaseToDoctor(o.order_number);
+  revalidatePath('/portal/doctor');
+  return data?.length ?? 0;
+}
+
+/**
+ * The health questions found a reason this treatment isn't safe for them (a
+ * safety-screen answer). Their waiting orders close here: never seen by the
+ * prescriber, never charged (nothing is charged before approval).
+ */
+export async function declineHeldOrders(userId: string, reason: string): Promise<void> {
+  if (!supabaseAdminConfigured()) return;
+  const db = createSupabaseAdminClient();
+  const { data } = await db
+    .from('orders')
+    .update({ status: 'declined-clinical', physician_note: reason })
+    .eq('user_id', userId)
+    .eq('status', 'awaiting-visit')
+    .select('id');
+  if (!data?.length) return;
+  await db.from('order_updates').insert(
+    data.map((o) => ({
+      order_id: o.id,
+      label: 'Not eligible',
+      body: reason,
+      author: 'System',
+      author_role: 'system' as const,
+      status_change: 'declined-clinical' as const,
+    })),
+  );
 }

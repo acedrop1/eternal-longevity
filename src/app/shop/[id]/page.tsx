@@ -10,7 +10,7 @@ import { getLiveProduct, getLiveProducts, toShopProduct } from '@/lib/catalog';
 import { pageMeta } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 import { getSession } from '@/lib/auth-server';
-import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { assessmentDone, intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { heldProductsFor } from '@/lib/held-products';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
@@ -36,7 +36,7 @@ async function ctaFor(productId: string): Promise<{ href?: string; label?: strin
   const has = held.get(productId);
   if (has === 'plan') return { href: '/portal/subscriptions', label: 'Manage your plan' };
   if (has === 'order') return { href: '/portal/orders', label: 'View your order' };
-  return state === 'submitted' && intakeCovers(answers, productId) ? {} : start;
+  return assessmentDone(state) && intakeCovers(answers, productId) ? {} : start;
 }
 
 interface PageProps {

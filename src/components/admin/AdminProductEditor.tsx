@@ -520,6 +520,41 @@ export function AdminProductEditor({
             </div>
           </SectionCard>
 
+          <SectionCard title="Add-on at checkout">
+            <div className="space-y-3">
+              <Check
+                checked={p.addon}
+                onChange={(v) => set('addon', v)}
+                label="Offer as an add-on"
+                body="Shows as “Add to your order” at checkout. Must also be Live. Best for products with no medical questions (supplements, shampoo): a prescription treatment only shows to members whose assessment already covered it. The prescriber still approves every line."
+              />
+              {p.addon && (
+                <>
+                  <Field label="One line on the card" hint="Up to 120 characters. Approved wording only.">
+                    <input className={input} value={p.addonPitch} maxLength={120} onChange={(e) => set('addonPitch', e.target.value)} />
+                  </Field>
+                  <div>
+                    <span className="mb-1.5 block text-[14px] font-medium text-ink/80">Show it with</span>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {ADDON_AREAS.map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2 text-[14px] text-ink">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-ink"
+                            checked={p.addonFor.includes(key)}
+                            onChange={(e) => set('addonFor', e.target.checked ? [...p.addonFor, key] : p.addonFor.filter((c) => c !== key))}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <span className="mt-1 block text-[13px] text-ink/60">None ticked: shown with every treatment.</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </SectionCard>
+
           <SectionCard title="Preview">
             {!p.isNew && baseline.status === 'live' ? (
               <Link
@@ -579,6 +614,14 @@ export function AdminProductEditor({
     </div>
   );
 }
+
+const ADDON_AREAS: [string, string][] = [
+  ['hair', 'Hair'],
+  ['skin', 'Skin'],
+  ['sexual-health', 'Sexual health'],
+  ['hormones', 'Hormones'],
+  ['longevity', 'Longevity'],
+];
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (

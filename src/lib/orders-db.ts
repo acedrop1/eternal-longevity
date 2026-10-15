@@ -50,7 +50,7 @@ import {
 } from '@/lib/order-rules';
 import type { Database } from '@/lib/database.types';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
-import { canOrder, latestIntakeAnswers } from '@/lib/intake-status';
+import { canOrder, intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
 import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { claimCheckout, releaseCheckout } from '@/lib/order-lock';
@@ -593,6 +593,7 @@ async function placeOrder(input: {
       shipping: bookedShippingCents,
       discount: bookedDiscountCents,
       total: bookedTotalCents,
+      healthQuestions: (await intakeStateFor(user.id)) === 'awaiting_visit',
     });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }
@@ -614,6 +615,26 @@ async function placeOrder(input: {
   return { ok: true, orderNumber: created[0] };
 }
 
+/**
+ * True while this order's member still owes the health questions that follow
+ * checkout (newest intake 'awaiting_visit'). Approving or signing then would
+ * skip them. Errors count as open: fail closed.
+ */
+async function healthQuestionsOpen(orderId: string): Promise<boolean> {
+  const db = createSupabaseAdminClient();
+  const { data: order, error } = await db.from('orders').select('user_id').eq('id', orderId).maybeSingle();
+  if (error) return true;
+  if (!order?.user_id) return false;
+  const { data: intake, error: intakeErr } = await db
+    .from('intake_submissions')
+    .select('status')
+    .eq('user_id', order.user_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return Boolean(intakeErr) || intake?.status === 'awaiting_visit';
+}
+
 /** Admin approves and releases the order for sign-off. */
 export async function approveOrderAction(
   orderNumber: string,
@@ -625,6 +646,7 @@ export async function approveOrderAction(
 
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
+  if (await healthQuestionsOpen(id)) return { ok: false, error: 'health_questions_open' };
 
   const moved = await moveOrder(id, ORDER_FROM.approve, {
     status: 'assigned',
@@ -852,6 +874,7 @@ export async function signRxAction(
 
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
+  if (await healthQuestionsOpen(id)) return { ok: false, error: 'health_questions_open' };
 
   /*
    * A product withheld or pulled back to draft after the order was placed is

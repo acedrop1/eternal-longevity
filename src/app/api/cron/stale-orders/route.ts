@@ -84,6 +84,17 @@ export async function GET(req: NextRequest) {
     now,
   );
 
+  // Orders held for the health questions: re-check any older than 15 minutes.
+  // releaseToDoctor sends them on if the visit is done (a release cut short, or
+  // a race with the visit) and simply holds them again if it is not.
+  const { data: waiting } = await db
+    .from('orders')
+    .select('order_number')
+    .eq('status', 'awaiting-visit')
+    .lt('created_at', new Date(now - 15 * 60_000).toISOString())
+    .limit(LIMIT);
+  for (const w of waiting ?? []) await releaseToDoctor(w.order_number).catch(() => undefined);
+
   // A failed release is retried every run: the point is to get it out. Only
   // one that still fails is worth telling anyone about.
   const stuckReleases: Stale[] = [];

@@ -552,6 +552,11 @@ const HORMONES_WOMEN: Step = {
 /*  Hair                                                                    */
 /* ----------------------------------------------------------------------- */
 
+/*
+ * Hair: only what the physician needs (short = more people finish). The
+ * transplant question lives on /hair's quick quiz only; /start saves that
+ * answer with the assessment for Admin → Marketing.
+ */
 const HAIR_HISTORY: Step = {
   id: 'cat-hair-history',
   eyebrow: 'YOUR HAIR',
@@ -570,17 +575,7 @@ const HAIR_HISTORY: Step = {
         { value: 'patches', label: 'Round or patchy spots' },
       ],
       flagOn: ['patches'],
-    },
-    {
-      id: 'hr_duration',
-      type: 'single-select',
-      label: 'When did you first notice it?',
-      required: true,
-      options: [
-        { value: 'lt1', label: 'Less than a year ago' },
-        { value: '1to3', label: '1 to 3 years ago' },
-        { value: 'gt3', label: 'More than 3 years ago' },
-      ],
+      why: 'The pattern of thinning helps your physician understand the likely cause. Round or patchy spots can have a different cause.',
     },
     {
       id: 'hr_pace',
@@ -594,6 +589,7 @@ const HAIR_HISTORY: Step = {
         { value: 'stable', label: "It isn't changing" },
       ],
       flagOn: ['sudden'],
+      why: 'Sudden shedding can have a different cause than gradual thinning, so your physician looks at it differently.',
     },
     {
       id: 'hr_family',
@@ -601,6 +597,7 @@ const HAIR_HISTORY: Step = {
       label: 'Does it run in your family?',
       required: true,
       options: YES_NO_UNSURE,
+      why: 'Hair loss often runs in families, on either side. Knowing helps your physician understand the likely cause.',
     },
   ],
 };
@@ -624,6 +621,7 @@ const HAIR_CONTEXT: Step = {
         { value: 'none', label: 'None of these' },
       ],
       flagOn: ['illness', 'surgery', 'weight', 'baby'],
+      why: 'Events like these can cause temporary shedding a few months later, which is treated differently.',
     },
     {
       id: 'hr_scalp',
@@ -632,6 +630,7 @@ const HAIR_CONTEXT: Step = {
       required: true,
       options: YES_NO,
       flagOn: ['yes'],
+      why: 'A scalp condition can affect hair and may need its own care first.',
     },
     {
       id: 'hr_tried',

@@ -203,7 +203,7 @@ export default async function AdminPortalPage() {
   const withPrescriber = by('assigned');
   const unpaid = by('signed').filter((r) => !r.paid_confirmed_at);
   const failedRelease = by('pending-admin');
-  const openOrders = by('pending-admin', 'assigned', 'signed', 'paid', 'compounding').length;
+  const openOrders = by('awaiting-visit', 'pending-admin', 'assigned', 'signed', 'paid', 'compounding').length;
   const stale = selectStale(o.orders, o.toPlace, Date.now());
   const staleCount = (k: StaleKind) => stale.filter((s) => s.kind === k).length;
 

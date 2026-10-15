@@ -12,7 +12,6 @@ import {
   CATEGORY_KNOCKOUTS,
   CATEGORY_LABEL,
   PRODUCT_CATEGORY,
-  buildCategorySteps,
   categorySteps,
   type CategoryKey,
 } from './intake-categories';
@@ -115,6 +114,8 @@ export type Field = {
   slots?: { id: string; label: string; hint: string; required?: boolean }[];
   /** file-upload: accepted types, e.g. 'application/pdf,image/*'. */
   accept?: string;
+  /** "Why we ask": one or two plain sentences, shown folded under the question. */
+  why?: string;
 };
 
 export type Step = {
@@ -469,19 +470,17 @@ export function productScreeningStep(
 ): Step {
   return {
     id: suffix ? `product-screen-${suffix}` : 'product-screen',
-    eyebrow: `SAFETY SCREEN · ${product.name.toUpperCase()}`,
-    heading: `A few questions specific to ${product.name}.`,
-    body: `These are the conditions that would make ${product.name} unsafe for you. Answer honestly — this is the screen that protects you.`,
+    eyebrow: `SAFETY CHECK · ${product.name.toUpperCase()}`,
+    heading: `A quick safety check for ${product.name}.`,
     fields: [
       {
         id: suffix ? `${PRODUCT_SCREEN_FIELD}__${suffix}` : PRODUCT_SCREEN_FIELD,
         type: 'single-select',
-        label: `Do any of the following apply to you?\n\n${product.contraindications
-          .map((c) => `• ${c}`)
-          .join('\n')}`,
+        // The wizard shows the "• " lines as a list card (IntakeWizard).
+        label: `Do any of these apply to you?\n\n${product.contraindications.map((c) => `• ${c}`).join('\n')}`,
         options: [
-          { value: 'none', label: 'None of these apply' },
-          { value: 'some', label: 'One or more applies' },
+          { value: 'none', label: 'No, none of these apply to me' },
+          { value: 'some', label: 'Yes, one or more applies' },
         ],
         required: true,
         knockoutOn: { values: ['some'], key: 'product_contraindication' },
@@ -541,14 +540,23 @@ export const CONDITIONS_STEP: Step = {
 export const MEDS_STEP: Step = {
   id: 'medications',
   eyebrow: 'MEDICATIONS & ALLERGIES',
-  heading: 'What do you currently take?',
-  body: 'Prescriptions, over-the-counter, supplements. Interactions matter.',
+  heading: 'Two quick ones.',
   fields: [
+    {
+      // A yes/no first, so "nothing" is one tap instead of an empty box to guess about.
+      id: 'meds_any',
+      type: 'pill-grid',
+      label: 'Do you take any medications, vitamins or supplements?\n\nInclude prescriptions, over-the-counter and herbal products.',
+      required: true,
+      options: YES_NO,
+    },
     {
       id: 'medications',
       type: 'text-long',
-      label: 'Medications, herbals and supplements — with dose',
-      placeholder: 'e.g. Lisinopril 10mg daily — blood pressure',
+      label: 'List each one, with the dose.',
+      placeholder: 'e.g. Lisinopril 10 mg daily',
+      required: true,
+      showIf: { field: 'meds_any', values: ['yes'] },
     },
     {
       id: 'allergies_any',
@@ -614,15 +622,6 @@ const GOOD_NEWS: Step = {
   fields: [],
 };
 
-const ALMOST_DONE: Step = {
-  id: 'almost-done',
-  eyebrow: 'NEXT',
-  heading: 'Almost done.',
-  body: 'Create your account so your physician can review.',
-  kind: 'interstitial',
-  fields: [],
-};
-
 /** Answer id of the recommendation screen: { productId, cadence }. */
 export const PLAN_FIELD = 'plan_choice';
 
@@ -631,6 +630,21 @@ export const RECOMMEND_STEP: Step = {
   eyebrow: 'YOUR TREATMENT',
   heading: 'Based on your answers, your physician may prescribe',
   fields: [{ id: PLAN_FIELD, type: 'recommendation', label: '', required: true }],
+};
+
+/** Hims-style last word before consents: anything we didn't ask (optional). */
+export const NOTE_STEP: Step = {
+  id: 'note',
+  eyebrow: 'FOR YOUR PHYSICIAN',
+  heading: 'Anything else your physician should know?',
+  fields: [
+    {
+      id: 'provider_note',
+      type: 'text-long',
+      label: 'Your note (optional)',
+      placeholder: "Questions, concerns, or anything we didn't ask.",
+    },
+  ],
 };
 
 /** What /start knows before the first question. */
@@ -674,44 +688,34 @@ const MEDIA_TYPES: FieldType[] = ['photo-upload', 'file-upload'];
  * Every pre-checkout screen for this visitor, in order. Steps still carry
  * their showIf; the wizard and the server both skip the ones that don't hold.
  *
- *   goal (no product/category) → category questions (no photos) → email →
- *   state → about you → body → health → conditions → medications →
- *   safety screen for the recommended product → "Good news" →
- *   recommendation → safety screen for the alternative, if they switched →
- *   consents → "Almost done" → account
+ *   goal (no product/category) → category questions (no photos) → state →
+ *   email → about you → "Good news" → recommendation → consents → account
+ *
+ * The health and safety questions follow checkout (buildVisitSteps); the
+ * order waits for them before it reaches the prescriber.
  *
  * Every answer is asked once: a field that appears again (sex) or is on file
  * (a member's `known`) is dropped from the later step.
  */
 export function buildAssessmentSteps(ctx: AssessmentContext, answers: Record<string, unknown>): Step[] {
   const category = assessmentCategory(ctx, answers);
-  const rec = recommendationFor(ctx, answers);
-  const chosen = chosenProduct(rec, answers);
   const step = (id: string) => STEPS.find((st) => st.id === id)!;
-  const screen = (id: string | null): Step[] => {
-    const p = id ? ctx.catalog[id] : undefined;
-    return p?.contraindications.length ? [productScreeningStep(p, id!)] : [];
-  };
+  // Hims order: only what picks a treatment comes before checkout. The health
+  // and safety questions are the portal visit, right after it (buildVisitSteps).
   const all: Step[] = [
     ...(ctx.category || ctx.productId ? [] : [GOAL_STEP]),
-    // State first, Hims-style: someone we can't treat finds out before answering anything else.
-    step('state'),
+    // Hims order: their goals and history first (the hook), then where they live.
     ...(category ? categorySteps(category, ctx.productId ? [ctx.productId] : []) : []).map((st) => ({
       ...st,
       fields: st.fields.filter((f) => !MEDIA_TYPES.includes(f.type)),
     })),
+    step('state'),
     ...(ctx.member ? [] : [step('email-capture')]),
     step('about'),
-    step('body'),
-    step('health'),
-    CONDITIONS_STEP,
-    MEDS_STEP,
-    ...screen(rec?.primary ?? null),
     GOOD_NEWS,
     RECOMMEND_STEP,
-    ...(chosen !== rec?.primary ? screen(chosen) : []),
     step('consents'),
-    ...(ctx.member ? [] : [ALMOST_DONE, step('account')]),
+    ...(ctx.member ? [] : [step('account')]),
   ];
   const seen = new Set(ctx.known ?? []);
   const out: Step[] = [];
@@ -724,17 +728,23 @@ export function buildAssessmentSteps(ctx: AssessmentContext, answers: Record<str
 }
 
 /**
- * The clinical visit completed in the portal. LEGACY: members who signed up
- * before the assessment moved ahead of checkout still have one open
- * ('awaiting_visit'); everyone else only has photos/labs left (MEDIA_STEPS).
+ * The health visit, right after checkout (intake 'awaiting_visit'):
+ * body* → health → conditions* → medications → each product's safety check →
+ * note for the physician (* not for hair and skin). Finishing it sends the
+ * waiting order to the prescriber (submitVisitAction).
  */
-const VISIT_TOPLEVEL_IDS = new Set(['health']);
 
 export function buildVisitSteps(products: IntakeProduct[] = []): Step[] {
-  const out: Step[] = STEPS.filter((s) => VISIT_TOPLEVEL_IDS.has(s.id));
-  out.push(CONDITIONS_STEP, MEDS_STEP, ...buildCategorySteps(products.map((p) => p.id)));
+  // Not required by NJ/NY/PA/MI law: topical and low-dose hair/skin treatments
+  // skip height/weight and the broad conditions list (each product's own
+  // safety check covers its contraindications). The category questions were
+  // answered before checkout; photos only if the prescriber asks for them.
+  const light = products.length > 0 && products.every((p) => ['hair', 'skin'].includes(PRODUCT_CATEGORY[p.id]));
+  const step = (id: string) => STEPS.find((st) => st.id === id)!;
+  const out: Step[] = [...(light ? [] : [step('body')]), step('health'), ...(light ? [] : [CONDITIONS_STEP]), MEDS_STEP];
   products
     .filter((p, i) => p.contraindications?.length && products.findIndex((q) => q.id === p.id) === i)
     .forEach((p, i) => out.push(productScreeningStep(p, i === 0 ? undefined : p.id)));
+  out.push(NOTE_STEP);
   return out;
 }

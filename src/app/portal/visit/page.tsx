@@ -5,7 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
-import { intakeStateFor, pendingMediaFor } from '@/lib/intake-status';
+import { intakeStateFor, latestIntakeAnswers, pendingMediaFor } from '@/lib/intake-status';
 import { getCatalogProduct } from '@/lib/catalog';
 import { visitProducts } from '@/lib/visit-products';
 import { MEMBER_NAV, EmptyState, PageHeader, btnPrimary } from '@/components/portal/ui';
@@ -23,18 +23,20 @@ export const metadata: Metadata = {
 export default async function VisitPage({
   searchParams,
 }: {
-  searchParams: Promise<{ product?: string }>;
+  searchParams: Promise<{ product?: string; ordered?: string }>;
 }) {
   const user = await getSession();
   if (!user) redirect(await loginUrl());
   if (user.role !== 'member') redirect(user.redirectTo);
 
-  const { product: param } = await searchParams;
-  const [visit, state, products] = await Promise.all([
+  const { product: param, ordered: justOrdered } = await searchParams;
+  const ordered = justOrdered === '1';
+  const [visit, state, products, onFile] = await Promise.all([
     getPendingVisit(),
     intakeStateFor(user.id),
     // Intake's product, ?product=, undecided orders and cart: every category is asked.
     visitProducts(user.id, [param]),
+    latestIntakeAnswers(user.id),
   ]);
   const primaryId = products[0]?.id;
   const product = primaryId ? await getCatalogProduct(primaryId) : undefined;
@@ -120,12 +122,12 @@ export default async function VisitPage({
     <PortalShell user={user} nav={nav}>
       <div>
         <PageHeader
-          title="Complete your visit"
-          intro={visit?.productName ? `For your ${visit.productName} order.` : undefined}
+          title={ordered ? 'Your order is in. A few quick questions for Dr. Elder.' : 'A few quick questions for Dr. Elder.'}
+          intro={`${ordered ? 'Nothing has been charged. ' : ''}These health questions take about 2 minutes, and Dr. Elder reviews your ${visit?.productName ?? 'order'} as soon as they’re done. You’re charged only if he approves.`}
         />
         <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-3 py-1.5 text-[13px] font-medium text-ink ring-1 ring-inset ring-butter-deep/60">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-          {visit ? 'Required before prescriber review' : 'Required before you can order'}
+          Needed before Dr. Elder can review your order
         </p>
       </div>
       <IntakeWizard
@@ -141,6 +143,8 @@ export default async function VisitPage({
             : undefined
         }
         visitProducts={products}
+        // Answered before checkout; the health questions depend on it (pregnancy).
+        seed={typeof onFile.sex === 'string' ? { sex: onFile.sex } : undefined}
       />
     </PortalShell>
   );

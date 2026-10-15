@@ -157,6 +157,10 @@
   0%   { transform: translate(-50%, -10%) scale(1);   opacity: 0.7; }
   100% { transform: translate(-50%, 10%)  scale(1.1); opacity: 1; }
 }
+@keyframes breathe {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
 @keyframes marquee {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -183,6 +187,12 @@
   .anim-slide-down { animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .anim-halo { animation: haloDrift 14s ease-in-out infinite alternate; }
   .anim-marquee { animation: marquee 20s linear infinite; }
+  /* Loading states: fade in after a beat (a fast load never flashes), then breathe. */
+  .anim-loading { animation: fadeIn 400ms ease-out 150ms both; }
+  .anim-breathe { animation: breathe 1.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .anim-breathe { animation: none; opacity: 0.6; }
+  }
   /* Faster scroll on mobile — the strip is shorter so it needs to move
      quicker to read as "alive" on small screens. */
   @media (max-width: 767px) {

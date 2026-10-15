@@ -35,9 +35,10 @@ export default async function CheckoutSuccessPage({
   // No order behind it (a bookmark, a typed URL): no "your order is in".
   if (!(await ownsOrder(user.id, (await searchParams).ref))) redirect('/portal/orders');
 
-  // A legacy open visit, or photos (hair, skin) still to add: either is the next step.
-  const [legacyVisit, media] = await Promise.all([getPendingVisit(), pendingMediaFor(user.id)]);
-  const pendingVisit = legacyVisit || media.photos;
+  // Health questions still to answer (the order waits on them): straight there.
+  const [openVisit, media] = await Promise.all([getPendingVisit(), pendingMediaFor(user.id)]);
+  if (openVisit) redirect('/portal/visit?ordered=1');
+  const pendingVisit = media.photos;
 
   return (
     <PortalShell user={user}>
@@ -75,9 +76,7 @@ export default async function CheckoutSuccessPage({
           {[
             {
               n: '01',
-              text: legacyVisit
-                ? 'Complete your clinical visit so your prescriber can review.'
-                : media.photos
+              text: media.photos
                   ? 'Dr. Elder asked for a few photos. Add them from your phone so he can finish your review.'
                   : 'Your prescriber reviews your answers.',
             },
@@ -102,7 +101,7 @@ export default async function CheckoutSuccessPage({
           href={pendingVisit ? '/portal/visit' : '/portal'}
           className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
         >
-          {legacyVisit ? 'Complete your visit' : media.photos ? 'Add your photos' : 'Back to portal'}
+          {media.photos ? 'Add your photos' : 'Back to portal'}
           <span aria-hidden>→</span>
         </Link>
         </div>

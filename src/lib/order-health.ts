@@ -11,7 +11,7 @@
 import type { Order, OrderStatus } from '@/lib/orders';
 
 /** Order statuses still in motion. 'paid' is a legacy value; 'pending-admin' is a release that failed. */
-export const LIVE_ORDER_STATUSES: string[] = ['pending-admin', 'assigned', 'signed', 'paid', 'compounding', 'shipped'];
+export const LIVE_ORDER_STATUSES: string[] = ['awaiting-visit', 'pending-admin', 'assigned', 'signed', 'paid', 'compounding', 'shipped'];
 
 export type PaymentState = 'paid' | 'pending' | 'failed' | 'awaiting';
 
@@ -22,7 +22,7 @@ export type PaymentState = 'paid' | 'pending' | 'failed' | 'awaiting';
  */
 export function paymentState(o: Pick<Order, 'status' | 'paidAt' | 'updates'>): PaymentState | null {
   if (o.paidAt) return 'paid';
-  if (o.status === 'pending-admin' || o.status === 'assigned') return 'pending';
+  if (o.status === 'awaiting-visit' || o.status === 'pending-admin' || o.status === 'assigned') return 'pending';
   if (!LIVE_ORDER_STATUSES.includes(o.status)) return null;
   return o.updates?.some((u) => /charge failed/i.test(u.note)) ? 'failed' : 'awaiting';
 }

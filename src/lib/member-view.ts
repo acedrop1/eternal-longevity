@@ -119,6 +119,9 @@ export function orderCard(o: Order, image: string, overnight: boolean): Treatmen
           cta: { label: 'Complete payment', href: `/portal/orders/pay/${encodeURIComponent(o.id)}` },
         };
   }
+  if (o.status === 'awaiting-visit') {
+    return { ...base, tone: 'attention', status: 'Health questions needed', cta: { label: 'Answer the questions', href: '/portal/visit' } };
+  }
   if (p.step === 0) {
     return o.status === 'assigned'
       ? { ...base, status: 'With Dr. Elder', cta: { label: 'Message Dr. Elder', href: thread('doctor') } }

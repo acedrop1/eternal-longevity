@@ -61,12 +61,13 @@ export function memberNextStep(input: {
       cta: { label: 'Message your care team', href: '/portal/messages' },
     };
   }
-  if (state === 'awaiting_visit') {
+  // Ordered, but the health questions that follow checkout aren't answered: the order waits on them.
+  if (state === 'awaiting_visit' && orders.some((o) => o.status === 'awaiting-visit')) {
     return {
       eyebrow: 'Next step',
-      title: 'Finish your visit',
-      body: 'A few medical questions are left before Dr. Elder can review your order.',
-      cta: { label: 'Finish your visit', href: '/portal/visit' },
+      title: 'Answer a few health questions for Dr. Elder',
+      body: 'Your order is waiting on them. About 2 minutes, and nothing is charged unless he approves.',
+      cta: { label: 'Answer the questions', href: '/portal/visit' },
     };
   }
   // intakeStateFor counts this as 'submitted', so it must come before the
@@ -90,9 +91,19 @@ export function memberNextStep(input: {
 
   const productId = typeof latestAnswers.requestedProductId === 'string' ? latestAnswers.requestedProductId : null;
   const product = productId ? getAnyShopProduct(productId) : null;
-  if (state === 'submitted' && product) {
+  // 'awaiting_visit' with nothing ordered yet: the assessment is done, checkout is next.
+  if ((state === 'submitted' || state === 'awaiting_visit') && product) {
     // A decision on this product is the answer, not an invitation to buy it.
     const last = byNewest.find((o) => o.lines.some((l) => l.productId === product.id));
+    // Closed by their own safety-check answers (the system, not Dr. Elder): say so.
+    if (last?.status === 'declined-clinical' && last.updates?.some((u) => u.role === 'system' && u.statusChange === 'declined-clinical')) {
+      return {
+        eyebrow: 'Your order',
+        title: `${product.name} isn’t the right fit for you`,
+        body: 'Based on your health answers, your order was closed and you have not been charged. Questions? Message your care team.',
+        cta: { label: 'Message your care team', href: '/portal/messages?thread=support' },
+      };
+    }
     if (last?.status === 'declined-clinical') {
       return {
         eyebrow: 'Your prescriber’s decision',

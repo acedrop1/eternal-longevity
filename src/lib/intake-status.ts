@@ -56,9 +56,16 @@ export async function intakeNeedsInfo(userId: string): Promise<boolean> {
   return data?.status === 'needs_info';
 }
 
-/** Only a completed intake may place an order. */
+/**
+ * The assessment is done, so they may order: either fully reviewed
+ * ('submitted') or waiting on the health questions that follow checkout
+ * ('awaiting_visit'; the order then waits for them, lib/release-to-doctor).
+ */
+export const assessmentDone = (state: IntakeState) => state === 'submitted' || state === 'awaiting_visit';
+
+/** Only a member who has done the assessment may place an order. */
 export async function canOrder(userId: string): Promise<boolean> {
-  return (await intakeStateFor(userId)) === 'submitted';
+  return assessmentDone(await intakeStateFor(userId));
 }
 
 /** The answers on this member's newest intake ({} when there is none). */

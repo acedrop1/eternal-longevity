@@ -7,7 +7,7 @@ import { getCatalogProduct, getLiveProduct, getLiveProducts } from '@/lib/catalo
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
 import { knownAnswerIds } from '@/lib/intake-rules';
-import { intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { assessmentDone, intakeStateFor, latestIntakeAnswers, type IntakeState } from '@/lib/intake-status';
 import { getAssessmentDraft } from '@/lib/assessment-drafts';
 import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
@@ -24,7 +24,7 @@ export const metadata: Metadata = pageMeta(
 );
 
 interface StartPageProps {
-  searchParams: Promise<{ product?: string; category?: string; plan?: string; renew?: string }>;
+  searchParams: Promise<{ product?: string; category?: string; plan?: string; renew?: string; goal?: string; format?: string }>;
 }
 
 /**
@@ -35,12 +35,18 @@ interface StartPageProps {
 export default async function StartPage({ searchParams }: StartPageProps) {
   // Visitors arriving from a storefront card land here with ?product=<slug>:
   // a live product, or a listed draft (LIST_DRAFTS) so it isn't silently dropped.
-  const { product: slug, category: cat, plan, renew } = await searchParams;
+  const { product: slug, category: cat, plan, renew, goal, format } = await searchParams;
   const live = slug ? await getLiveProduct(slug) : null;
   const item = !live && LIST_DRAFTS ? ALL_ITEMS.find((x) => x.item.slug === slug)?.item : undefined;
   const draft = item?.live ? await getCatalogProduct(item.live) : null;
   const requested = live ?? (draft?.status === 'draft' ? draft : null);
   const category = !requested && isCategoryKey(cat) ? cat : undefined;
+  // From /hair's quick questions: pre-fill the same hair answers (only known values).
+  const seed: Record<string, string> = {};
+  if (category === 'hair' || (requested && PRODUCT_CATEGORY[requested.id] === 'hair')) {
+    if (goal && ['stop', 'regrow', 'both'].includes(goal)) seed.hr_goal = goal;
+    if (format && ['pill', 'foam', 'either'].includes(format)) seed.hr_format = format;
+  }
 
   // Everything live the assessment can recommend, priced as the product pages price it.
   const what = new Map(ALL_ITEMS.map(({ item: i }) => [i.live ?? i.slug, i.what]));
@@ -59,6 +65,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             image: p.image,
             swatch: p.swatch,
             contraindications: p.contraindications,
+            sideEffects: p.sideEffects,
             tiers,
             // The plan picked on the product page (?plan=) comes preselected.
             defaultCadence:
@@ -90,7 +97,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   // Already ordered, or already on a plan: no second assessment, no second order.
   const held = isMember && requested ? (await heldProductsFor(user.id)).get(requested.id) : undefined;
   // Already assessed for this product: straight to choosing a plan. A renewal (?renew=) still re-asks.
-  const assessed = Boolean(isMember && requested && !renew && state === 'submitted' && intakeCovers(onFile, requested.id));
+  const assessed = Boolean(isMember && requested && !renew && state && assessmentDone(state as IntakeState) && intakeCovers(onFile, requested.id));
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -160,6 +167,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           member={member}
           draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
           renewal={Boolean(renew && requested && isMember)}
+          seed={seed}
         />
       )}
     </main>

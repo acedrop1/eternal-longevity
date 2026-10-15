@@ -22,9 +22,9 @@ export const ORDER_FROM: Record<
 > = {
   approve: ['pending-admin', 'assigned'],
   sign: ['pending-admin', 'assigned'],
-  declineClinical: ['pending-admin', 'assigned'],
+  declineClinical: ['pending-admin', 'assigned', 'awaiting-visit'],
   // Matches the admin board: anything not yet shipped can be cancelled.
-  deny: ['pending-admin', 'assigned', 'signed', 'paid', 'compounding'],
+  deny: ['awaiting-visit', 'pending-admin', 'assigned', 'signed', 'paid', 'compounding'],
 };
 
 /** Signed and waiting on money: the only state a pay link may charge. */

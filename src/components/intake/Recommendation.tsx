@@ -15,6 +15,8 @@ export interface Offer {
   image: string;
   swatch: string;
   contraindications: string[];
+  /** The product page's "Possible side effects", shown folded on the preview. */
+  sideEffects: string[];
   tiers: CadenceTier[];
   /** Cheapest per month: the plan the screen opens on. */
   defaultCadence: CadenceTier['key'];
@@ -23,6 +25,12 @@ export interface Offer {
 }
 
 export type PlanChoice = { productId: string; cadence: CadenceTier['key'] };
+
+const NEXT = [
+  'Check out. Nothing is charged today.',
+  'Answer a few health questions, about 2 minutes. Your physician reviews them.',
+  'If approved, a licensed pharmacy prepares your treatment and ships it to you.',
+];
 
 function ProductRow({ p, size = 'lg' }: { p: Offer; size?: 'lg' | 'sm' }) {
   return (
@@ -104,6 +112,32 @@ export function RecommendationPicker({
       <p className="mt-5 text-[14px] leading-relaxed text-ink-soft">
         Nothing is charged unless your physician approves. Your physician makes the final decision.
       </p>
+
+      {/* Hims-style preview: what happens next, and the side effects up front. */}
+      <div className="mt-6 rounded-shell bg-milk p-4 md:p-5">
+        <p className="mb-3 text-[13px] font-medium text-ink/65">What happens next</p>
+        <ol className="space-y-2.5">
+          {NEXT.map((s, i) => (
+            <li key={s} className="flex items-start gap-3 text-[15px] leading-snug text-ink">
+              <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-ink text-[12px] font-semibold text-butter">{i + 1}</span>
+              {s}
+            </li>
+          ))}
+        </ol>
+      </div>
+      {chosen.sideEffects.length > 0 && (
+        <details className="group mt-3 rounded-shell px-4 py-3 ring-1 ring-ink/10 md:px-5">
+          <summary className="cursor-pointer list-none text-[14px] font-semibold text-ink marker:hidden [&::-webkit-details-marker]:hidden">
+            Possible side effects
+          </summary>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-[14px] leading-relaxed text-ink-soft">
+            {chosen.sideEffects.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-soft">Your physician will go over these with you. Ask anything through your portal.</p>
+        </details>
+      )}
 
       {other && (
         <div className="mt-6 rounded-shell p-4 ring-1 ring-ink/10 md:p-5">

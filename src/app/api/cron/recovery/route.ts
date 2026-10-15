@@ -54,7 +54,8 @@ const SEND_BUDGET = 80;
 const PACE_MS = 500;
 
 const HOUR = 3_600_000;
-const COMPLETE_INTAKE = ['submitted', 'in_review', 'needs_info', 'approved'];
+// 'awaiting_visit' = assessment done (health questions follow checkout): still a plan reminder until they order.
+const COMPLETE_INTAKE = ['awaiting_visit', 'submitted', 'in_review', 'needs_info', 'approved'];
 const OPEN_ORDER = ['pending-admin', 'assigned'] as const;
 
 type Db = ReturnType<typeof createSupabaseAdminClient>;
@@ -445,65 +446,85 @@ async function recoverCarts(
   return { sent, skipped };
 }
 
-/** Intakes stuck at awaiting_visit — the member never finished the questions. */
+/**
+ * Orders waiting on the health questions that follow checkout ('awaiting-visit'):
+ * up to three reminders — the first run after VISIT_STEPS_HOURS[0] hours, then a
+ * day and three days after the order. Finishing the visit releases the order,
+ * which ends the sequence. One row per send in email_sends (stage 'visit',
+ * step 0-2) is both the claim and the count.
+ */
+const VISIT_STEPS_HOURS = [2, 24, 72];
+
 async function recoverVisits(
   db: Db,
   run: Run,
-  quietBefore: string,
+  _quietBefore: string,
   staleAfter: string,
 ): Promise<{ sent: number; skipped: number }> {
-  const { data, error } = await db
-    .from('intake_submissions')
-    .select('id, email, user_id, answers')
-    .eq('status', 'awaiting_visit')
-    .is('reminder_at', null)
-    .lt('updated_at', quietBefore)
-    .gt('updated_at', staleAfter)
+  const { data: held, error } = await db
+    .from('orders')
+    .select('user_id, member_email, member_name, created_at')
+    .eq('status', 'awaiting-visit')
+    .gt('created_at', staleAfter)
+    .order('created_at', { ascending: true })
     .limit(MAX_PER_RUN);
+  if (error || !held?.length) return { sent: 0, skipped: 0 };
 
-  if (error || !data) return { sent: 0, skipped: 0 };
+  // One reminder thread per member, timed from their oldest waiting order.
+  const byUser = new Map<string, (typeof held)[number]>();
+  for (const o of held) if (o.user_id && !byUser.has(o.user_id)) byUser.set(o.user_id, o);
+  const users = [...byUser.keys()];
+  const [{ data: intakes }, { data: profiles }] = await Promise.all([
+    db
+      .from('intake_submissions')
+      .select('id, user_id')
+      .eq('status', 'awaiting_visit')
+      .in('user_id', users)
+      .order('created_at', { ascending: false }),
+    db.from('profiles').select('id, account_status').in('id', users),
+  ]);
+  // Newest open intake per member, so the reminder count stays on one thread.
+  const intakeFor = new Map<string, string>();
+  for (const i of intakes ?? []) if (i.user_id && !intakeFor.has(i.user_id)) intakeFor.set(i.user_id, i.id);
+  const refs = [...intakeFor.values()];
+  const { data: prior } = refs.length
+    ? await db.from('email_sends').select('ref, step').eq('stage', 'visit').in('ref', refs)
+    : { data: [] };
+  const sentSteps = new Map<string, number>();
+  for (const r of prior ?? []) sentSteps.set(r.ref, Math.max(sentSteps.get(r.ref) ?? -1, r.step));
 
   let sent = 0;
   let skipped = 0;
-
-  for (const row of data) {
+  const now = Date.now();
+  for (const [uid, order] of byUser) {
     if (run.budget <= 0) break;
-    // Already mailed today: leave it unclaimed and try tomorrow.
-    if (!row.email || run.recent.has(row.email.toLowerCase())) {
+    const ref = intakeFor.get(uid);
+    const email = order.member_email;
+    if (!ref || !email) continue;
+    if (profiles?.find((p) => p.id === uid)?.account_status !== 'active') {
       skipped += 1;
       continue;
     }
-    const { error: claimErr } = await db
-      .from('intake_submissions')
-      .update({ reminder_at: new Date().toISOString() })
-      .eq('id', row.id)
-      .is('reminder_at', null);
+    const step = (sentSteps.get(ref) ?? -1) + 1;
+    if (step >= VISIT_STEPS_HOURS.length) continue;
+    if (now - Date.parse(order.created_at) < VISIT_STEPS_HOURS[step] * HOUR) continue;
+    // Already mailed today: try again tomorrow.
+    if (run.recent.has(email.toLowerCase())) {
+      skipped += 1;
+      continue;
+    }
+    // Claim before sending: the unique (stage, ref, step) stops a second send.
+    const { error: claimErr } = await db.from('email_sends').insert({ email: email.toLowerCase(), stage: 'visit', ref, step });
     if (claimErr) {
       skipped += 1;
       continue;
     }
-    if (row.user_id) {
-      const { data: p } = await db
-        .from('profiles')
-        .select('account_status')
-        .eq('id', row.user_id)
-        .maybeSingle();
-      if (p && p.account_status !== 'active') {
-        skipped += 1;
-        continue;
-      }
-    }
-
-    const answers = (row.answers ?? {}) as Record<string, unknown>;
     const msg = unfinishedVisitEmail({
-      firstName:
-        typeof answers.first_name === 'string'
-          ? firstNameOf(answers.first_name)
-          : 'there',
+      firstName: firstNameOf(order.member_name ?? '', 'there'),
       visitUrl: `${SITE_URL}/portal/visit`,
+      last: step === VISIT_STEPS_HOURS.length - 1,
     });
-    await logSend(db, row.email, 'visit', row.id);
-    if (await deliver(run, row.email, msg)) sent += 1;
+    if (await deliver(run, email, msg)) sent += 1;
     else skipped += 1;
   }
 

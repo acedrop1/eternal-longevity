@@ -40,6 +40,7 @@ export default function CookiesPage() {
             `Your cart (stored under the name el_cart_v1), so it is still there when you come back. Once you are signed in, your cart is saved to your account instead.`,
             `Your progress on an assessment you haven't finished, for up to 30 days. This covers your contact details and a few basics, such as your state, date of birth and the area of care you chose. It never includes your health answers.`,
             `The shipping details you type at checkout, kept only for that browser tab until you place your order.`,
+            `The tags on the link that brought you here, if any (for example, that you came from our email), kept for up to 30 days as el_attr, and a note that this browser visit has been counted. We use these only to count, on our own servers and without identifying you, which links and pages bring visitors and patients. They are never shared with advertising platforms.`,
           ],
         },
         {

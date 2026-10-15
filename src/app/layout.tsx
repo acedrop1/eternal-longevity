@@ -12,6 +12,7 @@ import {
 } from '@/lib/site';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import { AdPixel } from '@/components/analytics/AdPixel';
+import { SiteTracker } from '@/components/analytics/SiteTracker';
 import './globals.css';
 import { CatalogProvider } from '@/components/catalog/CatalogProvider';
 import { getLiveProducts, toShopProduct } from '@/lib/catalog';
@@ -139,6 +140,7 @@ export default async function RootLayout({
         <SmoothScroll />
         <CatalogProvider products={products}>{children}</CatalogProvider>
         <AdPixel />
+        <SiteTracker />
       </body>
     </html>
   );
