@@ -20,6 +20,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Billing', href: '/portal/admin/billing' },
   { label: 'Orders', href: '/portal/admin/fulfillment', also: ['/portal/admin/orders'] },
   { label: 'Products', href: '/portal/admin/products' },
+  { label: 'Pricing', href: '/portal/admin/pricing' },
   { label: 'Check-ins', href: '/portal/admin/checkins' },
   { label: 'Compliance', href: '/portal/admin/compliance' },
   { label: 'Settings', href: '/portal/admin/settings' },

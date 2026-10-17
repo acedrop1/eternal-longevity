@@ -18,6 +18,7 @@ import { DELIVERY_LABEL, NEVER_LIVE, offersTwelveMonth, type DeliveryForm, type 
 import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, pharmacyEntryFor, writeRow, type ProductStatus } from './catalog';
 import { cleanPharmacy, type StoredPharmacy } from './pharmacy-catalog';
 import { createSupabaseAdminClient } from './supabase/admin';
+import { toProductInput } from './product-input';
 
 export interface ProductInput {
   id: string;
@@ -228,6 +229,42 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
   // Every page that lists products reads the catalogue.
   revalidatePath('/', 'layout');
   return { ok: true, message: input.isNew ? 'Product created.' : 'Saved.', id };
+}
+
+/**
+ * Admin → Pricing: change plan prices and our cost for several products at
+ * once. Each goes through saveProductAction, so the same checks and the same
+ * audit trail apply as in the product editor.
+ */
+export async function savePricingAction(
+  rows: { id: string; pricing: ProductInput['pricing']; twelveMonthPlan: boolean; unitCost: number }[],
+): Promise<{ ok: boolean; message: string; failed: { id: string; message: string }[] }> {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') return { ok: false, message: 'Admin access is required.', failed: [] };
+  if (!Array.isArray(rows) || rows.length > 100) return { ok: false, message: 'Nothing to save.', failed: [] };
+  const failed: { id: string; message: string }[] = [];
+  for (const r of rows) {
+    const id = String(r?.id ?? '');
+    const [p, rx] = await Promise.all([getCatalogProduct(id), pharmacyEntryFor(id)]);
+    if (!p || !rx) {
+      failed.push({ id, message: 'That product no longer exists.' });
+      continue;
+    }
+    const input = toProductInput(p, rx);
+    const res = await saveProductAction({
+      ...input,
+      pricing: r.pricing,
+      twelveMonthPlan: Boolean(r.twelveMonthPlan),
+      pharmacy: { ...input.pharmacy, unitCost: Number(r.unitCost) },
+    });
+    if (!res.ok) failed.push({ id, message: res.message });
+  }
+  const saved = rows.length - failed.length;
+  return {
+    ok: failed.length === 0,
+    message: failed.length ? `Saved ${saved} of ${rows.length}.` : `Saved ${saved} ${saved === 1 ? 'product' : 'products'}.`,
+    failed,
+  };
 }
 
 const IMAGE_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };

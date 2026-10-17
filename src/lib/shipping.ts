@@ -3,11 +3,12 @@
  * place to change either. Plain data with no imports, so client components
  * can use it without pulling in the catalogue.
  *
- * Cold-chain products go overnight, everything else two-day. `storage` is the
- * product's own field (Admin → Products); unset counts as room temperature.
+ * Every order ships 2-day (decided 2026-10-16), cold-pack products included;
+ * OVERNIGHT stays in the types so it can come back by changing
+ * shippingMethodFor alone.
  *
- * One price for every shipment, 2-day or overnight cold-chain: $20 (the
- * pharmacy charges us $25 / $35; the plan prices carry the rest). A
+ * One price for every shipment: $5 by default, set in Admin → Settings (the
+ * pharmacy charges us $25 2-day; the plan prices carry the rest). A
  * member's first order ships free (firstOrderFree). After that every box
  * pays: renewals, and the second box of a 12 month plan (charged up front
  * with the year, see shipmentsPerCycle in lib/shopProducts).
@@ -17,12 +18,13 @@ export type ShippingMethod = '2_DAY' | 'OVERNIGHT';
 
 type Storage = 'refrigerated' | 'room' | undefined;
 
-export function shippingMethodFor(storage: Storage): ShippingMethod {
-  return storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function shippingMethodFor(_storage?: Storage): ShippingMethod {
+  return '2_DAY';
 }
 
 /** Whole dollars per shipment. */
-export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 20, OVERNIGHT: 20 };
+export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 5, OVERNIGHT: 5 };
 
 /** What the pharmacy charges us per shipment, whole dollars. Admin-only (profit, lib/profit). */
 export const SHIPPING_COST: Record<ShippingMethod, number> = { '2_DAY': 25, OVERNIGHT: 35 };

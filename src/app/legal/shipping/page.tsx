@@ -54,8 +54,8 @@ export default async function ShippingPage() {
           heading: 'Shipping Cost',
           paragraphs: [
             per === 0
-              ? 'Shipping is free on every box, 2-day and overnight cold-chain alike.'
-              : `Shipping is $${per} per box, the same for 2-day service and for overnight cold-chain (temperature-sensitive medications). The method is set by the medication, not chosen at checkout.${
+              ? 'Shipping is free on every box. Every order ships by 2-day service.'
+              : `Shipping is $${per} per box. Every order ships by 2-day service.${
                   firstOrderFree ? ' Your first order ships free: the first box of your first paid order carries no shipping charge.' : ''
                 } The amount is shown at checkout before you place your order.`,
             `Every other box is charged shipping, including each refill on a plan. Each renewal charge is the plan price plus shipping for its boxes, and the checkout authorization states the combined amount.`,
@@ -73,7 +73,7 @@ export default async function ShippingPage() {
         {
           heading: 'Cold-Chain Handling',
           paragraphs: [
-            'Temperature-sensitive medications ship overnight cold-chain, in an insulated container with a cold pack. Other medications ship by 2-day service.',
+            'Every order ships by 2-day service. Temperature-sensitive medications are packed in an insulated container with a cold pack.',
             'Store your medication as its label says. If a cold-chain package arrives warm to the touch, or the cold pack is fully thawed and the medication is at room temperature, do not use the contents. Photograph the package as it arrived and contact us the same day.',
           ],
         },

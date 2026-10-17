@@ -45,9 +45,7 @@ interface ShippingForm {
 }
 
 /**
- * The pharmacy ships each order overnight cold-chain (refrigerated products)
- * or 2-day (everything else); the product decides, not the member, so there is
- * no tier to pick. The price per box comes from the server (Admin → Settings),
+ * Every order ships 2-day (lib/shipping), so there is no tier to pick. The price per box comes from the server (Admin → Settings),
  * the same number placeOrder charges. Left as a list so a choice can come back without
  * rewiring the section.
  */

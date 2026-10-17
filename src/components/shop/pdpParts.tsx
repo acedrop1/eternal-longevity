@@ -91,7 +91,7 @@ export const coldChain = (p: ShopProduct) => p.storage === 'refrigerated';
 const STORAGE_LABEL = { refrigerated: 'Refrigerated 2–8°C', room: 'Room temperature' } as const;
 const storageLabel = (p: ShopProduct) => (p.storage ? STORAGE_LABEL[p.storage] : 'Store as directed on the label');
 /** How it ships; the price is the same either way (shippingNote). */
-export const shippingLine = (p: ShopProduct) => (coldChain(p) ? 'Overnight cold-chain shipping' : '2-day shipping');
+export const shippingLine = (p: ShopProduct) => (coldChain(p) ? '2-day shipping, packed cold' : '2-day shipping');
 
 /** Headline price for the selected plan, with the monthly-plan rate labelled beside it when it's higher. */
 export function PriceBlock({ product, active, shipping }: { product: ShopProduct; active: CadenceTier; shipping: ShippingSettings }) {
@@ -333,7 +333,7 @@ export function ProductDetails({
           <Row title="Shipping">
             <p>
               {coldChain(product)
-                ? 'Overnight cold-chain shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
+                ? '2-day shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
                 : '2-day shipping from our licensed 503A pharmacy.'}{' '}
               {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12 month plan ships in
               two boxes six months apart, with the second box&rsquo;s shipping billed with the year. Tracking is

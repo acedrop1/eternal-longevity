@@ -22,6 +22,7 @@ import { getAnyShopProduct } from '@/lib/shopProducts';
 import { CATEGORY_LABEL } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
 import { formatDate } from '@/lib/format';
+import { shippingMethodFor } from '@/lib/shipping';
 
 /** "Continue your Finasteride visit": what the unfinished run was for, and where it resumes. */
 function resumeFor(entry: string): { title: string; href: string } {
@@ -89,7 +90,7 @@ export default async function MemberPortalPage() {
   const latest = orders[0] ?? null;
   const treatments = treatmentCards(orders, plans, (id) => {
     const p = getAnyShopProduct(id);
-    return { image: p?.image, overnight: p?.storage === 'refrigerated' };
+    return { image: p?.image, overnight: shippingMethodFor(p?.storage) === 'OVERNIGHT' };
   });
   /*
    * An unfinished assessment stands in for "get started" and "choose your

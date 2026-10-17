@@ -4,9 +4,9 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminProductEditor } from '@/components/admin/AdminProductEditor';
 import { getSession, loginUrl } from '@/lib/auth-server';
-import { catalogStore, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
+import { catalogStore, getCatalog, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import type { ProductInput } from '@/lib/product-actions';
-import { offersTwelveMonth } from '@/lib/shopProducts';
+import { toProductInput } from '@/lib/product-input';
 import { getShippingSettings } from '@/lib/shipping-settings';
 
 export const metadata: Metadata = { title: 'Edit product' };
@@ -57,37 +57,23 @@ export default async function AdminProductPage({ params }: PageProps) {
     const [p, rx] = await Promise.all([getCatalogProduct(id), pharmacyEntryFor(id)]);
     if (!p || !rx) notFound();
     storage = p.storage;
-    initial = {
-      id: p.id,
-      isNew: false,
-      status: p.status,
-      name: p.name,
-      tagline: p.tagline,
-      category: p.category,
-      delivery: p.delivery,
-      cycleLength: p.cycleLength,
-      shortDescription: p.shortDescription,
-      longDescription: p.longDescription,
-      bestFor: p.bestFor,
-      benefits: p.benefits,
-      whatsIncluded: p.whatsIncluded,
-      sideEffects: p.sideEffects,
-      contraindications: p.contraindications,
-      pricing: p.pricing,
-      twelveMonthPlan: offersTwelveMonth(p),
-      image: p.image,
-      popular: Boolean(p.popular),
-      fdaApproved: Boolean(p.fdaApproved),
-      addon: Boolean(p.addon),
-      addonPitch: p.addonPitch ?? '',
-      addonFor: p.addonFor ?? [],
-      pharmacy: { ...rx, sku: rx.sku ?? '', defaultSig: rx.defaultSig ?? '' },
-    };
+    initial = toProductInput(p, rx);
   }
+
+  // Previous / next product, as Shopify's arrows in the page header.
+  const ids = (await getCatalog()).map((x) => x.id);
+  const at = ids.indexOf(id);
+  const nav = at >= 0 ? { prev: ids[at - 1] ?? null, next: ids[at + 1] ?? null } : { prev: null, next: null };
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
-      <AdminProductEditor initial={initial} canSave={catalogStore() !== 'none'} storage={storage} shipping={await getShippingSettings()} />
+      <AdminProductEditor
+        initial={initial}
+        canSave={catalogStore() !== 'none'}
+        storage={storage}
+        shipping={await getShippingSettings()}
+        nav={nav}
+      />
     </PortalShell>
   );
 }

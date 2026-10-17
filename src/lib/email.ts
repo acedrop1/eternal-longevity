@@ -230,7 +230,7 @@ export function shippedEmail(input: {
          ['Tracking', input.tracking],
        ])}
        <div style="margin:24px 0 0;">${button('Track your package', trackingUrl(input.carrier, input.tracking))}</div>
-       <p style="${NOTE}">Store it as the label directs. Temperature-sensitive medications ship cold-chain, so if yours says to refrigerate, do so on arrival. Every update is in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>.</p>`,
+       <p style="${NOTE}">Store it as the label directs. If your label says to refrigerate, do so on arrival. Every update is in <a href="${SITE_URL}/portal/orders" style="color:${INK};">your portal</a>.</p>`,
       { preheader: 'Your tracking number is inside.' },
     ),
   };

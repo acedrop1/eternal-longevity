@@ -3,7 +3,7 @@ import 'server-only';
 /**
  * What customers pay for shipping, editable in Admin → Settings.
  *
- *   pricePerShipment  whole dollars per box, 2-day and overnight alike
+ *   pricePerShipment  whole dollars per box (every order ships 2-day)
  *   firstOrderFree    a member's first paid order ships its first box free
  *
  * Stored as one row in `site_settings` (migration 0027; admin-only, read here

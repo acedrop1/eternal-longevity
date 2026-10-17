@@ -24,7 +24,7 @@
  */
 
 import { TERMINAL_ORDER, monthsPerShipment } from './order-rules';
-import { SHIPPING_COST, shippingChargeCents } from './shipping';
+import { SHIPPING_COST, shippingChargeCents, shippingMethodFor } from './shipping';
 
 /** What one product costs us: per pharmacy unit, units per 30 days, and how it ships. */
 export interface CostInfo {
@@ -116,7 +116,7 @@ export function productCostCents(lines: Pick<EconLine, 'productId' | 'cadence' |
 export function shippingCostCents(lines: (Pick<EconLine, 'productId'> & { cadence?: string })[], costs: CostTable): number {
   // One order is one box (see lineUnits): overnight if anything in it is cold.
   if (!lines.length) return 0;
-  const cold = lines.some((l) => costs[l.productId]?.storage === 'refrigerated');
+  const cold = lines.some((l) => shippingMethodFor(costs[l.productId]?.storage) === 'OVERNIGHT');
   return SHIPPING_COST[cold ? 'OVERNIGHT' : '2_DAY'] * 100;
 }
 
@@ -169,7 +169,7 @@ export function planEconomics(
     Math.round(priceDollars * 100) +
     shippingChargeCents({ pricePerShipment: shippingPriceDollars, shipments, firstOrder: Boolean(opts.firstOrder) });
   const productCost = Math.round(cost.unitCost * 100 * Math.max(1, cost.quantity) * months);
-  const shippingCost = SHIPPING_COST[cost.storage === 'refrigerated' ? 'OVERNIGHT' : '2_DAY'] * 100 * shipments;
+  const shippingCost = SHIPPING_COST[shippingMethodFor(cost.storage)] * 100 * shipments;
   const stripeFee = estimateProcessingFeeCents(charged);
   const profit = charged - productCost - shippingCost - stripeFee;
   return { charged, productCost, shippingCost, stripeFee, profit, margin: charged > 0 ? profit / charged : null };

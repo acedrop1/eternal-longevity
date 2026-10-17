@@ -24,8 +24,8 @@ export function withPrices(
     per === 0
       ? 'Shipping is free'
       : shipping.firstOrderFree
-        ? `Your first order ships free; after that shipping is $${per} per box, 2-day or overnight cold-chain alike`
-        : `Shipping is $${per} per box, 2-day or overnight cold-chain alike`;
+        ? `Your first order ships free; after that shipping is $${per} per box, by 2-day service`
+        : `Shipping is $${per} per box, by 2-day service`;
   const annual = range(live.flatMap((p) => (offersTwelveMonth(p) && p.pricing.annual ? [Math.round(p.pricing.annual / 12)] : [])));
   const monthly = range(live.map((p) => p.pricing.monthly));
   const quarterly = range(live.map((p) => Math.round(p.pricing.quarterly / 3)));
@@ -77,7 +77,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Getting Started',
     q: 'How long until my order arrives?',
-    a: "A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days, by 2-day service or overnight cold-chain depending on the product. Results vary by person and treatment, and we don't promise specific results or timelines.",
+    a: "A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days by 2-day service. Results vary by person and treatment, and we don't promise specific results or timelines.",
   },
 
   // === Eligibility ===
@@ -165,7 +165,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How are medications shipped?',
-    a: "Temperature-sensitive medications ship overnight cold-chain in insulated packaging; others ship 2-day. {{shipping}}. Renewals pay shipping on each box, and a 12 month plan's second box is billed with the year. You'll get a tracking number when your order ships.",
+    a: "Every order ships 2-day; temperature-sensitive medications are packed cold in insulated packaging. {{shipping}}. Renewals pay shipping on each box, and a 12 month plan's second box is billed with the year. You'll get a tracking number when your order ships.",
   },
   {
     category: 'Safety',

@@ -85,7 +85,7 @@ export function AdminSettings({
 
       <SettingsRow
         title="Shipping"
-        description="What customers pay per box, 2-day and overnight alike. A 12 month plan ships two boxes and pays for both up front."
+        description="What customers pay per box. Every order ships 2-day (the pharmacy charges us $25). A 12 month plan ships two boxes and pays for both up front."
       >
         <SectionCard>
           <ShippingForm initial={shipping} />

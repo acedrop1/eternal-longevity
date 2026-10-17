@@ -183,7 +183,7 @@ const TRUST = [
   { icon: Stethoscope, title: 'Licensed physician', body: 'Every prescription decided by Dr. Elder.' },
   { icon: FlaskConical, title: '503A pharmacy', body: 'Made to order, just for you.' },
   { icon: ShieldCheck, title: 'LegitScript certified', body: 'Independently verified.' },
-  { icon: Truck, title: 'Fast, tracked shipping', body: 'Cold-chain where it needs it.' },
+  { icon: Truck, title: 'Fast, tracked shipping', body: '2-day, tracked to your door.' },
 ];
 
 function TrustTile({ icon: Icon, title, body, className, dupe }: (typeof TRUST)[number] & { className?: string; dupe?: boolean }) {

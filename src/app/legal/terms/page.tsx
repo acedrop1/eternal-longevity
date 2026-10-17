@@ -56,7 +56,7 @@ export default async function TermsPage() {
         {
           heading: 'Pricing & Billing',
           paragraphs: [
-            `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. ${shipLine} It is the same for 2-day and overnight cold-chain delivery and is shown at checkout before you order. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
+            `Pricing for each product is shown on the relevant product page at the time of checkout, in U.S. dollars. ${shipLine} Every order ships by 2-day service, and shipping is shown at checkout before you order. No sales tax is charged on prescription medications. There are no membership fees, consultation fees, or other charges beyond the price and shipping shown.`,
             'All payments are processed by our payment processor, a PCI-DSS compliant service provider. We do not receive or store your full card number.',
           ],
         },
