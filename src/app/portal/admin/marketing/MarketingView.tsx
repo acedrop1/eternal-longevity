@@ -541,6 +541,23 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
           {copied === 'builder' ? 'Copied' : 'Copy link'}
         </button>
       </div>
+      {/* How this link will be filed in the reports above, and in Saved links once saved. */}
+      <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+        {(
+          [
+            ['Type', LINK_PRESETS[preset].label],
+            ['Landing page', pageName],
+            ['Source', slug(source) || '—'],
+            ['Medium', slug(medium) || '—'],
+            ['Campaign', slug(campaign) || '—'],
+          ] as const
+        ).map(([k, v]) => (
+          <div key={k} className="flex gap-1.5">
+            <dt className="text-ink/55">{k}</dt>
+            <dd className="font-medium text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           className={cn(fieldInput, 'max-w-sm')}
@@ -556,14 +573,14 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
         {note && <span className={cn('text-[13px]', note.ok ? 'text-emerald-700' : 'text-red-700')}>{note.text}</span>}
       </div>
       <p className="mt-2 text-[13px] text-ink/60">
-        For Meta ads, Mo can instead paste this into Ads Manager → URL parameters:{' '}
+        For Meta ads, you can instead paste this into Ads Manager → URL parameters:{' '}
         <code className="rounded bg-milk px-1">utm_source=meta&amp;utm_medium=paid&amp;utm_campaign={'{{campaign.name}}'}</code>
       </p>
 
       <div className="mt-5 border-t border-ink/10 pt-4">
         <h3 className="text-[14px] font-semibold text-ink">Saved links</h3>
         {links.length === 0 ? (
-          <p className="mt-1 text-[13px] text-ink/60">None yet. Build a link above, name it and press Save link.</p>
+          <p className="mt-1 text-[13px] text-ink/60">None yet. Build a link above, give it a name and press <b className="font-semibold text-ink/75">Save link</b>. It then appears here with its type, landing page, source, medium and campaign.</p>
         ) : (
           <div className="mt-2 overflow-x-auto">
             <table className="w-full min-w-[860px] text-[14px]">
