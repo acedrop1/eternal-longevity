@@ -13,6 +13,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Overview', href: '/portal/admin' },
   { label: 'Analytics', href: '/portal/admin/analytics' },
   { label: 'Marketing', href: '/portal/admin/marketing' },
+  { label: 'Landing pages', href: '/portal/admin/landing-pages' },
   { label: 'Members', href: '/portal/admin/members' },
   { label: 'Applications', href: '/portal/admin/queue' },
   { label: 'Messages', href: '/portal/admin/messages' },

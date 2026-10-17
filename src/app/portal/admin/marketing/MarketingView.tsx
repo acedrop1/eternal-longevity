@@ -453,7 +453,7 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
     });
   const save = () =>
     start(async () => {
-      const res = await saveLinkAction({ name: name || `${LINK_PRESETS[preset].label} · ${pageName}`, url });
+      const res = await saveLinkAction({ name: name || `${LINK_PRESETS[preset].label} · ${pageName}`, url, kind: LINK_PRESETS[preset].label });
       setNote({ ok: res.ok, text: res.message });
       if (res.ok && res.links) {
         setLinks(res.links);
@@ -565,28 +565,59 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
         {links.length === 0 ? (
           <p className="mt-1 text-[13px] text-ink/60">None yet. Build a link above, name it and press Save link.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-ink/10">
-            {links.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium text-ink">{l.name}</span>
-                  <span className="block break-all text-[12px] text-ink/55">{l.url}</span>
-                </span>
-                <button type="button" className={secondaryButton} onClick={() => copy(l.url, l.id)}>
-                  {copied === l.id ? 'Copied' : 'Copy'}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => remove(l.id)}
-                  aria-label={`Delete ${l.name}`}
-                  className="inline-flex h-8 items-center rounded-thumb px-2 text-[13px] font-medium text-ink/55 hover:bg-red-50 hover:text-red-700"
-                >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full min-w-[860px] text-[14px]">
+              <thead>
+                <tr className="bg-milk text-left text-[13px] text-ink/70">
+                  {['Name', 'Type', 'Landing page', 'Source', 'Medium', 'Campaign', ''].map((h, i) => (
+                    <th key={i} className="whitespace-nowrap px-3 py-2 font-semibold first:pl-3">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {links.map((l) => {
+                  // Read the details back off the link itself, so older saved links show them too.
+                  let u: URL | null = null;
+                  try {
+                    u = new URL(l.url);
+                  } catch {}
+                  const tag = (k: string) => u?.searchParams.get(k) || '—';
+                  const page = u ? (pages.find((pg) => pg.path === u!.pathname)?.label ?? u.pathname) : '—';
+                  return (
+                    <tr key={l.id} className="border-t border-ink/10 align-top">
+                      <td className="px-3 py-2.5">
+                        <span className="block font-medium text-ink">{l.name}</span>
+                        <span className="block max-w-[320px] truncate text-[12px] text-ink/50" title={l.url}>
+                          {l.url}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-ink/80">{l.kind ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-ink/80">{page}</td>
+                      <td className="px-3 py-2.5 text-ink/80">{tag('utm_source')}</td>
+                      <td className="px-3 py-2.5 text-ink/80">{tag('utm_medium')}</td>
+                      <td className="px-3 py-2.5 text-ink/80">{tag('utm_campaign')}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                        <button type="button" className={secondaryButton} onClick={() => copy(l.url, l.id)}>
+                          {copied === l.id ? 'Copied' : 'Copy'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => remove(l.id)}
+                          aria-label={`Delete ${l.name}`}
+                          className="ml-1 inline-flex h-8 items-center rounded-thumb px-2 text-[13px] font-medium text-ink/55 hover:bg-red-50 hover:text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </SectionCard>

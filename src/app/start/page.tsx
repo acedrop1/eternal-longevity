@@ -14,6 +14,7 @@ import { intakeCovers } from '@/lib/purchase-rules';
 import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
+import { landingSeed } from '@/lib/landings';
 import { getShippingSettings } from '@/lib/shipping-settings';
 import { shippingNote } from '@/components/shop/pdpParts';
 
@@ -24,7 +25,8 @@ export const metadata: Metadata = pageMeta(
 );
 
 interface StartPageProps {
-  searchParams: Promise<{ product?: string; category?: string; plan?: string; renew?: string; goal?: string; format?: string }>;
+  /** product, category, plan, renew, /hair's goal and format, plus other landing pages' quiz answers (lib/landings). */
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 /**
@@ -35,14 +37,17 @@ interface StartPageProps {
 export default async function StartPage({ searchParams }: StartPageProps) {
   // Visitors arriving from a storefront card land here with ?product=<slug>:
   // a live product, or a listed draft (LIST_DRAFTS) so it isn't silently dropped.
-  const { product: slug, category: cat, plan, renew, goal, format } = await searchParams;
+  const params = await searchParams;
+  const one = (k: string) => (typeof params[k] === 'string' ? (params[k] as string) : undefined);
+  const [slug, cat, plan, renew, goal, format] = ['product', 'category', 'plan', 'renew', 'goal', 'format'].map(one);
   const live = slug ? await getLiveProduct(slug) : null;
   const item = !live && LIST_DRAFTS ? ALL_ITEMS.find((x) => x.item.slug === slug)?.item : undefined;
   const draft = item?.live ? await getCatalogProduct(item.live) : null;
   const requested = live ?? (draft?.status === 'draft' ? draft : null);
   const category = !requested && isCategoryKey(cat) ? cat : undefined;
   // From /hair's quick questions: pre-fill the same hair answers (only known values).
-  const seed: Record<string, string> = {};
+  // Other landing pages (lib/landings): their quiz answers, for the category or product they open.
+  const seed: Record<string, string | string[]> = landingSeed({ category: cat, product: slug }, params);
   if (category === 'hair' || (requested && PRODUCT_CATEGORY[requested.id] === 'hair')) {
     if (goal && ['stop', 'regrow', 'both'].includes(goal)) seed.hr_goal = goal;
     if (format && ['pill', 'foam', 'either'].includes(format)) seed.hr_format = format;

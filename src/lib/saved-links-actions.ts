@@ -17,6 +17,8 @@ export interface SavedLink {
   id: string;
   name: string;
   url: string;
+  /** Where it's posted, as picked in the builder (e.g. "Eternal Hair text (SMS)"). */
+  kind?: string;
   createdAt: string;
   createdBy: string;
 }
@@ -65,7 +67,7 @@ export async function listSavedLinksAction(): Promise<SavedLink[]> {
   return read().catch(() => []);
 }
 
-export async function saveLinkAction(input: { name: string; url: string }): Promise<{ ok: boolean; message: string; links?: SavedLink[] }> {
+export async function saveLinkAction(input: { name: string; url: string; kind?: string }): Promise<{ ok: boolean; message: string; links?: SavedLink[] }> {
   const session = await admin();
   if (!session) return { ok: false, message: 'Admin access is required.' };
   const name = String(input?.name ?? '').trim().slice(0, 80);
@@ -78,7 +80,7 @@ export async function saveLinkAction(input: { name: string; url: string }): Prom
     const links = await read();
     if (links.length >= MAX) return { ok: false, message: `${MAX} saved links is the limit. Delete one first.` };
     const next: SavedLink[] = [
-      { id: crypto.randomUUID(), name, url, createdAt: new Date().toISOString(), createdBy: session.name },
+      { id: crypto.randomUUID(), name, url, kind: String(input?.kind ?? '').trim().slice(0, 60) || undefined, createdAt: new Date().toISOString(), createdBy: session.name },
       ...links,
     ];
     await write(next);

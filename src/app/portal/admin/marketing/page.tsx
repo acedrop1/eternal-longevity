@@ -11,6 +11,8 @@ import { SITE_URL } from '@/lib/site';
 import { CATEGORIES } from '@/lib/lineup';
 import { MarketingView, type NamedPage } from './MarketingView';
 import { listSavedLinksAction } from '@/lib/saved-links-actions';
+import { LANDINGS } from '@/lib/landings';
+import { getLandingStatus } from '@/lib/landing-actions';
 
 export const metadata: Metadata = { title: 'Marketing' };
 export const dynamic = 'force-dynamic';
@@ -56,6 +58,9 @@ export default async function MarketingPage({
   // The page dropdown: named pages first, then any other page that got visits (by its path).
   const named: NamedPage[] = [
     { label: 'Hair landing page (/hair)', path: '/hair' },
+    ...(await getLandingStatus().then((st) =>
+      LANDINGS.map((l) => ({ label: `${l.title} landing page (/${l.slug})${st[l.slug] ? '' : ' · draft'}`, path: `/${l.slug}` })),
+    )),
     { label: 'Homepage', path: '/' },
     { label: 'Shop all', path: '/shop' },
     { label: 'Start assessment', path: '/start' },
