@@ -9,7 +9,8 @@ import { NOTE_STEP, RECOMMEND_STEP, STEPS } from '@/lib/intakeSchema';
 import { PRODUCT_CATEGORY, buildCategorySteps } from '@/lib/intake-categories';
 import { SITE_URL } from '@/lib/site';
 import { CATEGORIES } from '@/lib/lineup';
-import { MarketingView } from './MarketingView';
+import { MarketingView, type NamedPage } from './MarketingView';
+import { listSavedLinksAction } from '@/lib/saved-links-actions';
 
 export const metadata: Metadata = { title: 'Marketing' };
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,19 @@ export default async function MarketingPage({
     ]),
   );
 
+  // The page dropdown: named pages first, then any other page that got visits (by its path).
+  const named: NamedPage[] = [
+    { label: 'Hair landing page (/hair)', path: '/hair' },
+    { label: 'Homepage', path: '/' },
+    { label: 'Shop all', path: '/shop' },
+    { label: 'Start assessment', path: '/start' },
+    ...CATEGORIES.map((c) => ({ label: `${c.name} treatments`, path: `/treatments/${c.slug}` })),
+  ];
+  const pages: NamedPage[] = [
+    ...named,
+    ...now.byPage.filter((r) => !named.some((n) => n.path === r.path)).map((r) => ({ label: r.path, path: r.path })),
+  ];
+
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <MarketingView
@@ -63,7 +77,8 @@ export default async function MarketingPage({
         before={before.totals}
         stepLabels={stepLabels}
         siteUrl={SITE_URL}
-        pages={[...new Set(['/', '/hair', '/shop', '/start', ...CATEGORIES.map((c) => `/treatments/${c.slug}`), ...now.byPage.map((r) => r.path)])]}
+        pages={pages}
+        savedLinks={await listSavedLinksAction()}
       />
     </PortalShell>
   );

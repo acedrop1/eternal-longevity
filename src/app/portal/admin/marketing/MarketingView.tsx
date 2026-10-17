@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/format';
 import { PRESETS, change, type DateRange, type Preset } from '@/lib/profit';
 import type { MarketingData, MarketingTotals, SourceRow } from '@/lib/marketing-data';
+import { deleteLinkAction, saveLinkAction, type SavedLink } from '@/lib/saved-links-actions';
 import {
   AdminPageHeader,
   MetricCard,
@@ -26,8 +27,9 @@ interface Props {
   before: MarketingTotals;
   stepLabels: Record<string, string>;
   siteUrl: string;
-  /** Suggestions for the link builder: landing pages, category pages, and any page that got visits. */
-  pages: string[];
+  /** The link builder's page dropdown: named pages, then any other page that got visits. */
+  pages: NamedPage[];
+  savedLinks: SavedLink[];
 }
 
 const money = (cents: number) => (cents < 0 ? `−${formatMoney(-cents)}` : formatMoney(cents));
@@ -38,13 +40,20 @@ const BLUE = '#2a78d6';
 
 /** Ready-made link tags: the source names the reports group by. */
 const LINK_PRESETS = [
-  { label: 'Eternal Hair email', source: 'eternalhair', medium: 'email', campaign: 'hair-launch' },
-  { label: 'Meta ad (Facebook/Instagram)', source: 'meta', medium: 'paid', campaign: '' },
-  { label: 'Google ad', source: 'google', medium: 'paid', campaign: '' },
-  { label: 'Instagram bio / post', source: 'instagram', medium: 'social', campaign: '' },
-  { label: 'Influencer / partner', source: 'partner', medium: 'referral', campaign: '' },
-  { label: 'Custom', source: '', medium: '', campaign: '' },
+  { label: 'Eternal Hair email', source: 'eternalhair', medium: 'email', campaign: 'hair-launch', page: '/hair' },
+  { label: 'Eternal Hair text (SMS)', source: 'eternalhair', medium: 'sms', campaign: 'hair-launch', page: '/hair' },
+  { label: 'Meta ad (Facebook/Instagram)', source: 'meta', medium: 'paid', campaign: '', page: '/hair' },
+  { label: 'Google ad', source: 'google', medium: 'paid', campaign: '', page: '/hair' },
+  { label: 'Instagram bio / post', source: 'instagram', medium: 'social', campaign: '', page: '/' },
+  { label: 'Influencer / partner', source: 'partner', medium: 'referral', campaign: '', page: '/' },
+  { label: 'Custom', source: '', medium: '', campaign: '', page: '/' },
 ];
+
+/** A page the link builder offers by name. */
+export interface NamedPage {
+  label: string;
+  path: string;
+}
 
 /** Label | Finished | Paid | Conv. | Net sales: shared by the category and quiz tables. */
 function MoneyTable({ first, rows, empty }: { first: string; empty: string; rows: { key: string; label: string; completes: number; orders: number; revenue: number }[] }) {
@@ -326,7 +335,7 @@ export function MarketingView(p: Props) {
         )}
       </SectionCard>
 
-      <LinkBuilder siteUrl={p.siteUrl} pages={p.pages} />
+      <LinkBuilder siteUrl={p.siteUrl} pages={p.pages} saved={p.savedLinks} />
 
       <SectionCard title="How tracking works">
         <dl className="grid gap-x-8 gap-y-3 text-[14px] leading-relaxed md:grid-cols-2">
@@ -412,25 +421,57 @@ function DayBars({ days }: { days: MarketingData['byDay'] }) {
   );
 }
 
-function LinkBuilder({ siteUrl, pages }: { siteUrl: string; pages: string[] }) {
+const OTHER = '__other';
+
+function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedPage[]; saved: SavedLink[] }) {
   const [preset, setPreset] = useState(0);
-  const [dest, setDest] = useState('/');
+  const [dest, setDest] = useState(LINK_PRESETS[0].page);
+  const [other, setOther] = useState(false);
   const [source, setSource] = useState(LINK_PRESETS[0].source);
   const [medium, setMedium] = useState(LINK_PRESETS[0].medium);
   const [campaign, setCampaign] = useState(LINK_PRESETS[0].campaign);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [links, setLinks] = useState(saved);
+  const [name, setName] = useState('');
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, start] = useTransition();
   const slug = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const q = new URLSearchParams();
   if (slug(source)) q.set('utm_source', slug(source));
   if (slug(medium)) q.set('utm_medium', slug(medium));
   if (slug(campaign)) q.set('utm_campaign', slug(campaign));
-  // Whatever was typed or pasted, as a path on our site.
+  // Whatever was picked, typed or pasted, as a path on our site.
   const path = `/${dest.trim().replace(/^https?:\/\/[^/]+/, '').replace(/^\/+/, '').split(/[?#]/)[0]}`;
   const url = `${siteUrl.replace(/\/$/, '')}${path}${q.toString() ? `?${q}` : ''}`;
+  const known = pages.some((pg) => pg.path === dest);
+  const pageName = pages.find((pg) => pg.path === path)?.label ?? path;
+
+  const copy = (text: string, key: string) =>
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  const save = () =>
+    start(async () => {
+      const res = await saveLinkAction({ name: name || `${LINK_PRESETS[preset].label} · ${pageName}`, url });
+      setNote({ ok: res.ok, text: res.message });
+      if (res.ok && res.links) {
+        setLinks(res.links);
+        setName('');
+      }
+    });
+  const remove = (id: string) =>
+    start(async () => {
+      if (!window.confirm('Delete this saved link? Links already sent keep working.')) return;
+      const res = await deleteLinkAction(id);
+      if (res.ok && res.links) setLinks(res.links);
+      else setNote({ ok: false, text: res.message });
+    });
+
   return (
     <SectionCard
       title="Link builder"
-      description="Make a tagged link for an email, ad or post, so its visits and sales show up above under its own name."
+      description="Make a tagged link for an email, text, ad or post, so its visits and sales show up above under its own name. Save it to reuse later."
     >
       <div className="grid gap-3 md:grid-cols-5">
         <label className="md:col-span-1">
@@ -444,6 +485,8 @@ function LinkBuilder({ siteUrl, pages }: { siteUrl: string; pages: string[] }) {
               setSource(LINK_PRESETS[i].source);
               setMedium(LINK_PRESETS[i].medium);
               setCampaign(LINK_PRESETS[i].campaign);
+              setDest(LINK_PRESETS[i].page);
+              setOther(false);
             }}
           >
             {LINK_PRESETS.map((l, i) => (
@@ -455,19 +498,29 @@ function LinkBuilder({ siteUrl, pages }: { siteUrl: string; pages: string[] }) {
         </label>
         <label>
           <span className={fieldLabel}>Page</span>
-          {/* Pick one, or type any page: a new landing page needs no change here. */}
-          <input
+          <select
             className={fieldInput}
-            list="link-pages"
-            value={dest}
-            onChange={(e) => setDest(e.target.value)}
-            placeholder="/hair"
-          />
-          <datalist id="link-pages">
-            {pages.map((d) => (
-              <option key={d} value={d} />
+            value={other || !known ? OTHER : dest}
+            onChange={(e) => {
+              if (e.target.value === OTHER) {
+                setOther(true);
+                setDest('');
+              } else {
+                setOther(false);
+                setDest(e.target.value);
+              }
+            }}
+          >
+            {pages.map((pg) => (
+              <option key={pg.path} value={pg.path}>
+                {pg.label}
+              </option>
             ))}
-          </datalist>
+            <option value={OTHER}>Other page…</option>
+          </select>
+          {(other || !known) && (
+            <input className={cn(fieldInput, 'mt-2')} value={dest} onChange={(e) => setDest(e.target.value)} placeholder="/treatments/hair" autoFocus />
+          )}
         </label>
         <label>
           <span className={fieldLabel}>Source</span>
@@ -484,23 +537,58 @@ function LinkBuilder({ siteUrl, pages }: { siteUrl: string; pages: string[] }) {
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <code className="min-w-0 flex-1 break-all rounded-thumb bg-milk px-3 py-2 text-[13px] text-ink">{url}</code>
-        <button
-          type="button"
-          className={secondaryButton}
-          onClick={() => {
-            void navigator.clipboard?.writeText(url).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            });
-          }}
-        >
-          {copied ? 'Copied' : 'Copy link'}
+        <button type="button" className={secondaryButton} onClick={() => copy(url, 'builder')}>
+          {copied === 'builder' ? 'Copied' : 'Copy link'}
         </button>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          className={cn(fieldInput, 'max-w-sm')}
+          value={name}
+          maxLength={80}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={`Name, e.g. ${LINK_PRESETS[preset].label} · ${pageName}`}
+          aria-label="Name for this link"
+        />
+        <button type="button" className={secondaryButton} disabled={busy} onClick={save}>
+          {busy ? 'Saving…' : 'Save link'}
+        </button>
+        {note && <span className={cn('text-[13px]', note.ok ? 'text-emerald-700' : 'text-red-700')}>{note.text}</span>}
       </div>
       <p className="mt-2 text-[13px] text-ink/60">
         For Meta ads, Mo can instead paste this into Ads Manager → URL parameters:{' '}
         <code className="rounded bg-milk px-1">utm_source=meta&amp;utm_medium=paid&amp;utm_campaign={'{{campaign.name}}'}</code>
       </p>
+
+      <div className="mt-5 border-t border-ink/10 pt-4">
+        <h3 className="text-[14px] font-semibold text-ink">Saved links</h3>
+        {links.length === 0 ? (
+          <p className="mt-1 text-[13px] text-ink/60">None yet. Build a link above, name it and press Save link.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-ink/10">
+            {links.map((l) => (
+              <li key={l.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-medium text-ink">{l.name}</span>
+                  <span className="block break-all text-[12px] text-ink/55">{l.url}</span>
+                </span>
+                <button type="button" className={secondaryButton} onClick={() => copy(l.url, l.id)}>
+                  {copied === l.id ? 'Copied' : 'Copy'}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => remove(l.id)}
+                  aria-label={`Delete ${l.name}`}
+                  className="inline-flex h-8 items-center rounded-thumb px-2 text-[13px] font-medium text-ink/55 hover:bg-red-50 hover:text-red-700"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </SectionCard>
   );
 }
