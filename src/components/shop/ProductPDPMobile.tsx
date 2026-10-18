@@ -60,7 +60,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
           whole product shows; the details ride up over its bottom edge on a rounded sheet. */}
       {/* The photo holds still (sticky) and the card scrolls up over it. */}
       <div className="sticky top-0 z-0 -mx-5">
-        <ProductImage product={product} sizes="100vw" className="aspect-[4/5] rounded-none" labelClass="bottom-11 left-5" />
+        <ProductImage product={product} sizes="100vw" className="aspect-[4/5] !rounded-none" labelClass="bottom-11 left-5" />
       </div>
 
       <div className="relative z-10 -mx-5 -mt-7 rounded-t-[28px] bg-white px-5 pt-7 shadow-[0_-12px_30px_-18px_rgba(17,17,17,0.35)]">
