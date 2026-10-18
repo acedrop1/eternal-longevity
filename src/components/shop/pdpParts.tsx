@@ -67,10 +67,13 @@ export function ProductImage({
 }
 
 /** "Billed $149 monthly", "Billed $402 every 3 months", "Billed $1248 once a year · ships every 6 months". */
+/** Whole dollars with a thousands separator: 1248 -> 1,248. */
+export const usd = (n: number) => n.toLocaleString('en-US');
+
 export const billedLine = (t: CadenceTier) =>
   t.key === 'annual'
-    ? `Billed $${t.total} once a year · ships every 6 months`
-    : `Billed $${t.total} ${t.key === 'monthly' ? 'monthly' : `every ${t.key === 'sixMonth' ? 6 : 3} months`}`;
+    ? `Billed $${usd(t.total)} once a year · ships every 6 months`
+    : `Billed $${usd(t.total)} ${t.key === 'monthly' ? 'monthly' : `every ${t.key === 'sixMonth' ? 6 : 3} months`}`;
 
 /** "Free shipping on your first order · $20 per box after" (Admin → Settings). */
 export const shippingNote = (s: ShippingSettings) =>
@@ -126,8 +129,9 @@ export function PlanSegments({
   onSelect: (key: CadenceTier['key']) => void;
   pulse?: boolean;
 }) {
+  // Phones: one row per plan, like an iOS list: a 56px target, a radio that reads by shape, label left, price right.
   return (
-    <div role="radiogroup" aria-label="Plan" className={cn('grid gap-1.5', tiers.length > 3 ? 'grid-cols-4' : 'grid-cols-3')}>
+    <div role="radiogroup" aria-label="Plan" className="space-y-2">
       {tiers.map((t) => {
         const on = t.key === selected;
         return (
@@ -138,20 +142,21 @@ export function PlanSegments({
             aria-checked={on}
             onClick={() => onSelect(t.key)}
             className={cn(
-              'relative flex flex-col items-center rounded-inner px-1 pb-2 pt-2.5 text-center transition-[box-shadow,background-color,color] duration-300',
-              on ? 'bg-ink text-white ring-2 ring-ink' : 'bg-milk text-ink ring-1 ring-transparent'
+              'flex min-h-[56px] w-full items-center gap-3 rounded-inner px-4 py-3 text-left transition-[box-shadow,background-color] duration-300',
+              on ? 'bg-white ring-2 ring-ink' : 'bg-milk ring-1 ring-transparent'
             )}
             style={pulse && on ? { boxShadow: '0 0 0 5px rgba(247,221,116,0.7)' } : undefined}
           >
-            {t.saveLabel && (
-              <span className="absolute -top-2 rounded-full bg-butter px-1.5 py-px text-[10px] font-semibold text-ink">
-                {t.saveLabel}
-              </span>
-            )}
-            <span className="text-[13px] font-medium">{t.label}</span>
-            <span className="mt-0.5 text-[15px] font-semibold tabular-nums">
+            <span aria-hidden className={cn('grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2', on ? 'border-ink' : 'border-ink/30')}>
+              {on && <span className="h-3 w-3 rounded-full bg-ink" />}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[16px] font-semibold tracking-[-0.01em]">{t.label}</span>
+              {t.saveLabel && <span className="rounded-full bg-butter px-2 py-0.5 text-[12px] font-semibold text-ink">{t.saveLabel}</span>}
+            </span>
+            <span className="shrink-0 text-[16px] font-semibold tabular-nums">
               ${t.perMonth}
-              <span className={cn('text-[11px] font-normal', on ? 'text-white/70' : 'text-ink/65')}>/mo</span>
+              <span className="text-[13px] font-normal text-ink-soft">/mo</span>
             </span>
           </button>
         );
@@ -217,7 +222,7 @@ export function PlanOptions({
                   ${t.perMonth}
                   <span className="text-[13px] font-normal text-ink-soft">/mo</span>
                 </span>
-                <span className="block text-[12px] text-ink/65">${t.total} billed</span>
+                <span className="block text-[12px] text-ink/65">${usd(t.total)} billed</span>
               </span>
             </button>
           );

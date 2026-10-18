@@ -7,7 +7,7 @@ import { Check } from 'lucide-react';
 import { cadenceTiersForProduct, defaultTier, type CadenceTier, type ShopProduct } from '@/lib/shopProducts';
 import { useCart } from '@/components/cart/CartProvider';
 import { BuyBar, ctaTarget, useCtaOffscreen } from './BuyBar';
-import { billedLine, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine, shippingNote } from './pdpParts';
+import { billedLine, usd, Disclosure, MonthlyRate, PlanSegments, ProductDetails, ProductImage, shippingLine, shippingNote } from './pdpParts';
 import type { ShippingSettings } from '@/lib/shipping-settings';
 
 interface ProductPDPMobileProps {
@@ -63,24 +63,19 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
         className="mx-auto aspect-[4/5] h-[36svh] min-h-[240px]"
       />
 
-      <div className="mt-4 flex items-end justify-between gap-4">
-        <div className="min-w-0">
-          {/* The desktop variant (ProductPDP) carries the page's one <h1>. This one is a level-1
-              heading only to assistive tech, which sees just the variant that is displayed. */}
-          <p role="heading" aria-level={1} className="text-[36px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink [text-wrap:balance]">{product.name}</p>
-          <p className="mt-1.5 text-[14px] text-ink-soft">{product.tagline}</p>
-        </div>
-        <div className="shrink-0 text-right tabular-nums">
-          <p className="flex items-baseline justify-end gap-1.5">
-            <span className="text-[30px] font-semibold leading-none tracking-[-0.04em]">${active.perMonth}</span>
-            <span className="text-[14px] text-ink-soft">/mo</span>
-          </p>
-          <MonthlyRate product={product} active={active} className="mt-1 block text-[11px]" />
-        </div>
+      {/* One column, top to bottom (iOS product pages): name, what it's for, price. Nothing squeezed side by side. */}
+      <div className="mt-5">
+        {/* The desktop variant (ProductPDP) carries the page's one <h1>. This one is a level-1
+            heading only to assistive tech, which sees just the variant that is displayed. */}
+        <p role="heading" aria-level={1} className="text-[34px] font-semibold leading-[1.02] tracking-[-0.04em] text-ink [text-wrap:balance]">{product.name}</p>
+        <p className="mt-1.5 text-[16px] leading-snug text-ink-soft">{product.tagline}</p>
+        <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 tabular-nums">
+          <span className="text-[28px] font-semibold leading-none tracking-[-0.03em]">${active.perMonth}<span className="text-[16px] font-normal text-ink-soft">/mo</span></span>
+          <MonthlyRate product={product} active={active} className="text-[14px]" />
+        </p>
       </div>
 
-      {/* Full width under the name and price, not squeezed beside the price. */}
-      <p className="mt-3 text-[15px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
+      <p className="mt-4 text-[16px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
       {pickPlan && (
         <div ref={planRef} className="mt-5 scroll-mt-40">
@@ -92,7 +87,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
         {href ? (
           <Link
             href={href}
-            className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-butter px-5 text-center text-[17px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
             {ctaLabel}
           </Link>
@@ -100,24 +95,24 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
           <button
             type="button"
             onClick={handleAddToCart}
-            className="block w-full rounded-full bg-butter px-5 py-4 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-butter px-5 text-center text-[17px] font-semibold text-ink transition-colors hover:bg-butter-deep"
           >
-            Add to Cart. ${active.total}
+            Add to cart · ${usd(active.total)}
           </button>
         )}
-        {pickPlan && <p className="mt-2.5 text-center text-[12px] text-ink/65 tabular-nums">
+        {pickPlan && <p className="mt-3 text-center text-[13px] leading-snug text-ink/65 tabular-nums">
           {billedLine(active)} · {shippingLine(product)} · {active.key === 'annual' ? 'cancel before your next yearly billing' : 'cancel anytime'}
         </p>}
-        <p className="mt-1 text-center text-[12px] text-ink/65 tabular-nums">{shippingNote(shipping)}</p>
+        <p className="mt-1 text-center text-[13px] leading-snug text-ink/65 tabular-nums">{shippingNote(shipping)}</p>
       </div>
 
       {/* Below the fold: what the chosen plan includes, then the rest. */}
       <div className="mt-10 rounded-shell bg-milk p-5">
         <p className="text-[13px] font-medium text-ink/65">Compounded by a licensed 503A pharmacy</p>
-        <p className="mt-4 text-[15px] font-semibold tracking-[-0.01em]">{active.label} includes</p>
+        <p className="mt-4 text-[17px] font-semibold tracking-[-0.01em]">{active.label} includes</p>
         <ul className="mt-3 space-y-2">
           {active.breakdown.map((line) => (
-            <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">
+            <li key={line} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-ink-soft">
               <Check aria-hidden className="mt-[3px] h-4 w-4 shrink-0" strokeWidth={2} />
               {line}
             </li>
@@ -126,7 +121,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
       </div>
 
       <div className="mt-6 space-y-3 border-t border-ink/10 pt-5">
-        <p className="text-[14px] leading-relaxed text-ink-soft">
+        <p className="text-[15px] leading-relaxed text-ink-soft">
           <span className="font-medium text-ink">Important. </span>
           This medication is compounded by a licensed 503A pharmacy against a prescription. Not a substitute
           for medical care; do not use if pregnant, nursing, or under 18.

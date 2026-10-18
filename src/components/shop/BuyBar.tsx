@@ -65,7 +65,7 @@ export function BuyBar({
   onChangePlan?: () => void;
 }) {
   const ctaCls =
-    'shrink-0 rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink transition-colors hover:bg-butter-deep md:px-5 md:py-3 md:text-[14px]';
+    'flex min-h-[44px] shrink-0 items-center rounded-full bg-butter px-5 text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep md:px-5 md:py-3 md:text-[14px]';
 
   return (
     <div
@@ -85,7 +85,7 @@ export function BuyBar({
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-[17px] font-semibold leading-none tracking-[-0.03em] md:text-[20px]">{product.name}</p>
-          <p className="mt-1 flex items-center gap-2 truncate text-[12px] text-ink-soft">
+          <p className="mt-1 flex items-center gap-2 truncate text-[13px] text-ink-soft">
             {/* Plan name drops on phones so the price always fits. */}
             <span className="truncate">
               <span className="hidden sm:inline">{active.label} · </span>
@@ -95,7 +95,7 @@ export function BuyBar({
               <button
                 type="button"
                 onClick={onChangePlan}
-                className="shrink-0 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
+                className="-my-3 shrink-0 py-3 underline decoration-ink/30 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
               >
                 Change
               </button>

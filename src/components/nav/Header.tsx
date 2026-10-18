@@ -47,10 +47,20 @@ function useSessionHome(): string | null {
  */
 export function Header({ categoryStrip = false, overlay = false }: { categoryStrip?: boolean; overlay?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
+  // Phones: the category strip tucks away while scrolling down and returns on any scroll up (as Safari's bars do).
+  const [tuck, setTuck] = useState(false);
   const home = useSessionHome();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      if (Math.abs(y - lastY) > 6) {
+        setTuck(y > lastY && y > 120);
+        lastY = y;
+      }
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -151,7 +161,11 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
           </div>
         </div>
 
-        {categoryStrip && <CategoryStrip glass={glass} onPhoto={onPhoto} />}
+        {categoryStrip && (
+          <div className={cn('transition-[opacity,transform] duration-300 ease-out', tuck && 'max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0')}>
+            <CategoryStrip glass={glass} onPhoto={onPhoto} />
+          </div>
+        )}
         <ShopMenu open={shopOpen} onClose={() => setShopOpen(false)} />
       </div>
     </header>

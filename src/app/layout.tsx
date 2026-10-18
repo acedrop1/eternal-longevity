@@ -104,6 +104,8 @@ export const viewport: Viewport = {
   themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
+  // env(safe-area-inset-*) is 0 without this, so the buy bar could sit on the iPhone home indicator.
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({
