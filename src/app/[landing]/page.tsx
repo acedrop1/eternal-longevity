@@ -91,12 +91,13 @@ export default async function LandingPage({ params }: Props) {
               <Aura mix="sunrise" />
               <div className="relative">
                 <p className="text-[13px] font-medium text-ink-soft">Prescribed by a licensed physician · {SERVICE_AREA_SHORT}</p>
-                <h1 className="mt-3 text-[34px] font-semibold leading-[0.98] tracking-[-0.05em] text-ink md:text-[60px]">
+                <h1 className="mt-3 text-[34px] font-semibold leading-[1.02] tracking-[-0.05em] text-ink md:text-[44px] lg:text-[52px]">
                   {l.headline.lead}{' '}
-                  <span className="whitespace-nowrap">
-                    <Swipe>{l.headline.swipe}</Swipe>
-                    {l.headline.footnote && <sup className="ml-0.5 align-super text-[0.35em] font-medium">1</sup>}
+                  {/* The /hair swipe can't wrap; these phrases are longer, so the highlight wraps line by line. */}
+                  <span className="bg-[linear-gradient(transparent_52%,#FFEC9F_52%,#FFEC9F_94%,transparent_94%)] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]">
+                    {l.headline.swipe}
                   </span>
+                  {l.headline.footnote && <sup className="ml-0.5 align-super text-[0.35em] font-medium">1</sup>}
                 </h1>
                 <p className="mt-3 max-w-[440px] text-[15px] leading-relaxed text-ink-soft md:text-[17px]">{l.subline}</p>
                 {hero?.image && (
