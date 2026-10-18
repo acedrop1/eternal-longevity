@@ -40,7 +40,7 @@ function Thumb({ item, live, tint, className, iconClass, sizes = '160px' }: { it
   const Icon = FORM_ICON[item.form];
   return (
     <span className={cn('relative grid shrink-0 place-items-center overflow-hidden', src ? 'bg-milk' : tint, className)}>
-      {src ? <Image src={src} alt="" fill sizes={sizes} className="object-cover" /> : <Icon aria-hidden strokeWidth={1.4} className={cn('text-ink/70', iconClass)} />}
+      {src ? <Image src={src} alt="" fill sizes={sizes} className="object-contain" /> : <Icon aria-hidden strokeWidth={1.4} className={cn('text-ink/70', iconClass)} />}
     </span>
   );
 }
@@ -78,15 +78,10 @@ export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: 
 export function LineupCard({ item, tint }: { item: LineupItem; tint: string }) {
   const live = useLive(item);
   return (
-    <div className="group relative aspect-[3/4] overflow-hidden rounded-shell shadow-[0_30px_60px_-36px_rgba(17,17,17,0.5)]">
-      <Thumb
-        item={item}
-        live={live}
-        tint={tint}
-        sizes="(max-width: 1024px) 50vw, 25vw"
-        className="absolute inset-0 -translate-y-[9%] scale-[1.2] transition-transform duration-700 ease-out-expo group-hover:scale-[1.25]"
-        iconClass="-mt-16 h-14 w-14 md:-mt-24 md:h-20 md:w-20"
-      />
+    <div className="group relative flex flex-col overflow-hidden rounded-shell bg-milk shadow-[0_30px_60px_-36px_rgba(17,17,17,0.5)]">
+      {/* The photo in its own 4:5 box (the shots' shape), whole: the name panel sits below it, not over it. */}
+      <div className="relative aspect-[4/5]">
+      <Thumb item={item} live={live} tint={tint} sizes="(max-width: 1024px) 50vw, 25vw" className="absolute inset-0" iconClass="h-14 w-14 md:h-20 md:w-20" />
 
       <div className={cn('absolute left-2 top-2 flex items-baseline gap-1 rounded-full px-2.5 py-1 md:left-4 md:top-4 md:gap-1.5 md:px-4 md:py-2', CARD_GLASS)}>
         {live ? (
@@ -104,8 +99,9 @@ export function LineupCard({ item, tint }: { item: LineupItem; tint: string }) {
           <Badge>{item.badge}</Badge>
         </span>
       )}
+      </div>
 
-      <div className={cn('pointer-events-none absolute inset-x-2 bottom-2 z-[2] rounded-inner px-3 py-2.5 md:inset-x-4 md:bottom-4 md:p-5', CARD_GLASS)}>
+      <div className="pointer-events-none relative z-[2] flex-1 px-3 py-3 md:p-5">
         <p className="text-[16px] font-semibold leading-tight tracking-[-0.03em] md:text-[22px]">{item.name}</p>
         <p className="mt-0.5 truncate text-[11px] text-ink-soft md:mt-1 md:whitespace-normal md:text-[14px]">{item.what}</p>
         <div className="hidden items-center justify-between gap-3 border-t border-ink/10 pt-3 md:mt-3 md:flex">

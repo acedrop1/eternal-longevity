@@ -59,7 +59,7 @@ const PRIMARY: Category[] = [
   {
     slug: 'longevity',
     name: 'Longevity',
-    line: 'NAD+, glutathione and more, to support healthy energy levels and healthy ageing.',
+    line: 'NAD+, glutathione and more, to support healthy energy levels and healthy aging.',
     image: '/brand/cat-longevity.jpg',
     tint: 'bg-butter-soft',
     items: [

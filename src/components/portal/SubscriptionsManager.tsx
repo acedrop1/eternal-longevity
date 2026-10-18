@@ -191,7 +191,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
             <article key={s.id} className={cn(panel, 'p-4 transition-opacity sm:p-6', isCancelled && 'opacity-60')}>
               <div className="flex gap-4">
                 <div className="relative h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-inner bg-milk-deep sm:h-24 sm:w-24">
-                  <Image src={s.image} alt="" fill sizes="96px" priority={i < 2} className="object-cover" />
+                  <Image src={s.image} alt="" fill sizes="96px" priority={i < 2} className="object-contain" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <StatusChip tone={declined ? 'error' : theme.tone}>{declined ? 'Payment failed' : theme.label}</StatusChip>

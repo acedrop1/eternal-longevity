@@ -8,13 +8,13 @@
  */
 export const EXPLAINER: Record<string, string> = {
   'nad-plus':
-    'NAD+ is a molecule every cell uses to turn food into energy, and levels naturally fall with age. A small injection under the skin supports healthy energy levels and healthy ageing.',
+    'NAD+ is a molecule every cell uses to turn food into energy, and levels naturally fall with age. A small injection under the skin supports healthy energy levels and healthy aging.',
   glutathione:
     "Glutathione is your body's main antioxidant, a small peptide that supports cells through everyday stress. You take it as a quick injection under the skin.",
   'pt-141':
     'PT-141 is a peptide that supports healthy desire by acting in the brain rather than on blood flow, for men and women. You use it as needed, with a small injection ahead of time.',
   'nad-nasal':
-    'The same NAD+ as our injection in a nasal spray, supporting healthy energy levels and healthy ageing with no needles. Your physician sets how often you use it.',
+    'The same NAD+ as our injection in a nasal spray, supporting healthy energy levels and healthy aging with no needles. Your physician sets how often you use it.',
   'mic-b12':
     'Vitamin B12 plus methionine, inositol and choline, nutrients that support healthy energy levels and nerve function. You take it as one quick injection.',
   'methylene-blue':

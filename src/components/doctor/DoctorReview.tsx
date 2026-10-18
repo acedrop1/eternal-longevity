@@ -455,7 +455,7 @@ export function DoctorReview({
                   className="relative h-12 w-12 flex-none overflow-hidden rounded-thumb border border-ink/10 bg-milk"
                   style={l.swatch ? { background: l.swatch } : undefined}
                 >
-                  {l.image && <Image src={l.image} alt={l.productName} fill priority sizes="48px" className="object-cover opacity-50" />}
+                  {l.image && <Image src={l.image} alt={l.productName} fill priority sizes="48px" className="object-contain opacity-50" />}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-medium text-ink md:text-[14px]">{l.productName}</p>

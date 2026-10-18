@@ -126,7 +126,7 @@ function MemberOrderCard({ order, onPlan, first }: { order: Order; onPlan: boole
       <div className="flex gap-4">
         {image && (
           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-inner bg-milk-deep sm:h-20 sm:w-20">
-            <Image src={image} alt="" fill sizes="80px" priority={first} className="object-cover" />
+            <Image src={image} alt="" fill sizes="80px" priority={first} className="object-contain" />
           </div>
         )}
         <div className="min-w-0 flex-1">

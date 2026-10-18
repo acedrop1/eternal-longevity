@@ -603,7 +603,7 @@ export const GOAL_STEP: Step = {
       label: '',
       required: true,
       options: [
-        { value: 'longevity', label: CATEGORY_LABEL.longevity, hint: 'Energy and healthy ageing', image: '/brand/cat-longevity.jpg' },
+        { value: 'longevity', label: CATEGORY_LABEL.longevity, hint: 'Energy and healthy aging', image: '/brand/cat-longevity.jpg' },
         { value: 'sexual-health', label: CATEGORY_LABEL['sexual-health'], hint: 'Performance and desire', image: '/brand/cat-sexual.jpg' },
         { value: 'hormones', label: CATEGORY_LABEL.hormones, hint: 'For men and for women in midlife', image: '/brand/cat-hormones.jpg' },
         { value: 'hair', label: CATEGORY_LABEL.hair, hint: 'Thinning and hair loss', image: '/brand/cat-hair.jpg' },

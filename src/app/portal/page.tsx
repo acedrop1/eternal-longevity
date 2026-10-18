@@ -218,7 +218,7 @@ export default async function MemberPortalPage() {
               <li key={t.key} className={cn(panel, 'flex flex-col p-4 md:p-5')}>
                 <div className="flex flex-1 gap-4">
                   <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-inner bg-milk-deep md:h-20 md:w-20">
-                    <Image src={t.image} alt="" fill sizes="80px" priority={i < 2} className="object-cover" />
+                    <Image src={t.image} alt="" fill sizes="80px" priority={i < 2} className="object-contain" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-ink">{t.name}</h3>

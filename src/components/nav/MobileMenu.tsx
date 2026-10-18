@@ -158,7 +158,7 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                     {top.map((p) => (
                       <Link key={p.id} href={`/shop/${p.id}`} onClick={() => setOpen(false)} className="w-36 shrink-0">
                         <span className="relative block aspect-[4/5] overflow-hidden rounded-inner bg-milk">
-                          <Image src={p.image} alt="" fill sizes="144px" className="object-cover" />
+                          <Image src={p.image} alt="" fill sizes="144px" className="object-contain" />
                           <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold backdrop-blur">Rx</span>
                         </span>
                         <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em]">{p.name}</span>

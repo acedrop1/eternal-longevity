@@ -108,7 +108,7 @@ export function CartDrawer() {
                         alt={it.product.name}
                         fill
                         sizes="80px"
-                        className={it.product.shot ? 'object-cover' : 'object-cover opacity-50'}
+                        className={it.product.shot ? 'object-contain' : 'object-contain opacity-50'}
                       />
                     </div>
                     <div className="flex flex-1 min-w-0 flex-col">

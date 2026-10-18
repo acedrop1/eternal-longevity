@@ -80,7 +80,7 @@ export function BuyBar({
     >
       <div className="flex items-center gap-3 py-2.5 pl-4 pr-2.5 md:gap-4 md:py-3 md:pl-3 md:pr-3">
         <span className="relative hidden h-11 w-11 shrink-0 overflow-hidden rounded-thumb bg-milk sm:block">
-          <Image src={product.image} alt="" fill sizes="44px" className="object-cover" />
+          <Image src={product.image} alt="" fill sizes="44px" className="object-contain" />
         </span>
 
         <div className="min-w-0 flex-1">

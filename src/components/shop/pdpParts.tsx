@@ -41,7 +41,7 @@ export function ProductImage({
         fill
         priority
         sizes={sizes}
-        className={product.shot ? 'object-cover' : 'object-cover opacity-45'}
+        className={product.shot ? 'object-contain' : 'object-contain opacity-45'}
         style={position ? { objectPosition: position } : undefined}
       />
       {/* Product renders are generic, unbranded vials; say so on the photo. */}

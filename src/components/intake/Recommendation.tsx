@@ -39,7 +39,7 @@ function ProductRow({ p, size = 'lg' }: { p: Offer; size?: 'lg' | 'sm' }) {
         className={size === 'lg' ? 'relative h-24 w-24 flex-none overflow-hidden rounded-inner bg-white' : 'relative h-14 w-14 flex-none overflow-hidden rounded-thumb bg-white'}
         style={{ background: p.swatch }}
       >
-        <Image src={p.image} alt={p.name} fill sizes={size === 'lg' ? '96px' : '56px'} className="object-cover" />
+        <Image src={p.image} alt={p.name} fill sizes={size === 'lg' ? '96px' : '56px'} className="object-contain" />
       </div>
       <div className="min-w-0">
         <p className={size === 'lg' ? 'text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]' : 'text-[16px] font-semibold tracking-[-0.01em] text-ink'}>

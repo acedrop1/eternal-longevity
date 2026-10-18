@@ -295,24 +295,19 @@ const CARD_GLASS =
  */
 export function ProductTile({ p, sizes = '(max-width: 1024px) 50vw, 25vw' }: { p: CatalogProduct; sizes?: string }) {
   return (
-    <div className="group relative aspect-[3/4] overflow-hidden rounded-shell bg-milk shadow-[0_30px_60px_-36px_rgba(17,17,17,0.5)]">
-      <Image
-        src={p.image}
-        alt=""
-        fill
-        sizes={sizes}
-        className="-translate-y-[9%] scale-[1.2] object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.25]"
-      />
-
-      <div className={cn('absolute left-2 top-2 flex items-baseline gap-1 rounded-full px-2.5 py-1 md:left-4 md:top-4 md:gap-2 md:px-4 md:py-2', CARD_GLASS)}>
-        <span className="text-[11px] text-ink-soft md:text-[13px]">from</span>
-        <span className="text-[13px] font-semibold md:text-[17px]">${perMonth(p)}</span>
-        <span className="text-[11px] text-ink-soft md:text-[13px]">/mo</span>
+    <div className="group relative flex flex-col overflow-hidden rounded-shell bg-milk shadow-[0_30px_60px_-36px_rgba(17,17,17,0.5)]">
+      {/* The photo in its own 4:5 box (the shots' shape), whole: nothing laid over the product. */}
+      <div className="relative aspect-[4/5]">
+        <Image src={p.image} alt="" fill sizes={sizes} className="object-contain" />
+        <div className={cn('absolute left-2 top-2 flex items-baseline gap-1 rounded-full px-2.5 py-1 md:left-4 md:top-4 md:gap-2 md:px-4 md:py-2', CARD_GLASS)}>
+          <span className="text-[11px] text-ink-soft md:text-[13px]">from</span>
+          <span className="text-[13px] font-semibold md:text-[17px]">${perMonth(p)}</span>
+          <span className="text-[11px] text-ink-soft md:text-[13px]">/mo</span>
+        </div>
       </div>
 
-      {/* Above the card link but click-through, except the button: the blur
-          makes the panel its own stacking context. */}
-      <div className={cn('pointer-events-none absolute inset-x-2 bottom-2 z-[2] rounded-inner px-3 py-2.5 md:inset-x-4 md:bottom-4 md:p-5', CARD_GLASS)}>
+      {/* Below the photo. Above the card link but click-through, except the button. */}
+      <div className="pointer-events-none relative z-[2] px-3 py-3 md:p-5">
         <p className="text-[16px] font-semibold leading-tight tracking-[-0.03em] md:text-[26px]">{p.name}</p>
         <div className="mt-0.5 md:mt-3 md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2 md:border-t md:border-ink/10 md:pt-3">
           <p className="truncate text-[11px] text-ink-soft md:overflow-visible md:whitespace-normal md:text-[14px]">{p.tagline}</p>

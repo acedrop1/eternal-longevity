@@ -121,7 +121,7 @@ export function AdminProductsIndex({ products }: { products: ProductRowView[] })
                   >
                     <td className={cn(td, 'flex-none md:w-14 md:pr-0')}>
                       <span className="relative block h-10 w-10 overflow-hidden rounded-thumb bg-milk ring-1 ring-ink/10">
-                        {p.image && <Image src={p.image} alt="" fill sizes="40px" className="object-cover" />}
+                        {p.image && <Image src={p.image} alt="" fill sizes="40px" className="object-contain" />}
                       </span>
                     </td>
                     <td className={cn(td, 'min-w-0 flex-1')}>

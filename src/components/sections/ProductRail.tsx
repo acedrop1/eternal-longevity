@@ -124,7 +124,7 @@ export function ProductCard({
         card: 'rounded-inner',
         overlay: 'rounded-thumb',
         top: 'left-2 top-2 md:left-3 md:top-3',
-        panel: 'inset-x-2 bottom-2 p-2 md:inset-x-3 md:bottom-3 md:px-4 md:py-3.5',
+        panel: 'p-2.5 md:px-4 md:py-3.5',
         name: 'clamp(1.05rem, 0.9vw + 0.8rem, 1.75rem)',
         // Phones: no divider and a tight gap, so name, tagline and button
         // stay a compact block on a half-width card.
@@ -135,7 +135,7 @@ export function ProductCard({
         card: 'rounded-inner',
         overlay: 'rounded-thumb',
         top: 'left-4 top-4',
-        panel: 'inset-x-4 bottom-4 px-4 py-3.5',
+        panel: 'px-4 py-3.5',
         name: 'clamp(1.4rem, 0.6vw + 1.2rem, 1.75rem)',
         tagline: 'mt-3 border-t pt-3 text-[14px]',
         sizes: '(max-width: 768px) 80vw, 34vw',
@@ -143,13 +143,9 @@ export function ProductCard({
 
   const body = (
     <>
-      <Image
-        src={item.image}
-        alt=""
-        fill
-        sizes={v.sizes}
-        className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]"
-      />
+      {/* The photo in its own 4:5 box (the shots' shape), whole: the name panel sits below it, not over it. */}
+      <div className="relative aspect-[4/5] shrink-0">
+      <Image src={item.image} alt="" fill sizes={v.sizes} className="object-contain" />
 
       {/* Price (monthly struck through beside the cheapest plan's per-month
           price, the comparison the product page already makes) and, in local
@@ -176,6 +172,7 @@ export function ProductCard({
           </span>
         )}
       </div>
+      </div>
 
       {/* Name + tagline panel with a Start assessment button. Grid: full
           width under the tagline on a phone, beside it from md. Rail: always
@@ -183,7 +180,7 @@ export function ProductCard({
       {/* Above the card link (z-2) but click-through, except the button:
           backdrop-blur makes the panel its own stacking context, so the
           button can only rise above the link if the panel does. */}
-      <div className={cn('pointer-events-none absolute z-[2] bg-ink/70 text-white ring-1 ring-white/10 backdrop-blur-xl', v.overlay, v.panel)}>
+      <div className={cn('pointer-events-none relative z-[2] flex-1 bg-ink text-white', v.panel)}>
         <p className="font-display font-normal" style={{ fontSize: v.name, lineHeight: 1.05 }}>
           {item.name}
         </p>
@@ -219,7 +216,7 @@ export function ProductCard({
   return (
     <div
       data-card
-      className={cn('group relative aspect-[3/4] shrink-0 overflow-hidden bg-neutral-200', v.card, className)}
+      className={cn('group relative flex shrink-0 flex-col overflow-hidden bg-milk', v.card, className)}
       aria-label={item.href ? undefined : `${item.name} (local preview, not on the live site)`}
     >
       {body}

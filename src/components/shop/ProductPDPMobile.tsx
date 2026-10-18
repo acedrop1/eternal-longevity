@@ -59,10 +59,8 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
       <ProductImage
         product={product}
         sizes="100vw"
-        className="h-[36svh] min-h-[240px] w-full"
-        // The box is wider than the 4:5 photo; centre the crop on the product
-        // so vials and taller bottles both stay whole.
-        position="50% 55%"
+        // The photo's own 4:5 shape, centred: the whole product shows, never a crop.
+        className="mx-auto aspect-[4/5] h-[36svh] min-h-[240px]"
       />
 
       <div className="mt-4 flex items-end justify-between gap-4">

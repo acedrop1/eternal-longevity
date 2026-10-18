@@ -290,7 +290,7 @@ export function AdminProductEditor({
                 <div className="flex flex-wrap gap-3">
                   {p.image && (
                     <div className="relative aspect-square w-28 overflow-hidden rounded-inner bg-milk ring-1 ring-ink/10">
-                      <Image src={p.image} alt="" fill sizes="112px" className="object-cover" />
+                      <Image src={p.image} alt="" fill sizes="112px" className="object-contain" />
                     </div>
                   )}
                   <button

@@ -616,7 +616,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'The coenzyme central to mitochondrial energy metabolism. Levels fall with age.',
     longDescription:
       'NAD+ is a coenzyme present in every cell and required for mitochondrial energy production and normal DNA-maintenance signalling. Tissue levels decline with age, and supplementation is an active research area — although how much subcutaneous dosing raises intracellular NAD+ in humans is still debated. Offered for energy and longevity support in healthy adults.',
-    bestFor: 'Adults discussing energy and healthy ageing with a prescriber.',
+    bestFor: 'Adults discussing energy and healthy aging with a prescriber.',
     benefits: [
       'Central to mitochondrial energy metabolism',
       'Studied for normal DNA-maintenance signalling',
@@ -699,7 +699,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       'The tripeptide your cells use in their normal antioxidant defences. Produced naturally, and levels fall with age.',
     longDescription:
       'Glutathione is a tripeptide of glutamate, cysteine and glycine that every cell produces and uses in redox reactions and phase-II liver conjugation. Levels fall with age and sustained physical stress. How much injected glutathione raises intracellular levels in humans is still debated, and we make no skin-lightening claim of any kind — that use has drawn FDA warning letters and we do not offer it.',
-    bestFor: 'Adults discussing oxidative stress and healthy ageing with a prescriber.',
+    bestFor: 'Adults discussing oxidative stress and healthy aging with a prescriber.',
     benefits: [
       'A tripeptide the body uses in its own antioxidant (redox) chemistry',
       'Supports the body’s normal antioxidant defences',

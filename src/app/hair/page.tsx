@@ -121,8 +121,8 @@ export default async function HairPage() {
             <div className="grid grid-cols-2 gap-3 md:gap-5">
               {formats.map((f) => (
                 <Link key={f.title} href={f.href} className="group flex flex-col overflow-hidden rounded-shell bg-milk transition-transform hover:-translate-y-0.5">
-                  <div className="relative aspect-square md:aspect-[4/3]">
-                    <Image src={f.image} alt={f.title} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover" />
+                  <div className="relative aspect-[4/5]">
+                    <Image src={f.image} alt={f.title} fill sizes="(max-width: 768px) 50vw, 400px" className="object-contain" />
                   </div>
                   <div className="p-4 md:p-6">
                     <p className="text-[18px] font-semibold tracking-[-0.02em] text-ink md:text-[22px]">{f.title}</p>

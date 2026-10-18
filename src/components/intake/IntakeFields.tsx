@@ -134,7 +134,7 @@ export function FieldRenderer({
                 </span>
                 {opt.image && (
                   <span aria-hidden className="relative -my-2 -mr-2 h-14 w-14 flex-none overflow-hidden rounded-thumb bg-milk-deep">
-                    <Image src={opt.image} alt="" fill sizes="56px" className="object-cover" />
+                    <Image src={opt.image} alt="" fill sizes="56px" className="object-contain" />
                   </span>
                 )}
               </button>

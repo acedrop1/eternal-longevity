@@ -910,7 +910,7 @@ export function CheckoutFlow({
                           alt={l.name}
                           fill
                           sizes="64px"
-                          className={l.shot ? 'object-cover' : 'object-cover opacity-50'}
+                          className={l.shot ? 'object-contain' : 'object-contain opacity-50'}
                         />
                       </div>
                       <div className="flex flex-1 min-w-0 items-start justify-between gap-3">
@@ -1118,7 +1118,7 @@ export function CheckoutFlow({
                       className="relative h-14 w-14 flex-none overflow-hidden rounded-thumb bg-milk-deep"
                       style={a.shot ? undefined : { background: a.swatch }}
                     >
-                      <Image src={a.image} alt="" fill sizes="56px" className={a.shot ? 'object-cover' : 'object-cover opacity-50'} />
+                      <Image src={a.image} alt="" fill sizes="56px" className={a.shot ? 'object-contain' : 'object-contain opacity-50'} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14px] font-semibold text-ink">{a.name}</span>
