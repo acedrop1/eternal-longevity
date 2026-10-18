@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DOCTOR_NAV } from '@/components/portal/ui';
-import { DoctorReview } from '@/components/doctor/DoctorReview';
+import { DoctorReview, type RxOption } from '@/components/doctor/DoctorReview';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getOrder, ordersDbConfigured } from '@/lib/orders-db';
 import { doctorThreadStatuses, reviewsForOrders, type PatientReview } from '@/lib/clinical-review';
-import { getPharmacyEntries } from '@/lib/catalog';
+import { getLiveProducts, getPharmacyEntries } from '@/lib/catalog';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { signWindowOpen } from '@/lib/reauth';
 import { orderRef } from '@/lib/format';
 import type { Order } from '@/lib/orders';
@@ -63,6 +65,15 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
 
   if (!order) notFound();
 
+  // What he can switch the order to before signing (Change prescription): live products, catalogue prices.
+  let options: RxOption[] = [];
+  if (order.status === 'assigned' && order.lines.length === 1) {
+    const [products, ship] = await Promise.all([getLiveProducts(), getShippingSettings()]);
+    options = products
+      .map((p) => ({ id: p.id, name: p.name, tiers: cadenceTiersForProduct(p, ship.pricePerShipment).map((t) => ({ key: t.key, label: t.label, total: t.total })) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   return (
     <PortalShell user={user} nav={DOCTOR_NAV}>
       <DoctorReview
@@ -72,6 +83,7 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
         review={review}
         thread={thread}
         defaultSig={defaultSig}
+        options={options}
         sample={sample}
       />
     </PortalShell>

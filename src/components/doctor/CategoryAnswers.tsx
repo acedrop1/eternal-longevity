@@ -22,23 +22,25 @@ export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
     <div className="space-y-4">
       {sections.map((s) => (
         <div key={s.key}>
-          <div className="mb-1.5 text-[14px] font-semibold text-ink">{s.title}</div>
+          <div className="mb-1 text-[15px] font-semibold text-ink">{s.title}</div>
           {s.items.length > 0 && (
-            <dl>
+            // Question above answer, left-aligned (same as the doctor's other answer cards).
+            <dl className="grid gap-x-8 sm:grid-cols-2">
               {s.items.map((i) => (
                 <div
                   key={i.label}
-                  className="flex flex-col gap-1 border-b border-ink/[0.06] py-2 last:border-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+                  className={cn(
+                    'border-b border-ink/[0.07] py-3',
+                    i.value.length > 40 && 'sm:col-span-2',
+                    i.flag && '-mx-3 rounded-inner border-transparent bg-amber-50 px-3',
+                  )}
                 >
-                  <dt className="text-[14px] leading-snug text-ink/70">{i.label}</dt>
-                  <dd
-                    className={cn(
-                      'flex flex-wrap items-center gap-2 text-[14px] font-semibold leading-snug sm:max-w-[55%] sm:justify-end sm:text-right',
-                      i.flag ? 'text-amber-800' : 'text-ink/90',
-                    )}
-                  >
-                    <span className="whitespace-pre-wrap break-words">{i.value}</span>
+                  <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/60 md:text-[13px]">
+                    <span>{i.label}</span>
                     {i.flag && <ReviewChip />}
+                  </dt>
+                  <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-medium leading-snug md:text-[15px]', i.flag ? 'text-amber-900' : 'text-ink')}>
+                    {i.value}
                   </dd>
                 </div>
               ))}

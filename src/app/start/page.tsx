@@ -6,7 +6,7 @@ import { getSession } from '@/lib/auth-server';
 import { getCatalogProduct, getLiveProduct, getLiveProducts } from '@/lib/catalog';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
-import { knownAnswerIds } from '@/lib/intake-rules';
+import { carriedAnswers, knownAnswerIds } from '@/lib/intake-rules';
 import { assessmentDone, intakeStateFor, latestIntakeAnswers, type IntakeState } from '@/lib/intake-status';
 import { getAssessmentDraft } from '@/lib/assessment-drafts';
 import { heldProductsFor } from '@/lib/held-products';
@@ -109,8 +109,14 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   // A member who signed up without an assessment has nothing on file yet: start them with the
   // name (and phone) from their account. Still shown and editable, not skipped.
   const fromAccount = isMember && !onFile.first_name ? await accountDetails(user.id) : {};
+  // Their earlier health answers come pre-filled too (marked "saved from your last visit"), so a second product isn't a blank form.
+  const carried = isMember ? carriedAnswers(onFile) : {};
   const member = isMember
-    ? { known: knownAnswerIds(onFile), prefill: { ...fromAccount, ...(typeof onFile.sex === 'string' ? { sex: onFile.sex } : {}) } }
+    ? {
+        known: knownAnswerIds(onFile),
+        prefill: { ...carried, ...fromAccount, ...(typeof onFile.sex === 'string' ? { sex: onFile.sex } : {}) },
+        carried: Object.keys(carried),
+      }
     : undefined;
   // Their unfinished run from this same entry point (the wizard keys it the same way).
   const entry = (requested && PRODUCT_CATEGORY[requested.id] ? requested.id : undefined) ?? category ?? 'general';

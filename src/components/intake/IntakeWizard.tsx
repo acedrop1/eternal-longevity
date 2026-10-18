@@ -171,7 +171,8 @@ interface IntakeWizardProps {
   /** Pre only: live products the assessment can recommend. */
   offers?: Record<string, Offer>;
   /** Pre only, signed in: answers on file are not asked again. */
-  member?: { known: string[]; prefill: Answers };
+  /** carried: health answers pre-filled from their last assessment (flagged on screen as saved). */
+  member?: { known: string[]; prefill: Answers; carried?: string[] };
   /** Pre only, signed in: their unfinished run from this entry point, resumed where they left. */
   draft?: { answers: Answers; screen: string | null };
   /** Pre only: renewing a plan whose prescription ran its term (/start?renew=). */
@@ -404,7 +405,8 @@ export function IntakeWizard({
   }, [mode, screenKey]);
   useEffect(() => {
     if (mode !== 'pre' || !member || !screenKey) return;
-    const own = Object.entries(answers).filter(([k, v]) => !(v instanceof File) && !(k in (member.prefill ?? {})));
+    // Pre-filled answers stay out of the draft unless the member changed them.
+    const own = Object.entries(answers).filter(([k, v]) => !(v instanceof File) && !(k in (member.prefill ?? {}) && member.prefill[k] === v));
     if (!own.length) return;
     const t = setTimeout(() => {
       void saveAssessmentDraftAction(draftEntry, Object.fromEntries(own), screenKey, progressPct).catch(() => {});
@@ -848,6 +850,13 @@ export function IntakeWizard({
       ) : (
         <>
           <p className="mb-3 text-[13px] font-medium text-ink/65">{sectionName(step.eyebrow)}</p>
+          {/* Returning member: say which answers came from their last visit, so they check rather than retype. */}
+          {member?.carried?.length && step.fields.some((f) => member.carried!.includes(f.id) && answers[f.id] === member.prefill[f.id]) ? (
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-butter-soft px-3 py-1.5 text-[13px] font-medium text-ink">
+              <Check aria-hidden className="h-3.5 w-3.5" strokeWidth={2.5} />
+              Saved from your last visit. Change anything that&rsquo;s different.
+            </p>
+          ) : null}
           {solo ? (
             <>
               {first && <p className="mb-2 max-w-xl text-[15px] leading-relaxed text-ink-soft">{step.heading}</p>}

@@ -6,6 +6,11 @@ import type { CategoryKey } from './intake-categories';
  * landing page is one entry here. Copy comes only from "The Words for Ads"
  * (approved Oct 15, 2026) and the Oct 14 claims research: no new claims.
  * A page is hidden until it is published in Admin → Landing pages.
+ *
+ * Quiz rule (same as /hair, as on Hims): at most three quick questions —
+ * the goal, the format (only when there is a real choice), and prescription
+ * interest. Medical questions (prior use, frequency, labs, skin type) belong
+ * in the assessment, not here.
  */
 
 export interface QuizQuestion {
@@ -76,24 +81,15 @@ export const LANDINGS: Landing[] = [
         ],
       },
       {
-        key: 'often',
-        label: 'How often do you expect to use it?',
-        field: 'sx_frequency',
+        key: 'format',
+        label: 'How would you prefer to take it?',
         options: [
-          { value: 'few_month', label: 'A few times a month' },
-          { value: 'weekly', label: 'About once a week' },
-          { value: 'several_week', label: 'Several times a week' },
+          { value: 'troche', label: 'A dissolvable troche' },
+          { value: 'capsule', label: 'A capsule' },
+          { value: 'either', label: 'Either is fine' },
         ],
       },
-      {
-        key: 'prior',
-        label: 'Have you used a prescription for this before?',
-        field: 'sx_prior',
-        options: [
-          { value: 'yes', label: 'Yes' },
-          { value: 'no', label: 'No' },
-        ],
-      },
+      RX_INTEREST,
     ],
     stickyLabel: 'Find your ED treatment',
     options: [
@@ -126,20 +122,11 @@ export const LANDINGS: Landing[] = [
           { value: 'strength', label: 'Strength and recovery' },
         ],
       },
-      {
-        key: 'labs',
-        label: 'Have you had a testosterone blood test in the last 6 months?',
-        field: 'hm_labs_recent',
-        options: [
-          { value: 'yes', label: 'Yes' },
-          { value: 'no', label: 'No' },
-        ],
-      },
       RX_INTEREST,
     ],
     stickyLabel: 'Check your testosterone care',
     options: [{ title: 'Enclomiphene', body: 'One capsule a day, if prescribed.', products: ['enclomiphene'] }],
-    smallPrint: [COMPOUNDED('Enclomiphene and our other hormone treatments'), 'No recent blood test? That’s fine. Your physician may ask for one before prescribing.'],
+    smallPrint: [COMPOUNDED('Enclomiphene and our other hormone treatments')],
   },
   {
     slug: 'skin',
@@ -165,14 +152,12 @@ export const LANDINGS: Landing[] = [
         ],
       },
       {
-        key: 'type',
-        label: 'What’s your skin type?',
-        field: 'sk_type',
+        key: 'format',
+        label: 'How would you prefer to take it?',
         options: [
-          { value: 'oily', label: 'Oily' },
-          { value: 'dry', label: 'Dry' },
-          { value: 'combination', label: 'Combination' },
-          { value: 'normal', label: 'Normal' },
+          { value: 'cream', label: 'A cream' },
+          { value: 'capsule', label: 'A daily capsule' },
+          { value: 'either', label: 'Either is fine' },
         ],
       },
       RX_INTEREST,
@@ -249,15 +234,6 @@ export const LANDINGS: Landing[] = [
           { value: 'desire', label: 'Interest in sex' },
           { value: 'performance', label: 'Performance' },
           { value: 'both', label: 'Both' },
-        ],
-      },
-      {
-        key: 'prior',
-        label: 'Have you used a prescription for this before?',
-        field: 'sx_prior',
-        options: [
-          { value: 'yes', label: 'Yes' },
-          { value: 'no', label: 'No' },
         ],
       },
       RX_INTEREST,

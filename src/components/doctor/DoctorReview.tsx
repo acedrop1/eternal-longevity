@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useOrders } from '@/components/orders/OrdersProvider';
-import { addOrderNoteAction, requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
+import { addOrderNoteAction, changePrescriptionAction, requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
 import { waited } from '@/lib/order-health';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
@@ -36,6 +36,13 @@ const alertBox = 'rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 t
 
 const ACTIVE = ['signed', 'compounding', 'shipped'];
 
+/** What he can prescribe instead: each live product and its plans, priced from the catalogue. */
+export interface RxOption {
+  id: string;
+  name: string;
+  tiers: { key: string; label: string; total: number }[];
+}
+
 function statusBadge(status: Order['status']): [string, BadgeTone] {
   if (status === 'assigned') return ['Awaiting my review', 'info'];
   if (status === 'declined-clinical') return ['Declined', 'critical'];
@@ -50,6 +57,7 @@ export function DoctorReview({
   review,
   thread,
   defaultSig,
+  options = [],
   sample = false,
 }: {
   order: Order;
@@ -60,6 +68,8 @@ export function DoctorReview({
   thread?: ThreadStatus;
   /** Approved default directions for this product (Admin → Products), to prefill the sig. */
   defaultSig: string;
+  /** Products and plans he can switch the order to (Change prescription). */
+  options?: RxOption[];
   /** Dev-only fixture order. */
   sample?: boolean;
 }) {
@@ -68,16 +78,26 @@ export function DoctorReview({
   const order = orders.find((o) => o.id === initial.id) ?? initial;
   const catFlags = review ? categoryFlagCount(review.categories) : 0;
   const router = useRouter();
-  const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask'>(null);
+  const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask' | 'change'>(null);
   const [note, setNote] = useState('');
   const [password, setPassword] = useState('');
   // The sig, prefilled with the directions he approved for this product.
   const [directions, setDirections] = useState(defaultSig);
+  // A changed prescription brings the new product's directions with the refresh.
+  useEffect(() => setDirections(defaultSig), [defaultSig]);
+  const line = order.lines[0];
+  const [rxPick, setRxProduct] = useState(line?.productId ?? '');
+  const [rxPlan, setRxPlan] = useState<string>(line?.cadence ?? '');
+  // The ordered product if it's on the list, otherwise the first one shown.
+  const rxProduct = options.some((o) => o.id === rxPick) ? rxPick : (options[0]?.id ?? '');
+  const rxTiers = options.find((o) => o.id === rxProduct)?.tiers ?? [];
+  const rxTier = rxTiers.find((t) => t.key === rxPlan) ?? rxTiers[0];
+  const rxSame = rxProduct === line?.productId && rxTier?.key === line?.cadence;
   const [signError, setSignError] = useState<string | null>(null);
   // Starts from the server's view, and opens if the ten minutes ran out while he read.
   const [needPassword, setNeedPassword] = useState(!signWindowOpen);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask' | 'photos'>(null);
+  const [busy, setBusy] = useState<null | 'sign' | 'decline' | 'ask' | 'photos' | 'change'>(null);
   /** What he just did here, so the page answers even before the refresh lands. */
   const [done, setDone] = useState<null | 'signed' | 'declined'>(null);
   const hoursWaiting = Math.max(0, Math.floor((Date.now() - order.placedAt) / 3_600_000));
@@ -160,6 +180,34 @@ export function DoctorReview({
     }
   };
 
+  const change = async () => {
+    if (!note.trim() || !rxTier || rxSame || busy) return;
+    setBusy('change');
+    setActionError(null);
+    try {
+      const res = await changePrescriptionAction(order.id, rxProduct, rxTier.key, note.trim());
+      if (res.ok) {
+        setOpen(null);
+        setNote('');
+        router.refresh();
+      } else {
+        setActionError(
+          res.error === 'already_ordered'
+            ? 'They already have that product on a plan or in another order. Nothing was changed.'
+            : res.error === 'product_unavailable'
+              ? 'That product is not on sale right now. Nothing was changed.'
+              : res.error === 'not_open'
+                ? 'This order is already signed or closed, so it can’t be changed here.'
+                : actionErrorText(res.error),
+        );
+      }
+    } catch {
+      setActionError(actionErrorText());
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const decline = async () => {
     if (!note.trim() || busy) return;
     setBusy('decline');
@@ -221,6 +269,11 @@ export function DoctorReview({
               <button type="button" disabled={busy !== null} onClick={() => setOpen('ask')} className={outlineBtn}>
                 Ask for more information
               </button>
+              {options.length > 0 && (
+                <button type="button" disabled={busy !== null} onClick={() => setOpen('change')} className={outlineBtn}>
+                  Change prescription
+                </button>
+              )}
               <button type="button" disabled={busy !== null} onClick={startSign} className={primaryBtn}>
                 Approve &amp; sign prescription
               </button>
@@ -371,6 +424,79 @@ export function DoctorReview({
                     >
                       Cancel
                     </button>
+                  </div>
+                </SectionCard>
+              )}
+
+              {open === 'change' && (
+                <SectionCard title="Prescribe something different">
+                  {actionError && (
+                    <p role="alert" className={cn(alertBox, 'mb-3')}>
+                      {actionError}
+                    </p>
+                  )}
+                  <p className={cn(body, 'mb-4 text-ink/65')}>
+                    For after you&rsquo;ve talked it through with them. The order switches to what you pick here, priced
+                    from the catalogue (their discount and free first box carry over). Your note, the change and the new
+                    price go to their thread and they&rsquo;re emailed. Nothing is charged until you sign.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Product</span>
+                      <select
+                        value={rxProduct}
+                        onChange={(e) => {
+                          setRxProduct(e.target.value);
+                          const t = options.find((o) => o.id === e.target.value)?.tiers ?? [];
+                          setRxPlan(t.find((x) => x.key === rxPlan)?.key ?? t[0]?.key ?? '');
+                        }}
+                        className={cn(textArea, 'min-h-[44px] md:min-h-[38px]')}
+                      >
+                        {options.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.name}
+                            {o.id === line?.productId ? ' (ordered)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Plan</span>
+                      <select value={rxTier?.key ?? ''} onChange={(e) => setRxPlan(e.target.value)} className={cn(textArea, 'min-h-[44px] md:min-h-[38px]')}>
+                        {rxTiers.map((t) => (
+                          <option key={t.key} value={t.key}>
+                            {t.label} · ${t.total.toLocaleString('en-US')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <label className="mt-3 block">
+                    <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Note to the patient</span>
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      rows={3}
+                      placeholder="As we discussed, a lower strength suits you better to start. We can step up at your next refill."
+                      className={textArea}
+                    />
+                  </label>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <button type="button" disabled={!note.trim() || !rxTier || rxSame || busy !== null} onClick={change} className={primaryBtn}>
+                      {busy === 'change' && <Spinner />}
+                      {busy === 'change' ? 'Changing…' : 'Change and tell the patient'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(null);
+                        setNote('');
+                      }}
+                      className={outlineBtn}
+                    >
+                      Cancel
+                    </button>
+                    {rxSame && <span className={cn(body, 'text-ink/55')}>Pick a different product or plan.</span>}
                   </div>
                 </SectionCard>
               )}
@@ -536,6 +662,17 @@ export function DoctorReview({
                   >
                     Ask for more information
                   </MenuItem>
+                  {options.length > 0 && (
+                    <MenuItem
+                      disabled={busy !== null}
+                      onClick={() => {
+                        close();
+                        setOpen('change');
+                      }}
+                    >
+                      Change prescription
+                    </MenuItem>
+                  )}
                   {review?.photosRequestable && (
                     <MenuItem
                       disabled={busy !== null}
@@ -746,19 +883,17 @@ function Spinner() {
  * should change a decision sits below the fold unannounced.
  */
 function ReviewSections({ review }: { review: PatientReview }) {
+  // Every flagged answer, with where it came from, read first.
   const flags = [
-    ...review.categories.flatMap((c) => c.items),
-    ...review.safety,
-    ...review.history,
-    ...review.context,
+    ...review.categories.flatMap((c) => c.items.map((i) => ({ ...i, where: c.title }))),
+    ...review.safety.map((l) => ({ ...l, where: 'Safety screen' })),
+    ...review.history.map((l) => ({ ...l, where: 'History' })),
+    ...review.context.map((l) => ({ ...l, where: 'Before you sign' })),
   ].filter((l) => l.flag);
-  const summary =
-    flags.length === 0 ? 'Nothing flagged' : `${flags.length} to weigh — ${flags.map((f) => f.label).join(', ')}`;
 
   return (
     <>
       <SectionCard title="Patient summary">
-        <p className={cn(body, 'mb-3', flags.length ? 'text-amber-800' : 'text-ink/60')}>{summary}</p>
         <Strip
           items={[
             ['Date of birth', review.dob],
@@ -770,12 +905,27 @@ function ReviewSections({ review }: { review: PatientReview }) {
         />
       </SectionCard>
 
+      {flags.length > 0 ? (
+        <SectionCard title={`Needs your attention (${flags.length})`} className="border-amber-600/25 bg-amber-50/60">
+          <ul className="divide-y divide-amber-600/15">
+            {flags.map((f) => (
+              <li key={`${f.where}-${f.label}`} className="py-3 first:pt-0 last:pb-0">
+                <p className="text-[13px] font-medium text-amber-900/70">{f.where}</p>
+                <p className="mt-0.5 text-[15px] leading-snug text-ink/75">{f.label}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-[17px] font-semibold leading-snug text-amber-900 md:text-[16px]">{f.value}</p>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ) : (
+        <p className="rounded-inner border border-emerald-600/20 bg-emerald-50 px-4 py-2.5 text-[15px] text-emerald-900 md:text-[14px]">
+          Nothing flagged in this assessment.
+        </p>
+      )}
+
       {review.categories.length > 0 && (
         <SectionCard title="Category answers">
-          {/* CategoryAnswers is shared with admin at 13px; phones read it at 15px here. */}
-          <div className="[&_dd]:text-[15px] [&_dt]:text-[15px] md:[&_dd]:text-[14px] md:[&_dt]:text-[14px]">
-            <CategoryAnswers sections={review.categories} />
-          </div>
+          <CategoryAnswers sections={review.categories} />
         </SectionCard>
       )}
 
@@ -798,11 +948,11 @@ function ReviewSections({ review }: { review: PatientReview }) {
 /** Short facts, read across in one line rather than stacked into rows. */
 function Strip({ items }: { items: [string, string][] }) {
   return (
-    <div className="flex flex-wrap gap-x-7 gap-y-2.5">
+    <div className="flex flex-wrap gap-x-8 gap-y-3">
       {items.map(([label, value]) => (
         <div key={label}>
-          <div className="text-[14px] text-ink/65 md:text-[13px]">{label}</div>
-          <div className="mt-0.5 text-[15px] font-semibold text-ink md:text-[14px]">{value}</div>
+          <div className="text-[13px] text-ink/60">{label}</div>
+          <div className="mt-0.5 text-[17px] font-semibold text-ink md:text-[16px]">{value}</div>
         </div>
       ))}
     </div>
@@ -810,45 +960,32 @@ function Strip({ items }: { items: [string, string][] }) {
 }
 
 /**
- * Answers in two columns once the main column is wide enough (xl).
- *
- * A question pinned to the left of a wide card with its answer pinned to the
- * right leaves the eye crossing half a screen per line. Paired into narrow
- * cells they sit next to each other. Anything long breaks out to full width
- * (and onto its own line on a phone), because free text is read rather than
- * scanned.
+ * Question above answer, left-aligned, like a chart: the eye reads down, never
+ * across a wide card. Short answers pair up two to a row on wide screens; long
+ * ones (free text) take the full width. A flagged answer is tinted and tagged
+ * where it sits, as well as in "Needs your attention".
  */
 function Answers({ lines }: { lines: { label: string; value: string; flag?: boolean }[] }) {
   return (
-    <dl className="grid gap-x-8 gap-y-0 xl:grid-cols-2">
-      {lines.map((l) => {
-        const long = l.value.length > 22;
-        return (
-          <div
-            key={l.label}
-            className={cn(
-              'flex items-baseline justify-between gap-3 border-b border-ink/[0.06] py-2 last:border-0 md:py-1.5',
-              long && 'flex-col items-start gap-0.5 xl:col-span-2',
-            )}
-          >
-            <dt className={cn('text-[15px] leading-snug md:text-[14px]', l.flag ? 'text-ink/80' : 'text-ink/70')}>
-              {l.label}
-            </dt>
-            <dd
-              className={cn(
-                'text-[15px] font-semibold leading-snug md:text-[14px]',
-                long ? 'w-full break-words' : 'flex-none text-right',
-                l.flag ? 'text-amber-800' : 'text-ink/90',
-              )}
-            >
-              {l.flag && !long && (
-                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-amber-500 align-middle" />
-              )}
-              {l.value}
-            </dd>
-          </div>
-        );
-      })}
+    <dl className="grid gap-x-8 sm:grid-cols-2">
+      {lines.map((l) => (
+        <div
+          key={l.label}
+          className={cn(
+            'border-b border-ink/[0.07] py-3',
+            l.value.length > 40 && 'sm:col-span-2',
+            l.flag && '-mx-3 rounded-inner border-transparent bg-amber-50 px-3',
+          )}
+        >
+          <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/60 md:text-[13px]">
+            <span>{l.label}</span>
+            {l.flag && <ReviewChip />}
+          </dt>
+          <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-medium leading-snug md:text-[15px]', l.flag ? 'text-amber-900' : 'text-ink')}>
+            {l.value}
+          </dd>
+        </div>
+      ))}
     </dl>
   );
 }

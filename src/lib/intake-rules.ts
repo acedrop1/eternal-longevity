@@ -330,6 +330,33 @@ export function consentsComplete(v: unknown): boolean {
 /** Who-you-are answers a member has on file and is not asked again (health questions always are). */
 const ON_FILE_IDS = ['state', 'first_name', 'last_name', 'dob', 'zip', 'phone', 'sex', 'weight_lb', 'consents'];
 
+/*
+ * Health answers a returning member sees already filled in (still shown, still changeable):
+ * medical history, medications, allergies, and their earlier answers for a category they've
+ * done before. Never carried: the safety screens (cancer, pregnancy, transplant) and the
+ * red-flag questions (nitrates, heart, blood pressure, alpha-blockers, recreational drugs,
+ * serotonergic drugs), which are asked fresh every time; photos and lab files.
+ */
+const CARRY_IDS = ['conditions', 'meds_any', 'medications', 'allergies_any', 'allergies_detail'];
+const CARRY_PREFIX = /^(hr|sk|sx|hm|hw|lng|wl)_/;
+const NEVER_CARRY = new Set([
+  'sx_nitrates', 'sx_cardiac_event', 'sx_exertion', 'sx_bp', 'sx_bp_checked', 'sx_alpha', 'sx_recreational',
+  'lng_mb_serotonergic', 'hr_photos', 'sk_photos', 'hm_labs_files',
+]);
+
+/** Earlier health answers to show pre-filled for a returning member (see CARRY_IDS). */
+export function carriedAnswers(onFile: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(onFile).filter(
+      ([k, v]) =>
+        (CARRY_IDS.includes(k) || CARRY_PREFIX.test(k)) &&
+        !NEVER_CARRY.has(k) &&
+        v !== null && v !== undefined && v !== '' &&
+        (typeof v === 'string' || typeof v === 'boolean' || typeof v === 'number' || (Array.isArray(v) && v.every((x) => typeof x === 'string'))),
+    ),
+  );
+}
+
 /** The answer ids a member's assessment skips, from their newest intake. */
 export function knownAnswerIds(onFile: Record<string, unknown>): string[] {
   const has = (k: string) => onFile[k] !== undefined && onFile[k] !== null && onFile[k] !== '';

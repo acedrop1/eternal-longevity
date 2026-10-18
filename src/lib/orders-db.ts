@@ -791,6 +791,130 @@ export async function requestInfoFromPatientAction(
 }
 
 /**
+ * The prescriber prescribes something other than what was ordered — a different
+ * product, strength or plan — after talking it through with the patient in
+ * their thread. Only before he signs: the order's line and money are rewritten
+ * here from the catalogue (same rules as placeOrder: shipping per box, the free
+ * first box kept, the promo's terms re-applied to the new price), so the charge
+ * at signing, the prescription, the plan and the pharmacy order all follow the
+ * new choice. The patient gets his note, the change and the new price in their
+ * thread and by email before anything is charged.
+ */
+export async function changePrescriptionAction(
+  orderNumber: string,
+  productId: string,
+  cadence: string,
+  note: string,
+): Promise<ActionResult & { total?: number }> {
+  const { user, error } = await requireRole(['doctor']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const why = (note ?? '').trim();
+  if (!why) return { ok: false, error: 'no_note' };
+  if (why.length > 1000) return { ok: false, error: 'note_too_long' };
+
+  const db = createSupabaseAdminClient();
+  const { data: order } = await db
+    .from('orders')
+    .select('id, user_id, status, member_email, shipping_cents, promo_code, total_cents')
+    .eq('order_number', orderNumber)
+    .maybeSingle();
+  if (!order?.user_id) return { ok: false, error: 'not_found' };
+  if (!(ORDER_FROM.sign as readonly string[]).includes(order.status)) return { ok: false, error: 'not_open' };
+
+  const { data: items } = await db
+    .from('order_items')
+    .select('id, product_id, product_name, cadence, cadence_label, quantity')
+    .eq('order_id', order.id);
+  if (items?.length !== 1) return { ok: false, error: 'multi_line' };
+  const item = items[0];
+
+  const product = (await getLiveProducts()).find((p) => p.id === productId);
+  if (!product) return { ok: false, error: 'product_unavailable' };
+  // Not a second copy of something already on a plan or in another order.
+  if (productId !== item.product_id && (await heldProductsFor(order.user_id)).has(productId)) {
+    return { ok: false, error: 'already_ordered' };
+  }
+
+  const ship = await getShippingSettings();
+  const tiers = cadenceTiersForProduct(product, ship.pricePerShipment);
+  const tier = tiers.find((t) => t.key === cadence) ?? tiers[0];
+  const quantity = item.quantity ?? 1;
+  const subtotalCents = Math.round(tier.total * 100) * quantity;
+
+  // The free first box stays with the order: it had one if it paid less shipping than full price.
+  const fullShipBefore = shippingChargeCents({
+    pricePerShipment: ship.pricePerShipment,
+    shipments: shipmentsPerCycle(item.cadence as OrderLine['cadence']),
+    firstOrder: false,
+  });
+  const firstOrder = Number(order.shipping_cents ?? 0) < fullShipBefore;
+  const shippingCents = shippingChargeCents({ pricePerShipment: ship.pricePerShipment, shipments: shipmentsPerCycle(tier.key), firstOrder });
+
+  // The code they used, on its own terms (already redeemed, so not re-checked against its limit).
+  let itemDiscountCents = 0;
+  let freeShipping = false;
+  if (order.promo_code) {
+    const { data: promo } = await db
+      .from('promo_codes')
+      .select('kind, value, includes_shipping')
+      .eq('code', order.promo_code)
+      .maybeSingle();
+    if (promo) {
+      const raw = promo.kind === 'percent' ? Math.round((subtotalCents * promo.value) / 100) : promo.value;
+      itemDiscountCents = Math.max(0, Math.min(raw, subtotalCents));
+      freeShipping = Boolean(promo.includes_shipping);
+    }
+  }
+  const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents: 0, discountCents: itemDiscountCents, freeShipping });
+  const discountCents = itemDiscountCents + (freeShipping ? shippingCents : 0);
+
+  const { error: itemErr } = await db
+    .from('order_items')
+    .update({
+      product_id: product.id,
+      product_name: product.name,
+      unit_price_cents: Math.round(tier.total * 100),
+      cadence: tier.key,
+      cadence_label: tier.label,
+      image: product.image,
+      swatch: product.swatch,
+    })
+    .eq('id', item.id);
+  if (itemErr) return { ok: false, error: 'update_failed' };
+  await db
+    .from('orders')
+    .update({ subtotal_cents: subtotalCents, shipping_cents: shippingCents, tax_cents: 0, discount_cents: discountCents, total_cents: totalCents })
+    .eq('id', order.id);
+
+  const before = `${item.product_name}, ${item.cadence_label}`;
+  const after = `${product.name}, ${tier.label}`;
+  const price = `$${(totalCents / 100).toFixed(2)}`;
+  await recordAudit([
+    { actorId: user.id, actorName: user.name, actorRole: 'doctor', entity: 'order', entityId: orderNumber, field: 'prescription changed', oldValue: `${before} ($${(Number(order.total_cents) / 100).toFixed(2)})`, newValue: `${after} (${price})` },
+  ]);
+  await appendUpdate(order.id, user.name, 'physician', 'Your prescriber changed your prescription', `${after}. ${price}, charged only when he signs.`);
+
+  // Into their thread with him, so they can answer before he signs.
+  await db.from('messages').insert({
+    thread_user_id: order.user_id,
+    sender_id: user.id,
+    channel: 'doctor',
+    body: `${why}\n\nI've changed your prescription from ${before} to ${after}. The new total is ${price}, charged only when I sign. Reply here if you have any questions.`,
+  });
+  if (order.member_email) {
+    const msg = prescriberMessageEmail();
+    try {
+      await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
+    } catch {
+      // The message is in their portal either way.
+    }
+  }
+
+  revalidatePortal();
+  return { ok: true, total: totalCents / 100 };
+}
+
+/**
  * The prescriber asks for photos (hair, skin). Photos are never required up
  * front; this flags the member's newest intake so the portal asks for them
  * (Add your photos, /portal/visit), and tells the member in their thread with
