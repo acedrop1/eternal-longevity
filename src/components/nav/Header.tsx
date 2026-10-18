@@ -94,7 +94,8 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
               <MobileMenu links={NAV_LINKS} light={!onPhoto} home={home} />
             </div>
             {/* Deeper than butter (#FFEC9F) so the logo reads on the white bar. */}
-            <Wordmark className={cn('text-[30px] md:text-[34px]', !onPhoto && 'text-[#F2D060]')} />
+            {/* Smaller on narrow phones so logo, search, cart and the button always fit one line (320px and up). */}
+            <Wordmark className={cn('text-[24px] min-[400px]:text-[28px] md:text-[34px]', !onPhoto && 'text-[#F2D060]')} />
             <nav className="hidden items-center gap-1.5 md:flex">
               {NAV_LINKS.map((link) => (
                 <Link
@@ -118,8 +119,11 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Search onPhoto={onPhoto} />
+          <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+            {/* Under 360px there's no room: search is one tap away in Shop. */}
+            <div className="max-[359px]:hidden">
+              <Search onPhoto={onPhoto} />
+            </div>
             {/* Visitors: Log in and Sign up, as on Hims. Phones get both from the menu, keeping room for search. */}
             {!home && (
               <>
@@ -155,9 +159,16 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
             {/* Signed in: straight back to the portal, not another assessment. */}
             <Link
               href={home ?? '/shop'}
-              className="rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink shadow-[0_6px_20px_-8px_rgba(247,221,116,0.9)] transition-[background-color,transform] hover:-translate-y-px hover:bg-butter-deep md:px-5"
+              className="whitespace-nowrap rounded-full bg-butter px-3.5 py-2.5 text-[13px] font-semibold text-ink shadow-[0_6px_20px_-8px_rgba(247,221,116,0.9)] transition-[background-color,transform] hover:-translate-y-px hover:bg-butter-deep md:px-5"
             >
-              {home ? 'My portal' : 'Get started'}
+              {home ? (
+                <>
+                  <span className="min-[420px]:hidden">Portal</span>
+                  <span className="hidden min-[420px]:inline">My portal</span>
+                </>
+              ) : (
+                'Get started'
+              )}
             </Link>
           </div>
         </div>
