@@ -744,7 +744,9 @@ export function buildVisitSteps(products: IntakeProduct[] = []): Step[] {
   const out: Step[] = [...(light ? [] : [step('body')]), step('health'), ...(light ? [] : [CONDITIONS_STEP]), MEDS_STEP];
   products
     .filter((p, i) => p.contraindications?.length && products.findIndex((q) => q.id === p.id) === i)
-    .forEach((p, i) => out.push(productScreeningStep(p, i === 0 ? undefined : p.id)));
+    // Every product's screen is keyed by the product (product_contraindications__<id>): a later visit can't overwrite
+    // an earlier product's answer, the prescriber sees which product it was, and a knockout closes only that product.
+    .forEach((p) => out.push(productScreeningStep(p, p.id)));
   out.push(NOTE_STEP);
   return out;
 }

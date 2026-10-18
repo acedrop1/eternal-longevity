@@ -283,15 +283,28 @@ export async function releaseHeldOrders(userId: string): Promise<string[]> {
  * safety-screen answer). Their waiting orders close here: never seen by the
  * prescriber, never charged (nothing is charged before approval).
  */
-export async function declineHeldOrders(userId: string, reason: string): Promise<void> {
+export async function declineHeldOrders(userId: string, reason: string, productIds?: string[]): Promise<void> {
   if (!supabaseAdminConfigured()) return;
   const db = createSupabaseAdminClient();
-  const { data } = await db
+  // A product's own safety answer closes only that product's order; the others stay open.
+  let only: string[] | undefined;
+  if (productIds?.length) {
+    const { data: rows } = await db
+      .from('orders')
+      .select('id, order_items!inner(product_id)')
+      .eq('user_id', userId)
+      .eq('status', 'awaiting-visit')
+      .in('order_items.product_id', productIds);
+    only = (rows ?? []).map((r) => r.id);
+    if (!only.length) return;
+  }
+  let q = db
     .from('orders')
     .update({ status: 'declined-clinical', physician_note: reason })
     .eq('user_id', userId)
-    .eq('status', 'awaiting-visit')
-    .select('id');
+    .eq('status', 'awaiting-visit');
+  if (only) q = q.in('id', only);
+  const { data } = await q.select('id');
   if (!data?.length) return;
   await db.from('order_updates').insert(
     data.map((o) => ({

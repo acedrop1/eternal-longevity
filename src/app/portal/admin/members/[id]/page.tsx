@@ -46,6 +46,7 @@ interface MemberDetail {
     status: string;
     cadence: string;
     perCycle: number;
+    nextBilling?: string | null;
   }[];
   orders: {
     ref: string;
@@ -138,7 +139,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
       await Promise.all([
         db
           .from('subscriptions')
-          .select('product_name, status, cadence_label, per_cycle_cents')
+          .select('product_name, status, cadence_label, per_cycle_cents, next_billing_date')
           .eq('user_id', id),
         db
           .from('orders')
@@ -218,6 +219,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         status: s.status,
         cadence: s.cadence_label ?? '—',
         perCycle: Math.round((s.per_cycle_cents ?? 0) / 100),
+        nextBilling: s.status === 'active' ? s.next_billing_date : null,
       })),
       orders: (orders ?? []).map((o) => {
         const items = itemsByOrder.get(o.id) ?? [];
@@ -423,6 +425,8 @@ export default async function MemberDetailPage({ params }: PageProps) {
                       <StatusBadge tone={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</StatusBadge>
                       <span className="ml-auto text-[13px] tabular-nums text-ink/65">
                         {s.cadence} · ${s.perCycle} per cycle
+                        {s.nextBilling &&
+                          ` · renews ${new Date(s.nextBilling.length === 10 ? `${s.nextBilling}T12:00:00` : s.nextBilling).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
                       </span>
                     </li>
                   ))}

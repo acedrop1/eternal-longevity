@@ -124,7 +124,7 @@ export default async function VisitPage({
       <div className="visit-intro">
         <PageHeader
           title={ordered ? 'Your order is in. A few quick questions for Dr. Elder.' : 'A few quick questions for Dr. Elder.'}
-          intro={`${ordered ? 'Nothing has been charged. ' : ''}These health questions take about 2 minutes, and Dr. Elder reviews your ${visit?.productName ?? 'order'} as soon as they’re done. You’re charged only if he approves.`}
+          intro={`${ordered ? 'Nothing has been charged. ' : ''}These health questions take about 2 minutes, and Dr. Elder reviews your ${products.length > 1 ? products.map((p) => p.name).join(' and ') : (visit?.productName ?? 'order')} as soon as they’re done. You’re charged only if he approves.`}
         />
         <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-butter-soft px-3 py-1.5 text-[13px] font-medium text-ink ring-1 ring-inset ring-butter-deep/60">
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-400" />

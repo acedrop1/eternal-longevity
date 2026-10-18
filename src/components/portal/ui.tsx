@@ -19,6 +19,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Messages', href: '/portal/admin/messages' },
   { label: 'Emails', href: '/portal/admin/emails' },
   { label: 'Billing', href: '/portal/admin/billing' },
+  { label: 'Subscriptions', href: '/portal/admin/subscriptions' },
   { label: 'Orders', href: '/portal/admin/fulfillment', also: ['/portal/admin/orders'] },
   { label: 'Products', href: '/portal/admin/products' },
   { label: 'Pricing', href: '/portal/admin/pricing' },

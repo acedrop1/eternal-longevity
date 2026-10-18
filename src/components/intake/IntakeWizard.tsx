@@ -623,7 +623,7 @@ export function IntakeWizard({
                 disabled={isPending}
                 onClick={() =>
                   startTransition(async () => {
-                    await declineVisitAction(status.key);
+                    await declineVisitAction(status.key, status.from);
                     router.push('/portal');
                   })
                 }

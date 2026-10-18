@@ -154,6 +154,19 @@ export function firstKnockout(answers: Record<string, unknown>): string | null {
   return null;
 }
 
+/**
+ * Which products a product-safety knockout is for: the ids on the keyed screens
+ * (product_contraindications__<id>) whose answer rules the product out. Empty
+ * when only the older unkeyed screen tripped (then the product isn't known).
+ */
+export function knockoutProductIds(answers: Record<string, unknown>): string[] {
+  const screen = KNOCKOUT_FIELDS.find((f) => f.id === PRODUCT_SCREEN_FIELD);
+  if (!screen) return [];
+  return Object.entries(answers)
+    .filter(([key, v]) => key.startsWith(`${PRODUCT_SCREEN_FIELD}__`) && fieldKnockout(screen, v))
+    .map(([key]) => key.slice(PRODUCT_SCREEN_FIELD.length + 2));
+}
+
 /** One condition: the answer (or any of a multi-select's answers) is one of the values. */
 function condHolds(c: Cond, answers: Record<string, unknown>): boolean {
   const v = answers[c.field];

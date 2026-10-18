@@ -192,6 +192,8 @@ const ORDER_ERROR: Record<string, string> = {
   not_assessed: 'One of these treatments needs a few questions of its own first.',
   duplicate_product: 'The same treatment is in your cart twice. Keep one plan to continue.',
   not_authorized: 'Please sign in to place your order.',
+  order_in_progress: 'Your order is already being placed. Give it a moment, then check your portal before trying again.',
+  consent_required: 'Please tick both boxes to agree before placing your order.',
   default: 'We could not place your order. Please try again.',
 };
 

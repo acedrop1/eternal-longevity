@@ -53,6 +53,7 @@ import {
   consentsComplete,
   fieldComplete,
   firstKnockout,
+  knockoutProductIds,
   intakeProductIds,
   knownAnswerIds,
   mediaPaths,
@@ -647,10 +648,10 @@ export async function submitVisitAction(
     ...visitInput(visitAnswers, steps),
     visitCompletedAt: new Date().toISOString(),
   };
-  // What this visit asked about is what it covers; the server records it.
   const asked = products.map((p) => p.id);
-  // Keep what earlier intakes covered; add what this visit asked about.
-  merged.assessedProductIds = [...new Set([...intakeProductIds(onFile), ...asked])];
+  // The visit asks health questions, not each product's own category questions: what's assessed stays what the
+  // assessments covered (every ordered product already is). A product only sitting in the cart doesn't become assessed here.
+  merged.assessedProductIds = [...new Set(intakeProductIds(onFile))];
   if (!asked.includes(merged.requestedProductId as string) && products[0]) {
     merged.requestedProductId = products[0].id;
     merged.requestedProduct = products[0].name;
@@ -663,7 +664,7 @@ export async function submitVisitAction(
   // The wizard stops a knockout in the browser; this stops one sent without it.
   const knockout = firstKnockout(merged);
   if (knockout) {
-    await closeForKnockout(db, user.id, knockout);
+    await closeForKnockout(db, user.id, knockout, knockoutProductIds(merged));
     return { ok: false, knockout };
   }
   if (problem) return { ok: false, error: problem };
@@ -707,16 +708,20 @@ export async function submitVisitAction(
  * still be treated for something else); a general one (cancer, pregnancy,
  * organ disease, age) also closes the intake, as before.
  */
-export async function declineVisitAction(knockoutKey: string): Promise<void> {
+export async function declineVisitAction(knockoutKey: string, fromScreen?: string): Promise<void> {
   const user = await getSession();
   if (!user || !supabaseAdminConfigured()) return;
-  await closeForKnockout(createSupabaseAdminClient(), user.id, knockoutKey);
+  // The product's own safety screen is keyed product-screen-<id>: close only that product's order.
+  const productId = typeof fromScreen === 'string' ? /product-screen-([a-z0-9-]+)/.exec(fromScreen)?.[1] : undefined;
+  await closeForKnockout(createSupabaseAdminClient(), user.id, knockoutKey, productId ? [productId] : undefined);
 }
 
 async function closeForKnockout(
   db: ReturnType<typeof createSupabaseAdminClient>,
   userId: string,
   knockoutKey: string,
+  /** For a product's own contraindication: the product(s) it rules out. */
+  productIds?: string[],
 ): Promise<void> {
   if (knockoutKey !== 'product_contraindication') {
     await db
@@ -725,5 +730,5 @@ async function closeForKnockout(
       .eq('user_id', userId)
       .eq('status', 'awaiting_visit');
   }
-  await declineHeldOrders(userId, SAFETY_DECLINE);
+  await declineHeldOrders(userId, SAFETY_DECLINE, knockoutKey === 'product_contraindication' ? productIds : undefined);
 }

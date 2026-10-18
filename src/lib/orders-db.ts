@@ -231,6 +231,17 @@ async function appendUpdate(
  * Move an order only if it is still in one of `from`. False when it has moved
  * on — a second click, a stale screen, or a request against a finished order.
  */
+/** "About order #1055 (Enclomiphene)": heads his messages, so a patient with two orders knows which one. */
+async function orderLabel(orderId: string): Promise<string> {
+  const db = createSupabaseAdminClient();
+  const [{ data: o }, { data: items }] = await Promise.all([
+    db.from('orders').select('order_number').eq('id', orderId).maybeSingle(),
+    db.from('order_items').select('product_name').eq('order_id', orderId),
+  ]);
+  const names = (items ?? []).map((i) => i.product_name).filter(Boolean).join(', ');
+  return o ? `About order #${o.order_number}${names ? ` (${names})` : ''}:` : '';
+}
+
 /** A doctor acts only on orders assigned to them, or not yet assigned to anyone. */
 async function assignedToMe(orderId: string, doctorId: string): Promise<boolean> {
   const { data } = await createSupabaseAdminClient().from('orders').select('assigned_physician_id').eq('id', orderId).maybeSingle();
@@ -681,17 +692,19 @@ async function placeOrder(input: {
  */
 async function healthQuestionsOpen(orderId: string): Promise<boolean> {
   const db = createSupabaseAdminClient();
-  const { data: order, error } = await db.from('orders').select('user_id').eq('id', orderId).maybeSingle();
+  const { data: order, error } = await db.from('orders').select('user_id, created_at').eq('id', orderId).maybeSingle();
   if (error) return true;
   if (!order?.user_id) return false;
   const { data: intake, error: intakeErr } = await db
     .from('intake_submissions')
-    .select('status')
+    .select('status, created_at')
     .eq('user_id', order.user_id)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  return Boolean(intakeErr) || intake?.status === 'awaiting_visit';
+  if (intakeErr) return true;
+  // Only this order's own questions hold it: an assessment started after the order is for another product.
+  return intake?.status === 'awaiting_visit' && Date.parse(intake.created_at) <= Date.parse(order.created_at);
 }
 
 /** Admin approves and releases the order for sign-off. */
@@ -819,7 +832,7 @@ export async function requestInfoFromPatientAction(
     thread_user_id: order.user_id,
     sender_id: user.id,
     channel: 'doctor',
-    body: text,
+    body: [await orderLabel(id), text].filter(Boolean).join('\n\n'),
   });
 
   await appendUpdate(
@@ -872,7 +885,7 @@ export async function changePrescriptionAction(
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, user_id, status, member_email, shipping_cents, promo_code, total_cents')
+    .select('id, user_id, status, member_email, shipping_cents, discount_cents, promo_code, total_cents')
     .eq('order_number', orderNumber)
     .maybeSingle();
   if (!order?.user_id) return { ok: false, error: 'not_found' };
@@ -918,9 +931,12 @@ export async function changePrescriptionAction(
       .eq('code', order.promo_code)
       .maybeSingle();
     if (promo) {
-      const raw = promo.kind === 'percent' ? Math.round((subtotalCents * promo.value) / 100) : promo.value;
-      itemDiscountCents = Math.max(0, Math.min(raw, subtotalCents));
       freeShipping = Boolean(promo.includes_shipping);
+      // A percent code re-applies to the new price. A fixed amount was split across the basket at
+      // checkout, so this order keeps its own share (its discount less any waived shipping), not the whole code.
+      const share = Math.max(0, Number(order.discount_cents ?? 0) - (freeShipping ? Number(order.shipping_cents ?? 0) : 0));
+      const raw = promo.kind === 'percent' ? Math.round((subtotalCents * promo.value) / 100) : share;
+      itemDiscountCents = Math.max(0, Math.min(raw, subtotalCents));
     }
   }
   const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents: 0, discountCents: itemDiscountCents, freeShipping });
@@ -1193,7 +1209,7 @@ export async function declineClinicalAction(
       thread_user_id: order.user_id,
       sender_id: user.id,
       channel: 'doctor',
-      body: note.trim(),
+      body: [await orderLabel(id), note.trim()].filter(Boolean).join('\n\n'),
     });
   }
 

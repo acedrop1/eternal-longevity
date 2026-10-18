@@ -55,6 +55,7 @@ create table if not exists rate_limits (
 );
 alter table rate_limits enable row level security;
 revoke all on rate_limits from anon, authenticated;
+grant all on rate_limits to service_role;
 
 create or replace function rate_hit(p_key text, p_max integer, p_window integer)
 returns boolean language plpgsql security definer set search_path = public as $$
@@ -69,6 +70,7 @@ begin
   return c <= p_max;
 end $$;
 revoke execute on function rate_hit(text, integer, integer) from public, anon, authenticated;
+grant execute on function rate_hit(text, integer, integer) to service_role;
 
 -- Optional housekeeping, any time:
 --   delete from rate_limits where reset_at < now() - interval '1 day';
@@ -78,7 +80,11 @@ revoke execute on function rate_hit(text, integer, integer) from public, anon, a
 -- with a member's own token must not get around them). NOT VALID: existing
 -- rows aren't re-checked, every new write is.
 -- =============================================================================
-alter table messages  add constraint messages_body_len     check (char_length(body) <= 4000) not valid;
-alter table profiles  add constraint profiles_name_len     check (full_name is null or char_length(full_name) <= 120) not valid;
-alter table profiles  add constraint profiles_phone_len    check (phone is null or char_length(phone) <= 20) not valid;
-alter table profiles  add constraint profiles_cart_size    check (cart is null or pg_column_size(cart) <= 32768) not valid;
+alter table messages drop constraint if exists messages_body_len;
+alter table messages add constraint messages_body_len check (char_length(body) <= 4000) not valid;
+alter table profiles drop constraint if exists profiles_name_len;
+alter table profiles add constraint profiles_name_len check (full_name is null or char_length(full_name) <= 120) not valid;
+alter table profiles drop constraint if exists profiles_phone_len;
+alter table profiles add constraint profiles_phone_len check (phone is null or char_length(phone) <= 20) not valid;
+alter table profiles drop constraint if exists profiles_cart_size;
+alter table profiles add constraint profiles_cart_size check (cart is null or pg_column_size(cart) <= 32768) not valid;

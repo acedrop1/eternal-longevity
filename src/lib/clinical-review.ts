@@ -136,14 +136,33 @@ export async function reviewsForOrders(
     if (seen) seen.count += 1;
     else history.set(row.user_id, { count: 1, last: row.paid_confirmed_at });
   }
+  // Everything else this patient has with us (open orders, active plans), for interactions.
+  const [{ data: openItems }, { data: plans }] = await Promise.all([
+    db
+      .from('orders')
+      .select('user_id, order_number, status, order_items(product_name)')
+      .in('user_id', userIds as string[])
+      .not('status', 'in', '(canceled,refunded,denied-admin,declined-clinical,delivered)'),
+    db.from('subscriptions').select('user_id, product_name, status').in('user_id', userIds as string[]).in('status', ['active', 'paused']),
+  ]);
+  const alsoFor = (userId: string, orderNumber: string) => {
+    const names = new Set<string>();
+    for (const o of openItems ?? []) {
+      if (o.user_id !== userId || o.order_number === orderNumber) continue;
+      for (const i of ((o as unknown as { order_items?: { product_name: string }[] }).order_items ?? [])) names.add(`${i.product_name} (order in progress)`);
+    }
+    for (const p of plans ?? []) if (p.user_id === userId) names.add(`${p.product_name} (${p.status === 'paused' ? 'paused plan' : 'active plan'})`);
+    return [...names];
+  };
+
   const { data: intakes } = await db
     .from('intake_submissions')
-    .select('user_id, answers, created_at')
+    .select('user_id, answers, created_at, status, review_notes')
     .in('user_id', userIds as string[])
     .order('created_at', { ascending: false });
 
   // Newest intake per member.
-  const latest = new Map<string, { answers: unknown; created_at: string }>();
+  const latest = new Map<string, { answers: unknown; created_at: string; status?: string | null; review_notes?: string | null }>();
   for (const row of intakes ?? []) {
     if (row.user_id && !latest.has(row.user_id)) latest.set(row.user_id, row);
   }
@@ -174,6 +193,9 @@ export async function reviewsForOrders(
         (o.card_last4 ? `\u2022\u2022\u2022\u2022 ${o.card_last4}` : null),
       priorOrders: h ? { count: h.count, last: h.last } : null,
       shippingAddress: o.shipping_address,
+      also: o.user_id ? alsoFor(o.user_id, o.order_number) : [],
+      // A later visit closed on a safety answer must show on orders already in the queue.
+      closedNote: row?.status === 'declined' ? (row.review_notes ?? 'Latest visit closed on a safety answer') : null,
     });
   }
   await signIntakeMedia(Object.values(out).flatMap((r) => r.categories));
@@ -194,6 +216,10 @@ function buildReview(input: {
   cardSummary: string | null;
   priorOrders: { count: number; last: string | null } | null;
   shippingAddress: unknown;
+  /** Other products this patient has with us (orders in progress, plans). */
+  also?: string[];
+  /** Set when their newest visit was closed by a safety answer. */
+  closedNote?: string | null;
 }): PatientReview {
   const a = (input.answers ?? {}) as Record<string, unknown>;
 
@@ -245,12 +271,20 @@ function buildReview(input: {
         value: organ.text,
         flag: organ.flag,
       },
+      ...(input.closedNote
+        ? [{ label: 'Latest visit closed on a safety answer', value: `${input.closedNote}. Check before signing.`, flag: true }]
+        : []),
     ],
     context: [
       {
         label: 'Card on file',
         value: input.cardSummary ?? 'None saved',
         flag: !input.cardSummary,
+      },
+      {
+        label: 'Also with us',
+        value: input.also?.length ? input.also.join(', ') : 'Nothing else',
+        flag: Boolean(input.also?.length),
       },
       {
         label: 'Previous approved orders',
@@ -325,7 +359,7 @@ export async function reviewsForUsers(
       .order('created_at', { ascending: false }),
   ]);
 
-  const latest = new Map<string, { answers: unknown; created_at: string }>();
+  const latest = new Map<string, { answers: unknown; created_at: string; status?: string | null; review_notes?: string | null }>();
   for (const row of intakes ?? []) {
     if (row.user_id && !latest.has(row.user_id)) latest.set(row.user_id, row);
   }
