@@ -139,7 +139,7 @@ export const LANDINGS: Landing[] = [
     ],
     stickyLabel: 'Check your testosterone care',
     options: [{ title: 'Enclomiphene', body: 'One capsule a day, if prescribed.', products: ['enclomiphene'] }],
-    smallPrint: [COMPOUNDED('Our testosterone treatments'), 'No recent blood test? That’s fine. Your physician may ask for one before prescribing.'],
+    smallPrint: [COMPOUNDED('Enclomiphene and our other hormone treatments'), 'No recent blood test? That’s fine. Your physician may ask for one before prescribing.'],
   },
   {
     slug: 'skin',
@@ -204,7 +204,7 @@ export const LANDINGS: Landing[] = [
         options: [
           { value: 'energy', label: 'Everyday energy' },
           { value: 'recovery', label: 'Recovery after activity' },
-          { value: 'ageing', label: 'Healthy ageing' },
+          { value: 'ageing', label: 'Healthy aging' },
         ],
       },
       {
@@ -266,7 +266,7 @@ export const LANDINGS: Landing[] = [
     options: [{ title: 'PT-141', body: 'A small injection, prescribed only if appropriate.', products: ['pt-141'] }],
     smallPrint: [
       COMPOUNDED('PT-141 (bremelanotide) and our other sexual-wellness treatments'),
-      'Bremelanotide is FDA-approved (as Vyleesi) only for certain premenopausal women with acquired, generalized HSDD; other uses are off-label. It can temporarily raise blood pressure and is not for people with uncontrolled hypertension or heart disease; it may cause nausea and skin darkening.',
+      'Bremelanotide is FDA-approved only for certain premenopausal women with acquired, generalized HSDD; other uses are off-label. It can temporarily raise blood pressure and is not for people with uncontrolled hypertension or heart disease; it may cause nausea and skin darkening.',
     ],
   },
 ];

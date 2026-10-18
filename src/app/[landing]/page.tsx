@@ -86,7 +86,7 @@ export default async function LandingPage({ params }: Props) {
       <main className="bg-white">
         {/* Hero, as on Hims: the promise and the photo on one side, the quiz on the other. */}
         <section className="px-3 pt-24 md:px-5 md:pt-28">
-          <div className="mx-auto grid gap-3 md:grid-cols-2 md:gap-5">
+          <div className="mx-auto grid max-w-6xl gap-3 md:grid-cols-2 md:gap-5">
             <div className="anim-hero relative overflow-hidden rounded-shell bg-milk px-5 pb-5 pt-6 md:px-10 md:pb-10 md:pt-12">
               <Aura mix="sunrise" />
               <div className="relative">
@@ -100,8 +100,8 @@ export default async function LandingPage({ params }: Props) {
                 </h1>
                 <p className="mt-3 max-w-[440px] text-[15px] leading-relaxed text-ink-soft md:text-[17px]">{l.subline}</p>
                 {hero?.image && (
-                  <div className="relative mt-5 aspect-[4/3] overflow-hidden rounded-inner bg-milk-deep md:mt-8">
-                    <Image src={hero.image} alt={hero.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                  <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-inner bg-milk-deep md:mt-8 md:aspect-[4/3]">
+                    <Image src={hero.image} alt={hero.name} fill priority sizes="(max-width: 768px) 100vw, 520px" className="object-cover" />
                   </div>
                 )}
               </div>
@@ -121,16 +121,16 @@ export default async function LandingPage({ params }: Props) {
 
         {/* The two formats, priced from the live catalogue. */}
         {formats.length > 0 && (
-          <FadeIn as="section" className="mx-auto max-w-5xl px-5 pt-20 md:px-10 md:pt-28">
+          <FadeIn as="section" className="mx-auto max-w-3xl px-5 pt-20 md:px-10 md:pt-28">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <h2 className="text-[30px] font-semibold leading-none tracking-[-0.045em] text-ink md:text-[40px]">Treatment options</h2>
               <p className="max-w-[340px] text-[15px] text-ink-soft">Pick what fits your routine. Your physician confirms what&apos;s right for you.</p>
             </div>
-            <div className={cn('grid gap-3 md:gap-5', formats.length > 1 ? 'grid-cols-2' : 'max-w-md grid-cols-1')}>
+            <div className={cn('grid gap-3 md:gap-5', formats.length > 1 ? 'grid-cols-2' : 'max-w-sm grid-cols-1')}>
               {formats.map((f) => (
                 <Link key={f.title} href={f.href} className="group flex flex-col overflow-hidden rounded-shell bg-milk transition-transform hover:-translate-y-0.5">
-                  <div className="relative aspect-square md:aspect-[4/3]">
-                    <Image src={f.image} alt={f.title} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover" />
+                  <div className="relative aspect-[4/3]">
+                    <Image src={f.image} alt={f.title} fill sizes="(max-width: 768px) 50vw, 380px" className="object-cover" />
                   </div>
                   <div className="p-4 md:p-6">
                     <p className="text-[18px] font-semibold tracking-[-0.02em] text-ink md:text-[22px]">{f.title}</p>
