@@ -43,10 +43,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             Go to login →
           </Link>
           <Link
-            href="/start"
+            href="/shop"
             className="block w-full py-2 text-center text-[14px] font-medium text-ink/60 transition-colors hover:text-ink"
           >
-            Start a new assessment →
+            Browse treatments →
           </Link>
         </div>
       </AuthShell>

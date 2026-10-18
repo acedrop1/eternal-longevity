@@ -56,15 +56,17 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
     <div className="text-ink md:hidden">
       {/* First screen: photo, name + price, plan picker and CTA, so nobody
           has to scroll to buy (System Labs pattern). Details follow below. */}
-      <ProductImage
-        product={product}
-        sizes="100vw"
-        // The photo's own 4:5 shape, centred: the whole product shows, never a crop.
-        className="mx-auto aspect-[4/5] h-[36svh] min-h-[240px]"
-      />
+      {/* Oura-style: the photo runs edge to edge under the floating header, in its own 4:5 shape so the
+          whole product shows; the details ride up over its bottom edge on a rounded sheet. */}
+      {/* The photo holds still (sticky) and the card scrolls up over it. */}
+      <div className="sticky top-0 z-0 -mx-5">
+        <ProductImage product={product} sizes="100vw" className="aspect-[4/5] rounded-none" labelClass="bottom-11 left-5" />
+      </div>
+
+      <div className="relative z-10 -mx-5 -mt-7 rounded-t-[28px] bg-white px-5 pt-7 shadow-[0_-12px_30px_-18px_rgba(17,17,17,0.35)]">
 
       {/* One column, top to bottom (iOS product pages): name, what it's for, price. Nothing squeezed side by side. */}
-      <div className="mt-5">
+      <div>
         {/* The desktop variant (ProductPDP) carries the page's one <h1>. This one is a level-1
             heading only to assistive tech, which sees just the variant that is displayed. */}
         <p role="heading" aria-level={1} className="text-[34px] font-semibold leading-[1.02] tracking-[-0.04em] text-ink [text-wrap:balance]">{product.name}</p>
@@ -77,13 +79,15 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
 
       <p className="mt-4 text-[16px] leading-relaxed text-ink/80">{EXPLAINER[product.id] ?? product.shortDescription}</p>
 
+      {/* The floating bar hides while the plans or the button are on screen, so it never covers them. */}
+      <div ref={ctaRef}>
       {pickPlan && (
         <div ref={planRef} className="mt-5 scroll-mt-40">
           <PlanSegments tiers={tiers} selected={selectedTier} onSelect={setSelectedTier} pulse={pulse} />
         </div>
       )}
 
-      <div ref={ctaRef} className="mt-3">
+      <div className="mt-3">
         {href ? (
           <Link
             href={href}
@@ -104,6 +108,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
           {billedLine(active)} · {shippingLine(product)} · {active.key === 'annual' ? 'cancel before your next yearly billing' : 'cancel anytime'}
         </p>}
         <p className="mt-1 text-center text-[13px] leading-snug text-ink/65 tabular-nums">{shippingNote(shipping)}</p>
+      </div>
       </div>
 
       {/* Below the fold: what the chosen plan includes, then the rest. */}
@@ -135,6 +140,7 @@ export function ProductPDPMobile({ product, shipping, ctaHref, ctaLabel = 'Start
 
       {/* Room for the buy bar, so the last row is never trapped under it. */}
       <div aria-hidden className="h-28" />
+      </div>
 
       <BuyBar
         product={product}

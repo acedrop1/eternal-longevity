@@ -69,10 +69,10 @@ export default function AboutPage() {
                 prescription decision is made by Dr. Elder, and a licensed 503A pharmacy is behind every order.
               </p>
               <Link
-                href="/start"
+                href="/shop"
                 className="group mt-8 inline-flex items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
-                Start your assessment
+                Find your treatment
                 <ArrowDot className="bg-ink text-white ring-0" />
               </Link>
             </div>
@@ -207,10 +207,10 @@ export default function AboutPage() {
                 </p>
               </div>
               <Link
-                href="/start"
+                href="/shop"
                 className="group flex w-fit shrink-0 items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
-                Start your assessment
+                Find your treatment
                 <ArrowDot className="bg-ink text-white ring-0" />
               </Link>
             </div>

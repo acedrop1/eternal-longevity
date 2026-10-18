@@ -66,11 +66,11 @@ export default async function VisitPage({
   if (state === 'none') {
     return (
       <PortalShell user={user} nav={nav}>
-        <PageHeader title="Start your assessment." />
+        <PageHeader title="Find your treatment." />
         <EmptyState
           action={
-            <Link href="/start" className={btnPrimary}>
-              Start your assessment
+            <Link href="/shop" className={btnPrimary}>
+              Find your treatment
             </Link>
           }
         >

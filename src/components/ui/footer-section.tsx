@@ -35,7 +35,6 @@ export const footerLinks: FooterSection[] = [
     links: [
       { title: 'Shop all', href: '/shop' },
       { title: 'FAQ', href: '/faq' },
-      { title: 'Start assessment', href: '/start' },
       { title: 'About', href: '/about' },
       { title: 'Contact', href: '/contact' },
       { title: 'Log in', href: '/login' },

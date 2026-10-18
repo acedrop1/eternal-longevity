@@ -23,10 +23,13 @@ export function ProductImage({
   sizes,
   className,
   position,
+  labelClass = 'bottom-4 left-4',
 }: {
   product: ShopProduct;
   sizes: string;
   className?: string;
+  /** Where the "Image for illustration" chip sits. */
+  labelClass?: string;
   /** object-position for a crop that isn't the photo's shape (e.g. '50% 20%'). */
   position?: string;
 }) {
@@ -46,7 +49,7 @@ export function ProductImage({
       />
       {/* Product renders are generic, unbranded vials; say so on the photo. */}
       {product.shot && (
-        <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[11px] font-medium text-ink/70 backdrop-blur-md">
+        <span className={cn('absolute rounded-full bg-white/75 px-3 py-1 text-[11px] font-medium text-ink/70 backdrop-blur-md', labelClass)}>
           Image for illustration
         </span>
       )}

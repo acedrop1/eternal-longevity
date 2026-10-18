@@ -26,11 +26,11 @@ const QUICK_LINKS = [
     cta: 'Browse the shop',
   },
   {
-    title: 'Start your assessment',
+    title: 'Find your treatment',
     body:
       'A physician usually reviews your intake within 1 business day. After approval, the pharmacy typically prepares and ships within a few business days.',
-    href: '/start',
-    cta: 'Begin now',
+    href: '/shop',
+    cta: 'Shop treatments',
   },
   {
     title: 'Talk to our team',
@@ -107,10 +107,10 @@ export default async function FAQPage() {
                 Three minutes. Answer a few questions and a licensed physician decides whether to prescribe.
               </p>
               <Link
-                href="/start"
+                href="/shop"
                 className="group mt-8 inline-flex items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
-                Start your assessment
+                Find your treatment
                 <ArrowDot className="bg-ink text-white ring-0" />
               </Link>
             </div>

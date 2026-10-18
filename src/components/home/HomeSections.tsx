@@ -143,10 +143,10 @@ export async function HomeHero() {
           <div className="max-w-[660px] text-white md:mt-8">
             <div className="flex flex-wrap items-center gap-3">
               <Link
-                href="/start"
+                href="/shop"
                 className="group flex items-center gap-2 rounded-full bg-butter py-2 pl-6 pr-2 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
-                Start your assessment
+                Find your treatment
                 <ArrowDot className="bg-ink text-white ring-0" />
               </Link>
             </div>
@@ -411,7 +411,7 @@ export function Beliefs() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-3 md:gap-5">
-          <Link href="/start" className="group relative block aspect-[4/5] overflow-hidden rounded-shell bg-milk md:row-span-2 md:aspect-auto">
+          <Link href="/treatments/longevity" className="group relative block aspect-[4/5] overflow-hidden rounded-shell bg-milk md:row-span-2 md:aspect-auto">
             <Image src="/brand/hero-man.jpg" alt="" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover object-[40%_center] transition-transform duration-700 group-hover:scale-[1.04]" />
             <Sticker className="absolute right-4 top-4">Longevity</Sticker>
             <div className="absolute inset-x-4 bottom-4 flex items-center justify-between">
@@ -465,7 +465,8 @@ const STEPS = [
   { title: 'Delivered to your door', body: 'Made to order by a licensed 503A pharmacy and shipped to you, tracked.' },
 ];
 
-export function HowItWorks({ href = '/start' }: { href?: string }) {
+/** href/label: the shop by default (no assessment without a product or category); product and category pages pass their own. */
+export function HowItWorks({ href = '/shop', label = 'Find your treatment' }: { href?: string; label?: string }) {
   return (
     <section id="how-it-works" className="scroll-mt-24 bg-white px-3 md:px-5">
       <div className="relative mx-auto overflow-hidden rounded-shell bg-milk px-5 py-16 md:px-10 md:py-24">
@@ -490,7 +491,7 @@ export function HowItWorks({ href = '/start' }: { href?: string }) {
           </ol>
           <div className="mt-10 flex justify-center">
             <Link href={href} className="group flex items-center gap-2 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
-              Start your assessment
+              {label}
               <ArrowDot className="bg-butter ring-0" />
             </Link>
           </div>
@@ -612,7 +613,7 @@ export async function HomeFAQ() {
 /*  Closing band                                                               */
 /* -------------------------------------------------------------------------- */
 
-export function ClosingBand({ href = '/start' }: { href?: string }) {
+export function ClosingBand({ href = '/shop', label = 'Find your treatment' }: { href?: string; label?: string }) {
   return (
     <section className="bg-white px-3 pb-3 md:px-5 md:pb-5">
       <div className="relative mx-auto overflow-hidden rounded-shell bg-butter-soft px-5 pb-6 pt-10 md:px-12 md:pt-16">
@@ -623,7 +624,7 @@ export function ClosingBand({ href = '/start' }: { href?: string }) {
             <p className="mt-3 text-[15px] text-ink-soft">Five minutes online. Reviewed by a physician. Nothing charged unless approved.</p>
           </div>
           <Link href={href} className="group flex w-fit shrink-0 items-center gap-3 rounded-full bg-ink py-2 pl-6 pr-2 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5">
-            Start your assessment
+            {label}
             <ArrowDot className="h-9 w-9 bg-butter ring-0" />
           </Link>
         </div>

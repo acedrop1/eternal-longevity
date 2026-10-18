@@ -166,10 +166,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         )}
 
         <Link
-          href="/start"
+          href="/signup"
           className="block w-full py-2 text-center text-[14px] font-medium text-ink/60 transition-colors hover:text-ink"
         >
-          Start a new assessment →
+          New here? Create an account →
         </Link>
       </form>
     </AuthShell>

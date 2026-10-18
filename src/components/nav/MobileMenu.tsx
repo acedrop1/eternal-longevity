@@ -188,11 +188,11 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
 
               <div className="flex flex-col gap-2 p-5">
                 <Link
-                  href="/start"
+                  href="/shop"
                   onClick={() => setOpen(false)}
                   className="block rounded-full bg-butter px-5 py-3.5 text-center text-[15px] font-semibold text-ink transition-colors hover:bg-butter-deep"
                 >
-                  Start your assessment
+                  Find your treatment
                 </Link>
                 {!home && (
                   <Link

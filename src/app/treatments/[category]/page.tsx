@@ -79,9 +79,9 @@ export default async function CategoryPage({ params }: Props) {
           )}
         </section>
 
-        <HowItWorks />
+        <HowItWorks href={`/start?category=${c.slug}`} label="Start your assessment" />
         <HomeFAQ />
-        <ClosingBand />
+        <ClosingBand href={`/start?category=${c.slug}`} label="Start your assessment" />
       </main>
       <Footer />
     </>

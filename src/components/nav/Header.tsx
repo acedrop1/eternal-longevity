@@ -45,7 +45,8 @@ function useSessionHome(): string | null {
  * hero photo it runs clear glass with white type; once the page scrolls it
  * firms up to milky white so it reads over anything.
  */
-export function Header({ categoryStrip = false, overlay = false }: { categoryStrip?: boolean; overlay?: boolean }) {
+/** categoryStrip 'desktop': no strip on phones (product pages, where the photo runs edge to edge under the bar). */
+export function Header({ categoryStrip = false, overlay = false }: { categoryStrip?: boolean | 'desktop'; overlay?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   // Phones: the category strip tucks away while scrolling down and returns on any scroll up (as Safari's bars do).
   const [tuck, setTuck] = useState(false);
@@ -153,7 +154,7 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
             )}
             {/* Signed in: straight back to the portal, not another assessment. */}
             <Link
-              href={home ?? '/start'}
+              href={home ?? '/shop'}
               className="rounded-full bg-butter px-4 py-2.5 text-[13px] font-semibold text-ink shadow-[0_6px_20px_-8px_rgba(247,221,116,0.9)] transition-[background-color,transform] hover:-translate-y-px hover:bg-butter-deep md:px-5"
             >
               {home ? 'My portal' : 'Get started'}
@@ -162,7 +163,7 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
         </div>
 
         {categoryStrip && (
-          <div className={cn('transition-[opacity,transform] duration-300 ease-out', tuck && 'max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0')}>
+          <div className={cn('transition-[opacity,transform] duration-300 ease-out', categoryStrip === 'desktop' && 'max-md:hidden', tuck && 'max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0')}>
             <CategoryStrip glass={glass} onPhoto={onPhoto} />
           </div>
         )}

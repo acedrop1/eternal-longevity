@@ -145,7 +145,7 @@ export function memberNextStep(input: {
       eyebrow: 'Get started',
       title: 'Start your first visit',
       body: 'A few minutes of questions. A licensed physician reviews them and decides whether to prescribe.',
-      cta: { label: 'Find your treatment', href: '/start' },
+      cta: { label: 'Find your treatment', href: '/shop' },
     };
   }
   return null;
