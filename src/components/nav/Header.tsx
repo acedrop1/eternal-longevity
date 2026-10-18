@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, UserRound } from 'lucide-react';
 import { Wordmark } from './Wordmark';
 import { MobileMenu } from './MobileMenu';
 import { Search } from './Search';
@@ -124,9 +124,19 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
             <div className="max-[359px]:hidden">
               <Search onPhoto={onPhoto} />
             </div>
-            {/* Visitors: Log in and Sign up, as on Hims. Phones get both from the menu, keeping room for search. */}
+            {/* Visitors: Log in and Sign up, as on Hims. Phones get a profile icon (Log in) beside search. */}
             {!home && (
               <>
+                <Link
+                  href="/login"
+                  aria-label="Log in"
+                  className={cn(
+                    'grid h-10 w-10 place-items-center rounded-full transition-colors md:hidden',
+                    onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 ring-1 ring-black/5 hover:bg-white'
+                  )}
+                >
+                  <UserRound className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden />
+                </Link>
                 <Link
                   href="/login"
                   className={cn(
@@ -167,7 +177,11 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
                   <span className="hidden min-[420px]:inline">My portal</span>
                 </>
               ) : (
-                'Get started'
+                // It opens the shop; on narrow phones it says so, leaving room for search and the profile icon.
+                <>
+                  <span className="min-[420px]:hidden">Shop</span>
+                  <span className="hidden min-[420px]:inline">Get started</span>
+                </>
               )}
             </Link>
           </div>
