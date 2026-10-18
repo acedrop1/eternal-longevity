@@ -194,6 +194,15 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
                 >
                   Start your assessment
                 </Link>
+                {!home && (
+                  <Link
+                    href="/signup"
+                    onClick={() => setOpen(false)}
+                    className="block rounded-full bg-ink px-5 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-ink/85"
+                  >
+                    Sign up
+                  </Link>
+                )}
                 <Link
                   href={home ?? '/login'}
                   onClick={() => setOpen(false)}

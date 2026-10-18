@@ -15,6 +15,19 @@ import { ALL_ITEMS, LIST_DRAFTS } from '@/lib/lineup';
 import { cadenceTiersForProduct, defaultTier } from '@/lib/shopProducts';
 import { pageMeta } from '@/lib/seo';
 import { landingSeed } from '@/lib/landings';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
+
+/** First name, last name and phone from a member's account (Google or /signup), for the about step. */
+async function accountDetails(userId: string): Promise<Record<string, string>> {
+  if (!supabaseAdminConfigured()) return {};
+  const { data } = await createSupabaseAdminClient().from('profiles').select('full_name, phone').eq('id', userId).maybeSingle();
+  const [first, ...rest] = String(data?.full_name ?? '').trim().split(/\s+/);
+  return {
+    ...(first ? { first_name: first } : {}),
+    ...(rest.length ? { last_name: rest.join(' ') } : {}),
+    ...(data?.phone ? { phone: data.phone } : {}),
+  };
+}
 import { getShippingSettings } from '@/lib/shipping-settings';
 import { shippingNote } from '@/components/shop/pdpParts';
 
@@ -93,8 +106,11 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const [state, onFile]: [string | null, Record<string, unknown>] = isMember
     ? await Promise.all([intakeStateFor(user.id), latestIntakeAnswers(user.id)])
     : [null, {}];
+  // A member who signed up without an assessment has nothing on file yet: start them with the
+  // name (and phone) from their account. Still shown and editable, not skipped.
+  const fromAccount = isMember && !onFile.first_name ? await accountDetails(user.id) : {};
   const member = isMember
-    ? { known: knownAnswerIds(onFile), prefill: typeof onFile.sex === 'string' ? { sex: onFile.sex } : {} }
+    ? { known: knownAnswerIds(onFile), prefill: { ...fromAccount, ...(typeof onFile.sex === 'string' ? { sex: onFile.sex } : {}) } }
     : undefined;
   // Their unfinished run from this same entry point (the wizard keys it the same way).
   const entry = (requested && PRODUCT_CATEGORY[requested.id] ? requested.id : undefined) ?? category ?? 'general';

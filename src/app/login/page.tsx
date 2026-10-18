@@ -14,6 +14,7 @@ import {
 } from '@/components/auth/AuthShell';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { DemoCredentials } from '@/components/auth/DemoCredentials';
+import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton';
 import { loginAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
@@ -98,6 +99,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div role="alert" className={authErrorClass}>
             That sign-in link is invalid or has expired. Please try again.
           </div>
+        )}
+        {error === 'use_password' && (
+          <div role="alert" className={authErrorClass}>
+            Staff accounts sign in with email, password and a code, not Google.
+          </div>
+        )}
+
+        {supabaseConfigured && (
+          <>
+            <GoogleButton next={next ?? undefined} />
+            <AuthDivider />
+          </>
         )}
 
         <div>

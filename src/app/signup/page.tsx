@@ -13,6 +13,7 @@ import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 import { SIGNUP_CONSENT } from '@/lib/followups';
+import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton';
 
 export const metadata: Metadata = {
   ...pageMeta('/signup', 'Create account', 'Create your Eternal Longevity account to start an assessment and track your care.'),
@@ -67,6 +68,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       }
     >
       <form action={signupAction} className="space-y-6">
+        <GoogleButton />
+        <AuthDivider />
         {error === 'invalid' && (
           <div role="alert" className={authErrorClass}>
             Enter a valid email and a password of at least 8 characters.

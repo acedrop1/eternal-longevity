@@ -109,21 +109,28 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
 
           <div className="flex items-center gap-2">
             <Search onPhoto={onPhoto} />
-            {/* Phones get Log in from the menu, keeping room for search. */}
+            {/* Visitors: Log in and Sign up, as on Hims. Phones get both from the menu, keeping room for search. */}
             {!home && (
-              <Link
-                href="/login"
-                aria-label="Log in"
-                className={cn(
-                  'hidden h-10 w-10 place-items-center rounded-full transition-colors md:grid',
-                  onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 ring-1 ring-black/5 hover:bg-white'
-                )}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className={cn(
+                    'hidden rounded-full px-3 py-2.5 text-[13px] font-semibold transition-colors md:block',
+                    onPhoto ? 'hover:bg-white/20' : 'text-ink hover:bg-white/70'
+                  )}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className={cn(
+                    'hidden rounded-full px-4 py-2.5 text-[13px] font-semibold transition-colors md:block',
+                    onPhoto ? 'bg-white/20 hover:bg-white/30' : 'bg-white/70 text-ink ring-1 ring-black/5 hover:bg-white'
+                  )}
+                >
+                  Sign up
+                </Link>
+              </>
             )}
             {/* Members can buy from the shop: their cart sits next to My portal. */}
             {home === '/portal' && (
