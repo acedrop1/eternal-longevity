@@ -46,8 +46,9 @@ export const LEAD_CONSENT = {
 
 /** What /signup shows under the button. Stored verbatim in the account's metadata. */
 export const SIGNUP_CONSENT = {
-  version: 'v1',
-  text: 'We’ll email you about your account and assessment. You can unsubscribe anytime.',
+  version: 'v2',
+  // Rendered with links by components/auth/SignupConsent; keep the words identical.
+  text: 'By creating an account you agree to our Terms of Service and Privacy Policy. We’ll email you about your account and assessment. You can unsubscribe anytime.',
 } as const;
 
 export interface Candidate {

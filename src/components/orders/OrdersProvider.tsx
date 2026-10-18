@@ -39,6 +39,8 @@ interface OrdersAPI {
   /** Live: resolves once the server has accepted (priced, geofenced, intake-checked) the order. */
   placeOrder: (
     order: Omit<Order, 'id' | 'placedAt' | 'status'>,
+    /** The two checkout agreements exactly as shown (kept on the order's audit record). */
+    consent?: { terms: string; charges: string },
   ) => Promise<{ ok: boolean; error?: string; orderNumber?: string; productId?: string }>;
   /** Admin approves an order, releasing it to the physician for sign-off. */
   approve: (id: string, note?: string) => void;
@@ -200,7 +202,7 @@ export function OrdersProvider({
   );
 
   const placeOrder = useCallback<OrdersAPI['placeOrder']>(
-    async (draft) => {
+    async (draft, consent) => {
       const order: Order = {
         ...draft,
         id: `ord-${Math.random().toString(36).slice(2, 8)}`,
@@ -218,6 +220,7 @@ export function OrdersProvider({
           total: draft.total,
           shippingAddress: draft.shippingAddress,
           promoCode: draft.promoCode,
+          consent,
         });
         if (res.ok) router.refresh();
         return res;

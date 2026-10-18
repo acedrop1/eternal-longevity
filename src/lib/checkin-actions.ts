@@ -5,6 +5,7 @@
  * session is needed; it works once, then the row is closed for good.
  */
 
+import { allow, LIMITS } from '@/lib/rate-limit';
 import { revalidatePath } from 'next/cache';
 import {
   createSupabaseAdminClient,
@@ -20,6 +21,7 @@ export async function submitCheckinAction(input: {
   comment?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   if (!supabaseAdminConfigured()) return { ok: false, error: 'not_configured' };
+  if (!(await allow('form', LIMITS.form))) return { ok: false, error: 'throttled' };
   const rating = Math.round(Number(input.rating));
   if (!(rating >= 1 && rating <= 5)) return { ok: false, error: 'Pick a number from 1 to 5.' };
   const comment = (input.comment ?? '').trim().slice(0, 2000) || null;

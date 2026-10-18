@@ -1,4 +1,5 @@
 import 'server-only';
+import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import type { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -22,6 +23,8 @@ export async function finishSignIn(
   user: User,
   next: string,
   base: string,
+  /** How they proved the mailbox: Google's verified email, or a link we emailed. */
+  via: 'google' | 'link' = 'link',
 ): Promise<NextResponse> {
 
   // Staff never sign in here (it would skip their second factor), except a password reset.
@@ -30,6 +33,32 @@ export async function finishSignIn(
     if ((profile?.role ?? 'member') !== 'member') {
       await supabase.auth.signOut();
       return NextResponse.redirect(`${base}/login?error=use_password`);
+    }
+  }
+
+  /*
+   * Account pre-hijacking: signup confirms the email without proving it, so
+   * someone could open an account under another person's address with a
+   * password of their own, and Supabase would link that person's Google sign-in
+   * to it. This sign-in proves the mailbox (Google, or a link we emailed). If a
+   * password exists that was never proven, it was set by whoever typed the
+   * address: wipe it and end every other session, so only the owner holds the
+   * account. app_metadata, because members can't write it.
+   */
+  if (!user.app_metadata?.email_proven && supabaseAdminConfigured()) {
+    const unprovenPassword = via === 'google' && (user.identities ?? []).some((i) => i.provider === 'email');
+    try {
+      await createSupabaseAdminClient().auth.admin.updateUserById(user.id, {
+        app_metadata: { ...user.app_metadata, email_proven: true },
+        ...(unprovenPassword ? { password: randomBytes(32).toString('base64url') } : {}),
+      });
+      if (unprovenPassword) await supabase.auth.signOut({ scope: 'others' });
+    } catch {
+      // Fail closed: without the check, this Google sign-in doesn't continue into an unproven account.
+      if (via === 'google') {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${base}/login?error=auth`);
+      }
     }
   }
 

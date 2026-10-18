@@ -149,12 +149,26 @@ export async function patchProfileAction(
   const user = await getSession();
   if (!user) return { ok: false, error: 'not_authenticated' };
 
+  // Checked here as well as in the form: a server action takes whatever it's sent.
   const row: ProfileUpdate = {};
-  if (patch.fullName !== undefined) row.full_name = patch.fullName;
-  if (patch.phone !== undefined) row.phone = patch.phone;
+  if (patch.fullName !== undefined) {
+    const name = String(patch.fullName).trim();
+    if (!name || name.length > 120) return { ok: false, error: 'Enter your name (up to 120 characters).' };
+    row.full_name = name;
+  }
+  if (patch.phone !== undefined) {
+    // US numbers only (texts go to US mobiles): 10 digits, an optional leading 1.
+    const digits = String(patch.phone ?? '').replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
+    if (digits && !/^[2-9]\d{9}$/.test(digits)) return { ok: false, error: 'Enter a 10-digit US phone number.' };
+    row.phone = digits || null;
+  }
   if (patch.dateOfBirth !== undefined) row.date_of_birth = patch.dateOfBirth || null;
-  if (patch.notifications !== undefined)
-    row.notification_prefs = patch.notifications as unknown as Json;
+  if (patch.notifications !== undefined) {
+    const n = patch.notifications as unknown;
+    const ok = n && typeof n === 'object' && !Array.isArray(n) && Object.values(n as Record<string, unknown>).every((v) => typeof v === 'boolean');
+    if (!ok || Object.keys(n as object).length > 20) return { ok: false, error: 'We couldn’t save that. Please try again.' };
+    row.notification_prefs = n as Json;
+  }
   if (!Object.keys(row).length) return { ok: true };
 
   const db = await createSupabaseServerClient();
@@ -228,8 +242,11 @@ export async function updateAddressAction(
   if (!Object.keys(row).length) return { ok: true };
 
   const db = await createSupabaseServerClient();
-  const { error } = await db.from('addresses').update(row).eq('id', id);
-  if (error) return { ok: false, error: error.message };
+  const { error } = await db.from('addresses').update(row).eq('id', id).eq('user_id', user.id);
+  if (error) {
+    console.error('[profile]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   if (patch.isPrimary) await demoteOthers('addresses', user.id, id);
   revalidatePath('/portal/account');
   return { ok: true };
@@ -239,8 +256,11 @@ export async function removeAddressAction(id: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'not_authenticated' };
   const db = await createSupabaseServerClient();
-  const { error } = await db.from('addresses').delete().eq('id', id);
-  if (error) return { ok: false, error: error.message };
+  const { error } = await db.from('addresses').delete().eq('id', id).eq('user_id', user.id);
+  if (error) {
+    console.error('[profile]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   revalidatePath('/portal/account');
   return { ok: true };
 }
@@ -249,8 +269,11 @@ export async function setPrimaryAddressAction(id: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'not_authenticated' };
   const db = await createSupabaseServerClient();
-  const { error } = await db.from('addresses').update({ is_primary: true }).eq('id', id);
-  if (error) return { ok: false, error: error.message };
+  const { error } = await db.from('addresses').update({ is_primary: true }).eq('id', id).eq('user_id', user.id);
+  if (error) {
+    console.error('[profile]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   await demoteOthers('addresses', user.id, id);
   revalidatePath('/portal/account');
   return { ok: true };
@@ -287,8 +310,11 @@ export async function removeCardAction(id: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'not_authenticated' };
   const db = await createSupabaseServerClient();
-  const { error } = await db.from('payment_methods').delete().eq('id', id);
-  if (error) return { ok: false, error: error.message };
+  const { error } = await db.from('payment_methods').delete().eq('id', id).eq('user_id', user.id);
+  if (error) {
+    console.error('[profile]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   revalidatePath('/portal/account');
   return { ok: true };
 }
@@ -297,8 +323,11 @@ export async function setPrimaryCardAction(id: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { ok: false, error: 'not_authenticated' };
   const db = await createSupabaseServerClient();
-  const { error } = await db.from('payment_methods').update({ is_primary: true }).eq('id', id);
-  if (error) return { ok: false, error: error.message };
+  const { error } = await db.from('payment_methods').update({ is_primary: true }).eq('id', id).eq('user_id', user.id);
+  if (error) {
+    console.error('[profile]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   await demoteOthers('payment_methods', user.id, id);
   revalidatePath('/portal/account');
   return { ok: true };

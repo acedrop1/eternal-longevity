@@ -1407,7 +1407,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     tagline: "Men's Higher-Strength Topical",
     category: 'skin-hair',
     shortDescription:
-      'Minoxidil at 12%, more than twice the strength sold over the counter, with topical finasteride in one foam.',
+      'Minoxidil at 12% (over-the-counter foam is 5%), with topical finasteride in one foam. Evidence at this strength is more limited.',
     longDescription:
       'Minoxidil is the active ingredient in FDA-approved topical scalp products, sold over the counter at up to 5%. This compounded foam uses 12% minoxidil with topical finasteride, a strength that is not FDA-approved and has much less published research than 5%; it is usually considered when a standard strength has not been enough. A higher strength also means more scalp irritation and more chance of the drug reaching the bloodstream. Consistent daily use is part of the plan; any effect depends on continuing it and varies between people. Your prescriber decides whether it is appropriate for you.',
     bestFor: 'Men who have already tried standard-strength minoxidil.',

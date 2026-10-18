@@ -1,16 +1,14 @@
 import 'server-only';
 import { headers } from 'next/headers';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 
 /**
  * A small fixed-window limiter for the endpoints an attacker hammers.
  *
- * In-memory on purpose. A serverless instance is short-lived and there are
- * several of them, so this is a speed bump rather than a wall — but a speed
- * bump on each instance still turns "unlimited password guesses" into a rate
- * an attacker cannot get anything out of, and it costs no infrastructure.
- *
- * ponytail: swap the Map for Upstash Redis if a real distributed limit is ever
- * needed — the call sites do not change.
+ * Counted in the database (rate_hit, migration 0032), so every serverless
+ * instance shares one count. If that call fails (not migrated yet, or the
+ * database is down) it falls back to a per-instance in-memory count: a speed
+ * bump rather than a wall, but never a lockout.
  */
 type Hit = { count: number; resetAt: number };
 const buckets = new Map<string, Hit>();
@@ -47,6 +45,17 @@ export async function allow(scope: string, limit: Limit, id?: string): Promise<b
   const now = Date.now();
   sweep(now);
   const key = `${scope}:${id ? `id:${id}` : await clientKey()}`;
+  if (supabaseAdminConfigured()) {
+    try {
+      const { data, error } = await createSupabaseAdminClient().rpc(
+        'rate_hit' as never,
+        { p_key: key, p_max: limit.max, p_window: limit.windowSeconds } as never,
+      );
+      if (!error && typeof data === 'boolean') return data;
+    } catch {
+      // Fall through to the in-memory count.
+    }
+  }
   const hit = buckets.get(key);
 
   if (!hit || hit.resetAt < now) {

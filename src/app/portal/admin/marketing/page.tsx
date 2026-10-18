@@ -12,7 +12,7 @@ import { CATEGORIES } from '@/lib/lineup';
 import { MarketingView, type NamedPage } from './MarketingView';
 import { listSavedLinksAction } from '@/lib/saved-links-actions';
 import { LANDINGS } from '@/lib/landings';
-import { getLandingStatus } from '@/lib/landing-actions';
+import { getLandingStatus } from '@/lib/landing-status';
 
 export const metadata: Metadata = { title: 'Marketing' };
 export const dynamic = 'force-dynamic';

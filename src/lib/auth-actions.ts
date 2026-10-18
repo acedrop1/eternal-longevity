@@ -62,7 +62,8 @@ export async function loginAction(formData: FormData): Promise<void> {
    * Nothing stood between an attacker and unlimited password guesses against
    * a known staff address, and the admin account reaches every chart.
    */
-  if (!(await allow('login', LIMITS.login))) {
+  // Per IP and per account, so spreading guesses across addresses or IPs doesn't help.
+  if (!(await allow('login', LIMITS.login)) || !(await allow('login', LIMITS.login, email))) {
     redirect(withNext('/login?error=throttled'));
   }
 
@@ -170,7 +171,7 @@ export async function assessmentSignInAction(
   password: string,
 ): Promise<{ ok: boolean; error?: 'invalid' | 'throttled' | 'use_login' }> {
   const email = rawEmail.trim().toLowerCase();
-  if (!(await allow('login', LIMITS.login))) return { ok: false, error: 'throttled' };
+  if (!(await allow('login', LIMITS.login)) || !(await allow('login', LIMITS.login, email))) return { ok: false, error: 'throttled' };
 
   if (!supabaseConfigured) {
     const demo = DEMO_USERS.find((u) => u.email.toLowerCase() === email && u.password === password);
@@ -343,6 +344,13 @@ export async function confirmRecoveryAction(formData: FormData): Promise<void> {
   const { data, error } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
   if (error || !data.user) redirect('/forgot-password?error=expired');
   await markRecovery(data.user.id);
+  // The link proved the mailbox: record it, and end every other session (a reset is often "someone else is in").
+  if (supabaseAdminConfigured()) {
+    await createSupabaseAdminClient()
+      .auth.admin.updateUserById(data.user.id, { app_metadata: { ...data.user.app_metadata, email_proven: true } })
+      .catch(() => {});
+  }
+  await supabase.auth.signOut({ scope: 'others' }).catch(() => {});
   redirect(next);
 }
 

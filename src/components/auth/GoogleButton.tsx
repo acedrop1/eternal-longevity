@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
-import { SIGNUP_CONSENT } from '@/lib/followups';
+import { SignupConsent } from '@/components/auth/SignupConsent';
 
 /**
  * "Continue with Google" (members only; staff sign in with a password and a
@@ -79,7 +79,8 @@ export function GoogleButton({ next }: { next?: string }) {
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={() => setReady(true)} />
       <div ref={slot} className="flex min-h-[44px] w-full justify-center" aria-busy={busy} />
       {busy && <p className="text-center text-[13px] text-ink/65">Signing you in…</p>}
-      <p className="text-center text-[12px] text-ink/55">New here? Continuing with Google creates your account. {SIGNUP_CONSENT.text}</p>
+      <p className="text-center text-[12px] text-ink/55">New here? Continuing with Google creates your account.</p>
+      <SignupConsent className="text-center text-[12px] text-ink/55" />
       {error && (
         <p role="alert" className="text-center text-[13px] text-red-700">
           {error}

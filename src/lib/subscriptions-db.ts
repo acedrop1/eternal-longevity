@@ -95,7 +95,10 @@ export async function changeSubscriptionPlanAction(
       per_cycle_cents: perCycleCents(tier.total, plan, pricePerShipment),
     })
     .eq('id', sub.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[subscriptions]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
 
   /*
    * Refills were counted for the plan the prescription was written on. A
@@ -142,7 +145,10 @@ export async function setSubscriptionStatusAction(
     .eq('user_id', user.id)
     .in('status', from)
     .select('id');
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[subscriptions]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   if (!data?.length) {
     return { ok: false, error: 'That change is not available for this plan.' };
   }
@@ -182,7 +188,10 @@ export async function skipNextCycleAction(subscriptionId: string): Promise<Resul
     .eq('status', 'active')
     .eq('next_billing_date', sub.next_billing_date)
     .select('id');
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[subscriptions]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   if (!data?.length) return { ok: false, error: 'This plan changed. Refresh and try again.' };
 
   revalidatePath('/portal/subscriptions');

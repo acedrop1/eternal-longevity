@@ -137,11 +137,11 @@ export function Footer() {
           <p className="shrink-0 text-[12px] text-ink-soft">
             © {new Date().getFullYear()} {BUSINESS_LEGAL_NAME}. All rights reserved.
           </p>
-          <p className="max-w-2xl text-[11.5px] leading-relaxed text-ink-soft md:text-right">
+          <p className="max-w-2xl text-[12px] leading-relaxed text-ink-soft md:text-right">
             Prescriptions are written by a licensed physician following clinical review, and dispensed
             by an independently licensed 503A compounding pharmacy. Eternal Longevity is not a pharmacy. Rx
             only. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or
-            quality. {FDA_DISCLAIMER} Not a substitute for primary care. Available to residents of {SERVICE_AREA} only. 18+.
+            quality. {FDA_DISCLAIMER} Not a substitute for primary care. Available only to adults located in {SERVICE_AREA} at the time of their visit. 18+.
           </p>
         </div>
       </div>

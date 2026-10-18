@@ -31,6 +31,7 @@ import { getTransfer, type EncryptedCard } from '@/lib/frame';
 import { allow, LIMITS } from '@/lib/rate-limit';
 import { AWAITING_PAYMENT } from '@/lib/order-rules';
 import { snapshotOrderCosts } from '@/lib/profit-data';
+import { renewalsFor } from '@/lib/payment-record';
 import { REFILL_CHARGE_FAILED } from '@/lib/orders';
 
 export const TOKEN_TTL_DAYS = 7;
@@ -82,7 +83,10 @@ export async function issuePayLink(
     .from('orders')
     .update({ pay_token: token, pay_token_expires: expires })
     .eq('id', order.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[pay]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
 
   const payUrl = `${SITE_URL}/pay/${token}`;
 
@@ -384,7 +388,7 @@ async function sendCompedConfirmation(
     if (!order) return;
     const [{ data: profile }, { data: items }] = await Promise.all([
       db.from('profiles').select('email, full_name').eq('id', order.user_id).maybeSingle(),
-      db.from('order_items').select('product_name, quantity, unit_price_cents').eq('order_id', orderId),
+      db.from('order_items').select('product_name, quantity, unit_price_cents, cadence').eq('order_id', orderId),
     ]);
     if (!profile?.email) return;
     const mail = orderConfirmationEmail({
@@ -398,6 +402,7 @@ async function sendCompedConfirmation(
         qty: i.quantity ?? 1,
         amount: (i.unit_price_cents ?? 0) * (i.quantity ?? 1),
       })),
+      renewals: await renewalsFor(items ?? []),
     });
     await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
   } catch (err) {

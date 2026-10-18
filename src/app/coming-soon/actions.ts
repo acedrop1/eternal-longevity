@@ -1,5 +1,6 @@
 'use server';
 
+import { allow, LIMITS } from '@/lib/rate-limit';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
@@ -13,6 +14,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Save a pre-launch signup. Falls back to emailing the care team so no signup is lost. */
 export async function joinWaitlistAction(_prev: FormState, form: FormData): Promise<FormState> {
   if (String(form.get('company') ?? '')) return { ok: true }; // honeypot: bots fill every field
+  if (!(await allow('form', LIMITS.form))) return { error: 'Too many tries. Please wait a few minutes.' };
   const email = String(form.get('email') ?? '').trim().toLowerCase();
   if (!EMAIL.test(email) || email.length > 254) return { error: 'Please enter a valid email address.' };
 

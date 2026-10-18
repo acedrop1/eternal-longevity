@@ -23,6 +23,7 @@ import {
   SERVICEABLE_STATES,
   STATE_NAMES,
   type AssessmentContext,
+  CONSENT_VERSION,
 } from '@/lib/intakeSchema';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { getLiveProducts } from '@/lib/catalog';
@@ -108,7 +109,7 @@ export async function emailHasAccountAction(email: string): Promise<boolean> {
     const { data } = await db
       .from('profiles')
       .select('id')
-      .ilike('email', clean)
+      .eq('email', clean)
       .maybeSingle();
     return Boolean(data?.id);
   } catch {
@@ -253,6 +254,8 @@ export async function submitIntakeAction(
   if (!consentsComplete(answers.consents)) {
     return { ok: false, error: 'Please confirm the required acknowledgements.' };
   }
+  // Which consent text they agreed to, and when (the boxes alone don't say).
+  answers.consentsAccepted = { version: CONSENT_VERSION, at: new Date().toISOString() };
   const plan = chosenPlan(ctx, live, answers);
   if (!plan) return { ok: false, error: 'Choose a treatment and plan to continue.' };
   answers.requestedProduct = plan.name;
@@ -408,6 +411,8 @@ export async function submitMemberAssessmentAction(
   if (!consentsComplete(merged.consents)) {
     return { ok: false, error: 'Please confirm the required acknowledgements.' };
   }
+  // Which consent text they agreed to, and when: kept from the visit they first gave it, renewed if given again now.
+  merged.consentsAccepted = answers.consents ? { version: CONSENT_VERSION, at: new Date().toISOString() } : (merged.consentsAccepted ?? { version: CONSENT_VERSION, at: new Date().toISOString() });
   const plan = chosenPlan(ctx, live, merged);
   if (!plan) return { ok: false, error: 'Choose a treatment and plan to continue.' };
   merged.requestedProduct = plan.name;
@@ -668,6 +673,8 @@ export async function submitVisitAction(
   if (!consentsComplete(merged.consents)) {
     return { ok: false, error: 'Please confirm the required acknowledgements.' };
   }
+  // Which consent text they agreed to, and when: kept from the visit they first gave it, renewed if given again now.
+  merged.consentsAccepted = (visitAnswers as Record<string, unknown>)?.consents ? { version: CONSENT_VERSION, at: new Date().toISOString() } : (merged.consentsAccepted ?? { version: CONSENT_VERSION, at: new Date().toISOString() });
   const { error } = await db
     .from('intake_submissions')
     .update({ answers: merged as unknown as Json, status: 'submitted' })

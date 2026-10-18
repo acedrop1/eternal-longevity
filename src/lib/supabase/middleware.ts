@@ -89,7 +89,22 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return response;
+  /*
+   * Signed out on a private page: a real 307 to /login here, before the page
+   * starts streaming. The page's own redirect still holds, but arrives inside
+   * a 200 that only a browser running JavaScript follows.
+   */
+  if (!user) {
+    const p = request.nextUrl.pathname;
+    if (p === '/portal' || p.startsWith('/portal/') || p === '/checkout' || p.startsWith('/checkout/')) {
+      const login = request.nextUrl.clone();
+      login.pathname = '/login';
+      login.search = '';
+      login.searchParams.set('next', request.headers.get(PATH_HEADER) ?? p);
+      return NextResponse.redirect(login, 307);
+    }
+    return response;
+  }
 
   /*
    * Automatic logoff. Supabase refreshes a token forever as long as the tab
@@ -145,7 +160,10 @@ export async function updateSession(request: NextRequest) {
      */
     const stale = seen > 0 && now - seen > absoluteMs;
     const idledOut = !stale && seen > 0 && now - seen > idleMs;
-    const agedOut = !stale && since > 0 && now - since > absoluteMs;
+    // The ceiling also runs from Supabase's own last sign-in time, which a browser can't edit:
+    // deleting the stamp cookies doesn't stretch a stolen session past it.
+    const signedInAt = Date.parse(user.last_sign_in_at ?? '');
+    const agedOut = (!stale && since > 0 && now - since > absoluteMs) || (signedInAt > 0 && now - signedInAt > absoluteMs);
 
     if (idledOut || agedOut) {
       await supabase.auth.signOut();

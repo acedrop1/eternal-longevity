@@ -460,12 +460,14 @@ async function recoverCarts(
 
     // Claim it before sending: a duplicate nudge is worse than a missed one.
     const claimedAt = new Date().toISOString();
-    const { error: claimErr } = await db
+    const { data: claimed, error: claimErr } = await db
       .from('profiles')
       .update({ cart_reminder_at: claimedAt })
       .eq('id', row.id)
-      .is('cart_reminder_at', null);
-    if (claimErr) {
+      .is('cart_reminder_at', null)
+      .select('id');
+    // Another run got it first (0 rows), or the write failed: don't send twice.
+    if (claimErr || !claimed?.length) {
       skipped += 1;
       continue;
     }

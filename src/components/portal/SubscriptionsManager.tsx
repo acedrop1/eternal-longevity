@@ -414,7 +414,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
         {cancelling?.step === 'why' && (
           <>
             <h2 className={sheetTitle}>Why are you cancelling?</h2>
-            <p className={sheetCopy}>It helps your care team get this right.</p>
+            <p className={sheetCopy}>Optional. It helps your care team get this right.</p>
             <fieldset className="mt-5 space-y-2">
               <legend className="sr-only">Reason</legend>
               {CANCEL_REASONS.map((r) => (
@@ -436,7 +436,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
               </button>
               <button
                 type="button"
-                disabled={!cancelling.reason}
+                // The reason is optional, as the cancellation policy says.
                 onClick={() =>
                   setCancelling({ ...cancelling, step: cancelling.sub.status === 'active' ? 'pause' : 'confirm' })
                 }

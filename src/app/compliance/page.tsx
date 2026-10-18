@@ -47,7 +47,10 @@ function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
   { label: 'Prescriber of record', value: p.name ? p.display : PRESCRIBER_FALLBACK.display },
   {
     label: 'Prescriber licensure',
-    value: `Licensed in ${SERVICE_AREA}`,
+    // The licence number on file is shown with its state (LegitScript expects numbers, not just states).
+    value: p.licenseNumber
+      ? `Licensed in ${SERVICE_AREA} · ${p.licenseState ? `${p.licenseState} ` : ''}licence #${p.licenseNumber}`
+      : `Licensed in ${SERVICE_AREA}`,
   },
   { label: 'NPI', value: p.npi || '—' },
   {

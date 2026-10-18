@@ -104,10 +104,10 @@ export const LANDINGS: Landing[] = [
     start: { product: 'enclomiphene' },
     seo: {
       title: 'Testosterone care, prescribed online',
-      description: 'Testosterone care guided by lab work and a licensed physician. One capsule a day, if prescribed.',
+      description: 'Testosterone care reviewed by a licensed physician, who may ask for lab work. One capsule a day, if prescribed.',
     },
-    headline: { lead: 'Testosterone care, guided by', swipe: 'lab work and a licensed physician.' },
-    subline: 'One capsule a day, if prescribed. Message your prescriber any time. 100% online.',
+    headline: { lead: 'Testosterone care,', swipe: 'reviewed by a licensed physician.' },
+    subline: 'One capsule a day, if prescribed. Your physician may ask for lab work. Message your prescriber any time.',
     heroProduct: 'enclomiphene',
     quiz: [
       {

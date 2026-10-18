@@ -14,23 +14,11 @@ import { getSession } from './auth-server';
 import { recordAudit } from './prescriber';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
 import { LANDINGS } from './landings';
+import { getLandingStatus, LANDING_DEV_FILE, LANDING_KEY } from './landing-status';
 
-const KEY = 'landing_status';
-const DEV_FILE = path.join(process.cwd(), '.data', 'landing-status.json');
+const KEY = LANDING_KEY;
 const db = () => createSupabaseAdminClient() as unknown as SupabaseClient;
-
-export async function getLandingStatus(): Promise<Record<string, boolean>> {
-  try {
-    if (supabaseAdminConfigured()) {
-      const { data } = await db().from('site_settings').select('value').eq('key', KEY).maybeSingle();
-      return (data?.value as Record<string, boolean> | null) ?? {};
-    }
-    if (process.env.NODE_ENV !== 'development') return {};
-    return JSON.parse(await fs.readFile(DEV_FILE, 'utf8')) as Record<string, boolean>;
-  } catch {
-    return {};
-  }
-}
+const DEV_FILE = LANDING_DEV_FILE;
 
 export async function setLandingPublishedAction(slug: string, published: boolean): Promise<{ ok: boolean; message: string }> {
   const session = await getSession();

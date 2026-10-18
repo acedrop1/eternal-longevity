@@ -17,6 +17,7 @@ export const SERVER_ANSWER_KEYS = [
   'photosRequested',
   'mediaCompletedAt',
   'visitCompletedAt',
+  'consentsAccepted',
 ] as const;
 
 const MEDIA_FIELD_IDS = ALL_CATEGORY_STEPS.flatMap((s) => s.fields)

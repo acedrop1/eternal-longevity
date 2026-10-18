@@ -90,7 +90,8 @@ export function MobileMenu({ links, light = true, home = null }: MobileMenuProps
         onClick={toggle}
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
-        className={cn('relative grid h-9 w-9 place-items-center', light ? 'text-ink' : 'text-white')}
+        // 44px to tap, laid out at 36px (the negative margin), so the header stays the same width.
+        className={cn('relative -m-1 grid h-11 w-11 place-items-center', light ? 'text-ink' : 'text-white')}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
           {open ? (

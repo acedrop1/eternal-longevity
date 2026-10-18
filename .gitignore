@@ -12,8 +12,8 @@
 *.pem
 *.tsbuildinfo
 .DS_Store
-.env
-.env*.local
+.env*
+!.env.example
 .pnp.js
 .pnpm-debug.log*
 .vercel

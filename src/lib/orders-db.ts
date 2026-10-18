@@ -33,8 +33,10 @@ import {
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
 import { getSession } from '@/lib/auth-server';
+import { allow, clientKey, LIMITS } from '@/lib/rate-limit';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
+import { zipInState } from '@/lib/intake-rules';
 import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
 import { getLiveProducts } from '@/lib/catalog';
 import { orderTotalCents, shippingChargeCents } from '@/lib/shipping';
@@ -149,17 +151,28 @@ const SELECT =
 /*  Reads                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Every order the caller is allowed to see. RLS narrows this to the member's
- * own rows, or all rows for doctor/admin.
+/*
+ * Staff read through the server (service role) only after getSession(), which
+ * enforces their sign-in code; their database role grants nothing on its own
+ * (migration 0032), so a staff password alone can't read charts through the
+ * REST API. Members read their own rows with their session, under RLS, and
+ * the query names them too.
  */
+async function ordersReader() {
+  const user = await getSession();
+  if (!user) return null;
+  if (user.role === 'admin' || user.role === 'doctor') return { db: createSupabaseAdminClient(), userId: null };
+  return { db: await createSupabaseServerClient(), userId: user.id };
+}
+
+/** Every order the caller is allowed to see: their own, or all of them for doctor/admin. */
 export async function listOrders(): Promise<Order[]> {
   if (!supabaseConfigured) return [];
-  const db = await createSupabaseServerClient();
-  const { data, error } = await db
-    .from('orders')
-    .select(SELECT)
-    .order('created_at', { ascending: false });
+  const r = await ordersReader();
+  if (!r) return [];
+  let q = r.db.from('orders').select(SELECT);
+  if (r.userId) q = q.eq('user_id', r.userId);
+  const { data, error } = await q.order('created_at', { ascending: false });
   if (error) {
     console.error('[orders-db] listOrders:', error.message);
     return [];
@@ -170,12 +183,11 @@ export async function listOrders(): Promise<Order[]> {
 /** One order by its human-readable order number. */
 export async function getOrder(orderNumber: string): Promise<Order | null> {
   if (!supabaseConfigured) return null;
-  const db = await createSupabaseServerClient();
-  const { data, error } = await db
-    .from('orders')
-    .select(SELECT)
-    .eq('order_number', orderNumber)
-    .maybeSingle();
+  const r = await ordersReader();
+  if (!r) return null;
+  let q = r.db.from('orders').select(SELECT).eq('order_number', String(orderNumber));
+  if (r.userId) q = q.eq('user_id', r.userId);
+  const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
   return mapOrder(data as OrderRow);
 }
@@ -219,6 +231,12 @@ async function appendUpdate(
  * Move an order only if it is still in one of `from`. False when it has moved
  * on — a second click, a stale screen, or a request against a finished order.
  */
+/** A doctor acts only on orders assigned to them, or not yet assigned to anyone. */
+async function assignedToMe(orderId: string, doctorId: string): Promise<boolean> {
+  const { data } = await createSupabaseAdminClient().from('orders').select('assigned_physician_id').eq('id', orderId).maybeSingle();
+  return Boolean(data) && (!data!.assigned_physician_id || data!.assigned_physician_id === doctorId);
+}
+
 async function moveOrder(
   id: string,
   from: (typeof ORDER_FROM)[keyof typeof ORDER_FROM],
@@ -329,9 +347,18 @@ async function placeOrder(input: {
   shippingAddress: Order['shippingAddress'];
   /** Promotion code the member entered, if any. */
   promoCode?: string;
+  /** The terms and recurring-charge agreements, as rendered at checkout. */
+  consent?: { terms: string; charges: string };
 }): Promise<ActionResult & { orderNumber?: string; productId?: string }> {
   const { user, error } = await requireRole(['member']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+
+  // ROSCA / NY GBL 527-a: no recurring order without the express agreement, and a record of what was agreed.
+  const consent = {
+    terms: String(input.consent?.terms ?? '').replace(/\s+/g, ' ').trim().slice(0, 4000),
+    charges: String(input.consent?.charges ?? '').replace(/\s+/g, ' ').trim().slice(0, 4000),
+  };
+  if (supabaseAdminConfigured() && (!consent.terms || !consent.charges)) return { ok: false, error: 'consent_required' };
 
   // The form checks these too; this is the check a crafted request meets.
   const addressError = shippingAddressError(input.shippingAddress);
@@ -352,6 +379,10 @@ async function placeOrder(input: {
    */
   const shipState = shippingAddress.state;
   if (!SERVICEABLE_STATES.includes(shipState)) {
+    return { ok: false, error: 'state_not_serviced' };
+  }
+  // The ZIP must belong to that state too: carriers route by ZIP, so "NJ" with a California ZIP ships to California.
+  if (!zipInState(shippingAddress.zip, shipState)) {
     return { ok: false, error: 'state_not_serviced' };
   }
 
@@ -462,6 +493,17 @@ async function placeOrder(input: {
    * The claim is atomic; the loser is told, rather than charged full price
    * without warning.
    */
+  // One use per member: a shared code isn't a discount on every order and refill.
+  if (appliedCode) {
+    const { count } = await createSupabaseAdminClient()
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('promo_code', appliedCode)
+      .not('status', 'in', '(canceled,refunded,denied-admin,declined-clinical)');
+    if ((count ?? 0) > 0) return { ok: false, error: 'promo_unavailable' };
+  }
+
   if (appliedCode && !(await redeemPromo(appliedCode))) {
     return { ok: false, error: 'promo_unavailable' };
   }
@@ -568,6 +610,21 @@ async function placeOrder(input: {
     // Marks the order that took the free box, so another open order can't (lib/first-box).
     if (firstOrder) {
       await appendUpdate(order.id, 'System', 'system', FIRST_BOX_FREE, 'Free shipping on your first order.');
+    }
+
+    if (consent.terms) {
+      await recordAudit([
+        {
+          actorId: user.id,
+          actorName: user.name,
+          actorRole: 'member',
+          entity: 'order',
+          entityId: orderNumber,
+          field: 'checkout consent',
+          oldValue: null,
+          newValue: JSON.stringify({ at: new Date().toISOString(), ip: await clientKey(), terms: consent.terms, charges: consent.charges }),
+        },
+      ]);
     }
 
     created.push(orderNumber);
@@ -819,6 +876,7 @@ export async function changePrescriptionAction(
     .eq('order_number', orderNumber)
     .maybeSingle();
   if (!order?.user_id) return { ok: false, error: 'not_found' };
+  if (!(await assignedToMe(order.id, user.id))) return { ok: false, error: 'not_authorized' };
   if (!(ORDER_FROM.sign as readonly string[]).includes(order.status)) return { ok: false, error: 'not_open' };
 
   const { data: items } = await db
@@ -993,7 +1051,7 @@ export async function signRxAction(
    * evidence that the prescriber is the one signing it.
    */
   if (!(await signWindowOpen(user.id))) {
-    if (!(await passwordMatches(user.email, password))) {
+    if (!(await allow('login', LIMITS.login, user.id)) || !(await passwordMatches(user.email, password))) {
       return { ok: false, error: 'bad_password' };
     }
   }
@@ -1002,6 +1060,7 @@ export async function signRxAction(
 
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
+  if (!(await assignedToMe(id, user.id))) return { ok: false, error: 'not_authorized' };
   if (await healthQuestionsOpen(id)) return { ok: false, error: 'health_questions_open' };
 
   /*
@@ -1110,6 +1169,7 @@ export async function declineClinicalAction(
   if (error || !user) return { ok: false, error: 'not_authorized' };
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
+  if (!(await assignedToMe(id, user.id))) return { ok: false, error: 'not_authorized' };
 
   const db = createSupabaseAdminClient();
   const { data: order } = await db

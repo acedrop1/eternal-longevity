@@ -17,7 +17,10 @@ import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { emailConfigured, noticeEmail, orderConfirmationEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
-import { AWAITING_PAYMENT, TERMINAL_ORDER } from '@/lib/order-rules';
+import { AWAITING_PAYMENT, TERMINAL_ORDER, monthsPerCycle } from '@/lib/order-rules';
+import { shipmentsPerCycle } from '@/lib/shopProducts';
+import { getShippingSettings } from '@/lib/shipping-settings';
+import { shippingChargeCents } from '@/lib/shipping';
 import { orderRef } from '@/lib/format';
 import { SITE_URL } from '@/lib/site';
 import { paymentMatchesOrder } from '@/lib/payment-match';
@@ -174,6 +177,19 @@ async function alertMismatch(t: FrameTransfer, order: Pick<OrderRow, 'order_numb
   }
 }
 
+/** What each line renews at (full price plus every box's shipping) and how often, for the confirmation email. */
+export async function renewalsFor(items: { unit_price_cents: number | null; quantity: number | null; cadence: string | null }[]) {
+  const ship = await getShippingSettings();
+  return items
+    .filter((i) => i.cadence && i.cadence !== 'once')
+    .map((i) => ({
+      amountCents:
+        (i.unit_price_cents ?? 0) * (i.quantity ?? 1) +
+        shippingChargeCents({ pricePerShipment: ship.pricePerShipment, shipments: shipmentsPerCycle(i.cadence!), firstOrder: false }),
+      months: monthsPerCycle(i.cadence!),
+    }));
+}
+
 /** The member's confirmation. Never throws: the payment already stands. */
 async function sendOrderConfirmation(db: Db, orderId: string): Promise<void> {
   if (!emailConfigured()) return;
@@ -186,7 +202,7 @@ async function sendOrderConfirmation(db: Db, orderId: string): Promise<void> {
     if (!order) return;
     const [{ data: profile }, { data: items }] = await Promise.all([
       db.from('profiles').select('email, full_name').eq('id', order.user_id).maybeSingle(),
-      db.from('order_items').select('product_name, quantity, unit_price_cents').eq('order_id', order.id),
+      db.from('order_items').select('product_name, quantity, unit_price_cents, cadence').eq('order_id', order.id),
     ]);
     if (!profile?.email) return;
     const mail = orderConfirmationEmail({
@@ -201,6 +217,7 @@ async function sendOrderConfirmation(db: Db, orderId: string): Promise<void> {
         qty: i.quantity ?? 1,
         amount: (i.unit_price_cents ?? 0) * (i.quantity ?? 1),
       })),
+      renewals: await renewalsFor(items ?? []),
     });
     await sendEmail({ to: profile.email, subject: mail.subject, html: mail.html });
   } catch (err) {

@@ -34,7 +34,7 @@ export const EXPLAINER: Record<string, string> = {
   'fin-min-foam':
     "The same two ingredients in a scalp foam, for men who'd rather skip a pill. Finasteride lowers DHT at the follicle and minoxidil supports healthy hair growth.",
   'min-12-fin':
-    "A stronger scalp foam for men: 12% minoxidil, more than the 5% sold in stores, plus finasteride. Often prescribed when standard minoxidil isn't enough, to support fuller-looking hair.",
+    "A higher-strength scalp foam for men: 12% minoxidil, compared with the 5% sold in stores, plus finasteride. Evidence at this strength is more limited; your physician decides if it's right for you.",
   'fin-min-tret':
     'Finasteride and minoxidil in a scalp foam for men, with a little tretinoin that may help your scalp absorb the minoxidil. Used daily to support a fuller-looking head of hair.',
   finasteride:

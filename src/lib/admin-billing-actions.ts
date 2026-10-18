@@ -7,6 +7,7 @@
  * No raw card data is ever accepted — members add cards in their own account
  * (lib/cards); these actions work purely with the processor's ids.
  */
+import { allow } from '@/lib/rate-limit';
 import { revalidatePath } from 'next/cache';
 import { getSession } from './auth-server';
 import { billingConfigured, chargeOnce } from './billing';
@@ -112,9 +113,17 @@ export async function adminChargeOnce(input: {
   const contact = await memberContact(input.userId);
   if (!contact) return { ok: false, message: 'Member not found.' };
 
-  const amountCents = Math.round(input.amountDollars * 100);
-  if (amountCents < 50) {
+  const amountCents = Math.round(Number(input.amountDollars) * 100);
+  if (!Number.isFinite(amountCents) || amountCents < 50) {
     return { ok: false, message: 'Amount must be at least $0.50.' };
+  }
+  if (amountCents > 2_500_00) {
+    return { ok: false, message: 'One-off charges are capped at $2,500. Split it, or contact the processor.' };
+  }
+
+  // A double click must not charge twice.
+  if (!(await allow('charge', { max: 1, windowSeconds: 30 }, input.userId))) {
+    return { ok: false, message: 'A charge for this member just went through. Check their billing before charging again.' };
   }
 
   try {

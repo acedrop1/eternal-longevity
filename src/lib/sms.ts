@@ -46,9 +46,19 @@ export async function sendSms(
   body: string,
 ): Promise<SendSmsResult> {
   if (!smsConfigured()) {
-    console.warn(`[sms] Twilio not configured — skipped message to ${to}`);
+    console.warn(`[sms] Twilio not configured — skipped a message to …${to.slice(-2)}`);
     return { ok: false, error: 'not_configured' };
   }
+  // US numbers arrive as typed ("(555) 555-1234", "555.555.1234"); Twilio wants E.164.
+  const digits = to.replace(/\D/g, '');
+  const e164 = to.trim().startsWith('+') ? `+${digits}` : digits.length === 10 ? `+1${digits}` : digits.length === 11 && digits.startsWith('1') ? `+${digits}` : null;
+  if (!e164 || !e164.startsWith('+1')) {
+    await logMessage({ channel: 'sms', to, body, ok: false, error: 'not a US number' });
+    return { ok: false, error: 'invalid_number' };
+  }
+  to = e164;
+  // Carrier rules: every text says how to stop them (Twilio honours STOP itself).
+  if (!/\bSTOP\b/.test(body)) body = `${body} Reply STOP to opt out.`;
   try {
     const message = await getTwilio().messages.create({
       to,

@@ -328,6 +328,9 @@ export function CheckoutFlow({
   const [newCard, setNewCard] = useState(false);
   const [notAssessed, setNotAssessed] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  // The two agreements' text as shown, sent with the order for its audit record.
+  const termsTextRef = useRef<HTMLSpanElement>(null);
+  const chargesTextRef = useRef<HTMLSpanElement>(null);
   // Separate, explicit consent to the charges themselves, recurring ones
   // included — the card is billed later with nobody at the keyboard.
   const [chargesAccepted, setChargesAccepted] = useState(false);
@@ -652,6 +655,9 @@ export function CheckoutFlow({
       },
       cardLast4,
       promoCode: promo?.ok ? promo.code : undefined,
+    }, {
+      terms: termsAccepted ? (termsTextRef.current?.textContent ?? '') : '',
+      charges: chargesAccepted ? (chargesTextRef.current?.textContent ?? '') : '',
     });
     if (!res.ok) {
       setIsPaying(false);
@@ -1638,8 +1644,8 @@ export function CheckoutFlow({
                 onChange={(e) => setTermsAccepted(e.target.checked)}
                 className="mt-1 h-4 w-4 flex-none accent-ink"
               />
-              <span>
-                I am 18 or older and a resident of {SERVICE_AREA_OR}, the health
+              <span ref={termsTextRef}>
+                I am 18 or older and located in {SERVICE_AREA_OR} for this visit, the health
                 information I provided is accurate and complete, and I agree to
                 the{' '}
                 <Link href="/legal/terms" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
@@ -1672,7 +1678,7 @@ export function CheckoutFlow({
                 onChange={(e) => setChargesAccepted(e.target.checked)}
                 className="mt-1 h-4 w-4 flex-none accent-ink"
               />
-              <span>
+              <span ref={chargesTextRef}>
                 If my prescriber approves, I authorize {SITE_NAME} to charge the
                 card I saved ${totalText} for this order.{' '}
                 {discount > 0 || freeShipping || firstBoxFree ? 'After that, renewals are at full price:' : 'After that:'}

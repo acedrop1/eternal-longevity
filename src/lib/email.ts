@@ -56,7 +56,8 @@ export async function sendEmail(
   input: SendEmailInput,
 ): Promise<SendEmailResult> {
   if (!emailConfigured()) {
-    console.warn(`[email] Resend not configured — skipped: "${input.subject}"`);
+    // Subjects can carry a sign-in code: digits are masked in the log.
+    console.warn(`[email] Resend not configured — skipped: "${input.subject.replace(/\d/g, '•')}"`);
     return { ok: false, error: 'not_configured' };
   }
   try {
@@ -504,7 +505,16 @@ export function orderConfirmationEmail(input: {
   shipping: number;
   discount: number;
   total: number;
+  /** Each plan's renewal: cents per renewal (with shipping) and months between them. */
+  renewals?: { amountCents: number; months: number }[];
 }): { subject: string; html: string } {
+  // Auto-renewal acknowledgment the member keeps (NY GBL 527-a): what renews, how often, and how to cancel.
+  const renewalTerms = (input.renewals ?? []).filter((r) => r.amountCents > 0 && r.months > 0);
+  const renewalHtml = renewalTerms.length
+    ? `<p style="${P}"><strong style="color:${INK};">Your plan renews automatically.</strong> ${renewalTerms
+        .map((r) => `$${(r.amountCents / 100).toFixed(2)} (shipping included) every ${r.months === 1 ? 'month' : `${r.months} months`}`)
+        .join('; ')}, charged to the card you saved, until you cancel. Cancel anytime in your portal under Subscriptions, or email ${escapeHtml(SUPPORT_EMAIL)}. Cancelling stops the next charge.</p>`
+    : '';
   const rows = input.items
     .map(
       // No drug names in member email; the portal has the detail.
@@ -539,6 +549,7 @@ export function orderConfirmationEmail(input: {
            ).toFixed(2)}</td>
          </tr>
        </table>
+       ${renewalHtml}
        ${button('View your order', `${SITE_URL}/portal/orders`)}
        <p style="${NOTE}">Order reference <strong style="color:${INK};">${escapeHtml(
          input.orderNumber,
@@ -1007,6 +1018,7 @@ export function approvedPayNowEmail(input: {
       `<div style="${EYEBROW}">PRESCRIBER APPROVED</div>
        <h1 style="${H1}">Good news, ${escapeHtml(input.firstName)}. You&rsquo;re approved.</h1>
        <p style="${P}">Your prescriber reviewed your visit and approved your treatment. We tried the card you saved at checkout and it didn&rsquo;t go through. Often that&rsquo;s an expiry date or a bank hold, not anything wrong on your end.</p>
+       <p style="${P}">Your prescriber reviewed your history and determined he could meet the same standard of care as an in-person visit through this online visit. You can message him any time from your member portal.</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${PANEL}margin:0 0 18px;">
          <tr><td style="padding:18px 20px;color:${INK};font-size:14px;">
            <span style="color:${MUTED};font-size:13px;">Amount due</span><br/>

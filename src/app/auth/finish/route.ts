@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase.auth.getUser();
     // Never the password-reset path from here: that needs an emailed link.
-    if (data.user) return finishSignIn(supabase, data.user, next.startsWith('/auth/reset') ? '/portal' : next, base);
+    if (data.user) return finishSignIn(supabase, data.user, next.startsWith('/auth/reset') ? '/portal' : next, base, 'google');
   }
   return NextResponse.redirect(`${base}/login?error=auth`);
 }

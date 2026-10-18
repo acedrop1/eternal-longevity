@@ -12,7 +12,7 @@ import {
 import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
-import { SIGNUP_CONSENT } from '@/lib/followups';
+import { SignupConsent } from '@/components/auth/SignupConsent';
 import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton';
 
 export const metadata: Metadata = {
@@ -129,7 +129,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           Create account →
         </SubmitButton>
 
-        <p className="-mt-3 text-center text-[13px] text-ink/65">{SIGNUP_CONSENT.text}</p>
+        <SignupConsent className="-mt-3 text-center text-[13px] text-ink/65" />
 
         <p className="text-[13px] leading-relaxed text-ink/65">
           Creating an account doesn&apos;t place an order. Every protocol is

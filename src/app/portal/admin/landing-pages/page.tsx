@@ -6,7 +6,7 @@ import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminPageHeader, SectionCard, StatusBadge } from '@/components/admin/IndexTable';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { LANDINGS, startHref } from '@/lib/landings';
-import { getLandingStatus } from '@/lib/landing-actions';
+import { getLandingStatus } from '@/lib/landing-status';
 import { getLiveProducts } from '@/lib/catalog';
 import { SITE_URL } from '@/lib/site';
 import { PublishToggle } from './PublishToggle';

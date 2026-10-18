@@ -89,7 +89,10 @@ export async function sendMessageAction(channel: MessageChannel, body: string): 
     channel,
     body: text,
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[messages]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
   await notifyStaffOfReply(user.id, channel);
   revalidatePath('/portal/messages');
   return { ok: true };
@@ -150,6 +153,7 @@ async function notifyStaffOfReply(userId: string, channel: MessageChannel): Prom
 export async function listMessageThreads(channel: MessageChannel): Promise<MessageThread[]> {
   const user = await getSession();
   if (!user || (user.role !== 'doctor' && user.role !== 'admin')) return [];
+  if (user.role === 'doctor' && channel !== 'doctor') return [];
   if (!supabaseAdminConfigured()) return [];
 
   const db = createSupabaseAdminClient();
@@ -196,6 +200,7 @@ export async function listThreadMessages(
 ): Promise<PortalMessage[]> {
   const user = await getSession();
   if (!user || (user.role !== 'doctor' && user.role !== 'admin')) return [];
+  if (user.role === 'doctor' && channel !== 'doctor') return [];
   const db = createSupabaseAdminClient();
   const { data } = await db
     .from('messages')
@@ -224,6 +229,7 @@ export async function replyMessageAction(
   }
   if (!supabaseAdminConfigured()) return { ok: false, error: 'Messaging is not connected.' };
   if (!isChannel(channel)) return { ok: false, error: 'Unknown conversation.' };
+  if (user.role === 'doctor' && channel !== 'doctor') return { ok: false, error: 'Not authorized.' };
   const text = body.trim();
   if (!text) return { ok: false, error: 'Type a message first.' };
   if (text.length > 4000) return { ok: false, error: 'Message is too long.' };
@@ -235,7 +241,10 @@ export async function replyMessageAction(
     channel,
     body: text,
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[messages]', error.message);
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
 
   // The member hears there is something to read; what it says stays in the portal.
   const { data: member } = await db.from('profiles').select('email, phone').eq('id', userId).maybeSingle();

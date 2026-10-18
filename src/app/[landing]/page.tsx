@@ -7,7 +7,7 @@ import { Aura, Swipe } from '@/components/home/HomeSections';
 import { notFound } from 'next/navigation';
 import { LandingQuiz, QuizStickyBar } from '@/components/landing/LandingQuiz';
 import { LANDINGS, getLanding, startHref } from '@/lib/landings';
-import { getLandingStatus } from '@/lib/landing-actions';
+import { getLandingStatus } from '@/lib/landing-status';
 import { getSession } from '@/lib/auth-server';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { getLiveProducts } from '@/lib/catalog';

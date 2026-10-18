@@ -36,6 +36,8 @@ export default async function MemberMessagesPage({
         <div className="mt-8">
           <EmptyState
             action={
+              // A full reload on purpose: it retries the server load from scratch.
+              // eslint-disable-next-line @next/next/no-html-link-for-pages
               <a href="/portal/messages" className={btnPrimary}>
                 Try again
               </a>

@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache';
  * the row and chart kept intact.
  */
 import { getSession } from './auth-server';
+import { recordAudit } from './prescriber';
 import type { Role } from './auth';
 import type { AccountStatus } from './database.types';
 import {
@@ -173,6 +174,27 @@ export async function adminCreateUser(input: {
   }
 }
 
+const ROLES = ['member', 'doctor', 'admin', 'pharmacy'] as const;
+const STATUSES = ['active', 'suspended', 'deactivated'] as const;
+
+/**
+ * Role and status changes are checked against the real values, never applied
+ * to the admin's own account (no locking yourself out, no silent self-grant),
+ * and written to the audit log: an escalation to admin leaves a trail.
+ */
+async function guardAccountChange(userId: string, field: 'role' | 'account_status', value: string): Promise<AdminUserResult | { actor: { id: string; name: string } }> {
+  const session = await getSession();
+  if (!session) return { ok: false, message: 'Admin access is required.' };
+  const allowed: readonly string[] = field === 'role' ? ROLES : STATUSES;
+  if (!allowed.includes(value)) return { ok: false, message: 'Unknown value.' };
+  if (userId === session.id) return { ok: false, message: 'You can’t change your own role or status. Ask another admin.' };
+  return { actor: { id: session.id, name: session.name } };
+}
+
+async function auditAccountChange(actor: { id: string; name: string }, userId: string, field: string, oldValue: string | null, newValue: string) {
+  await recordAudit([{ actorId: actor.id, actorName: actor.name, actorRole: 'admin', entity: 'profile', entityId: userId, field, oldValue, newValue }]);
+}
+
 /** Suspend, deactivate, or reactivate an account. */
 export async function adminSetUserStatus(input: {
   userId: string;
@@ -180,14 +202,18 @@ export async function adminSetUserStatus(input: {
 }): Promise<AdminUserResult> {
   const blocked = await adminGuard();
   if (blocked) return blocked;
+  const g = await guardAccountChange(input.userId, 'account_status', input.status);
+  if (!('actor' in g)) return g;
 
   try {
     const db = createSupabaseAdminClient();
+    const { data: before } = await db.from('profiles').select('account_status').eq('id', input.userId).maybeSingle();
     const { error } = await db
       .from('profiles')
       .update({ account_status: input.status })
       .eq('id', input.userId);
-    if (error) return { ok: false, message: error.message };
+    if (error) return { ok: false, message: 'Could not update the account.' };
+    await auditAccountChange(g.actor, input.userId, 'account status', before?.account_status ?? null, input.status);
 
     // Block or restore sign-in at the auth layer to match.
     await db.auth.admin.updateUserById(input.userId, {
@@ -213,14 +239,18 @@ export async function adminSetUserRole(input: {
 }): Promise<AdminUserResult> {
   const blocked = await adminGuard();
   if (blocked) return blocked;
+  const g = await guardAccountChange(input.userId, 'role', input.role);
+  if (!('actor' in g)) return g;
 
   try {
     const db = createSupabaseAdminClient();
+    const { data: before } = await db.from('profiles').select('role').eq('id', input.userId).maybeSingle();
     const { error } = await db
       .from('profiles')
       .update({ role: input.role })
       .eq('id', input.userId);
-    if (error) return { ok: false, message: error.message };
+    if (error) return { ok: false, message: 'Could not change the role.' };
+    await auditAccountChange(g.actor, input.userId, 'role', before?.role ?? null, input.role);
     return { ok: true, message: `Role changed to ${input.role}.` };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };
