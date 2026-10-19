@@ -228,6 +228,8 @@ export async function signupAction(formData: FormData): Promise<void> {
         reminders_consent: { at: new Date().toISOString(), version: SIGNUP_CONSENT.version, text: SIGNUP_CONSENT.text },
       },
     });
+    // Supabase's leaked-password check: say so, rather than suggesting the email is taken.
+    if (createErr?.code === 'weak_password') redirect('/signup?error=leaked');
     if (createErr || !created.user) redirect('/signup?error=taken');
     if (fullName) await admin.from('profiles').update({ full_name: fullName }).eq('id', created.user.id);
 
@@ -381,6 +383,11 @@ export async function updatePasswordAction(
   if (!authUser || !(await takeRecovery(authUser.id))) redirect(again('failed'));
 
   const { error } = await supabase.auth.updateUser({ password });
+  if (error?.code === 'weak_password') {
+    // Rejected as a breached password: they proved the mailbox already, so the same link gets another try.
+    await markRecovery(authUser.id);
+    redirect(again('leaked'));
+  }
   if (error) redirect(again('failed'));
   // Whoever else holds a session on this account (the reason for a reset, often) is out.
   await supabase.auth.signOut({ scope: 'others' });

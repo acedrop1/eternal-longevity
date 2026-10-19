@@ -55,6 +55,11 @@ export default async function ResetPasswordPage({
             Password must be 8+ characters with an uppercase letter, a lowercase letter, and a special character.
           </div>
         )}
+        {error === 'leaked' && (
+          <div role="alert" className={authErrorClass}>
+            That password has shown up in a data breach elsewhere, so it isn’t safe to use. Please choose a different one.
+          </div>
+        )}
         {error === 'failed' && (
           <div role="alert" className={authErrorClass}>
             That reset link has expired. Request a new one from the login page.

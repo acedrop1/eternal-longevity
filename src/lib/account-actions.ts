@@ -53,7 +53,7 @@ export async function changePasswordAction(input: {
   }
 
   const { error } = await supabase.auth.updateUser({ password: input.next });
-  if (error) return { ok: false, message: 'Could not update your password.' };
+  if (error) return { ok: false, message: error.code === 'weak_password' ? 'That password has shown up in a data breach elsewhere, so it isn’t safe to use. Please choose a different one.' : 'Could not update your password.' };
 
   return { ok: true, message: 'Password updated.' };
 }

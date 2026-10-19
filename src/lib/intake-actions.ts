@@ -323,6 +323,8 @@ export async function submitIntakeAction(
               : {}),
           })
           .eq('id', userId);
+      } else if (authErr?.code === 'weak_password') {
+        return { ok: false, error: 'That password has shown up in a data breach elsewhere, so it isn’t safe to use. Please choose a different one.' };
       } else if (authErr) {
         /*
          * Email already registered. This used to look up that account and

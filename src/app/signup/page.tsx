@@ -81,6 +81,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             again.
           </div>
         )}
+        {error === 'leaked' && (
+          <div role="alert" className={authErrorClass}>
+            That password has shown up in a data breach elsewhere, so it isn’t safe to use. Please choose a different one.
+          </div>
+        )}
         {error === 'taken' && (
           <div role="alert" className={authErrorClass}>
             We couldn&apos;t create that account. The email may already be
