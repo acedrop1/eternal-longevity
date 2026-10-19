@@ -12,6 +12,8 @@ import {
 import { requestPasswordResetAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 import { loginHref, safeNext } from '@/lib/safe-next';
+import { headers } from 'next/headers';
+import { requestHost, staffPortalFor } from '@/lib/staff-host';
 
 export const metadata: Metadata = {
   ...pageMeta('/forgot-password', 'Reset password', 'Request a link to reset the password on your Eternal Longevity account.'),
@@ -29,11 +31,12 @@ export default async function ForgotPasswordPage({
   // Where they were headed before the password got in the way.
   const next = safeNext(rawNext);
   const backToLogin = loginHref(next);
+  const staff = !!staffPortalFor(requestHost(await headers()));
 
   // Demo mode — no real accounts to reset.
   if (!supabaseConfigured) {
     return (
-      <AuthShell eyebrow="Account" title="Reset your password.">
+      <AuthShell staff={staff} eyebrow="Account" title="Reset your password.">
         <div className="space-y-4 rounded-shell bg-milk p-6 md:p-8">
           <p className="text-[15px] leading-relaxed text-ink-soft">
             Password reset turns on once the backend is connected. Until then,
@@ -52,6 +55,7 @@ export default async function ForgotPasswordPage({
 
   return (
     <AuthShell
+      staff={staff}
       eyebrow="Account"
       title="Reset your password."
       footer={

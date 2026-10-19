@@ -47,6 +47,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthShell
+      staff={!!staff}
       eyebrow={staff === 'admin' ? 'Admin portal' : staff === 'doctor' ? 'Physician portal' : supabaseConfigured ? 'Member portal' : 'Member · Doctor · Admin'}
       title={staff ? 'Staff sign in.' : 'Welcome back.'}
       footer={

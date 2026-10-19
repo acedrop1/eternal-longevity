@@ -36,8 +36,9 @@ export default async function VerifyPage({ searchParams }: PageProps) {
 
   const masked = user.email.replace(/^(.).*(@.*)$/, (_m, a, b) => `${a}••••${b}`);
 
+  // Only staff are asked for a code: their plain sign-in layout.
   return (
-    <AuthShell eyebrow="One more step" title="Confirm it is you.">
+    <AuthShell staff eyebrow="One more step" title="Confirm it is you.">
       <p className="mb-6 text-[15px] leading-relaxed text-ink-soft">
         We emailed a six-digit code to{' '}
         <span className="font-semibold text-ink">{masked}</span>. It expires in ten

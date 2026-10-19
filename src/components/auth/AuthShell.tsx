@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { Header } from '@/components/nav/Header';
+import { Wordmark } from '@/components/nav/Wordmark';
 import { Footer } from '@/components/sections/Footer';
 import { FadeIn } from '@/components/ui/FadeIn';
 import { SERVICE_AREA_SHORT } from '@/lib/site';
@@ -20,7 +21,10 @@ export function AuthShell({
   title,
   children,
   footer,
+  staff = false,
 }: {
+  /** admin. / doctor. addresses: the form alone, no site header, photo or footer. */
+  staff?: boolean;
   eyebrow: string;
   title: string;
   /** The card — usually a <form>. */
@@ -28,6 +32,22 @@ export function AuthShell({
   /** Optional small print rendered below the card. */
   footer?: ReactNode;
 }) {
+  if (staff) {
+    return (
+      <main className="min-h-svh bg-white px-5 py-8 text-ink">
+        <Wordmark href={null} className="h-7 w-auto" />
+        <div className="mx-auto mt-[12vh] w-full max-w-[400px]">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-milk px-3.5 py-1.5 text-[13px] font-medium text-ink/70">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-butter-deep" />
+            {eyebrow}
+          </span>
+          <h1 className="text-[40px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink">{title}</h1>
+          <div className="mt-8">{children}</div>
+          {footer && <div className="mt-8 text-[14px] leading-relaxed text-ink-soft">{footer}</div>}
+        </div>
+      </main>
+    );
+  }
   return (
     <>
       <Header />
