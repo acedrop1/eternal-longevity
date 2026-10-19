@@ -17,8 +17,6 @@ export const EMAIL_DISCLOSURE =
 export const SMS_CONFIRM_TEXT =
   'Eternal Longevity: Reply YES to confirm your request for recurring marketing texts. Msg frequency varies; msg & data rates may apply. STOP to opt out; HELP for help.';
 
-/** Golden rule: SMS marketing is offered only once the program is provisioned. */
-export const smsMarketingEnabled = () => process.env.NEXT_PUBLIC_SMS_MARKETING === '1';
 
 export const SERVICE_STATES = [
   { value: 'NJ', label: 'New Jersey' },

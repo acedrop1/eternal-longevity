@@ -4,6 +4,7 @@ import { pageMeta } from '@/lib/seo';
 import { LegalLayout, type LegalSection } from '@/components/legal/LegalLayout';
 import { BUSINESS_LEGAL_NAME, BUSINESS_ADDRESS, SUPPORT_EMAIL } from '@/lib/site';
 import { CONSENT_ITEMS } from '@/lib/intakeSchema';
+import { getMarketingSettings } from '@/lib/marketing-settings';
 
 export const metadata: Metadata = pageMeta(
   '/legal/text-messages',
@@ -12,11 +13,11 @@ export const metadata: Metadata = pageMeta(
 );
 
 const FROM = '(877) 879-0450';
-// Marketing SMS is not live yet. Its terms publish only once the program works (brief's golden rule).
-const MARKETING_ON = process.env.NEXT_PUBLIC_SMS_MARKETING === '1';
+// Marketing SMS terms publish only while the program is offered (Admin → Settings → Marketing sign-up; brief's golden rule).
 const MARKETING_FROM = process.env.NEXT_PUBLIC_SMS_SENDING_NUMBER?.trim();
 
-const MARKETING_SECTIONS: LegalSection[] = MARKETING_ON
+const marketingSections = (on: boolean): LegalSection[] =>
+  on
   ? [
       {
         heading: 'Marketing text messages',
@@ -67,7 +68,8 @@ function OptInExample() {
   );
 }
 
-export default function TextMessagesPage() {
+export default async function TextMessagesPage() {
+  const marketingOn = (await getMarketingSettings()).sms;
   return (
     <LegalLayout
       title="Text Messaging Terms"
@@ -106,7 +108,7 @@ export default function TextMessagesPage() {
             'No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Text messaging opt-in data and consent are not shared with any third parties. Mobile numbers are shared only with the service providers that deliver our messages. See our Privacy Policy.',
           ],
         },
-        ...MARKETING_SECTIONS,
+        ...marketingSections(marketingOn),
         {
           heading: 'Contact',
           paragraphs: [`${BUSINESS_LEGAL_NAME}, ${BUSINESS_ADDRESS}. Email ${SUPPORT_EMAIL}.`],
@@ -115,7 +117,7 @@ export default function TextMessagesPage() {
       related={[
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Terms of Service', href: '/legal/terms' },
-        ...(MARKETING_ON ? [{ label: 'Marketing Preferences', href: '/marketing-preferences' }] : []),
+        ...(marketingOn ? [{ label: 'Marketing Preferences', href: '/marketing-preferences' }] : []),
       ]}
     >
       <OptInExample />

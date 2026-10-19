@@ -1,3 +1,4 @@
+import { getMarketingSettings } from '@/lib/marketing-settings';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
@@ -195,6 +196,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
           renewal={Boolean(renew && requested && isMember)}
           seed={seed}
+          marketingEmail={(await getMarketingSettings()).email}
         />
       )}
     </main>

@@ -491,7 +491,7 @@ export function FieldRenderer({
           </button>
 
           {/* Individual consent rows */}
-          {CONSENT_ITEMS.map((c) => {
+          {CONSENT_ITEMS.filter((c) => !field.hideItems?.includes(c.id)).map((c) => {
             const checked = !!consents[c.id];
             return (
               <button

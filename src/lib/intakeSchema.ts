@@ -116,6 +116,8 @@ export type Field = {
   accept?: string;
   /** "Why we ask": one or two plain sentences, shown folded under the question. */
   why?: string;
+  /** consent-stack only: CONSENT_ITEMS ids not offered (e.g. marketing_email switched off in Admin → Settings). */
+  hideItems?: string[];
 };
 
 export type Step = {

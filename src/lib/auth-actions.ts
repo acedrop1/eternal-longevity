@@ -7,6 +7,7 @@
  *
  * The /login, /signup, /forgot-password, /auth/reset pages all post to these.
  */
+import { getMarketingSettings } from './marketing-settings';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DEMO_USERS, redirectForRole, type Role } from './auth';
@@ -235,7 +236,7 @@ export async function signupAction(formData: FormData): Promise<void> {
     if (createErr || !created.user) redirect('/signup?error=taken');
     if (fullName) await admin.from('profiles').update({ full_name: fullName }).eq('id', created.user.id);
     // The pre-checked marketing box, if they left it checked.
-    if (formData.get('marketing_email') === 'on') {
+    if (formData.get('marketing_email') === 'on' && (await getMarketingSettings()).email) {
       await optInEmailFromForm(admin, {
         email,
         firstName: fullName.split(/\s+/)[0] || null,

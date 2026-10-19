@@ -179,6 +179,8 @@ interface IntakeWizardProps {
   renewal?: boolean;
   /** Pre only: answers already chosen on a landing page (/hair). Pre-filled, still shown. */
   seed?: Answers;
+  /** Admin → Settings → Marketing sign-up: offer the marketing-email box (pre-checked) or leave it out. */
+  marketingEmail?: boolean;
 }
 
 /** One id per visit session: the storage folder for its photos and files. */
@@ -199,6 +201,7 @@ export function IntakeWizard({
   draft,
   renewal = false,
   seed,
+  marketingEmail = true,
 }: IntakeWizardProps = {}) {
   const compact = mode !== 'pre';
   // The screen's heading is the page's H1 on /start; the portal page has its own.
@@ -270,12 +273,12 @@ export function IntakeWizard({
   // skips that step (consents on file) is never enrolled by a box they didn't see. Unticking sticks.
   const consentField = screen?.fields.find((f) => f.type === 'consent-stack');
   useEffect(() => {
-    if (!consentField) return;
+    if (!consentField || !marketingEmail) return;
     setAnswers((a) => {
       const c = (a[consentField.id] ?? {}) as Record<string, boolean>;
       return 'marketing_email' in c ? a : { ...a, [consentField.id]: { ...c, marketing_email: true } };
     });
-  }, [consentField]);
+  }, [consentField, marketingEmail]);
 
   // Resume saved progress once, on the first screen that isn't complete.
   useEffect(() => {
@@ -982,7 +985,11 @@ export function IntakeWizard({
               />
             ) : (
               <FieldRenderer
-                field={solo ? { ...f, label: question } : f}
+                field={{
+                  ...f,
+                  ...(solo ? { label: question } : {}),
+                  ...(f.type === 'consent-stack' && !marketingEmail ? { hideItems: ['marketing_email'] } : {}),
+                }}
                 value={answers[f.id]}
                 onChange={(v) => onPick(f, v)}
                 mediaFolder={visitId}

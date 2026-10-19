@@ -10,6 +10,7 @@
  *
  * Either way the wizard gets back { ok, caseId }, so the front end is identical.
  */
+import { getMarketingSettings } from './marketing-settings';
 import { cookies } from 'next/headers';
 import type { Json } from '@/lib/database.types';
 import { getSession, setSession } from '@/lib/auth-server';
@@ -465,6 +466,7 @@ async function marketingFromAssessment(
 ): Promise<void> {
   const consents = (answers.consents ?? {}) as Record<string, unknown>;
   if (consents.marketing_email !== true || !email) return;
+  if (!(await getMarketingSettings()).email) return;
   await optInEmailFromForm(db, {
     email,
     firstName: String(name ?? '').trim().split(/\s+/)[0] || null,

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { pageMeta } from '@/lib/seo';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import Link from 'next/link';
+import { getMarketingSettings } from '@/lib/marketing-settings';
 import {
   AuthShell,
   AuthLabel,
@@ -27,6 +28,8 @@ interface SignupPageProps {
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const { error } = await searchParams;
+  // Admin → Settings → Marketing sign-up can stop offering the box.
+  const marketingEmail = (await getMarketingSettings()).email;
 
   // Demo mode — accounts open once the backend is connected.
   if (!supabaseConfigured) {
@@ -131,17 +134,21 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           />
         </div>
 
-        {/* Marketing email: pre-checked by the owner's choice, untick to opt out; counted on submit. Never texts. */}
-        <label className="flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-ink/75">
-          <input type="checkbox" name="marketing_email" defaultChecked className="mt-1 h-4 w-4 flex-none accent-ink" />
-          <span>
-            {EMAIL_DISCLOSURE.replace(' See Privacy Policy.', '')} See{' '}
-            <Link href="/legal/privacy" target="_blank" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
-              Privacy Policy
-            </Link>
-            .
-          </span>
-        </label>
+        {marketingEmail && (
+          <>
+          {/* Marketing email: pre-checked by the owner's choice, untick to opt out; counted on submit. Never texts. */}
+          <label className="flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-ink/75">
+            <input type="checkbox" name="marketing_email" defaultChecked className="mt-1 h-4 w-4 flex-none accent-ink" />
+            <span>
+              {EMAIL_DISCLOSURE.replace(' See Privacy Policy.', '')} See{' '}
+              <Link href="/legal/privacy" target="_blank" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+          </>
+        )}
 
         <SubmitButton pendingLabel="Creating your account…">
           Create account →

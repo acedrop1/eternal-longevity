@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { SubscribeForm } from '@/components/privacy/SubscribeForm';
-import { smsMarketingEnabled } from '@/lib/marketing-consent';
+import { getMarketingSettings } from '@/lib/marketing-settings';
 
 export const metadata: Metadata = {
   title: 'Subscribe',
@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 /** Optional marketing sign-up. Care, the assessment and checkout never depend on it. */
-export default function SubscribePage() {
-  const sms = smsMarketingEnabled();
+export default async function SubscribePage() {
+  const { email, sms } = await getMarketingSettings();
+  const channels = [email && 'email', sms && 'text'].filter(Boolean).join(' or ');
   return (
     <>
       <Header />
@@ -23,12 +24,15 @@ export default function SubscribePage() {
             Hear from us.
           </h1>
           <p className="mb-8 text-[15px] leading-relaxed text-ink-soft">
-            Updates and offers from Eternal Longevity{sms ? ', by email, text or both' : ' by email'}. Optional, and
-            never required for an assessment or treatment.
+            {channels
+              ? `Updates and offers from Eternal Longevity by ${channels}. Optional, and never required for an assessment or treatment.`
+              : 'Marketing sign-up is closed right now. Your care, orders and account messages are not affected.'}
           </p>
-          <div className="rounded-shell bg-milk p-6 md:p-8">
-            <SubscribeForm smsEnabled={sms} />
-          </div>
+          {channels && (
+            <div className="rounded-shell bg-milk p-6 md:p-8">
+              <SubscribeForm smsEnabled={sms} emailEnabled={email} />
+            </div>
+          )}
         </div>
       </main>
       <Footer />

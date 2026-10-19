@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
-import { saveShippingSettingsAction } from '@/lib/settings-actions';
+import { saveMarketingSettingsAction, saveShippingSettingsAction } from '@/lib/settings-actions';
+import type { MarketingSettings } from '@/lib/marketing-settings';
 import type { SettingsResult } from '@/lib/admin-settings-actions';
 import type { ShippingSettings } from '@/lib/shipping-settings';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,9 @@ export interface AdminSettingsProps {
   prescriber: PrescriberRecord;
   clinic: { name: string; siteUrl: string };
   shipping: ShippingSettings;
+  marketing: MarketingSettings;
+  /** Twilio keys are set (texts can be sent at all). */
+  smsReady: boolean;
 }
 
 /**
@@ -33,6 +37,8 @@ export function AdminSettings({
   prescriber,
   clinic,
   shipping,
+  marketing,
+  smsReady,
 }: AdminSettingsProps) {
   const connectedCount = services.filter((s) => s.connected).length;
   const live = connectedCount > 0;
@@ -89,6 +95,17 @@ export function AdminSettings({
       >
         <SectionCard>
           <ShippingForm initial={shipping} />
+        </SectionCard>
+      </SettingsRow>
+
+      <Divider />
+
+      <SettingsRow
+        title="Marketing sign-up"
+        description="Whether customers are offered marketing email and marketing texts. Customers always opt in themselves; switching one off hides the choice and does not unsubscribe anyone."
+      >
+        <SectionCard>
+          <MarketingForm initial={marketing} smsReady={smsReady} />
         </SectionCard>
       </SettingsRow>
 
@@ -209,6 +226,104 @@ function ShippingForm({ initial }: { initial: ShippingSettings }) {
           className={cn(
             'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
             busy || !dirty || price === '' ? 'cursor-not-allowed bg-ink/10 text-ink/65' : 'bg-ink text-white hover:bg-ink/85',
+          )}
+        >
+          {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarketingForm({ initial, smsReady }: { initial: MarketingSettings; smsReady: boolean }) {
+  const [saved, setSaved] = useState(initial);
+  const [value, setValue] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<SettingsResult | null>(null);
+  const dirty = value.email !== saved.email || value.sms !== saved.sms;
+
+  async function save() {
+    if (!dirty || busy) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await saveMarketingSettingsAction(value);
+      setResult(res);
+      if (res.ok && res.value) {
+        setSaved(res.value);
+        setValue(res.value);
+      }
+    } catch {
+      setResult({ ok: false, message: 'Request failed. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const rows = [
+    {
+      key: 'email' as const,
+      title: 'Marketing email',
+      body: 'A pre-checked box at sign-up and in the assessment (customers can untick it), and email on /subscribe. Double opt-in by email.',
+    },
+    {
+      key: 'sms' as const,
+      title: 'Marketing texts',
+      body: smsReady
+        ? 'An unticked box on /subscribe, confirmed by a YES reply, and the marketing section of the Text Messaging Terms. Turn on only once Twilio has approved the marketing use case.'
+        : 'Twilio is not connected, so texts cannot be sent yet.',
+    },
+  ];
+
+  return (
+    <div>
+      <div className="space-y-4">
+        {rows.map((r) => (
+          <label key={r.key} className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              role="switch"
+              className="mt-0.5 h-4 w-4 flex-none accent-ink"
+              checked={value[r.key]}
+              onChange={(e) => {
+                setValue((v) => ({ ...v, [r.key]: e.target.checked }));
+                setResult(null);
+              }}
+            />
+            <span>
+              <span className="block text-[14px] font-medium text-ink">
+                {r.title} · {value[r.key] ? 'offered' : 'not offered'}
+              </span>
+              <span className="block text-[13px] leading-snug text-ink/60">{r.body}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <p className="mt-4 text-xs leading-relaxed text-ink/60">
+        Who has opted in is in Admin → Consent &amp; tracking. Every change is recorded in the audit trail.
+      </p>
+
+      {result && (
+        <p
+          role={result.ok ? 'status' : 'alert'}
+          className={cn(
+            'mt-4 rounded-inner border px-4 py-3 text-sm',
+            result.ok ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800' : 'border-red-600/20 bg-red-50 text-red-700',
+          )}
+        >
+          {result.message}
+        </p>
+      )}
+
+      <div className="mt-5">
+        <button
+          type="button"
+          disabled={busy || !dirty}
+          onClick={save}
+          className={cn(
+            'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
+            busy || !dirty ? 'cursor-not-allowed bg-ink/10 text-ink/65' : 'bg-ink text-white hover:bg-ink/85',
           )}
         >
           {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}

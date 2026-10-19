@@ -6,7 +6,8 @@ import { AccountSettings } from '@/components/profile/AccountSettings';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { paymentsOwed, resumeAfterNewCard } from '@/lib/refills';
 import { frameAccountFor, paymentsConfigured } from '@/lib/payments';
-import { MEMBER_NAV, PageHeader, btnPrimary } from '@/components/portal/ui';
+import { MEMBER_NAV, PageHeader, btnPrimary, btnSecondary, panel } from '@/components/portal/ui';
+import { getMarketingSettings } from '@/lib/marketing-settings';
 
 export const metadata: Metadata = {
   title: 'Account',
@@ -69,6 +70,9 @@ export default async function AccountPage({
                 .filter(Boolean)
                 .join(' '),
             };
+
+  const offered = await getMarketingSettings();
+  const channels = [offered.email && 'email', offered.sms && 'text'].filter(Boolean).join(' or ');
 
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
@@ -143,6 +147,28 @@ export default async function AccountPage({
         cardsEnabled={cardsEnabled}
         paymentAccountId={paymentAccountId ?? undefined}
       />
+
+      {/* Optional marketing, offered as Admin → Settings → Marketing sign-up allows. Unsubscribing is always available. */}
+      <section aria-labelledby="offers" className={`${panel} max-w-3xl p-5 sm:p-6`}>
+        <h2 id="offers" className="text-[19px] font-semibold tracking-[-0.02em] text-ink">
+          Offers and updates
+        </h2>
+        <p className="mt-1 text-[15px] leading-relaxed text-ink/70">
+          {channels
+            ? `Optional news and offers by ${channels}. Never needed for your care, and you can stop any time.`
+            : 'Manage or stop any marketing messages. Care and order messages are separate.'}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {channels && (
+            <Link href="/subscribe" className={btnPrimary}>
+              Sign up
+            </Link>
+          )}
+          <Link href="/marketing-preferences" className={btnSecondary}>
+            Manage or unsubscribe
+          </Link>
+        </div>
+      </section>
     </PortalShell>
   );
 }

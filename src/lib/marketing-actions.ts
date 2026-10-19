@@ -21,10 +21,10 @@ import {
   SERVICE_STATES,
   SMS_CONFIRM_TEXT,
   SMS_DISCLOSURE,
-  smsMarketingEnabled,
 } from '@/lib/marketing-consent';
 import { TOKEN, contactByPrefToken, logConsent, normalizePhone, requestMeta, suppressEmail } from '@/lib/marketing';
 import { LIMITS, allow } from './rate-limit';
+import { getMarketingSettings } from './marketing-settings';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const LIVE: MarketingStatus[] = ['pending', 'subscribed'];
@@ -41,9 +41,11 @@ export async function subscribeAction(input: {
   website?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   if (input?.website) return { ok: true };
-  const wantsEmail = input.emailOptIn === true;
-  // The SMS box is not on the page until the program is provisioned; a forged one is ignored.
-  const wantsSms = input.smsOptIn === true && smsMarketingEnabled();
+  // A box admin has switched off (Admin → Settings) is not on the page; a forged one is ignored.
+  const offered = await getMarketingSettings();
+  const wantsEmail = input.emailOptIn === true && offered.email;
+  const wantsSms = input.smsOptIn === true && offered.sms;
+  if (!offered.email && !offered.sms) return { ok: false, error: 'Sign-up is not open right now.' };
   if (!wantsEmail && !wantsSms) return { ok: false, error: 'Choose at least one way to hear from us.' };
 
   const email = wantsEmail ? String(input.email ?? '').trim().toLowerCase() : null;

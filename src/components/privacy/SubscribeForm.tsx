@@ -18,7 +18,7 @@ const lead = (s: string) => s.slice(0, s.lastIndexOf(' See '));
  * /subscribe. Two separate, unticked boxes; each channel's field appears only
  * once its box is ticked. Contact details only — no health questions.
  */
-export function SubscribeForm({ smsEnabled }: { smsEnabled: boolean }) {
+export function SubscribeForm({ smsEnabled, emailEnabled = true }: { smsEnabled: boolean; emailEnabled?: boolean }) {
   const [emailOn, setEmailOn] = useState(false);
   const [smsOn, setSmsOn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -98,6 +98,8 @@ export function SubscribeForm({ smsEnabled }: { smsEnabled: boolean }) {
       <fieldset className="space-y-4">
         <legend className={labelClass}>How should we reach you?</legend>
 
+        {emailEnabled && (
+          <>
         <label className="flex gap-3 text-[14px] leading-relaxed text-ink-soft">
           <input type="checkbox" checked={emailOn} onChange={(e) => setEmailOn(e.target.checked)} className={box} />
           <span>
@@ -115,6 +117,9 @@ export function SubscribeForm({ smsEnabled }: { smsEnabled: boolean }) {
             </label>
             <input id="sub-email" name="email" type="email" required autoComplete="email" placeholder="you@example.com" className={fieldClass} />
           </div>
+        )}
+
+          </>
         )}
 
         {smsEnabled && (
