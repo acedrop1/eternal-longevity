@@ -156,9 +156,91 @@ export async function GET(req: NextRequest) {
     acc[s.kind] = (acc[s.kind] ?? 0) + 1;
     return acc;
   }, {});
+  const unanswered = await remindUnanswered(db, now, day).catch(() => 0);
+
   return NextResponse.json({
+    unanswered,
     stale: tally,
     released: stale.filter((s) => s.kind === 'release').length - stuckReleases.length,
     alerted: due.length,
   });
+}
+
+/** A member's message with no staff reply after this long gets a reminder (then once a day). */
+const UNANSWERED_HOURS = 12;
+
+/**
+ * Member messages nobody has answered: the admin inbox hears about all of
+ * them, the prescriber about his own thread (email and text). Each thread is
+ * claimed once a day in email_sends. Counts and wait times only, no names.
+ */
+async function remindUnanswered(db: ReturnType<typeof createSupabaseAdminClient>, now: number, day: string): Promise<number> {
+  const { data } = await db
+    .from('messages')
+    .select('thread_user_id, sender_id, channel, created_at')
+    .gte('created_at', new Date(now - 30 * 86_400_000).toISOString())
+    .order('created_at', { ascending: false })
+    // ponytail: newest 2000 messages in 30 days; page through if volume ever passes that.
+    .limit(2000);
+  // Newest message per thread; waiting when the member sent it, long enough ago.
+  const latest = new Map<string, { channel: string; thread: string; hours: number; fromMember: boolean }>();
+  for (const m of data ?? []) {
+    const key = `${m.channel}:${m.thread_user_id}`;
+    if (latest.has(key)) continue;
+    latest.set(key, {
+      channel: m.channel,
+      thread: m.thread_user_id,
+      fromMember: m.sender_id === m.thread_user_id,
+      hours: Math.floor((now - new Date(m.created_at).getTime()) / 3_600_000),
+    });
+  }
+  const due: { channel: string; hours: number }[] = [];
+  for (const [key, t] of latest) {
+    if (!t.fromMember || t.hours < UNANSWERED_HOURS) continue;
+    const { error } = await db
+      .from('email_sends')
+      .insert({ email: SUPPORT_EMAIL.toLowerCase(), stage: 'stale-message', ref: `${key}:${day}`, step: 0 });
+    if (!error) due.push({ channel: t.channel, hours: t.hours });
+  }
+  if (!due.length) return 0;
+
+  const rows: [string, string][] = due.map((t) => [
+    t.channel === 'doctor' ? 'To Dr. Elder' : 'To support',
+    `Waiting ${waited(t.hours)}`,
+  ]);
+  const n = due.length;
+  await sendEmail({
+    to: SUPPORT_EMAIL,
+    subject: `${n} ${n === 1 ? 'message has' : 'messages have'} no reply`,
+    html: noticeEmail({
+      eyebrow: 'Unanswered messages',
+      heading: `${n} member ${n === 1 ? 'message is' : 'messages are'} waiting for a reply`,
+      body: 'Each has waited over 12 hours. You will hear about each one at most once a day until someone replies.',
+      rows,
+      cta: {
+        label: 'Open the inbox',
+        href: `${SITE_URL}/portal/admin/messages${due.every((t) => t.channel === 'doctor') ? '?channel=doctor' : ''}`,
+      },
+    }),
+  }).catch(() => undefined);
+
+  const forDoctor = due.filter((t) => t.channel === 'doctor').length;
+  if (forDoctor) {
+    const msgs = `${forDoctor} patient ${forDoctor === 1 ? 'message has' : 'messages have'}`;
+    await pageDoctors(
+      db,
+      (firstName) => ({
+        subject: `${msgs} no reply`,
+        html: noticeEmail({
+          eyebrow: 'Waiting on you',
+          heading: `${firstName}, ${msgs} waited over 12 hours`,
+          body: 'Open your messages to read and reply.',
+          cta: { label: 'Open messages', href: `${SITE_URL}/portal/doctor/messages` },
+        }),
+      }),
+      // No patient details: SMS is not covered by a BAA.
+      `Eternal Longevity: ${msgs} no reply. ${SITE_URL}/portal/doctor/messages`,
+    );
+  }
+  return n;
 }

@@ -31,9 +31,12 @@ type Tab = 'all' | 'awaiting';
 export function AdminInbox({
   threads,
   messagesByUser,
+  readOnly = false,
 }: {
   threads: MessageThread[];
   messagesByUser: Record<string, PortalMessage[]>;
+  /** Patient ↔ prescriber threads: admin reads, only the prescriber replies. */
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(threads[0]?.userId ?? null);
@@ -208,6 +211,9 @@ export function AdminInbox({
             );
           })}
         </div>
+        {readOnly ? (
+          <p className="border-t border-ink/10 p-3 text-[13px] text-ink/60">Read only. Dr. Elder answers these from his portal.</p>
+        ) : (
         <div className="border-t border-ink/10 p-3">
           {error && <p className="mb-2 px-1 text-[13px] text-red-700">{error}</p>}
           <div className="flex items-end gap-2">
@@ -235,6 +241,7 @@ export function AdminInbox({
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

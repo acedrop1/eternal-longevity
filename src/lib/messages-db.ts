@@ -99,8 +99,8 @@ export async function sendMessageAction(channel: MessageChannel, body: string): 
 }
 
 /**
- * Tell whoever answers the thread that a member wrote: the prescriber for the
- * doctor thread, the support inbox for support. At most one email per thread
+ * Tell staff a member wrote: the prescriber and the admin inbox for the doctor
+ * thread, the admin inbox for support. At most one email per thread
  * per 15 minutes, worked out from the member's own message times (no send
  * log). No patient name or drug anywhere in the email.
  */
@@ -120,20 +120,32 @@ async function notifyStaffOfReply(userId: string, channel: MessageChannel): Prom
 
     const doctor = channel === 'doctor';
     const prescriber = doctor ? await getPrescriber().catch(() => null) : null;
-    await sendEmail({
-      to: prescriber?.email || SUPPORT_EMAIL,
-      subject: doctor ? 'New patient reply' : 'New member message',
-      html: noticeEmail({
-        eyebrow: doctor ? 'Patient messages' : 'Support messages',
-        heading: doctor ? 'A patient replied.' : 'A member wrote to support.',
-        // No name or details: email isn't where patient information goes.
-        body: 'Open the portal to read it and reply.',
-        cta: {
-          label: 'Open messages',
-          href: `${SITE_URL}/portal/${doctor ? 'doctor' : 'admin'}/messages`,
-        },
-      }),
-    });
+    // Doctor thread: the prescriber and the admin inbox both hear of it. Support thread: the admin inbox.
+    const notices: { to: string; href: string; heading: string }[] = [
+      {
+        to: SUPPORT_EMAIL,
+        href: `${SITE_URL}/portal/admin/messages${doctor ? '?channel=doctor' : ''}`,
+        heading: doctor ? 'A patient wrote to Dr. Elder.' : 'A member wrote to support.',
+      },
+    ];
+    if (prescriber?.email && prescriber.email !== SUPPORT_EMAIL) {
+      notices.push({ to: prescriber.email, href: `${SITE_URL}/portal/doctor/messages`, heading: 'A patient wrote to you.' });
+    }
+    await Promise.allSettled(
+      notices.map((n) =>
+        sendEmail({
+          to: n.to,
+          subject: doctor ? 'New patient message for Dr. Elder' : 'New member message',
+          html: noticeEmail({
+            eyebrow: doctor ? 'Patient messages' : 'Support messages',
+            heading: n.heading,
+            // No name or details: email isn't where patient information goes.
+            body: 'Open the portal to read it and reply.',
+            cta: { label: 'Open messages', href: n.href },
+          }),
+        }),
+      ),
+    );
     // Same nudge by text to the prescriber; no patient details (no BAA for SMS).
     if (prescriber?.phone) {
       await sendSms(prescriber.phone, `Eternal Longevity: a patient replied. ${SITE_URL}/portal/doctor/messages`);
