@@ -7,6 +7,7 @@ import {
   type SettingsResult,
 } from '@/lib/admin-settings-actions';
 import { CREDENTIALS, type PrescriberRecord } from '@/lib/prescriberTypes';
+import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
 import { cn } from '@/lib/utils';
 
 const field =
@@ -37,6 +38,8 @@ export function PrescriberForm({
     licenseNumber: record.licenseNumber,
     licenseExpires: record.licenseExpires,
     phone: record.phone,
+    otherLicenses: record.otherLicenses,
+    dea: record.dea,
   });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<SettingsResult | null>(null);
@@ -48,7 +51,11 @@ export function PrescriberForm({
     form.licenseState !== record.licenseState ||
     form.licenseNumber !== record.licenseNumber ||
     form.licenseExpires !== record.licenseExpires ||
-    form.phone !== record.phone;
+    form.phone !== record.phone ||
+    form.dea !== record.dea ||
+    JSON.stringify(form.otherLicenses) !== JSON.stringify(record.otherLicenses);
+  // Every state we serve other than the primary licence's.
+  const otherStates = SERVICEABLE_STATES.filter((st) => st !== form.licenseState);
 
   const set = (patch: Partial<typeof form>) =>
     setForm((f) => ({ ...f, ...patch }));
@@ -181,6 +188,37 @@ export function PrescriberForm({
             type="date"
             value={form.licenseExpires}
             onChange={(e) => set({ licenseExpires: e.target.value })}
+            className={field}
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        {otherStates.map((st) => (
+          <div key={st}>
+            <label className={label} htmlFor={`pf-lic-${st}`}>
+              {STATE_NAMES[st] ?? st} licence
+            </label>
+            <input
+              id={`pf-lic-${st}`}
+              value={form.otherLicenses[st] ?? ''}
+              maxLength={40}
+              onChange={(e) => set({ otherLicenses: { ...form.otherLicenses, [st]: e.target.value } })}
+              className={field}
+            />
+          </div>
+        ))}
+        <div>
+          <label className={label} htmlFor="pf-dea">
+            DEA number
+          </label>
+          <input
+            id="pf-dea"
+            value={form.dea}
+            maxLength={9}
+            spellCheck={false}
+            onChange={(e) => set({ dea: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 9) })}
+            placeholder="Only for controlled substances"
             className={field}
           />
         </div>

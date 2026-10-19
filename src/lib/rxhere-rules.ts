@@ -1,81 +1,84 @@
 /**
- * Pure rules for the pharmacy's partner API.
+ * Pure rules for the pharmacy's practice API (RxHere Integration Guide, Oct 2026).
  *
- * No I/O and no server imports, so the order payload, the webhook mapping and
- * the secret check can be asserted in isolation (see the scratchpad check
- * script). The HTTP client is rxhere.ts; the orchestration is auto-pharmacy.ts
+ * No I/O and no server imports, so the payload, the webhook mapping and the
+ * signature check can be asserted in isolation (scripts/check-rxhere.mjs). The HTTP client is rxhere.ts; the orchestration is auto-pharmacy.ts
  * and the webhook route.
  */
 
-import { createHash, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { monthsPerShipment } from '@/lib/order-rules';
 import type { PharmacyItem } from '@/lib/pharmacy-catalog';
 
 /* --------------------------------- orders --------------------------------- */
 
-export interface RxHereAddress {
-  line1: string;
-  line2?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country: 'US';
+/** One catalog product (guide §2). `id` is the platform_product_id we order by. */
+export interface RxHereCatalogItem {
+  id: string;
+  name: string;
+  type?: string;
+  category?: string;
+  strengths?: unknown;
+  dosage_form?: string;
+  price_cents?: number;
+  controlled_substance?: boolean;
 }
 
-export interface RxHereOrderPayload {
-  partnerOrderId: string;
-  shippingMethod: '2_DAY' | 'OVERNIGHT';
-  sku: string;
-  name?: string;
-  strength?: string;
-  size?: string;
-  dosageForm?: string;
-  quantity: number;
-  sig: string;
+/** The catalog page as returned: an array, or an object carrying one. */
+export function catalogItems(data: unknown): RxHereCatalogItem[] {
+  const list = Array.isArray(data)
+    ? data
+    : data && typeof data === 'object'
+      ? Object.values(data as Record<string, unknown>).find(Array.isArray) ?? []
+      : [];
+  return (list as Record<string, unknown>[]).filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string') as unknown as RxHereCatalogItem[];
+}
+
+export interface RxHerePrescriptionPayload {
   patient: {
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    gender?: 'Male' | 'Female' | 'Other';
-    phone?: string;
+    external_patient_id: string;
+    first_name: string;
+    last_name: string;
+    dob: string;
     email?: string;
-    allergies?: string;
-    height?: string;
-    weight?: string;
-    address: RxHereAddress;
+    phone?: string;
+    gender?: string;
+    allergies?: string[];
+    address: { line1: string; line2?: string; city: string; state: string; postal_code: string };
   };
   prescriber: {
-    npiNumber: string;
-    firstName?: string;
-    lastName?: string;
-    title?: string;
-    practiceName?: string;
-    stateLicenseNumber?: string;
-    phone?: string;
-    email?: string;
+    full_name: string;
+    npi_number: string;
+    dea_number?: string;
+    licenses: { state: string; number: string }[];
   };
+  prescriptions: {
+    platform_product_id: string;
+    order_quantity: number;
+    drug_name: string;
+    strength?: string;
+    dosage_form?: string;
+    sig: string;
+    quantity?: number;
+    days_supply?: number;
+  }[];
+  shipping_destination_type: 'patient_direct';
+  external_order_id: string;
 }
 
-export interface RxHereOrder {
-  orderId: string;
-  orderIds?: string[];
-  partnerOrderId?: string;
-  batchId?: string | null;
-  orderFlowType?: string;
-  isRuo?: boolean;
+/** POST /prescriptions answer (guide §3). */
+export interface RxHerePlaced {
+  patient_id?: string;
+  prescriber_id?: string;
+  order_id?: string;
+  order_number?: string;
   status?: string;
-  departmentQueue?: string;
-  totalAmount?: string;
-}
-
-/**
- * Patient-specific (503A) only. A research-use order ships with no patient to
- * the provider: that is never what we mean, so anything other than an
- * explicit NORMAL, non-RUO answer is treated as wrong and cancelled.
- */
-export function isPatientSpecific(o: Pick<RxHereOrder, 'isRuo' | 'orderFlowType'>): boolean {
-  // Only an explicit research-use marker trips this; a response that omits the field is not RUO.
-  return o.isRuo !== true && (o.orderFlowType === undefined || o.orderFlowType === 'NORMAL');
+  billing?: 'card' | 'invoice';
+  payment_status?: 'paid' | 'awaiting_payment' | 'not_required' | 'refunded';
+  payment_message?: string;
+  total_cents?: number;
+  sandbox?: boolean;
+  idempotent_replay?: boolean;
 }
 
 /** YYYY-MM-DD from what we store (date column, ISO timestamp, or US M/D/YYYY). */
@@ -94,17 +97,17 @@ export function toIsoDate(raw: unknown): string | null {
   return dt.toISOString().slice(0, 10);
 }
 
-const GENDER: Record<string, 'Male' | 'Female' | 'Other'> = { m: 'Male', f: 'Female', intersex: 'Other' };
+const GENDER: Record<string, string> = { m: 'male', f: 'female', intersex: 'other' };
 
 /**
  * Only an explicit "no" is NKDA. An intake that never asked is not the same as
- * a patient with no allergies, so it is left blank for the pharmacist to see.
+ * a patient with no allergies, so it is left out for the pharmacist to see.
  */
-export function allergiesFrom(answers: Record<string, unknown>): string | undefined {
-  if (answers.allergies_any === 'no') return 'No Known Drug Allergies (NKDA)';
+export function allergiesFrom(answers: Record<string, unknown>): string[] | undefined {
+  if (answers.allergies_any === 'no') return ['No Known Drug Allergies (NKDA)'];
   if (answers.allergies_any === 'yes') {
     const detail = typeof answers.allergies_detail === 'string' ? answers.allergies_detail.trim() : '';
-    return (detail || 'Reports drug allergies; details not given').slice(0, 500);
+    return [(detail || 'Reports drug allergies; details not given').slice(0, 500)];
   }
   return undefined;
 }
@@ -117,15 +120,33 @@ export function pharmacyQuantity(item: Pick<PharmacyItem, 'quantity'>, cadence: 
   return Math.max(1, item.quantity) * monthsPerShipment(cadence) * Math.max(1, lineQty);
 }
 
-export type PayloadError = 'sku_missing' | 'no_directions' | 'patient_incomplete' | 'no_address' | 'no_npi';
+/** The catalog id: a UUID. An old partner-API SKU (AA-NAD-02…) is not one and is never sent. */
+export const isCatalogId = (v: string | null | undefined) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((v ?? '').trim());
+
+/** DEA: 2 letters then 7 digits passing the DEA checksum (guide §4). */
+export function validDea(v: string): boolean {
+  const m = v.trim().toUpperCase().match(/^[A-Z]{2}(\d{7})$/);
+  if (!m) return false;
+  const d = m[1].split('').map(Number);
+  return (d[0] + d[2] + d[4] + 2 * (d[1] + d[3] + d[5])) % 10 === d[6];
+}
+
+export type PayloadError =
+  | 'sku_missing'
+  | 'no_directions'
+  | 'patient_incomplete'
+  | 'no_address'
+  | 'no_npi'
+  | 'no_license';
 
 export interface PayloadInput {
   orderNumber: string;
+  patientId: string;
   item: PharmacyItem | null;
   cadence: string;
   lineQty: number;
   sig: string | null;
-  shippingMethod: '2_DAY' | 'OVERNIGHT';
   patient: {
     firstName: string | null;
     lastName: string | null;
@@ -137,14 +158,11 @@ export interface PayloadInput {
   address: Record<string, unknown> | null;
   prescriber: {
     name: string;
-    credential: string;
     npi: string;
-    licenseState: string;
-    licenseNumber: string;
-    phone: string;
-    email: string;
+    dea: string;
+    /** state → licence number, the primary licence included. */
+    licenses: Record<string, string>;
   };
-  practiceName: string;
 }
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -152,154 +170,133 @@ const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const opt = (v: unknown) => str(v) || undefined;
 
 /**
- * The order we send. Refuses rather than guesses: no SKU, no directions, no
- * real patient identity, no address or no NPI means it is not sent at all and
- * stays on the board for a person.
+ * The prescription we post. Refuses rather than guesses: no catalog id, no
+ * directions, no real patient identity, no full address, no NPI or no licence
+ * at all means it is not sent and stays on the board for a person.
  */
-export function buildOrderPayload(
+export function buildPrescriptionPayload(
   input: PayloadInput,
-): { ok: true; payload: RxHereOrderPayload } | { ok: false; error: PayloadError } {
+): { ok: true; payload: RxHerePrescriptionPayload } | { ok: false; error: PayloadError } {
   const { item, patient, prescriber } = input;
-  if (!item?.sku) return { ok: false, error: 'sku_missing' };
+  if (!item || !isCatalogId(item.sku)) return { ok: false, error: 'sku_missing' };
 
   const sig = str(input.sig);
   if (!sig) return { ok: false, error: 'no_directions' };
 
   const firstName = str(patient.firstName);
   const lastName = str(patient.lastName);
-  const dateOfBirth = toIsoDate(patient.dob);
-  if (!firstName || !lastName || !dateOfBirth) return { ok: false, error: 'patient_incomplete' };
+  const dob = toIsoDate(patient.dob);
+  if (!firstName || !lastName || !dob) return { ok: false, error: 'patient_incomplete' };
 
   const a = input.address ?? {};
-  if (!str(a.line1)) return { ok: false, error: 'no_address' };
   const state = str(a.state).toUpperCase();
+  const postal = str(a.zip) || str(a.zipCode) || str(a.postal_code);
+  if (!str(a.line1) || !str(a.city) || !/^[A-Z]{2}$/.test(state) || !postal) return { ok: false, error: 'no_address' };
 
   if (!/^\d{10}$/.test(str(prescriber.npi))) return { ok: false, error: 'no_npi' };
 
-  const ans = patient.answers;
-  const ft = Number(ans.height_ft);
-  const inch = Number(ans.height_in);
-  const lb = Number(ans.weight_lb);
-  const [pFirst, ...pRest] = str(prescriber.name).split(/\s+/);
+  // Every licence we hold goes. RxHere keeps the ones already on its file, so a
+  // state missing here is RxHere's call (license_state_mismatch), not a block.
+  const licenses = Object.entries(prescriber.licenses)
+    .map(([st, number]) => ({ state: st.trim().toUpperCase(), number: str(number) }))
+    .filter((l) => /^[A-Z]{2}$/.test(l.state) && l.number);
+  if (!licenses.length) return { ok: false, error: 'no_license' };
+
+  const dea = str(prescriber.dea).toUpperCase();
+  const quantity = pharmacyQuantity(item, input.cadence, input.lineQty);
 
   return {
     ok: true,
     payload: {
-      partnerOrderId: input.orderNumber,
-      shippingMethod: input.shippingMethod,
-      sku: item.sku,
-      name: opt(item.name),
-      strength: opt(item.strength),
-      size: opt(item.size),
-      dosageForm: opt(item.dosageForm),
-      quantity: pharmacyQuantity(item, input.cadence, input.lineQty),
-      sig,
       patient: {
-        firstName,
-        lastName,
-        dateOfBirth,
-        gender: GENDER[str(ans.sex)],
-        phone: opt(patient.phone) ?? opt(a.phone),
+        external_patient_id: input.patientId,
+        first_name: firstName,
+        last_name: lastName,
+        dob,
         email: opt(patient.email),
-        allergies: allergiesFrom(ans),
-        height: Number.isFinite(ft) && ft > 0 ? `${ft}'${Number.isFinite(inch) ? inch : 0}"` : undefined,
-        weight: Number.isFinite(lb) && lb > 0 ? `${lb} lb` : undefined,
-        address: {
-          line1: str(a.line1),
-          line2: opt(a.line2),
-          city: opt(a.city),
-          state: state || undefined,
-          zipCode: opt(a.zip) ?? opt(a.zipCode),
-          country: 'US',
-        },
+        phone: (opt(patient.phone) ?? opt(a.phone))?.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, ''),
+        gender: GENDER[str(patient.answers.sex)],
+        allergies: allergiesFrom(patient.answers),
+        address: { line1: str(a.line1), line2: opt(a.line2), city: str(a.city), state, postal_code: postal },
       },
       prescriber: {
-        npiNumber: str(prescriber.npi),
-        firstName: opt(pFirst),
-        lastName: opt(pRest.join(' ')),
-        title: opt(prescriber.credential) ?? 'DO',
-        practiceName: opt(input.practiceName),
-        // One licence is on file. It goes only when it is the patient's state;
-        // another state's number on this prescription would be wrong.
-        stateLicenseNumber:
-          state && str(prescriber.licenseState).toUpperCase() === state ? opt(prescriber.licenseNumber) : undefined,
-        phone: opt(prescriber.phone),
-        email: opt(prescriber.email),
+        full_name: str(prescriber.name),
+        npi_number: str(prescriber.npi),
+        // Required only for controlled substances; a malformed one would reject the whole order.
+        dea_number: validDea(dea) ? dea : undefined,
+        licenses,
       },
+      prescriptions: [
+        {
+          platform_product_id: str(item.sku),
+          order_quantity: quantity,
+          drug_name: item.name,
+          strength: opt(item.strength),
+          dosage_form: opt(item.dosageForm),
+          sig,
+          quantity,
+          days_supply: 30 * monthsPerShipment(input.cadence),
+        },
+      ],
+      shipping_destination_type: 'patient_direct',
+      external_order_id: input.orderNumber,
     },
   };
 }
 
 /* -------------------------------- webhooks -------------------------------- */
 
-export const RXHERE_EVENTS = [
-  'COMPOUNDING',
-  'QA_PENDING',
-  'SHIPPED',
-  'IN_TRANSIT',
-  'OUT_FOR_DELIVERY',
-  'DELIVERED',
-  'HOLD',
-  'EXCEPTION',
-  'CANCELLED',
-] as const;
+/** Our names for the guide's events (§7). */
+export const RXHERE_EVENTS = ['PAID', 'INVOICED', 'SHIPPED', 'DELIVERED', 'EXCEPTION'] as const;
 export type RxHereEvent = (typeof RXHERE_EVENTS)[number];
+const EVENT_MAP: Record<string, RxHereEvent> = {
+  'order.paid': 'PAID',
+  'order.invoiced': 'INVOICED',
+  'order.shipped': 'SHIPPED',
+  'order.delivered': 'DELIVERED',
+  'order.exception': 'EXCEPTION',
+};
 
 export interface RxHereWebhook {
+  /** RxHere's order_id (we store it as orders.pharmacy_order_id). */
   reference: string;
   event: RxHereEvent;
   occurredAt: string;
   trackingNumber: string | null;
   carrier: string | null;
   reason: string | null;
-  location: { city?: string; state?: string } | null;
-  proofOfDelivery: { signedBy?: string; deliveredAt?: string } | null;
 }
 
 /** The documented payload, or null. Unknown events and malformed bodies are dropped. */
 export function parseWebhook(body: unknown): RxHereWebhook | null {
   if (!body || typeof body !== 'object') return null;
   const b = body as Record<string, unknown>;
-  const reference = str(b.reference);
-  const event = str(b.event) as RxHereEvent;
-  const occurredAt = str(b.occurredAt);
-  if (!reference || reference.length > 100 || !RXHERE_EVENTS.includes(event)) return null;
+  const reference = str(b.order_id);
+  const event = EVENT_MAP[str(b.event)];
+  const occurredAt = str(b.occurred_at);
+  if (!reference || reference.length > 100 || !event) return null;
   if (!occurredAt || Number.isNaN(Date.parse(occurredAt))) return null;
-  const obj = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : null);
-  const loc = obj(b.location);
-  const pod = obj(b.proofOfDelivery);
   return {
     reference,
     event,
     occurredAt: new Date(occurredAt).toISOString(),
-    trackingNumber: opt(b.trackingNumber)?.slice(0, 64) ?? null,
-    carrier: opt(b.carrier)?.slice(0, 40) ?? null,
-    reason: opt(b.reason)?.slice(0, 2000) ?? null,
-    location: loc ? { city: opt(loc.city), state: opt(loc.state) } : null,
-    proofOfDelivery: pod ? { signedBy: opt(pod.signedBy)?.slice(0, 100), deliveredAt: opt(pod.deliveredAt) } : null,
+    trackingNumber: opt(b.tracking_number)?.slice(0, 64) ?? null,
+    carrier: opt(b.tracking_carrier)?.slice(0, 40) ?? null,
+    reason: (opt(b.message) ?? opt(b.reason) ?? opt(b.status))?.slice(0, 2000) ?? null,
   };
 }
 
-/** The documented idempotency key: reference + event + occurredAt (unique in pharmacy_events). */
-export function eventKey(w: Pick<RxHereWebhook, 'reference' | 'event' | 'occurredAt'>): string {
-  return `${w.reference}|${w.event}|${w.occurredAt}`;
-}
-
 /**
- * Constant-time check of either header against our secret. Both sides are
- * hashed first so a length difference leaks nothing and timingSafeEqual never
- * throws.
+ * X-Webhook-Signature: "sha256=" + hex HMAC-SHA256 of the exact raw body,
+ * keyed with the signing secret. Constant-time; a wrong length is just false.
  */
-export function secretMatches(headerValues: (string | null | undefined)[], secret: string | undefined): boolean {
-  if (!secret) return false;
-  const want = createHash('sha256').update(secret).digest();
-  let ok = false;
-  for (const v of headerValues) {
-    if (!v) continue;
-    const got = createHash('sha256').update(v).digest();
-    if (timingSafeEqual(got, want)) ok = true;
-  }
-  return ok;
+export function signatureValid(rawBody: string, header: string | null | undefined, secret: string | undefined): boolean {
+  if (!header || !secret) return false;
+  const expected = createHmac('sha256', secret).update(rawBody, 'utf8').digest();
+  const hex = header.trim().replace(/^sha256=/i, '');
+  if (!/^[0-9a-f]+$/i.test(hex)) return false;
+  const received = Buffer.from(hex, 'hex');
+  return received.length === expected.length && timingSafeEqual(received, expected);
 }
 
 type RowStatus = 'draft' | 'submitted' | 'accepted' | 'shipped' | 'delivered' | 'canceled';
@@ -310,7 +307,7 @@ export interface WebhookPlan {
   steps: Step[];
   /** A member-timeline entry beyond what the steps write. */
   timeline: { label: string; body: string } | null;
-  alert: 'hold' | 'exception' | 'cancelled' | 'no_tracking' | null;
+  alert: 'exception' | 'no_tracking' | null;
 }
 
 const PRE_SHIP: RowStatus[] = ['draft', 'submitted'];
@@ -319,56 +316,26 @@ const PRE_SHIP: RowStatus[] = ['draft', 'submitted'];
  * What an event does to our order. Steps only ever move forward: each one is
  * offered only from a board status it can follow, and advanceFulfillment's
  * conditional update refuses anything else, so a late or replayed event never
- * moves an order back.
+ * moves an order back. PAID and INVOICED are RxHere billing us; they only
+ * update the staff status.
  */
 export function planWebhookEvent(w: RxHereWebhook, row: RowStatus): WebhookPlan {
   const none: WebhookPlan = { steps: [], timeline: null, alert: null };
   if (row === 'canceled') return none;
-  const place: Step[] = PRE_SHIP.includes(row) ? ['placed'] : [];
-  const where = [w.location?.city, w.location?.state].filter(Boolean).join(', ');
 
   switch (w.event) {
-    case 'COMPOUNDING':
-      return {
-        ...none,
-        steps: place,
-        timeline: { label: 'Compounding', body: 'A pharmacist verified your prescription and compounding has started.' },
-      };
-    case 'QA_PENDING':
-      return {
-        ...none,
-        steps: place,
-        timeline: { label: 'Quality check', body: 'Compounding is finished. Your order is in the pharmacy’s quality check before it ships.' },
-      };
+    case 'PAID':
+    case 'INVOICED':
+      return none;
     case 'SHIPPED':
       if (!w.trackingNumber) return { ...none, alert: 'no_tracking' };
       return { ...none, steps: [...PRE_SHIP, 'accepted'].includes(row) ? ['shipped'] : [] };
-    case 'IN_TRANSIT':
-      return { ...none, timeline: { label: 'In transit', body: where ? `Scanned in ${where}.` : 'Moving through the carrier network.' } };
-    case 'OUT_FOR_DELIVERY':
-      return { ...none, timeline: { label: 'Out for delivery', body: 'Your order is on the delivery truck today.' } };
-    case 'DELIVERED': {
+    case 'DELIVERED':
       // A DELIVERED that overtakes its SHIPPED (retries arrive out of order)
       // still lands: ship it with the tracking it carries, then deliver.
-      const steps: Step[] =
-        row === 'shipped' ? ['delivered'] : row !== 'delivered' && w.trackingNumber ? ['shipped', 'delivered'] : [];
-      const pod = w.proofOfDelivery;
       return {
         ...none,
-        steps,
-        timeline: pod?.signedBy
-          ? { label: 'Proof of delivery', body: `Signed for by ${pod.signedBy}${pod.deliveredAt ? ` · ${pod.deliveredAt}` : ''}.` }
-          : null,
-      };
-    }
-    case 'HOLD':
-      return {
-        steps: [],
-        timeline: {
-          label: 'Pharmacy review',
-          body: 'The pharmacist has a question for your prescriber. Your care team is on it; nothing is needed from you unless we reach out.',
-        },
-        alert: 'hold',
+        steps: row === 'shipped' ? ['delivered'] : row !== 'delivered' && w.trackingNumber ? ['shipped', 'delivered'] : [],
       };
     case 'EXCEPTION':
       return {
@@ -376,35 +343,27 @@ export function planWebhookEvent(w: RxHereWebhook, row: RowStatus): WebhookPlan 
         timeline: { label: 'Delivery update', body: 'The carrier reported a delay or a delivery problem. We are following it up.' },
         alert: 'exception',
       };
-    case 'CANCELLED':
-      // Staff decide what happens next (re-place, refund); the member hears from them.
-      return { ...none, alert: 'cancelled' };
   }
 }
 
 /*
- * The pharmacy status shown to staff. Phases only move forward — a late
- * COMPOUNDING never covers a SHIPPED — and DELIVERED / CANCELLED are final.
- * Within a phase the newest event wins (HOLD, then COMPOUNDING again once it
- * is cleared).
+ * The pharmacy status shown to staff. Phases only move forward, and DELIVERED
+ * is final. AWAITING_PAYMENT is ours: RxHere could not charge our card.
  */
 const PHASE: Record<string, number> = {
   SENDING: 0,
   ERROR: 0,
   MANUAL: 0,
   DRY_RUN: 0,
-  COMPOUNDING: 1,
-  QA_PENDING: 1,
-  HOLD: 1,
+  AWAITING_PAYMENT: 1,
+  PAID: 1,
+  INVOICED: 1,
   SHIPPED: 2,
-  IN_TRANSIT: 2,
-  OUT_FOR_DELIVERY: 2,
   EXCEPTION: 2,
   DELIVERED: 3,
-  CANCELLED: 3,
 };
 
-/** The new status, or null to leave it. Unknown current values (the 201's own words) count as just sent. */
+/** The new status, or null to leave it. Unknown current values (the API's own words) count as just sent. */
 export function nextPharmacyStatus(current: string | null, incoming: RxHereEvent): string | null {
   const from = current ? PHASE[current] ?? 1 : 0;
   if (from === 3) return null;

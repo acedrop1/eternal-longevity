@@ -35,20 +35,11 @@ import { SITE_URL } from '@/lib/site';
 import type { Json } from '@/lib/database.types';
 import { orderRef as orderLabel } from '@/lib/format';
 import { getPrescriber } from '@/lib/prescriber';
-import { BUSINESS_LEGAL_NAME } from '@/lib/site';
 import { TERMINAL_ORDER, monthsPerShipment } from '@/lib/order-rules';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
-import { getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
-import { shippingMethodFor } from '@/lib/shipping';
-import { buildOrderPayload, isPatientSpecific, type PayloadError } from '@/lib/rxhere-rules';
-import {
-  cancelPharmacyOrder,
-  getPharmacyOrder,
-  rxhereConfigured,
-  rxhereDryRun,
-  submitPharmacyOrder,
-  type RxHereErrorCode,
-} from '@/lib/rxhere';
+import { pharmacyEntryFor } from '@/lib/catalog';
+import { buildPrescriptionPayload, type PayloadError } from '@/lib/rxhere-rules';
+import { postPrescription, rxhereConfigured, rxhereSandbox, type RxHereErrorCode } from '@/lib/rxhere';
 
 export async function autoSubmitToPharmacy(
   orderNumber: string,
@@ -285,22 +276,28 @@ const STUCK_MS = 2 * 60_000;
  * or the pharmacy's response body.
  */
 const NOT_SENT: Record<PayloadError | 'multi_item', string> = {
-  sku_missing: 'No pharmacy SKU yet. Place it in the pharmacy portal, or add the SKU in Admin → Products.',
+  sku_missing: 'No RxHere catalog ID for this product. Add it in Admin → Products (the IDs are listed in Admin → Settings → Pharmacy catalog), or place it in the RxHere portal.',
   no_directions: 'No directions on the prescription and no approved default for this product.',
   patient_incomplete: 'The patient’s legal name or date of birth is missing or invalid. Fix the profile, then retry.',
-  no_address: 'No shipping address on the order.',
+  no_address: 'The shipping address is missing a street, city, state or ZIP.',
   no_npi: 'The prescriber has no valid 10-digit NPI on file (Admin → Settings).',
-  multi_item: 'More than one product on this order. Place it in the pharmacy portal.',
+  no_license: 'The prescriber has no licence number on file (Admin → Settings → Prescriber).',
+  multi_item: 'More than one product on this order. Place it in the RxHere portal.',
 };
-const REJECTED: Record<RxHereErrorCode, string> = {
-  sku_unknown: 'The pharmacy does not recognise this SKU. Check it in Admin → Products, then retry.',
-  patient_incomplete: 'The pharmacy rejected the patient’s name, date of birth or address. Fix them, then retry.',
-  bad_request: 'The pharmacy rejected the order (400). Retry, or place it by hand.',
-  auth: 'The pharmacy refused our API token. Check RXHERE_API_TOKEN.',
-  not_found: 'The pharmacy reported a duplicate but could not return it. Check its portal before retrying.',
-  conflict: 'The pharmacy already has this order number. Check its portal before retrying.',
-  unavailable: 'The pharmacy API did not answer. Retry in a few minutes.',
-  not_configured: 'The pharmacy API is not configured.',
+const REJECTED: Partial<Record<RxHereErrorCode, string>> = {
+  product_unavailable: 'RxHere says this product is not offered to us or is out of stock. Check the catalog ID in Admin → Products.',
+  unauthorized: 'RxHere refused our API key. Check RXHERE_API_TOKEN in Vercel.',
+  forbidden: 'Our API key is not allowed to place orders. Ask RxHere to adjust it.',
+  account_not_open: 'RxHere says our account cannot place new orders right now. Contact RxHere.',
+  invalid_npi: 'RxHere rejected the prescriber’s NPI. Check it in Admin → Settings.',
+  invalid_dea: 'RxHere rejected the prescriber’s DEA number. Check it in Admin → Settings.',
+  controlled_requires_dea: 'This product is a controlled substance and needs the prescriber’s DEA number (Admin → Settings).',
+  license_state_mismatch: 'RxHere has no licence for the prescriber in the patient’s state. Add it in Admin → Settings → Prescriber.',
+  validation_failed: 'RxHere rejected a field on the order. Check the patient’s details and the product, then retry.',
+  order_rejected: 'RxHere could not place the order. Check its portal, then retry or place it by hand.',
+  duplicate_request: 'RxHere is still processing this order. Retry in a minute.',
+  rate_limited: 'RxHere asked us to slow down. Retry in a minute.',
+  unavailable: 'RxHere did not answer. Retry in a few minutes.',
 };
 
 /**
@@ -339,14 +336,13 @@ export async function alertCareTeam(input: {
 }
 
 /**
- * Send one paid order to the pharmacy over its API.
+ * Send one paid order to RxHere (POST /prescriptions).
  *
  * Called when the order joins the board, and again from "Send to pharmacy" on
- * the order page (`manual`, which goes even in dry run: a person chose to
- * send this one). Never sends twice: an order with a pharmacy order id is
+ * the order page. Never sends twice: an order with a pharmacy order id is
  * done, the SENDING claim below lets only one caller through at a time, and
- * our order number is the partnerOrderId, so a resend the pharmacy already has
- * comes back 409 and is reconciled instead of duplicated.
+ * our order number is the external_order_id, so a resend RxHere already has
+ * returns the original order instead of a second one.
  *
  * Not sent means the row stays in "To place" with the reason on it, exactly
  * as a manual order does today.
@@ -414,11 +410,12 @@ export async function sendToPharmacyApi(
       .from('order_items')
       .select('product_id, quantity, cadence')
       .eq('order_id', order.id);
+    // ponytail: one product per order goes by API; multi-line orders are placed by hand until each line carries its own signed sig.
     if (items?.length !== 1) return fail('MANUAL', NOT_SENT.multi_item);
     const line = items[0];
 
     const rxQuery = db.from('prescriptions').select('directions, doctor_id');
-    const [{ data: rx }, { data: profile }, { data: intake }, product, item] = await Promise.all([
+    const [{ data: rx }, { data: profile }, { data: intake }, item] = await Promise.all([
       row.prescription_id
         ? rxQuery.eq('id', row.prescription_id).maybeSingle()
         : rxQuery.eq('order_id', order.id).maybeSingle(),
@@ -431,7 +428,6 @@ export async function sendToPharmacyApi(
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
-      getCatalogProduct(String(line.product_id)),
       pharmacyEntryFor(String(line.product_id)),
     ]);
     const prescriber = await getPrescriber(rx?.doctor_id ?? order.assigned_physician_id ?? undefined);
@@ -441,13 +437,13 @@ export async function sendToPharmacyApi(
     // The legal name as given at the assessment; a profile name only if it has both parts.
     const [pFirst, ...pRest] = str(profile?.full_name).split(/\s+/);
 
-    const built = buildOrderPayload({
+    const built = buildPrescriptionPayload({
       orderNumber: order.order_number,
+      patientId: String(order.user_id),
       item,
       cadence: String(line.cadence ?? 'monthly'),
       lineQty: line.quantity ?? 1,
       sig: rx?.directions ?? item?.defaultSig ?? null,
-      shippingMethod: shippingMethodFor(product?.storage),
       patient: {
         firstName: str(answers.first_name) || (pRest.length ? pFirst : null),
         lastName: str(answers.last_name) || (pRest.length ? pRest.join(' ') : null),
@@ -457,62 +453,47 @@ export async function sendToPharmacyApi(
         email: order.member_email,
       },
       address: (order.shipping_address ?? null) as Record<string, unknown> | null,
-      prescriber,
-      practiceName: BUSINESS_LEGAL_NAME,
+      prescriber: {
+        name: prescriber.display || prescriber.name,
+        npi: prescriber.npi,
+        dea: prescriber.dea,
+        licenses: { ...prescriber.otherLicenses, ...(prescriber.licenseState ? { [prescriber.licenseState]: prescriber.licenseNumber } : {}) },
+      },
     });
     if (!built.ok) return fail(built.error === 'sku_missing' ? 'MANUAL' : 'ERROR', NOT_SENT[built.error]);
-    const payload = built.payload;
 
-    if (rxhereDryRun() && !opts.manual) {
-      // Shape only: which fields are filled, never their values.
-      console.info(
-        `[rxhere] dry run · order ${order.order_number} · sku ${payload.sku} · ${payload.shippingMethod} · qty ${payload.quantity} · patient fields ${Object.keys(payload.patient).filter((k) => payload.patient[k as keyof typeof payload.patient] !== undefined).join(',')}`,
-      );
-      return fail('DRY_RUN', 'Dry run: not sent automatically. Use “Send to pharmacy” on the order, or place it by hand.');
-    }
-
-    let res = await submitPharmacyOrder(payload);
-    // Already there (a retry after a timeout that did land): adopt it, don't resend.
-    if (!res.ok && res.code === 'conflict') res = await getPharmacyOrder(order.order_number);
-    if (!res.ok) return fail('ERROR', REJECTED[res.code]);
+    const res = await postPrescription(built.payload);
+    if (!res.ok) return fail('ERROR', REJECTED[res.code] ?? `RxHere rejected the order (${res.code}). Retry, or place it by hand.`);
     const placed = res.data;
 
     /*
-     * Patient-specific only. A research-use (RUO) order carries no patient and
-     * ships to the provider; if the pharmacy ever answers with one, it is
-     * cancelled on the spot and a person takes over. The id is kept so it is
-     * never resent automatically.
+     * Sandbox key (vr_test_): every check passed and nothing was created. The
+     * row stays in "To place" so a person places it, or it goes again once the
+     * live key is in.
      */
-    if (!isPatientSpecific(placed)) {
-      const cancel = await cancelPharmacyOrder(placed.orderId || order.order_number);
-      const cancelled = cancel.ok && cancel.data.success !== false;
-      await settle(
-        'ERROR',
-        cancelled
-          ? 'The pharmacy took this as a research-use order, not a patient prescription. It was cancelled automatically. Do not resend until the pharmacy fixes the account.'
-          : 'The pharmacy took this as a research-use order, not a patient prescription, and the automatic cancel failed. Cancel it in the pharmacy portal now.',
-        { pharmacy_order_id: placed.orderId ?? null, pharmacy_batch_id: placed.batchId ?? null },
-      );
-      await alertCareTeam({
-        orderNumber: order.order_number,
-        eyebrow: 'Pharmacy error',
-        heading: cancelled ? 'A pharmacy order was cancelled automatically' : 'Cancel a pharmacy order now',
-        body: cancelled
-          ? 'The pharmacy answered as a research-use order, not a patient prescription, so it was cancelled. Place it by hand and raise it with the pharmacy.'
-          : 'The pharmacy answered as a research-use order, not a patient prescription, and the automatic cancel failed. Cancel it in the pharmacy portal now.',
-      });
-      return { sent: false, message: 'The pharmacy answered as research-use, not patient-specific. See the order.' };
+    if (placed.sandbox || rxhereSandbox()) {
+      return fail('DRY_RUN', 'Sandbox key: RxHere accepted every field, but nothing was created. Place it by hand, or retry once the live key is in.');
+    }
+    if (!placed.order_id) {
+      return fail('ERROR', 'RxHere answered without an order id. Check its portal; a retry returns the same order.');
     }
 
-    if (!placed?.orderId) {
-      return fail('ERROR', 'The pharmacy answered without an order id. Check its portal; a retry reconciles it.');
-    }
-
-    await settle(placed.status || 'SUBMITTED', null, {
-      pharmacy_order_id: placed.orderId,
-      pharmacy_batch_id: placed.batchId ?? null,
+    // RxHere charges our card on file per order; a decline leaves it unfilled until paid.
+    const unpaid = placed.payment_status === 'awaiting_payment';
+    await settle(unpaid ? 'AWAITING_PAYMENT' : 'SUBMITTED', unpaid ? 'RxHere could not charge our card on file. Update the card in the RxHere portal; it fills once paid.' : null, {
+      pharmacy_order_id: placed.order_id,
+      // RxHere's own order number, as its portal shows it.
+      pharmacy_batch_id: placed.order_number ?? null,
       pharmacy_submitted_at: now(),
     });
+    if (unpaid) {
+      await alertCareTeam({
+        orderNumber: order.order_number,
+        eyebrow: 'Pharmacy payment',
+        heading: 'RxHere could not charge our card',
+        body: 'The order is at RxHere but will not be filled until it is paid. Update the card on file in the RxHere portal.',
+      });
+    }
 
     // The same step as "Mark placed" on the board: row, order and timeline move together.
     await advanceFulfillment({
@@ -520,12 +501,12 @@ export async function sendToPharmacyApi(
       step: 'placed',
       actorName: 'System',
       actorRole: 'pharmacy',
-      pharmacyRef: placed.orderId,
+      pharmacyRef: placed.order_number ?? placed.order_id,
       note: 'Sent to our partner pharmacy. A pharmacist verifies your prescription before compounding starts.',
       // Only paid orders reach the board, and the pharmacy has it now either way.
       paymentConfirmed: true,
     });
-    return { sent: true, message: `Sent to the pharmacy (order ${placed.orderId}).` };
+    return { sent: true, message: `Sent to the pharmacy (order ${placed.order_number ?? placed.order_id}).` };
   };
 
   try {
@@ -539,10 +520,9 @@ export async function sendToPharmacyApi(
 
 /**
  * Staff cancelled an order: take it off the board and, if it already went to
- * the pharmacy and hasn't shipped, cancel it there. A cancel the API refuses,
- * or an order a person placed in the pharmacy portal by hand, is a person's
- * job: the care team is told to cancel it there, and `cancelByHand` says so
- * to whoever pressed cancel.
+ * the pharmacy and hasn't shipped, tell the care team to cancel it in the
+ * RxHere portal (the API has no cancel). `cancelByHand` says so to whoever
+ * pressed cancel.
  */
 export async function withdrawFromPharmacy(orderNumber: string): Promise<{ cancelByHand: boolean }> {
   if (!supabaseAdminConfigured()) return { cancelByHand: false };
@@ -577,26 +557,8 @@ export async function withdrawFromPharmacy(orderNumber: string): Promise<{ cance
       ? byHand('This order was cancelled here after it was placed with the pharmacy by hand. Cancel it in the pharmacy portal before it ships.')
       : { cancelByHand: false };
   }
-  if (!rxhereConfigured()) {
-    return byHand(`This order was cancelled here, but the pharmacy API is not configured (pharmacy order ${order.pharmacy_order_id}). Cancel it in the pharmacy portal before it ships.`);
-  }
-
-  const res = await cancelPharmacyOrder(orderNumber);
-  if (res.ok && res.data.success !== false) {
-    await db
-      .from('orders')
-      .update({ pharmacy_status: 'CANCELLED', pharmacy_updated_at: new Date().toISOString() })
-      .eq('id', order.id);
-    await db.from('order_updates').insert({
-      order_id: order.id,
-      label: 'Cancelled at the pharmacy',
-      body: 'The pharmacy order was cancelled before it shipped.',
-      author: 'System',
-      author_role: 'system',
-    });
-    return { cancelByHand: false };
-  }
+  // The API has no cancel: a person cancels it in the RxHere portal before it ships.
   return byHand(
-    `This order was cancelled here, but the pharmacy did not accept the cancel (pharmacy order ${order.pharmacy_order_id}). Cancel it in the pharmacy portal before it ships.`,
+    `This order was cancelled here. Cancel RxHere order ${order.pharmacy_order_id} in the RxHere portal before it ships.`,
   );
 }

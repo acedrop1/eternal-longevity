@@ -8,9 +8,11 @@
  * prefills reads that, never this map directly.
  *
  * Fields:
- *   sku         — from the pharmacy's catalogue (owner). null = not on the
- *                 API yet: the order stays on the board to place by hand,
- *                 marked "No pharmacy SKU yet".
+ *   sku         — the RxHere catalog id (a UUID, Admin → Settings → Pharmacy
+ *                 catalog), set per product in Admin → Products. The codes
+ *                 below (AA-NAD-02…) are the old partner-API SKUs, kept for
+ *                 reference only: anything that is not a UUID is never sent
+ *                 and the order stays on the board to place by hand.
  *   defaultSig  — the directions Dr. Elder approves for this product. Only a
  *                 prefill: he can edit it per prescription, and what he signs
  *                 is what is sent.

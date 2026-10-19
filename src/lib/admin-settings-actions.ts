@@ -7,6 +7,8 @@
  * variables and are shown read-only. The prescriber on file is the one piece
  * the admin edits in-app — it flows onto every order sent to the pharmacy.
  */
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { validDea } from './rxhere-rules';
 import { revalidatePath } from 'next/cache';
 import { getSession } from './auth-server';
 import { CREDENTIALS, getPrescriber, recordAudit } from './prescriber';
@@ -29,6 +31,8 @@ export async function adminSavePrescriber(input: {
   licenseState: string;
   licenseNumber: string;
   licenseExpires: string;
+  otherLicenses?: Record<string, string>;
+  dea?: string;
 }): Promise<SettingsResult> {
   const session = await getSession();
   if (!session || session.role !== 'admin') {
@@ -53,6 +57,8 @@ export async function doctorSaveOwnDetails(input: {
   licenseNumber: string;
   licenseExpires: string;
   phone: string;
+  otherLicenses?: Record<string, string>;
+  dea?: string;
 }): Promise<SettingsResult> {
   const session = await getSession();
   if (!session || session.role !== 'doctor') {
@@ -76,6 +82,8 @@ async function savePrescriberFields(
     licenseNumber: string;
     licenseExpires: string;
     phone?: string;
+    otherLicenses?: Record<string, string>;
+    dea?: string;
   },
   actorId: string,
   actorName: string,
@@ -103,6 +111,18 @@ async function savePrescriberFields(
   if (state && state.length !== 2) {
     return { ok: false, message: 'Use the two-letter state code.' };
   }
+  const dea = (input.dea ?? '').trim().toUpperCase();
+  if (dea && !validDea(dea)) {
+    return { ok: false, message: 'A DEA number is 2 letters and 7 digits, and this one fails the DEA check digit.' };
+  }
+  const other: Record<string, string> = {};
+  for (const [st, n] of Object.entries(input.otherLicenses ?? {})) {
+    const k = st.trim().toUpperCase();
+    const v = String(n ?? '').trim();
+    if (!/^[A-Z]{2}$/.test(k) || k === state) continue;
+    if (v.length > 40) return { ok: false, message: `The ${k} licence number is too long.` };
+    if (v) other[k] = v;
+  }
 
   try {
     const db = createSupabaseAdminClient();
@@ -123,6 +143,16 @@ async function savePrescriberFields(
       .update(next)
       .eq('id', input.doctorId);
     if (error) return { ok: false, message: error.message };
+    if (input.dea !== undefined || input.otherLicenses !== undefined) {
+      // ponytail: a separate write so the rest still saves before migration 0036 is run.
+      const { error: extraErr } = await (db as unknown as SupabaseClient)
+        .from('profiles')
+        .update({ dea_number: dea || null, other_licenses: other })
+        .eq('id', input.doctorId);
+      if (extraErr) {
+        return { ok: false, message: 'Saved, except the DEA number and other licences: run supabase/migrations/0036_prescriber_dea_licences.sql in Supabase, then save again.' };
+      }
+    }
 
     /*
      * These are the facts a board or a certifier asks you to evidence, and they
@@ -137,6 +167,14 @@ async function savePrescriberFields(
         ['Licence state', before.licenseState, state],
         ['Licence number', before.licenseNumber, input.licenseNumber.trim()],
         ['Licence expiry', before.licenseExpires, input.licenseExpires.trim()],
+        ['DEA number', before.dea, input.dea === undefined ? before.dea : dea],
+        [
+          'Other licences',
+          Object.entries(before.otherLicenses).map(([k, v]) => `${k} ${v}`).join(', '),
+          input.otherLicenses === undefined
+            ? Object.entries(before.otherLicenses).map(([k, v]) => `${k} ${v}`).join(', ')
+            : Object.entries(other).map(([k, v]) => `${k} ${v}`).join(', '),
+        ],
       ].map(([field, oldValue, newValue]) => ({
         actorId,
         actorName,

@@ -1,67 +1,83 @@
 /**
- * The pharmacy's partner API (RXHere): place, read and cancel patient-specific
- * orders.
+ * The pharmacy's practice ordering API (RxHere, run by VitaRelay, Inc.):
+ * read the catalog, post prescriptions, read an order. The Oct 18 2026
+ * Integration Guide. There is no cancel and no shipping-rate endpoint: a cancel
+ * is a person's job in the RxHere portal.
  *
  * Server-only. Configured entirely from env and never logged:
- *   RXHERE_API_TOKEN       bearer token from the pharmacy's Provider Portal
- *   RXHERE_WEBHOOK_SECRET  the secret shown with it, checked on every webhook
- *   RXHERE_API_BASE        optional; defaults to production
- *   RXHERE_DRY_RUN=1       optional; build every payload, send nothing
+ *   RXHERE_API_TOKEN       the practice API key. vr_test_… is the sandbox: every
+ *                          check runs, nothing is created, shipped or charged.
+ *   RXHERE_WEBHOOK_SECRET  the signing secret RxHere shows once when it
+ *                          registers our webhook address (HMAC-SHA256).
  *
  * Every request carries patient data, so nothing from a request or a response
- * body is put into a thrown error or a log line: failures come back as a fixed
- * code plus the HTTP status.
+ * body is put into a thrown error or a log line: failures come back as the
+ * API's error code plus the HTTP status.
  */
 import 'server-only';
-import type { RxHereOrder, RxHereOrderPayload } from '@/lib/rxhere-rules';
+import type { RxHereCatalogItem, RxHerePlaced, RxHerePrescriptionPayload } from '@/lib/rxhere-rules';
 
-const TIMEOUT_MS = 10_000;
+const BASE = 'https://portal.rxhere.com/api/public/practice/v1';
+const TIMEOUT_MS = 15_000;
 
 export function rxhereConfigured(): boolean {
   return Boolean(process.env.RXHERE_API_TOKEN && process.env.RXHERE_WEBHOOK_SECRET);
 }
 
-export function rxhereDryRun(): boolean {
-  return process.env.RXHERE_DRY_RUN === '1';
+/** A vr_test_ key: the API checks everything and creates nothing. */
+export function rxhereSandbox(): boolean {
+  return (process.env.RXHERE_API_TOKEN ?? '').startsWith('vr_test_');
 }
 
+/** The API's own error codes (guide §8), plus our two for no answer and no key. */
 export type RxHereErrorCode =
-  | 'sku_unknown'
-  | 'patient_incomplete'
-  | 'bad_request'
-  | 'auth'
+  | 'invalid_body'
+  | 'product_unavailable'
+  | 'unauthorized'
+  | 'account_not_open'
+  | 'forbidden'
   | 'not_found'
-  | 'conflict'
+  | 'duplicate_request'
+  | 'validation_failed'
+  | 'invalid_npi'
+  | 'invalid_dea'
+  | 'controlled_requires_dea'
+  | 'license_state_mismatch'
+  | 'prescriber_required'
+  | 'prescriber_not_found'
+  | 'shipping_address_required'
+  | 'prescriptions_required'
+  | 'order_rejected'
+  | 'rate_limited'
   | 'unavailable'
   | 'not_configured';
 
+const KNOWN = new Set<string>([
+  'invalid_body', 'product_unavailable', 'unauthorized', 'account_not_open', 'not_found', 'duplicate_request',
+  'validation_failed', 'invalid_npi', 'invalid_dea', 'controlled_requires_dea', 'license_state_mismatch',
+  'prescriber_required', 'prescriber_not_found', 'shipping_address_required', 'prescriptions_required', 'order_rejected',
+]);
+
 export type RxHereResult<T> =
-  | { ok: true; data: T }
+  | { ok: true; data: T; status: number }
   | { ok: false; code: RxHereErrorCode; status: number; retryable: boolean };
 
-/**
- * 400s are told apart by the pharmacy's message, read here and dropped: an
- * unknown SKU is ours to fix in the catalogue map, a missing identity or
- * address is the patient record.
- */
-function codeFor(status: number, message: string): RxHereErrorCode {
-  if (status === 400) {
-    if (/sku/i.test(message)) return 'sku_unknown';
-    if (/patient|address|destination|dateOfBirth|firstName|lastName/i.test(message)) return 'patient_incomplete';
-    return 'bad_request';
-  }
-  if (status === 401 || status === 403) return 'auth';
+function codeFor(status: number, code: string): RxHereErrorCode {
+  if (KNOWN.has(code)) return code as RxHereErrorCode;
+  if (status === 401) return 'unauthorized';
+  if (status === 403) return 'forbidden';
   if (status === 404) return 'not_found';
-  if (status === 409) return 'conflict';
+  if (status === 409) return 'duplicate_request';
+  if (status === 429) return 'rate_limited';
+  if (status === 422) return 'validation_failed';
   return 'unavailable';
 }
 
 async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<RxHereResult<T>> {
   const token = process.env.RXHERE_API_TOKEN;
   if (!token) return { ok: false, code: 'not_configured', status: 0, retryable: false };
-  const base = (process.env.RXHERE_API_BASE || 'https://api.rxhere.com/api').replace(/\/+$/, '');
   try {
-    const res = await fetch(`${base}${path}`, {
+    const res = await fetch(`${BASE}${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -73,60 +89,37 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
       cache: 'no-store',
     });
     const text = await res.text();
-    if (res.ok) {
-      try {
-        return { ok: true, data: JSON.parse(text) as T };
-      } catch {
-        return { ok: false, code: 'unavailable', status: res.status, retryable: true };
-      }
-    }
-    let message = '';
+    let json: { data?: T; error?: { code?: unknown } } = {};
     try {
-      const j = JSON.parse(text) as { error?: unknown; message?: unknown };
-      message = String(j.error ?? j.message ?? '');
+      json = JSON.parse(text);
     } catch {
-      message = text.slice(0, 300);
+      // Not JSON: an outage page or a proxy error.
     }
-    const code = codeFor(res.status, message);
-    return { ok: false, code, status: res.status, retryable: code === 'unavailable' };
+    if (res.ok && json.data !== undefined) return { ok: true, data: json.data, status: res.status };
+    const code = res.ok ? 'unavailable' : codeFor(res.status, String(json.error?.code ?? ''));
+    return { ok: false, code, status: res.status, retryable: ['unavailable', 'rate_limited', 'duplicate_request'].includes(code) };
   } catch {
     // Timeout or network: the order may or may not have landed. The retry
-    // resends the same partnerOrderId, and a 409 then reconciles it.
+    // resends the same external_order_id, which returns the original order.
     return { ok: false, code: 'unavailable', status: 0, retryable: true };
   }
 }
 
-const id = (s: string) => encodeURIComponent(s);
-
-export function submitPharmacyOrder(payload: RxHereOrderPayload): Promise<RxHereResult<RxHereOrder>> {
-  return call<RxHereOrder>('POST', '/logistics/orders', payload);
+/** One page of the catalog (limit max 100). */
+export function listCatalog(opts: { q?: string; page?: number; limit?: number } = {}): Promise<RxHereResult<RxHereCatalogItem[]>> {
+  const p = new URLSearchParams();
+  if (opts.q) p.set('q', opts.q);
+  p.set('page', String(opts.page ?? 1));
+  p.set('limit', String(Math.min(100, opts.limit ?? 100)));
+  return call<RxHereCatalogItem[]>('GET', `/catalog?${p}`);
 }
 
-/** By the pharmacy's orderId or our partnerOrderId (our order number). */
-export function getPharmacyOrder(orderIdOrRef: string): Promise<RxHereResult<RxHereOrder>> {
-  return call<RxHereOrder>('GET', `/logistics/orders/${id(orderIdOrRef)}`);
+/** Patient + prescriber + lines in one call; creates nothing unless every check passes. */
+export function postPrescription(payload: RxHerePrescriptionPayload): Promise<RxHereResult<RxHerePlaced>> {
+  return call<RxHerePlaced>('POST', '/prescriptions', payload);
 }
 
-/** Before carrier dispatch only. A partnerOrderId cancels the whole batch. */
-export function cancelPharmacyOrder(
-  orderIdOrRef: string,
-): Promise<RxHereResult<{ success: boolean; cancelledCount?: number; failedCount?: number }>> {
-  return call('POST', `/logistics/orders/${id(orderIdOrRef)}/cancel`);
-}
-
-export interface RxHereRates {
-  carrier: string;
-  rates: {
-    serviceLevel: '2_DAY' | 'OVERNIGHT';
-    label: string;
-    amount: number;
-    currency: string;
-    estimatedDaysMin: number;
-    estimatedDaysMax: number;
-    description: string;
-  }[];
-}
-
-export function getShippingRates(): Promise<RxHereResult<RxHereRates>> {
-  return call<RxHereRates>('GET', '/logistics/shipping-rates');
+/** By RxHere's order_id. */
+export function getPharmacyOrder(orderId: string): Promise<RxHereResult<Record<string, unknown>>> {
+  return call('GET', `/orders/${encodeURIComponent(orderId)}`);
 }

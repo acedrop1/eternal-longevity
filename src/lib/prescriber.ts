@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
@@ -28,6 +29,8 @@ const EMPTY: PrescriberRecord = {
   licenseState: '',
   licenseNumber: '',
   licenseExpires: '',
+  otherLicenses: {},
+  dea: '',
   email: '',
   phone: '',
 };
@@ -73,6 +76,14 @@ export async function getPrescriber(
     const credential =
       (data.credential ?? '').trim() || (suffixed ? PRESCRIBER_FALLBACK.credential : '');
 
+    // Read apart so a database without migration 0036 still returns the rest.
+    const { data: extra } = await (db as unknown as SupabaseClient)
+      .from('profiles')
+      .select('dea_number, other_licenses')
+      .eq('id', data.id)
+      .maybeSingle();
+    const other = (extra?.other_licenses ?? {}) as Record<string, unknown>;
+
     return {
       id: data.id,
       name,
@@ -82,6 +93,10 @@ export async function getPrescriber(
       licenseState: data.license_state ?? '',
       licenseNumber: data.license_number ?? '',
       licenseExpires: data.license_expires ?? '',
+      otherLicenses: Object.fromEntries(
+        Object.entries(other).filter((e): e is [string, string] => typeof e[1] === 'string' && e[1].trim() !== ''),
+      ),
+      dea: typeof extra?.dea_number === 'string' ? extra.dea_number : '',
       email: data.email ?? '',
       phone: data.phone ?? '',
     };

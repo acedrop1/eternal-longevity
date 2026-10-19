@@ -405,7 +405,7 @@ export function AdminProductEditor({
                   }}
                 />
               </Field>
-              <Field label="SKU (pharmacy)" hint={p.pharmacy.sku.trim() ? 'Orders are sent automatically.' : 'Empty: orders stay on the board to place by hand.'}>
+              <Field label="Pharmacy ID (RxHere catalog)" hint={/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.pharmacy.sku.trim()) ? 'Orders are sent automatically.' : 'Paste the ID from Settings → Pharmacy catalog. Until then orders stay on the board to place by hand.'}>
                 <input className={input} value={p.pharmacy.sku} maxLength={80} spellCheck={false} onChange={(e) => setRx('sku', e.target.value.replace(/\s/g, ''))} />
               </Field>
               <Field label="Name for the pharmacy">

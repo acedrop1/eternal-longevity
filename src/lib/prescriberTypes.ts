@@ -16,6 +16,10 @@ export interface PrescriberRecord {
   licenseState: string;
   licenseNumber: string;
   licenseExpires: string;
+  /** Licences in other states, state → number (the primary one is licenseState / licenseNumber). */
+  otherLicenses: Record<string, string>;
+  /** Needed only for controlled substances. */
+  dea: string;
   email: string;
   phone: string;
 }

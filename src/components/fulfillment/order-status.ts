@@ -54,9 +54,12 @@ export function fulfillmentBadge(b?: BoardRow, o?: Order): [string, BadgeTone] |
   return null;
 }
 
-/** The pharmacy API's status words (and our own: SENDING, ERROR, MANUAL, DRY_RUN). */
+/** RxHere's webhook events (and our own: SENDING, ERROR, MANUAL, DRY_RUN, AWAITING_PAYMENT). */
 const PHARMACY: Record<string, [string, BadgeTone]> = {
   SENDING: ['Sending to pharmacy', 'info'],
+  AWAITING_PAYMENT: ['Pharmacy card declined', 'critical'],
+  PAID: ['Paid at pharmacy', 'info'],
+  INVOICED: ['Invoiced by pharmacy', 'info'],
   COMPOUNDING: ['Compounding', 'info'],
   QA_PENDING: ['Pharmacy QA', 'info'],
   SHIPPED: ['Shipped by pharmacy', 'success'],
@@ -68,7 +71,7 @@ const PHARMACY: Record<string, [string, BadgeTone]> = {
   CANCELLED: ['Pharmacy cancelled', 'critical'],
   ERROR: ['Pharmacy error', 'critical'],
   MANUAL: ['Place by hand', 'attention'],
-  DRY_RUN: ['Dry run · not sent', 'attention'],
+  DRY_RUN: ['Sandbox · not created', 'attention'],
 };
 const RETRYABLE = ['ERROR', 'MANUAL', 'DRY_RUN'];
 
