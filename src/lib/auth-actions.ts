@@ -20,6 +20,8 @@ import {
 } from './supabase/admin';
 import { passwordResetEmail, sendEmail, signupWelcomeEmail } from './email';
 import { SIGNUP_CONSENT } from './followups';
+import { optInEmailFromForm } from './marketing';
+import { CONSENT_VERSION as MARKETING_CONSENT_VERSION, EMAIL_DISCLOSURE } from './marketing-consent';
 import { SITE_URL } from './site';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from './session-policy';
 import {
@@ -232,6 +234,16 @@ export async function signupAction(formData: FormData): Promise<void> {
     if (createErr?.code === 'weak_password') redirect('/signup?error=leaked');
     if (createErr || !created.user) redirect('/signup?error=taken');
     if (fullName) await admin.from('profiles').update({ full_name: fullName }).eq('id', created.user.id);
+    // The pre-checked marketing box, if they left it checked.
+    if (formData.get('marketing_email') === 'on') {
+      await optInEmailFromForm(admin, {
+        email,
+        firstName: fullName.split(/\s+/)[0] || null,
+        formUrl: `${SITE_URL}/signup`,
+        disclosure: EMAIL_DISCLOSURE,
+        version: MARKETING_CONSENT_VERSION,
+      });
+    }
 
     const msg = signupWelcomeEmail({ firstName: fullName.split(/\s+/)[0] || undefined });
     await sendEmail({ to: email, subject: msg.subject, html: msg.html }).catch(() => undefined);

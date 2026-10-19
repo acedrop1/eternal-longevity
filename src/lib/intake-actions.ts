@@ -34,6 +34,8 @@ import { DEMO_USERS } from '@/lib/auth';
 import { deleteAssessmentDraft } from '@/lib/assessment-drafts';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ACTIVITY_COOKIE, SESSION_START_COOKIE } from '@/lib/session-policy';
+import { optInEmailFromForm } from '@/lib/marketing';
+import { CONSENT_VERSION as MARKETING_CONSENT_VERSION, EMAIL_DISCLOSURE } from '@/lib/marketing-consent';
 import { SERVICE_AREA_OR, SITE_URL } from '@/lib/site';
 import {
   createSupabaseAdminClient,
@@ -367,6 +369,9 @@ export async function submitIntakeAction(
   const team = intakeReceivedTeamEmail(caseId, email, fullName);
   await sendEmail({ to: SUPPORT_EMAIL, subject: team.subject, html: team.html }).catch(() => undefined);
 
+  // The assessment's marketing-email box (pre-checked when shown), if they left it checked.
+  if (userId) await marketingFromAssessment(createSupabaseAdminClient(), answers, String(email), fullName);
+
   // Chosen plan into their cart, then signed in and on to checkout.
   if (userId) await saveChosenToCart(createSupabaseAdminClient(), userId, plan);
   const signedIn = userId ? await signIn(email.trim().toLowerCase(), account.password) : false;
@@ -444,9 +449,30 @@ export async function submitMemberAssessmentAction(
     return { ok: false, error: 'We could not save your answers. Please try again.' };
   }
   await syncProfileFromAnswers(db, user.id, merged);
+  // Only this submission's own box counts: consents on file from an earlier visit don't enrol anyone.
+  await marketingFromAssessment(db, answers, user.email, user.name);
   await saveChosenToCart(db, user.id, plan);
   await deleteAssessmentDraft(user.id, entry);
   return { ok: true, caseId, next: '/checkout' };
+}
+
+/** The assessment's pre-checked marketing-email box, counted when it was submitted checked. */
+async function marketingFromAssessment(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  answers: Record<string, unknown>,
+  email: string | null | undefined,
+  name: string | null | undefined,
+): Promise<void> {
+  const consents = (answers.consents ?? {}) as Record<string, unknown>;
+  if (consents.marketing_email !== true || !email) return;
+  await optInEmailFromForm(db, {
+    email,
+    firstName: String(name ?? '').trim().split(/\s+/)[0] || null,
+    state: typeof answers.state === 'string' ? answers.state : null,
+    formUrl: `${SITE_URL}/start`,
+    disclosure: EMAIL_DISCLOSURE,
+    version: MARKETING_CONSENT_VERSION,
+  });
 }
 
 /* ------------------------------ portal visit ----------------------------- */

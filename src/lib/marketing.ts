@@ -87,3 +87,42 @@ export async function contactByPrefToken(db: Db, token: string) {
     .maybeSingle();
   return data;
 }
+
+/**
+ * Marketing email opt-in from the sign-up or assessment form: a pre-checked box
+ * the person can untick, counted when they submit (owner's choice; email
+ * marketing is opt-out under CAN-SPAM). Logged to the consent ledger with the
+ * wording shown. Never re-subscribes someone who opted out: only an explicit
+ * /subscribe does that. SMS is never enrolled this way (TCPA needs an unticked box).
+ */
+export async function optInEmailFromForm(
+  db: Db,
+  input: { email: string; firstName?: string | null; state?: string | null; formUrl: string; disclosure: string; version: string },
+): Promise<void> {
+  const email = input.email.trim().toLowerCase();
+  if (!email) return;
+  try {
+    const { data: existing } = await db.from('marketing_contacts').select('id, email_status').eq('email', email).maybeSingle();
+    if (existing?.email_status === 'unsubscribed' || existing?.email_status === 'subscribed') return;
+    const row = { email, email_status: 'subscribed' as const, ...(input.firstName ? { first_name: input.firstName } : {}), ...(input.state ? { state: input.state } : {}) };
+    const { data: saved } = existing
+      ? await db.from('marketing_contacts').update(row).eq('id', existing.id).select('id').single()
+      : await db.from('marketing_contacts').insert(row).select('id').single();
+    if (!saved) return;
+    const meta = await requestMeta();
+    await logConsent(db, [
+      {
+        contact_id: saved.id,
+        channel: 'email',
+        action: 'opt_in',
+        disclosure_text: `${input.disclosure} [Pre-checked box, left checked on submit.]`,
+        disclosure_version: input.version,
+        form_url: input.formUrl,
+        ...meta,
+      },
+    ]);
+  } catch (err) {
+    // Sign-up and the assessment never fail over marketing.
+    console.error('[marketing] form opt-in failed', err instanceof Error ? err.message : err);
+  }
+}

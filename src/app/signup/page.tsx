@@ -13,6 +13,7 @@ import { PasswordField } from '@/components/auth/PasswordField';
 import { signupAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 import { SignupConsent } from '@/components/auth/SignupConsent';
+import { EMAIL_DISCLOSURE } from '@/lib/marketing-consent';
 import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton';
 
 export const metadata: Metadata = {
@@ -129,6 +130,18 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             minLength={8}
           />
         </div>
+
+        {/* Marketing email: pre-checked by the owner's choice, untick to opt out; counted on submit. Never texts. */}
+        <label className="flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-ink/75">
+          <input type="checkbox" name="marketing_email" defaultChecked className="mt-1 h-4 w-4 flex-none accent-ink" />
+          <span>
+            {EMAIL_DISCLOSURE.replace(' See Privacy Policy.', '')} See{' '}
+            <Link href="/legal/privacy" target="_blank" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
 
         <SubmitButton pendingLabel="Creating your account…">
           Create account →

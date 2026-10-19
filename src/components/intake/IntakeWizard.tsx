@@ -266,6 +266,17 @@ export function IntakeWizard({
   const screen = status.kind === 'in-progress' ? screens[idx] : undefined;
   const rec = useMemo(() => (mode === 'pre' ? recommendationFor(ctx, answers) : null), [mode, ctx, answers]);
 
+  // The marketing-email box starts checked, but only once the consents step is on screen: a member who
+  // skips that step (consents on file) is never enrolled by a box they didn't see. Unticking sticks.
+  const consentField = screen?.fields.find((f) => f.type === 'consent-stack');
+  useEffect(() => {
+    if (!consentField) return;
+    setAnswers((a) => {
+      const c = (a[consentField.id] ?? {}) as Record<string, boolean>;
+      return 'marketing_email' in c ? a : { ...a, [consentField.id]: { ...c, marketing_email: true } };
+    });
+  }, [consentField]);
+
   // Resume saved progress once, on the first screen that isn't complete.
   useEffect(() => {
     if (!saves) return;
