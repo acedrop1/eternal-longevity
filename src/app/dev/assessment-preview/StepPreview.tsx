@@ -64,7 +64,12 @@ export function StepPreview({
                 )}
                 <div className="mt-2 space-y-1 text-[12.5px]">
                   {f.showIf && <p className="text-amber-800">Only asked when {when(f.showIf)}.</p>}
-                  {f.knockoutOn && (
+                  {f.knockoutOn?.key === 'out_of_state' ? (
+                    <p className="text-red-700">
+                      Available in New Jersey, New York, Pennsylvania and Michigan. Any other state: “We’re not in your state yet”, no
+                      assessment or order, but they can still create a free account and hear when we launch there.
+                    </p>
+                  ) : f.knockoutOn && (
                     <p className="text-red-700">
                       Stops the assessment (not eligible) if answered: {f.options?.filter((o) => f.knockoutOn!.values.includes(o.value)).map((o) => o.label).join(' / ') || f.knockoutOn.values.join(' / ')}.
                     </p>

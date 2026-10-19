@@ -24,7 +24,7 @@ export default function CancellationPage() {
         {
           heading: `How to Cancel a Subscription`,
           paragraphs: [
-            `Open Portal › Subscriptions and cancel there. It takes effect immediately and stops all future charges. You can also pause or change your plan there. You can also email ${SUPPORT_EMAIL} from the address on your account and we will cancel it for you within one business day.`,
+            `Open Portal › Treatments and cancel there. It takes effect immediately and stops all future charges. You can also pause or change your plan there. You can also email ${SUPPORT_EMAIL} from the address on your account and we will cancel it for you within one business day.`,
             `We do not require a phone call, a reason, or notice. There is no cancellation fee and no minimum commitment.`,
           ],
         },

@@ -5,8 +5,10 @@ import {
   renewSubscription,
   type RenewalOutcome,
 } from '@/lib/refills';
-import { supabaseAdminConfigured } from '@/lib/supabase/admin';
-import { noticeEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
+import { noticeEmail, renewalReminderEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
+import { cadenceOfLabel, monthsPerCycle, planName } from '@/lib/order-rules';
+import { shortDate } from '@/lib/member-view';
 import { orderRef } from '@/lib/format';
 import { SITE_URL } from '@/lib/site';
 
@@ -101,5 +103,46 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ due, ...tally, outcomes });
+  const reminded = await remindUpcoming().catch(() => 0);
+  return NextResponse.json({ due, ...tally, outcomes, reminded });
+}
+
+/** Days ahead the renewal reminder goes out. */
+const REMIND_DAYS = 7;
+
+/**
+ * A week's notice before a 6 or 12 month plan charges: the amount, the date and
+ * how to change it. Monthly and 3 month plans renew often enough to expect it.
+ * Exactly REMIND_DAYS ahead, so one daily run sends each reminder once.
+ * ponytail: a missed cron day skips that day's reminders; add a reminded_at column if that matters.
+ */
+async function remindUpcoming(): Promise<number> {
+  const db = createSupabaseAdminClient();
+  const on = new Date(Date.now() + REMIND_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const { data: subs } = await db
+    .from('subscriptions')
+    .select('user_id, cadence_label, per_cycle_cents')
+    .eq('status', 'active')
+    .is('stripe_subscription_id', null)
+    .eq('next_billing_date', on);
+  const long = (subs ?? []).filter((s) => monthsPerCycle(cadenceOfLabel(s.cadence_label, 'monthly')) >= 6 && (s.per_cycle_cents ?? 0) > 0);
+  if (!long.length) return 0;
+  const { data: profiles } = await db
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', [...new Set(long.map((s) => s.user_id))]);
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  let sent = 0;
+  for (const s of long) {
+    const p = byId.get(s.user_id);
+    if (!p?.email) continue;
+    const m = renewalReminderEmail({
+      firstName: (p.full_name ?? '').trim().split(/\s+/)[0] || 'there',
+      amountCents: s.per_cycle_cents ?? 0,
+      dateLabel: shortDate(on),
+      planLabel: planName(s.cadence_label),
+    });
+    if ((await sendEmail({ to: p.email, subject: m.subject, html: m.html })).ok) sent++;
+  }
+  return sent;
 }

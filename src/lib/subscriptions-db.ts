@@ -25,6 +25,8 @@ import {
   perCycleCents,
   refillsBetween,
 } from '@/lib/order-rules';
+import { planUpdatedEmail, sendEmail } from '@/lib/email';
+import { shortDate } from '@/lib/member-view';
 
 type Result = { ok: boolean; error?: string };
 
@@ -32,6 +34,14 @@ export type PlanKey = 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
 const PLAN_KEYS: string[] = ['monthly', 'quarterly', 'sixMonth', 'annual'];
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/** The member's emailed record of a change they just made. Best effort: the change already stands. */
+async function emailMember(change: Parameters<typeof planUpdatedEmail>[0]['change'], detail?: string) {
+  const user = await getSession();
+  if (!user?.email) return;
+  const m = planUpdatedEmail({ firstName: user.name.trim().split(/\s+/)[0] || 'there', change, detail });
+  await sendEmail({ to: user.email, subject: m.subject, html: m.html }).catch(() => {});
+}
 
 /*
  * Ownership is read through the caller's own session (RLS), and the write then
@@ -119,6 +129,10 @@ export async function changeSubscriptionPlanAction(
       .eq('id', rx.id);
   }
 
+  await emailMember(
+    'changed',
+    `New plan: ${tier.label}${sub.next_billing_date ? `, starting ${shortDate(sub.next_billing_date)}` : ''}.`,
+  );
   revalidatePath('/portal/subscriptions');
   return { ok: true };
 }
@@ -152,6 +166,7 @@ export async function setSubscriptionStatusAction(
   if (!data?.length) {
     return { ok: false, error: 'That change is not available for this plan.' };
   }
+  await emailMember(status === 'active' ? 'resumed' : status);
   revalidatePath('/portal/subscriptions');
   return { ok: true };
 }
@@ -194,6 +209,7 @@ export async function skipNextCycleAction(subscriptionId: string): Promise<Resul
   }
   if (!data?.length) return { ok: false, error: 'This plan changed. Refresh and try again.' };
 
+  await emailMember('skipped', `Your next refill is now ${shortDate(next)}.`);
   revalidatePath('/portal/subscriptions');
   return { ok: true };
 }

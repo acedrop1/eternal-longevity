@@ -116,7 +116,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Treatments',
     q: 'How do refills work?',
-    a: "On a plan, refills ship on the same prescription until it expires or runs out of refills. They are not reviewed again each time, but the prescriber can pause or stop your plan at any time. When the prescription runs out, your plan pauses until he reviews it again. You can pause, change or cancel your plan any time in Portal › Subscriptions, with no fee.",
+    a: "On a plan, refills ship on the same prescription until it expires or runs out of refills. They are not reviewed again each time, but the prescriber can pause or stop your plan at any time. When the prescription runs out, your plan pauses until he reviews it again. You can pause, change or cancel your plan any time in Portal › Treatments, with no fee.",
   },
   {
     category: 'Treatments',
@@ -138,7 +138,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What does a plan include?',
-    a: "Refills on your prescription on the schedule you choose, tracked shipping on each one, and access to our team and the prescriber through the portal. Longer plans cost less per month. You can pause, change or cancel any time from Portal › Subscriptions, with no fee.",
+    a: "Refills on your prescription on the schedule you choose, tracked shipping on each one, and access to our team and the prescriber through the portal. Longer plans cost less per month. You can pause, change or cancel any time from Portal › Treatments, with no fee.",
   },
   {
     category: 'Pricing',

@@ -1697,7 +1697,7 @@ export function CheckoutFlow({
                 <span className="mt-1.5 block">
                   I can cancel a plan anytime in{' '}
                   <Link href="/portal/subscriptions" className="text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink" target="_blank">
-                    Portal › Subscriptions
+                    Portal › Treatments
                   </Link>
                   ; cancelling stops the next charge.
                 </span>

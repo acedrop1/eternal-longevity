@@ -514,7 +514,7 @@ export function orderConfirmationEmail(input: {
   const renewalHtml = renewalTerms.length
     ? `<p style="${P}"><strong style="color:${INK};">Your plan renews automatically.</strong> ${renewalTerms
         .map((r) => `$${(r.amountCents / 100).toFixed(2)} (shipping included) every ${r.months === 1 ? 'month' : `${r.months} months`}`)
-        .join('; ')}, charged to the card you saved, until you cancel. Cancel anytime in your portal under Subscriptions, or email ${escapeHtml(SUPPORT_EMAIL)}. Cancelling stops the next charge.</p>`
+        .join('; ')}, charged to the card you saved, until you cancel. Cancel anytime in your portal under Treatments, or email ${escapeHtml(SUPPORT_EMAIL)}. Cancelling stops the next charge.</p>`
     : '';
   const rows = input.items
     .map(
@@ -838,6 +838,92 @@ export function planNeedsReviewEmail(input: {
        ${button('Start your renewal', input.portalUrl)}`,
       { preheader: 'Your plan is paused until your prescriber reviews it again.' },
     ),
+  };
+}
+
+/**
+ * The member's written record of a change they made to a plan themselves
+ * (cancel, pause, resume, skip, change plan). No drug name, as everywhere in
+ * member email. The footnote doubles as a tamper alarm on the account.
+ */
+export function planUpdatedEmail(input: {
+  firstName: string;
+  change: 'canceled' | 'paused' | 'resumed' | 'skipped' | 'changed';
+  /** Plain text: the date or plan the change landed on. */
+  detail?: string;
+}): { subject: string; html: string } {
+  const copy = {
+    canceled: {
+      subject: 'Your plan is cancelled',
+      heading: 'Your plan is cancelled.',
+      body: 'You won’t be charged again for this plan, and nothing more will ship for it. Your treatment history stays in your account.',
+      next: 'Changed your mind? Message your care team from your portal and we’ll restart it.',
+    },
+    paused: {
+      subject: 'Your plan is paused',
+      heading: 'Your plan is paused.',
+      body: 'No charges and no shipments until you resume. Your prescription stays on file.',
+      next: 'Resume any time from Treatments in your portal.',
+    },
+    resumed: {
+      subject: 'Your plan is back on',
+      heading: 'Your plan is back on.',
+      body: 'Charges and shipments restart from your next refill.',
+      next: 'You can skip, pause, change or cancel any time from Treatments in your portal.',
+    },
+    skipped: {
+      subject: 'Your next refill is skipped',
+      heading: 'Your next refill is skipped.',
+      body: 'You won’t be charged or shipped on your usual date.',
+      next: 'You can skip, pause, change or cancel any time from Treatments in your portal.',
+    },
+    changed: {
+      subject: 'Your plan is updated',
+      heading: 'Your plan is updated.',
+      body: 'Nothing was charged today. Your new plan starts with your next refill.',
+      next: 'You can skip, pause, change or cancel any time from Treatments in your portal.',
+    },
+  }[input.change];
+  return {
+    subject: copy.subject,
+    html: noticeEmail({
+      eyebrow: 'Plan update',
+      heading: `${input.firstName}, ${copy.heading.charAt(0).toLowerCase()}${copy.heading.slice(1)}`,
+      body: input.detail ? `${copy.body}\n\n${input.detail}` : copy.body,
+      next: copy.next,
+      cta: { label: 'View your treatments', href: `${SITE_URL}/portal/subscriptions` },
+      footnote: 'Didn’t make this change? Reply to this email right away.',
+      preheader: copy.body,
+    }),
+  };
+}
+
+/** A week before a 6 or 12 month plan renews: what will be charged, when, and how to change it. */
+export function renewalReminderEmail(input: {
+  firstName: string;
+  /** Cents, shipping included, as the renewal charges it. */
+  amountCents: number;
+  /** 'Oct 30' */
+  dateLabel: string;
+  /** '12 month plan' */
+  planLabel: string;
+}): { subject: string; html: string } {
+  const amount = (input.amountCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return {
+    subject: `Your plan renews on ${input.dateLabel}`,
+    html: noticeEmail({
+      eyebrow: 'Upcoming renewal',
+      heading: `${input.firstName}, your plan renews on ${input.dateLabel}.`,
+      rows: [
+        ['Plan', input.planLabel],
+        ['Renews', input.dateLabel],
+        ['Amount', `${amount} (shipping included)`],
+        ['Charged to', 'The card saved in your account'],
+      ],
+      next: `Nothing to do if you’d like to keep it. To change, skip, pause or cancel, open Treatments in your portal before ${input.dateLabel}.`,
+      cta: { label: 'Manage your plan', href: `${SITE_URL}/portal/subscriptions` },
+      preheader: `${amount} on ${input.dateLabel}. Change or cancel any time before then.`,
+    }),
   };
 }
 

@@ -171,8 +171,9 @@ export const STEPS: Step[] = [
   },
 
   // -------------------------------------------------------------
-  // STATE: first of the eligibility questions. Any state we do not serve is a
-  // knockout (see KNOCKOUT_MESSAGES.out_of_state).
+  // STATE: first of the eligibility questions. Any state we do not serve ends
+  // the assessment (no prescribing there), but the screen offers a free account
+  // (see KNOCKOUT_MESSAGES.out_of_state and IntakeWizard).
   // -------------------------------------------------------------
   {
     id: 'state',
@@ -404,7 +405,7 @@ export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> 
   ...CATEGORY_KNOCKOUTS,
   out_of_state: {
     title: "We're not in your state yet",
-    body: 'Our physician is licensed only in the states below for now. We hope to add more.',
+    body: "Our physician is licensed in the states below, so he can't prescribe in your state yet. You can still create your free account now, and we'll email you when we launch there.",
   },
   under18: {
     title: 'You must be 18 or older',

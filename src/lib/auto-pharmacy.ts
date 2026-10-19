@@ -223,7 +223,7 @@ export async function autoSubmitToPharmacy(
       try {
         await sendEmail({
           to: SUPPORT_EMAIL,
-          subject: `Order ${orderLabel(order.order_number)} paid and sent to the pharmacy`,
+          subject: `${orderLabel(order.order_number)} paid and sent to the pharmacy`,
           html: noticeEmail({
             eyebrow: 'Paid order',
             heading: 'Paid and sent to the pharmacy',

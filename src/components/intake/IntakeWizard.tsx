@@ -607,7 +607,9 @@ export function IntakeWizard({
             <CircleAlert aria-hidden className="h-6 w-6" strokeWidth={1.5} />
           </div>
           <Heading className={cn(H2, 'mb-4')}>
-            {msg.title}
+            {status.key === 'out_of_state' && STATE_NAMES[String(answers.state)]
+              ? `We’re not in ${STATE_NAMES[String(answers.state)]} yet`
+              : msg.title}
           </Heading>
           <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">{msg.body}</p>
           {mode === 'visit' && (
@@ -643,8 +645,9 @@ export function IntakeWizard({
                 {isPending ? 'Closing…' : 'Close my order'}
               </button>
             ) : status.key === 'out_of_state' ? (
-              <Link href="/contact" className={BTN_PRIMARY}>
-                Tell me when you launch
+              // Anyone may hold an account; only prescribing is limited to licensed states.
+              <Link href={member ? '/portal' : '/signup'} className={BTN_PRIMARY}>
+                {member ? 'Go to your account' : 'Create your free account'}
               </Link>
             ) : (
               <Link href="/" className={BTN_PRIMARY}>
