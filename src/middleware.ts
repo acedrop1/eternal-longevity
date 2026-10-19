@@ -4,10 +4,40 @@ import { LOCK_COOKIE, SITE_LOCKED, isOpenPath, lockToken } from '@/lib/site-lock
 import { PATH_HEADER } from '@/lib/safe-next';
 
 /**
+ * Staff portals live on their own addresses. Sign-in cookies are per address,
+ * so staff sign in there separately from the public site.
+ */
+const APEX = 'etlongevity.com';
+const STAFF_HOSTS: Record<string, string> = { admin: '/portal/admin', doctor: '/portal/doctor' };
+
+function staffHostRedirect(request: NextRequest): NextResponse | null {
+  if (request.method !== 'GET') return null;
+  const host = (request.headers.get('host') ?? '').split(':')[0];
+  if (!host.endsWith(`.${APEX}`)) return null; // localhost and previews are left alone
+  const sub = host.slice(0, -APEX.length - 1);
+  const { pathname, search } = request.nextUrl;
+  // A staff portal asked for on www (old links, staff emails) or the other staff address moves to its own.
+  for (const [name, base] of Object.entries(STAFF_HOSTS)) {
+    if (sub !== name && (pathname === base || pathname.startsWith(`${base}/`))) {
+      return NextResponse.redirect(`https://${name}.${APEX}${pathname}${search}`, 307);
+    }
+  }
+  if (Object.hasOwn(STAFF_HOSTS, sub) && pathname === '/') {
+    return NextResponse.redirect(new URL(STAFF_HOSTS[sub], request.url), 307);
+  }
+  return null;
+}
+
+const isStaffHost = (request: NextRequest) =>
+  Object.keys(STAFF_HOSTS).some((s) => (request.headers.get('host') ?? '').split(':')[0] === `${s}.${APEX}`);
+
+/**
  * Root middleware. Refreshes the Supabase auth session on every request once
  * the backend is connected; a harmless pass-through until then.
  */
 export async function middleware(request: NextRequest) {
+  const moved = staffHostRedirect(request);
+  if (moved) return moved;
   if (SITE_LOCKED && !isOpenPath(request.nextUrl.pathname)) {
     const token = await lockToken();
     if (!token || request.cookies.get(LOCK_COOKIE)?.value !== token) {
@@ -25,7 +55,10 @@ export async function middleware(request: NextRequest) {
   const here = request.nextUrl.clone();
   here.searchParams.delete('_rsc');
   request.headers.set(PATH_HEADER, here.pathname + here.search);
-  return updateSession(request);
+  const response = await updateSession(request);
+  // Staff addresses never appear in search results.
+  if (isStaffHost(request)) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
 }
 
 export const config = {
