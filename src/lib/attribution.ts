@@ -89,7 +89,7 @@ export function readAttribution(): Attribution | null {
   }
 }
 
-export type SiteEventKind = 'visit' | 'start' | 'step' | 'complete';
+export type SiteEventKind = 'visit' | 'start' | 'step' | 'complete' | 'product';
 
 /** Browser: send one anonymous event. Never throws, never blocks. */
 export function track(kind: SiteEventKind, extra: { step?: string; path?: string } = {}): void {

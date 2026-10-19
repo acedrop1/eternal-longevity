@@ -267,6 +267,41 @@ export function MarketingView(p: Props) {
           </div>
         </SectionCard>
 
+        {/* Product pages viewed */}
+        <SectionCard
+          title="Products viewed"
+          description="Product page views, one per product per visit. Counted on our own server only; never sent to Meta or any ad platform."
+          flush
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-[14px] tabular-nums">
+              <thead>
+                <tr className="bg-milk text-left text-[13px] text-ink/70">
+                  <th className="px-4 py-2 font-semibold">Product</th>
+                  <th className="px-4 py-2 text-right font-semibold">Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.data.productViews.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="border-t border-ink/10 px-4 py-6 text-center text-ink/65">No product views yet in this range.</td>
+                  </tr>
+                )}
+                {p.data.productViews.map((r) => (
+                  <tr key={r.path}>
+                    <td className={plainTd}>
+                      <a href={r.path} target="_blank" className="underline decoration-ink/25 underline-offset-[3px] hover:decoration-ink">
+                        {r.path.replace('/shop/', '').replace(/-/g, ' ')}
+                      </a>
+                    </td>
+                    <td className={cn(plainTd, 'text-right')}>{int(r.views)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+
         {/* Assessment drop-off */}
         <SectionCard title="Assessment drop-off" description="How many reached each screen. A big drop means people quit there." flush>
           <div className="overflow-x-auto">

@@ -24,5 +24,18 @@ export function SiteTracker() {
     } catch {}
     track('visit', { path: pathname });
   }, [pathname]);
+
+  // Which products people look at: one anonymous count per product page per session, first-party only
+  // (Admin → Marketing). Never sent to an ad platform: product pages are excluded from the pixel.
+  useEffect(() => {
+    const m = /^\/shop\/([a-z0-9-]+)$/.exec(pathname);
+    if (!m) return;
+    try {
+      const key = `el_pv:${m[1]}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {}
+    track('product', { path: pathname });
+  }, [pathname]);
   return null;
 }

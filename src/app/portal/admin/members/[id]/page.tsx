@@ -69,6 +69,8 @@ interface MemberDetail {
     orderNumber: string;
     author: string | null;
   }[];
+  /** What they agreed to and what they're enrolled in: care consents, alerts and marketing. */
+  consents?: { label: string; on: boolean | null; detail: string }[];
   /** The intake, read the way the prescriber reads it. */
   review: PatientReview | null;
 }
@@ -198,7 +200,39 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
       : { data: [] };
 
 
+    // Consents and marketing (Admin wants it on the profile): newest intake's boxes, the account's
+    // reminder consent, and the marketing program's status for their email.
+    const consentAnswers = ((intake?.answers ?? {}) as Record<string, unknown>).consents as Record<string, unknown> | undefined;
+    const accepted = ((intake?.answers ?? {}) as Record<string, unknown>).consentsAccepted as { version?: string; at?: string } | undefined;
+    const [{ data: authUser }, { data: mkt }] = await Promise.all([
+      db.auth.admin.getUserById(id),
+      profile.email
+        ? db.from('marketing_contacts').select('id, email_status, sms_status, phone').eq('email', profile.email.toLowerCase()).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const { data: lastEvents } = mkt
+      ? await db.from('marketing_consent_events').select('channel, action, form_url, created_at').eq('contact_id', mkt.id).order('created_at', { ascending: false }).limit(10)
+      : { data: [] as { channel: string; action: string; form_url: string | null; created_at: string }[] };
+    const last = (ch: string) => {
+      const e = (lastEvents ?? []).find((x) => x.channel === ch);
+      return e ? ` · last ${e.action.replace('_', '-')} ${fmtDate(e.created_at)}${e.form_url ? ` via ${e.form_url.replace(/^https?:\/\/[^/]+/, '')}` : ''}` : '';
+    };
+    const box = (key: string) => (consentAnswers ? consentAnswers[key] === true : null);
+    const statusText = (st?: string | null) =>
+      st === 'subscribed' ? 'Subscribed' : st === 'pending' ? 'Pending confirmation' : st === 'unsubscribed' ? 'Unsubscribed' : 'Not enrolled';
+    const reminders = (authUser?.user?.user_metadata as Record<string, unknown> | undefined)?.reminders_consent as { at?: string; version?: string } | undefined;
+    const consents: MemberDetail['consents'] = [
+      { label: 'Telehealth informed consent', on: box('master_ack'), detail: accepted?.at ? `Agreed ${fmtDate(accepted.at)} (version ${accepted.version ?? '—'})` : consentAnswers ? 'From their assessment' : 'No assessment yet' },
+      { label: 'Health information acknowledgment', on: box('health_ack'), detail: box('health_ack') ? 'Agreed in the assessment' : consentAnswers ? 'Not yet (asked at their next assessment)' : 'No assessment yet' },
+      { label: 'Account & care text alerts', on: box('sms_alerts'), detail: 'Sign-in codes, care team messages, order updates' },
+      { label: 'Marketing emails', on: mkt ? mkt.email_status === 'subscribed' : false, detail: statusText(mkt?.email_status) + last('email') },
+      { label: 'Marketing texts', on: mkt ? mkt.sms_status === 'subscribed' : false, detail: statusText(mkt?.sms_status) + (mkt?.phone ? ` · ${mkt.phone}` : '') + last('sms') },
+      { label: 'Assessment reminder emails', on: reminders ? true : null, detail: reminders?.at ? `Agreed at sign-up ${fmtDate(reminders.at)}` : 'No sign-up consent on file' },
+      { label: 'De-identified research use', on: box('research'), detail: 'Optional box in the assessment' },
+    ];
+
     return {
+      consents,
       name: profile.full_name ?? 'Unnamed',
       email: profile.email ?? '',
       phone: profile.phone,
@@ -408,6 +442,24 @@ export default async function MemberDetailPage({ params }: PageProps) {
                           {o.warning}
                         </p>
                       )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Consents & marketing" flush>
+              {!detail.consents?.length ? (
+                <Empty>Nothing on file.</Empty>
+              ) : (
+                <ul className="divide-y divide-ink/10">
+                  {detail.consents.map((c) => (
+                    <li key={c.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+                      <span className="text-[14px] font-medium text-ink">{c.label}</span>
+                      <StatusBadge tone={c.on === true ? 'success' : c.on === false ? 'neutral' : 'info'}>
+                        {c.on === true ? 'Yes' : c.on === false ? 'No' : 'Unknown'}
+                      </StatusBadge>
+                      <span className="w-full text-[13px] text-ink/65 md:ml-auto md:w-auto md:text-right">{c.detail}</span>
                     </li>
                   ))}
                 </ul>

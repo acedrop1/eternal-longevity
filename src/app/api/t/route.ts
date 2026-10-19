@@ -10,7 +10,7 @@ import { dayOf } from '@/lib/profit';
  * identifies a person. Always answers 204, so a blocked or failed write
  * never shows up for the visitor.
  */
-const KINDS = new Set(['visit', 'start', 'step', 'complete']);
+const KINDS = new Set(['visit', 'start', 'step', 'complete', 'product']);
 const BOT = /bot|crawl|spider|slurp|preview|headless|lighthouse|monitor/i;
 const clip = (v: unknown, n: number) =>
   typeof v === 'string' && v ? v.trim().toLowerCase().replace(/[^a-z0-9._\-/: ]/g, '').slice(0, n) || null : null;

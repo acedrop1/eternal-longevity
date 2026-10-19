@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { META_PIXEL_ID } from '@/lib/site';
+import { REVIEWED_PAGES } from '@/lib/tracking-config';
 
 /**
  * Optional advertising and analytics tags (Meta Pixel today), consent-first,
@@ -22,9 +23,9 @@ import { META_PIXEL_ID } from '@/lib/site';
  *  - every choice (and withdrawal) is logged server-side with its version.
  */
 
-/** Exact paths the privacy owner reviewed as general marketing pages. Add to this list only after review. */
-const REVIEWED_PAGES = new Set(['/', '/about', '/contact']);
-const isReviewed = (path: string) => REVIEWED_PAGES.has(path);
+/** The reviewed pages live in lib/tracking-config (also shown in Admin → Consent & tracking). */
+const REVIEWED = new Set<string>(REVIEWED_PAGES);
+const isReviewed = (path: string) => REVIEWED.has(path);
 
 export const CONSENT_VERSION = '2026-10-19';
 const STORE_KEY = 'el_consent_v2';

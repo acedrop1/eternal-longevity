@@ -85,6 +85,8 @@ export interface MarketingData {
   bySource: SourceRow[];
   byCampaign: SourceRow[];
   byPage: PageRow[];
+  /** Product page views (first-party, one per product per session). */
+  productViews: { path: string; views: number }[];
   steps: StepRow[];
   byDay: DayRow[];
   byCategory: CategoryRow[];
@@ -127,6 +129,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
   const campaigns = new Map<string, SourceRow>();
   const pages = new Map<string, PageRow>();
   const steps = new Map<string, number>();
+  const productViews = new Map<string, number>();
   const days = emptyDays(range);
   const cats = new Map<string, CategoryRow>();
   const catRow = (key: string) => {
@@ -187,6 +190,9 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
           bump(src, med, camp, (r) => r.starts++);
         } else if (kind === 'step' && e.step) {
           steps.set(str(e.step), (steps.get(str(e.step)) ?? 0) + 1);
+        } else if (kind === 'product') {
+          const p = str(e.path);
+          if (p) productViews.set(p, (productViews.get(p) ?? 0) + 1);
         }
       }
     } catch (err) {
@@ -278,6 +284,7 @@ export async function loadMarketing(range: DateRange): Promise<MarketingData> {
     bySource: [...sources.values()].sort(byValue),
     byCampaign: [...campaigns.values()].sort(byValue),
     byPage: [...pages.values()].sort((a, b) => b.revenue - a.revenue || b.sessions - a.sessions).slice(0, 25),
+    productViews: [...productViews.entries()].map(([path, views]) => ({ path, views })).sort((a, b) => b.views - a.views),
     steps: [...steps.entries()].map(([step, reached]) => ({ step, reached })).sort((a, b) => b.reached - a.reached),
     byDay: [...days.values()],
     byCategory: [...cats.values()].sort((a, b) => b.revenue - a.revenue || b.completes - a.completes),
