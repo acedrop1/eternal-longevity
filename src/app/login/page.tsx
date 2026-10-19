@@ -19,6 +19,8 @@ import { loginAction } from '@/lib/auth-actions';
 import { supabaseConfigured } from '@/lib/env';
 import { getSession } from '@/lib/auth-server';
 import { safeNext } from '@/lib/safe-next';
+import { headers } from 'next/headers';
+import { requestHost, staffPortalFor } from '@/lib/staff-host';
 
 export const metadata: Metadata = {
   ...pageMeta('/login', 'Log in', 'Log in to your Eternal Longevity account to see your orders, messages and prescription status.'),
@@ -40,18 +42,26 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const user = timeout ? null : await getSession();
   if (user) redirect(safeNext(rawNext, user.role) ?? user.redirectTo);
   const next = safeNext(rawNext);
+  // admin. and doctor. addresses: a staff sign-in, no Google and no sign-up.
+  const staff = staffPortalFor(requestHost(await headers()));
 
   return (
     <AuthShell
-      eyebrow={supabaseConfigured ? 'Member portal' : 'Member · Doctor · Admin'}
-      title="Welcome back."
+      eyebrow={staff === 'admin' ? 'Admin portal' : staff === 'doctor' ? 'Physician portal' : supabaseConfigured ? 'Member portal' : 'Member · Doctor · Admin'}
+      title={staff ? 'Staff sign in.' : 'Welcome back.'}
       footer={
         <>
-          Trouble signing in?{' '}
-          <Link href="/contact" className={authLinkClass}>
-            Contact our team
-          </Link>
-          .
+          {staff ? (
+            'Password, then a code sent to your email.'
+          ) : (
+            <>
+              Trouble signing in?{' '}
+              <Link href="/contact" className={authLinkClass}>
+                Contact our team
+              </Link>
+              .
+            </>
+          )}
         </>
       }
     >
@@ -106,7 +116,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         )}
 
-        {supabaseConfigured && (
+        {supabaseConfigured && !staff && (
           <>
             <GoogleButton next={next ?? undefined} />
             <AuthDivider />
@@ -119,7 +129,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             id="login-email"
             name="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={staff ? 'you@etlongevity.com' : 'you@example.com'}
             autoComplete="email"
             required
             className={authInputClass}
@@ -156,7 +166,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {!supabaseConfigured && <DemoCredentials />}
 
         {/* Live mode: a real sign-up link. */}
-        {supabaseConfigured && (
+        {supabaseConfigured && !staff && (
           <Link
             href="/signup"
             className={authSecondaryClass}
@@ -165,12 +175,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </Link>
         )}
 
+        {!staff && (
         <Link
           href="/signup"
           className="block w-full py-2 text-center text-[14px] font-medium text-ink/60 transition-colors hover:text-ink"
         >
           New here? Create an account →
         </Link>
+        )}
       </form>
     </AuthShell>
   );
