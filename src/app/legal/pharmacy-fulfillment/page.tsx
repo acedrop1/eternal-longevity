@@ -7,6 +7,7 @@ import {
   SUPPORT_EMAIL,
   SERVICE_AREA,
 } from '@/lib/site';
+import { IDENTITY, RX_DISCLOSURE } from '../identity';
 
 export const metadata: Metadata = pageMeta(
   '/legal/pharmacy-fulfillment',
@@ -18,14 +19,15 @@ export default function PharmacyFulfillmentPage() {
   return (
     <LegalLayout
       title="Pharmacy Fulfillment"
-      effective="September 2026"
+      effective="October 19, 2026"
       lead={`You should be able to check who made your medication without taking our word for it. This page explains who fills your prescription, where to find the pharmacy’s name (on your medication label), the rules it operates under, and how to verify its licence in about a minute.`}
       sections={[
         {
           heading: `Who Fills Your Prescription`,
           paragraphs: [
-            `Prescriptions are dispensed and shipped by an independently owned, state-licensed 503A compounding pharmacy that we work with. The dispensing pharmacy’s name and address appear on your medication label and on the paperwork in your package.`,
-            `We are not a pharmacy. We do not compound, hold, or handle medication at any point — it travels from the pharmacy to you.`,
+            IDENTITY,
+            `The dispensing pharmacy ships your prescription directly to you. Its name and address appear on your medication label and on the paperwork in your package. We do not compound, hold, or handle medication at any point.`,
+            RX_DISCLOSURE,
           ],
         },
         {
@@ -39,7 +41,7 @@ export default function PharmacyFulfillmentPage() {
           heading: `What 503A Means`,
           paragraphs: [
             `A 503A pharmacy compounds against a patient-specific prescription. It is licensed by its own state board of pharmacy and, where it ships across state lines, must also hold a licence or registration in each state it ships to.`,
-            `A 503A pharmacy is not a drug manufacturer and its preparations are not FDA-approved. See our Compounded Medication Disclosure.`,
+            `A 503A pharmacy is not a drug manufacturer. Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or quality. See our Compounded Medication Disclosure.`,
           ],
         },
         {
@@ -51,7 +53,7 @@ export default function PharmacyFulfillmentPage() {
         {
           heading: `If the Pharmacy Changes`,
           paragraphs: [
-            `We may add or change pharmacy partners as licensure and supply require. Any pharmacy we use will be state-licensed and licensed or registered to ship into each state we serve (${SERVICE_AREA}). The pharmacy that filled your specific order is always the one named on your label.`,
+            `We may add or change pharmacy partners as licensure and supply require. Any pharmacy we use will be an independently licensed 503A compounding pharmacy, licensed or registered to ship into each state we serve (${SERVICE_AREA}). The pharmacy that filled your specific order is always the one named on your label.`,
           ],
         },
         {

@@ -424,7 +424,8 @@ export const KNOCKOUT_MESSAGES: Record<string, { title: string; body: string }> 
   },
 };
 
-export const CONSENT_VERSION = '2026-10';
+// Bumped when the wording changes; members with an older set are asked again (consentsComplete).
+export const CONSENT_VERSION = '2026-10-19';
 
 export const CONSENT_ITEMS = [
   {
@@ -432,6 +433,13 @@ export const CONSENT_ITEMS = [
     required: true,
     label:
       'I have read and agree to the Telehealth Informed Consent (etlongevity.com/legal/consent) and the statements above, and I consent to receive care through telehealth.',
+  },
+  {
+    // Sensitive-data acknowledgment (NJ Data Privacy Act), separate from any marketing or tracking choice.
+    id: 'health_ack',
+    required: true,
+    label:
+      'I agree to Eternal Longevity LLC collecting and using the health information I provide for my assessment, clinical review, prescribing when appropriate, pharmacy fulfillment, follow-up, payment and required records. I have read the Health Information Privacy section (etlongevity.com/legal/privacy#health-information). This choice is separate from optional marketing and advertising tracking.',
   },
   {
     id: 'sms_alerts',

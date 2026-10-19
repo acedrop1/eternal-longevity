@@ -16,11 +16,12 @@ import {
 } from '@/lib/site';
 import { ArrowDot, Aura, GLASS } from '@/components/home/HomeSections';
 import { cn } from '@/lib/utils';
+import { IDENTITY, RX_DISCLOSURE } from '@/app/legal/identity';
 
 export const metadata: Metadata = pageMeta(
   '/compliance',
   'Compliance',
-  'How Eternal Longevity operates: licensed prescriber, state-licensed 503A compounding pharmacy, age and state restrictions, and certificates of analysis.',
+  'How Eternal Longevity operates: licensed prescriber, independently licensed 503A compounding pharmacy, age and state restrictions, and certificates of analysis.',
 );
 
 /**
@@ -55,10 +56,11 @@ function factsFor(p: PrescriberRecord): { label: string; value: string }[] {
   { label: 'NPI', value: p.npi || '—' },
   {
     label: 'Dispensing pharmacy',
-    value: 'A state-licensed 503A compounding pharmacy that dispenses and ships prescriptions (named on your prescription label)',
+    value: 'An independently licensed 503A compounding pharmacy that dispenses and ships prescriptions (named on your prescription label). Eternal Longevity is not a pharmacy.',
   },
   { label: 'States served', value: SERVICEABLE_STATES.join(', ') },
   { label: 'Minimum age', value: '18+' },
+  { label: 'Compounded status', value: 'Compounded medications are not FDA-approved; the FDA does not verify their safety, effectiveness or quality.' },
   ];
 }
 
@@ -77,7 +79,7 @@ const CONTROLS: { title: string; body: string }[] = [
   },
   {
     title: 'Licensed fulfilment',
-    body: 'We do not hold or ship inventory. Prescriptions are dispensed by a state-licensed 503A compounding pharmacy (named on your prescription label) and shipped directly to the patient. Temperature-sensitive medications ship cold-chain.',
+    body: 'We do not hold or ship inventory, and Eternal Longevity is not a pharmacy. Prescriptions are dispensed by an independently licensed 503A compounding pharmacy (named on your prescription label) and shipped directly to the patient. Temperature-sensitive medications ship cold-chain.',
   },
   {
     title: 'Direct seller',
@@ -107,6 +109,8 @@ export default async function CompliancePage() {
                 hold ourselves to. Everything on this page can be evidenced with
                 a document on request.
               </p>
+              <p className="mt-4 max-w-[460px] text-[16px] leading-relaxed text-ink-soft">{IDENTITY}</p>
+              <p className="mt-4 max-w-[460px] text-[14px] leading-relaxed text-ink/65">{RX_DISCLOSURE}</p>
               <div className="mt-8 flex w-fit flex-col items-start gap-4 rounded-shell bg-milk p-4 pr-6 sm:flex-row sm:items-center">
                 <LegitScriptSeal className="shrink-0" />
                 <p className="max-w-[260px] text-[14px] leading-relaxed text-ink-soft">

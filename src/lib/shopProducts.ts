@@ -289,7 +289,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/11.jpg', '/images/14.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Injection-site reactions (most common)',
       'Joint pain or stiffness',
@@ -422,7 +422,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     image: '/images/8.jpg',
     gallery: ['/images/8.jpg', '/images/7.jpg', '/images/9.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Nausea (most common, dose-related)',
       'Facial flushing',
@@ -1055,7 +1055,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/methylene-blue.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Blue-green urine, and sometimes blue-tinged stool or tongue (expected and temporary)',
       'Nausea or stomach upset',
@@ -1101,7 +1101,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/sildenafil-tadalafil.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Headache',
       'Flushing',
@@ -1149,7 +1149,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/sildenafil.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Headache',
       'Flushing',
@@ -1197,7 +1197,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/oxytocin.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Headache',
       'Nausea',
@@ -1286,7 +1286,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/hrt-cream.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Breast tenderness',
       'Spotting or irregular bleeding',
@@ -1336,7 +1336,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/fin-min-capsule.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Lower libido, or erectile or ejaculation changes, uncommonly',
       'Temporary shedding in the first weeks',
@@ -1383,7 +1383,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/fin-min-foam.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Scalp itching, dryness or flaking',
       'Temporary shedding in the first weeks',
@@ -1429,7 +1429,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/min-12-fin.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Scalp itching, redness or flaking, more likely than at lower strengths',
       'Temporary shedding in the first weeks',
@@ -1475,7 +1475,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/fin-min-tret.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Scalp redness, dryness, peeling or itching',
       'Sun sensitivity on the scalp',
@@ -1521,7 +1521,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/finasteride.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Lower libido, uncommonly',
       'Erectile or ejaculation changes, uncommonly',
@@ -1566,7 +1566,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/oral-minoxidil.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Unwanted facial or body hair growth',
       'Temporary shedding in the first weeks',
@@ -1610,7 +1610,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/spironolactone.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Irregular periods or spotting',
       'Breast tenderness',
@@ -1656,7 +1656,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/tretinoin.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Dryness, peeling and flaking, especially in the first weeks',
       'Redness, stinging or warmth',
@@ -1699,7 +1699,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/glow-cream.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Dryness, peeling and flaking, especially in the first weeks',
       'Redness, stinging or warmth',
@@ -1741,7 +1741,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/clear-skin-cream.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Dryness, peeling and redness',
       'Stinging or burning on application',
@@ -1784,7 +1784,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/brightening.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Mild redness, stinging or dryness',
       'Increased sensitivity to the sun',
@@ -1826,7 +1826,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/even-tone-cream.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Redness, peeling, dryness or stinging',
       'Increased sensitivity to the sun',
@@ -1910,7 +1910,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     shot: true,
     gallery: ['/brand/products/clear-skin-capsules.jpg'],
     requiresReview: true,
-    fdaApproved: true,
+    fdaApproved: false,
     sideEffects: [
       'Nausea or stomach upset',
       'Increased sensitivity to the sun',

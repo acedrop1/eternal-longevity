@@ -10,6 +10,7 @@ import { getLiveProducts } from '@/lib/catalog';
 import { fromPrice, listedCategories, type Form } from '@/lib/lineup';
 import { pageMeta } from '@/lib/seo';
 import { SERVICE_AREA_SHORT } from '@/lib/site';
+import { RxDisclosure } from '@/components/landing/RxDisclosure';
 
 /*
  * /hair: the ad landing page for hair, laid out like Hims' hair page and kept
@@ -134,6 +135,8 @@ export default async function HairPage() {
                 </Link>
               ))}
             </div>
+            {/* Required on paid landing pages (Mo's brief): prescription, eligibility, compounded status, pricing and renewal terms. */}
+            <RxDisclosure safetyHref="/treatments/hair" />
           </FadeIn>
         )}
 

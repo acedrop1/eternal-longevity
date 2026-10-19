@@ -5,6 +5,7 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { Aura, Swipe } from '@/components/home/HomeSections';
 import { notFound } from 'next/navigation';
+import { RxDisclosure } from '@/components/landing/RxDisclosure';
 import { LandingQuiz, QuizStickyBar } from '@/components/landing/LandingQuiz';
 import { LANDINGS, getLanding, startHref } from '@/lib/landings';
 import { getLandingStatus } from '@/lib/landing-status';
@@ -143,6 +144,7 @@ export default async function LandingPage({ params }: Props) {
                 </Link>
               ))}
             </div>
+            <RxDisclosure safetyHref={`/shop/${encodeURIComponent(l.heroProduct)}`} />
           </FadeIn>
         )}
 

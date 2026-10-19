@@ -9,6 +9,8 @@
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import { LEAD_CONSENT } from '@/lib/followups';
 import type { Json } from '@/lib/database.types';
+import { requestMeta, suppressEmail } from '@/lib/marketing';
+import { SITE_URL } from '@/lib/site';
 import { LIMITS, allow } from './rate-limit';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -138,6 +140,14 @@ export async function unsubscribeAction(token: string): Promise<{ ok: boolean }>
       .from('profiles')
       .update({ notification_prefs: { ...prefs, reminders: false, marketing: false } as Json })
       .eq('id', member.id);
+  }
+  // And the /subscribe marketing list, if the address is on it: one opt-out covers every marketing email.
+  if (email) {
+    await suppressEmail(db, email, {
+      formUrl: `${SITE_URL}/unsubscribe`,
+      disclosure: 'Unsubscribed with the link in a reminder email.',
+      ...(await requestMeta()),
+    });
   }
   return { ok: true };
 }

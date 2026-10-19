@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
 import {
@@ -18,8 +19,8 @@ export default function CookiesPage() {
   return (
     <LegalLayout
       title="Cookie Notice"
-      effective="October 2026"
-      lead={`We keep very little in your browser. Most of what we store is there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own. On our marketing pages we also ask whether we and our advertising and analytics partners may use tracking technologies. None of them load unless you consent.`}
+      effective="October 19, 2026"
+      lead={`We keep very little in your browser. Most of what we store is there to make the site work, and two services we rely on at checkout (Frame Payments and Google) set or use their own. On selected general marketing pages we also ask whether we may use optional analytics and advertising tools. None of them load unless you consent.`}
       sections={[
         {
           heading: `What We Set`,
@@ -60,34 +61,36 @@ export default function CookiesPage() {
           ],
         },
         {
-          heading: `Advertising and Analytics (Optional)`,
+          heading: `Optional Analytics and Advertising`,
           paragraphs: [
-            `On our marketing pages (home, shop, treatment and product pages, About, FAQ, Compliance and Contact) we ask for your consent before we or our advertising and analytics partners, such as Meta and Google, use cookies, pixels and similar tracking technologies. With your consent, they collect information about you and your visit, including the pages you view, links you click, your browser and device, and your IP address. This may include sensitive health information, such as the fact that you viewed a page about a particular treatment. We and our partners use it to measure and improve our advertising, personalize ads you see on other sites and apps, and improve our services. If you do not consent, these technologies do not load.`,
-            `Even with your consent, there are limits:`,
+            `With your permission, selected general marketing pages use Meta, TikTok and Google technologies to measure visits and interactions. These partners may receive limited browser and device information, IP address and permitted public-page interaction information. These tools do not run on treatment-specific or product pages, subscribe or preference forms, assessment, checkout, payment, sign-in, account or patient-care pages. We do not send health information, prescriptions, medical messages, patient lists, names, email addresses or phone numbers to these advertising tools. Some non-health disclosures may constitute targeted advertising or a sale under applicable law. You can reject optional tools or change your choice through Privacy Choices. We treat Global Privacy Control as a decline of optional analytics and advertising. Necessary security, login and payment functions remain available.`,
+            `These tools never run on:`,
           ],
           bullets: [
-            `They never load on your assessment, checkout, payment, sign-in or member portal pages. If one was loaded earlier in your visit, opening one of those pages reloads the page so no partner code runs there.`,
-            `We never send partners your intake answers, prescriptions, medical records, or your name, email or phone number.`,
-            `Each partner's own privacy policy governs what it does with the information it collects.`,
+            `Treatment-specific or product pages.`,
+            `Subscribe or marketing preference forms, and privacy request pages.`,
+            `The assessment.`,
+            `Checkout and payment pages.`,
+            `Sign-in, account or patient-care pages, including the member portal.`,
           ],
         },
         {
           heading: `Your Choice`,
           paragraphs: [
-            `You can change your mind at any time with the "Your Privacy Choices" link in the footer of every page. If you withdraw consent, these technologies stop loading straight away. Your choice is saved in your browser's local storage (as el_ad_consent).`,
+            `Analytics and advertising are off until you choose to allow them. You can change your mind at any time with the "Your Privacy Choices" link in the footer of every page or the Privacy Choices button above. If you withdraw consent, these tools stop loading straight away. Your choice is saved in your browser's local storage (as el_ad_consent) and logged with the version of this notice it applies to.`,
             `The strictly necessary cookies and storage above cannot be switched off without breaking sign-in and checkout. Your browser can still block or clear them for any site, including this one.`,
           ],
         },
         {
           heading: `Global Privacy Control and Do Not Track`,
           paragraphs: [
-            `If your browser sends a Global Privacy Control signal, we treat it as a decline: our advertising and analytics technologies never load and we do not ask. We do not track you across other sites ourselves.`,
+            `If your browser sends a Global Privacy Control signal, we treat it as a decline: our analytics and advertising tools never load and we do not ask. We do not track you across other sites ourselves.`,
           ],
         },
         {
           heading: `If This Changes`,
           paragraphs: [
-            `If we add or change advertising or analytics partners, we will update this page. They will only ever load with your consent, and never on your assessment, checkout or member portal.`,
+            `If we add or change advertising or analytics partners, we will update this page. They will only ever load with your consent, and never on the pages listed above.`,
           ],
         },
         {
@@ -101,6 +104,18 @@ export default function CookiesPage() {
         { label: 'Privacy Policy', href: '/legal/privacy' },
         { label: 'Terms of Service', href: '/legal/terms' },
       ]}
-    />
+    >
+      <div className="mb-12 flex max-w-[68ch] flex-col gap-4 rounded-shell bg-milk p-5 sm:flex-row sm:items-center sm:justify-between md:p-7">
+        <p className="text-[15px] leading-relaxed text-ink/80">
+          Optional analytics and advertising are off by default. Review or change your choice at any time.
+        </p>
+        <Link
+          href="/legal/cookies#cookie-choices"
+          className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-ink px-5 text-[15px] font-semibold text-white"
+        >
+          Privacy Choices
+        </Link>
+      </div>
+    </LegalLayout>
   );
 }

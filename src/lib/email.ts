@@ -109,7 +109,8 @@ function nextStep(html: string): string {
  * Wrap body content in the branded shell: the butter logo on an ink band (it
  * reads in light and dark clients alike), a white card, the legal footer.
  * Reminder and marketing email passes `unsubscribeUrl`, which adds the
- * opt-out line; `preheader` is the inbox preview text.
+ * opt-out line and the Marketing preferences link (the page emails a signed
+ * link, so this one needs no token); `preheader` is the inbox preview text.
  */
 export function shell(
   body: string,
@@ -141,7 +142,7 @@ export function shell(
           opts?.unsubscribeUrl
             ? `<br /><br />Don&rsquo;t want these reminders? <a href="${escapeHtml(
                 opts.unsubscribeUrl,
-              )}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a>.`
+              )}" style="color:${MUTED};text-decoration:underline;">Unsubscribe</a> &middot; <a href="${SITE_URL}/marketing-preferences" style="color:${MUTED};text-decoration:underline;">Marketing preferences</a>`
             : ''
         }
       </td></tr>

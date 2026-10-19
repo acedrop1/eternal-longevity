@@ -54,6 +54,10 @@ export type FulfillmentStatus =
   | 'delivered'
   | 'canceled';
 export type AccountStatus = 'active' | 'suspended' | 'deactivated';
+export type MarketingStatus = 'none' | 'pending' | 'subscribed' | 'unsubscribed';
+export type PrivacyRequestType =
+  | 'access' | 'correction' | 'deletion' | 'copy' | 'consent_withdrawal' | 'ad_opt_out' | 'appeal' | 'agent';
+export type PrivacyRequestStatus = 'received' | 'in_progress' | 'extended' | 'completed' | 'denied' | 'appealed';
 
 export type Database = {
   public: {
@@ -930,6 +934,108 @@ export type Database = {
           created_at?: string;
         };
         Update: { status?: 'sent' | 'failed' };
+        Relationships: [];
+      };
+      // Migration 0033.
+      marketing_contacts: {
+        Row: {
+          id: string;
+          email: string | null;
+          phone: string | null;
+          first_name: string | null;
+          state: string | null;
+          email_status: MarketingStatus;
+          sms_status: MarketingStatus;
+          email_token: string | null;
+          pref_token: string;
+          timezone: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          email?: string | null;
+          phone?: string | null;
+          first_name?: string | null;
+          state?: string | null;
+          email_status?: MarketingStatus;
+          sms_status?: MarketingStatus;
+          email_token?: string | null;
+          pref_token?: string;
+          timezone?: string | null;
+        };
+        Update: {
+          email?: string | null;
+          phone?: string | null;
+          first_name?: string | null;
+          state?: string | null;
+          email_status?: MarketingStatus;
+          sms_status?: MarketingStatus;
+          email_token?: string | null;
+          timezone?: string | null;
+        };
+        Relationships: [];
+      };
+      marketing_consent_events: {
+        Row: {
+          id: number;
+          contact_id: string;
+          channel: 'email' | 'sms';
+          action: 'opt_in' | 'confirm' | 'opt_out';
+          disclosure_text: string | null;
+          disclosure_version: string | null;
+          form_url: string | null;
+          ip: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          contact_id: string;
+          channel: 'email' | 'sms';
+          action: 'opt_in' | 'confirm' | 'opt_out';
+          disclosure_text?: string | null;
+          disclosure_version?: string | null;
+          form_url?: string | null;
+          ip?: string | null;
+          user_agent?: string | null;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      privacy_requests: {
+        Row: {
+          id: string;
+          ref: string;
+          request_type: PrivacyRequestType;
+          name: string;
+          email: string;
+          state: string | null;
+          details: string | null;
+          is_agent: boolean;
+          agent_name: string | null;
+          status: PrivacyRequestStatus;
+          due_at: string;
+          extended_until: string | null;
+          extension_reason: string | null;
+          appeal_of: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          request_type: PrivacyRequestType;
+          name: string;
+          email: string;
+          state?: string | null;
+          details?: string | null;
+          is_agent?: boolean;
+          agent_name?: string | null;
+          appeal_of?: string | null;
+        };
+        Update: {
+          status?: PrivacyRequestStatus;
+          extended_until?: string | null;
+          extension_reason?: string | null;
+        };
         Relationships: [];
       };
       // Migration 0016.

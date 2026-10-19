@@ -138,8 +138,13 @@ export const getCatalog = cache(async (): Promise<CatalogProduct[]> => {
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // The hard gate: a stored `live` row never overrides NEVER_LIVE.
-  return [...fromSeed, ...added].map((p) => (NEVER_LIVE.has(p.id) ? { ...p, status: 'withheld' as const } : p));
+  // The hard gates: a stored `live` row never overrides NEVER_LIVE, and nothing we sell is FDA-approved
+  // (every formula is compounded by a 503A pharmacy), whatever an older saved row says.
+  return [...fromSeed, ...added].map((p) => ({
+    ...p,
+    fdaApproved: false,
+    ...(NEVER_LIVE.has(p.id) ? { status: 'withheld' as const } : {}),
+  }));
 });
 
 /** Products that may be listed, linked, indexed or ordered. */

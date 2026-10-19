@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
 import { pageMeta } from '@/lib/seo';
 import { LegalLayout } from '@/components/legal/LegalLayout';
-import {
-  BUSINESS_LEGAL_NAME,
-  BUSINESS_ADDRESS,
-  SUPPORT_EMAIL,
-  SERVICE_AREA,
-} from '@/lib/site';
+import { BUSINESS_LEGAL_NAME, BUSINESS_ADDRESS, SUPPORT_EMAIL } from '@/lib/site';
+import { IDENTITY, RX_DISCLOSURE } from '../identity';
 
 export const metadata: Metadata = pageMeta(
   '/legal/medical-disclaimer',
@@ -18,14 +14,15 @@ export default function MedicalDisclaimerPage() {
   return (
     <LegalLayout
       title="Medical Disclaimer"
-      effective="September 2026"
-      lead={`Many companies in this category describe themselves as technology platforms that merely connect you to independent physicians. We do not, because it would not be true of us: our prescriber practises within this company. That makes it more important, not less, to be exact about what this relationship is and is not.`}
+      effective="October 19, 2026"
+      lead={`This page explains who provides your care, what our clinical relationship with you covers, what it does not, and why it is not a substitute for your own doctor.`}
       sections={[
         {
           heading: `Who Provides Your Care`,
           paragraphs: [
-            `${BUSINESS_LEGAL_NAME} is wholly owned by Bader Elder, DO, an osteopathic physician licensed to practise medicine and surgery in ${SERVICE_AREA}, who makes every prescription decision and signs every prescription issued through this service. We do not describe ourselves as a technology platform, and we do not route you to a third-party prescriber network.`,
-            `A physician–patient relationship is established between you and Dr. Elder when he reviews your intake. We are not a pharmacy; dispensing is done by an independently owned, state-licensed 503A compounding pharmacy, named on your prescription label.`,
+            IDENTITY,
+            `A physician–patient relationship is established between you and Dr. Elder when he reviews your assessment. The dispensing pharmacy is named on your prescription label.`,
+            RX_DISCLOSURE,
           ],
         },
         {

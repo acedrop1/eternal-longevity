@@ -37,6 +37,7 @@ export const footerLinks: FooterSection[] = [
       { title: 'FAQ', href: '/faq' },
       { title: 'About', href: '/about' },
       { title: 'Contact', href: '/contact' },
+      { title: 'Subscribe', href: '/subscribe' },
       { title: 'Log in', href: '/login' },
     ],
   },
@@ -45,8 +46,12 @@ export const footerLinks: FooterSection[] = [
     links: [
       { title: 'Terms of Service', href: '/legal/terms' },
       { title: 'Privacy Policy', href: '/legal/privacy' },
+      { title: 'Health Information Privacy', href: '/legal/privacy#health-information' },
       { title: 'Cookie Notice', href: '/legal/cookies' },
-      { title: 'Your Privacy Choices', href: '/legal/cookies#cookie-choices' },
+      // Opens the consent panel on any page (components/analytics/AdPixel).
+      { title: 'Privacy Choices', href: '/legal/cookies#cookie-choices' },
+      { title: 'Marketing Preferences', href: '/marketing-preferences' },
+      { title: 'Privacy Requests', href: '/privacy-request' },
       { title: 'Informed Consent', href: '/legal/consent' },
       { title: 'Text Messaging Terms', href: '/legal/text-messages' },
       { title: 'Refund Policy', href: '/legal/refunds' },

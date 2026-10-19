@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   }
   if (typeof b.kind !== 'string' || !KINDS.has(b.kind)) return none;
   const path = clip(b.path, 120);
-  if (path && /^\/(portal|api|login|auth|pay)/.test(path)) return none;
+  if (path && /^\/(portal|api|login|auth|pay|subscribe|marketing-preferences|privacy-request)/.test(path)) return none;
   try {
     const db = createSupabaseAdminClient() as unknown as SupabaseClient;
     await db.from('site_events').insert({

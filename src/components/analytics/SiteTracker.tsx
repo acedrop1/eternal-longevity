@@ -9,7 +9,8 @@ import { captureAttribution, track } from '@/lib/attribution';
  * browser) and counts one visit per browser session, for Admin → Marketing.
  * Nothing leaves our servers. Portal, sign-in and payment pages are skipped.
  */
-const SKIP = /^\/(portal|login|auth|pay|forgot-password|checkin|unsubscribe)/;
+// Subscribe, preferences and privacy-request handle contact details: no analytics there (Mo's brief, section 2).
+const SKIP = /^\/(portal|login|auth|pay|forgot-password|checkin|unsubscribe|subscribe|marketing-preferences|privacy-request)/;
 const SESSION = 'el_visit';
 
 export function SiteTracker() {

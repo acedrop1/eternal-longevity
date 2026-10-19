@@ -158,7 +158,8 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
     gallery: before?.gallery?.length ? [image, ...before.gallery.slice(1)] : [image],
     requiresReview: true,
     popular: Boolean(input.popular) || undefined,
-    fdaApproved: Boolean(input.fdaApproved) || undefined,
+    // Compounded formulas are never FDA-approved (catalog.ts enforces it too).
+    fdaApproved: undefined,
     addon: Boolean(input.addon) || undefined,
     addonPitch: text(input.addonPitch, 120) || undefined,
     addonFor: Array.isArray(input.addonFor) ? input.addonFor.filter((c) => ADDON_AREAS.includes(c)) : undefined,

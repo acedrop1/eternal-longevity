@@ -594,12 +594,10 @@ export function AdminProductEditor({
               <div className="space-y-3 pt-1">
                 <span className="block text-[14px] font-medium text-ink/80">Tags</span>
                 <Check checked={p.popular} onChange={(v) => set('popular', v)} label="Popular" body="Shows a small “Popular” tag on the product page." />
-                <Check
-                  checked={p.fdaApproved}
-                  onChange={(v) => set('fdaApproved', v)}
-                  label="FDA-approved reference drug"
-                  body="Record-keeping only. It does not make the product sellable; status does."
-                />
+                {/* Every product is compounded by a 503A pharmacy, so none is FDA-approved; not a setting. */}
+                <p className="text-[13px] leading-snug text-ink/65">
+                  Compounded by a 503A pharmacy: not FDA-approved. The site never marks a compounded formula as FDA-approved.
+                </p>
               </div>
             </div>
           </SectionCard>
