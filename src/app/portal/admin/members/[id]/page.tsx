@@ -1,3 +1,4 @@
+import { MemberMarketingControls } from '@/components/admin/MemberMarketingControls';
 import type { Metadata } from 'next';
 import {
   ageFrom,
@@ -71,6 +72,8 @@ interface MemberDetail {
   }[];
   /** What they agreed to and what they're enrolled in: care consents, alerts and marketing. */
   consents?: { label: string; on: boolean | null; detail: string }[];
+  /** marketing_contacts statuses for their email ('none' when not on the list). */
+  marketing?: { email: string; sms: string };
   /** The intake, read the way the prescriber reads it. */
   review: PatientReview | null;
 }
@@ -233,6 +236,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
 
     return {
       consents,
+      marketing: { email: mkt?.email_status ?? 'none', sms: mkt?.sms_status ?? 'none' },
       name: profile.full_name ?? 'Unnamed',
       email: profile.email ?? '',
       phone: profile.phone,
@@ -463,6 +467,9 @@ export default async function MemberDetailPage({ params }: PageProps) {
                     </li>
                   ))}
                 </ul>
+              )}
+              {detail.marketing && detail.email && (
+                <MemberMarketingControls memberId={id} emailStatus={detail.marketing.email} smsStatus={detail.marketing.sms} />
               )}
             </SectionCard>
 
