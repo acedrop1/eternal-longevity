@@ -37,7 +37,8 @@ export default async function AdminSettingsPage() {
 
   // A real read-only call with the saved key: the only way to know a secret env value is right.
   // ponytail: first 5 pages (500 products); page further if the catalog ever outgrows that.
-  const rx = rxhereConfigured() ? await listCatalog({ limit: 100 }) : null;
+  // The key alone is enough to read the catalog; orders also wait for the webhook secret.
+  const rx = process.env.RXHERE_API_TOKEN ? await listCatalog({ limit: 100 }) : null;
   let catalog: RxHereCatalogItem[] = rx?.ok ? catalogItems(rx.data) : [];
   for (let page = 2; rx?.ok && catalog.length === (page - 1) * 100 && page <= 5; page++) {
     const next = await listCatalog({ page, limit: 100 });
@@ -87,7 +88,7 @@ export default async function AdminSettingsPage() {
       detail: !rx
         ? 'Partner API token not set'
         : rx.ok
-          ? `RxHere key accepted${rxhereSandbox() ? ' · sandbox key (vr_test_): orders are checked, nothing is created' : ' · live: orders send automatically'}`
+          ? `RxHere key accepted${rxhereConfigured() ? '' : ' · webhook secret not set, orders wait'}${rxhereSandbox() ? ' · sandbox key (vr_test_): orders are checked, nothing is created' : ' · live: orders send automatically'}`
           : rx.code === 'unauthorized' || rx.code === 'forbidden'
             ? 'RxHere refused the key. Ask RxHere for a new one'
             : `RxHere API not reachable (${rx.status || 'timeout'})`,

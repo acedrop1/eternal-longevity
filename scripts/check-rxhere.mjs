@@ -11,6 +11,10 @@ assert.equal(signatureValid(body + ' ', sig, 's3cret'), false);
 assert.equal(signatureValid(body, sig, 'other'), false);
 assert.equal(signatureValid(body, 'sha256=zz', 's3cret'), false);
 assert.equal(signatureValid(body, null, 's3cret'), false);
+const bare = 'sha256=' + createHmac('sha256', 'abc123').update(body).digest('hex');
+assert.equal(signatureValid(body, bare, 'whsec_abc123'), true); // keyed without the prefix
+const full = 'sha256=' + createHmac('sha256', 'whsec_abc123').update(body).digest('hex');
+assert.equal(signatureValid(body, full, 'whsec_abc123'), true); // keyed with it
 assert.deepEqual(parseWebhook(JSON.parse(body)), { reference: 'abc', event: 'SHIPPED', occurredAt: '2026-10-19T18:22:03.005Z', trackingNumber: '1Z', carrier: 'ups', reason: null });
 assert.equal(parseWebhook({ event: 'order.unknown', order_id: 'a', occurred_at: '2026-10-19T00:00:00Z' }), null);
 

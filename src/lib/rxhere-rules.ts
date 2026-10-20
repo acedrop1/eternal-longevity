@@ -292,11 +292,15 @@ export function parseWebhook(body: unknown): RxHereWebhook | null {
  */
 export function signatureValid(rawBody: string, header: string | null | undefined, secret: string | undefined): boolean {
   if (!header || !secret) return false;
-  const expected = createHmac('sha256', secret).update(rawBody, 'utf8').digest();
   const hex = header.trim().replace(/^sha256=/i, '');
   if (!/^[0-9a-f]+$/i.test(hex)) return false;
   const received = Buffer.from(hex, 'hex');
-  return received.length === expected.length && timingSafeEqual(received, expected);
+  // The guide keys with the secret as issued (whsec_…); accept the bare part after the prefix too.
+  const keys = [secret, secret.replace(/^whsec_/, '')].filter((k, i, a) => k && a.indexOf(k) === i);
+  return keys.some((k) => {
+    const expected = createHmac('sha256', k).update(rawBody, 'utf8').digest();
+    return received.length === expected.length && timingSafeEqual(received, expected);
+  });
 }
 
 type RowStatus = 'draft' | 'submitted' | 'accepted' | 'shipped' | 'delivered' | 'canceled';
