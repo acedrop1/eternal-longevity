@@ -5,6 +5,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminPageHeader } from '@/components/admin/IndexTable';
 import { getSession, loginUrl } from '@/lib/auth-server';
+import { withLiveCosts } from '@/lib/pharmacy-prices';
 import { getLiveProducts, getPharmacyEntries } from '@/lib/catalog';
 import { SHOP_CATEGORIES, offersTwelveMonth } from '@/lib/shopProducts';
 import { SHIPPING_COST } from '@/lib/shipping';
@@ -26,7 +27,7 @@ export default async function AdminPricingPage() {
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const [products, pharmacy, shipping] = await Promise.all([getLiveProducts(), getPharmacyEntries(), getShippingSettings()]);
+  const [products, pharmacy, shipping] = await Promise.all([getLiveProducts(), getPharmacyEntries().then(withLiveCosts), getShippingSettings()]);
   const order = SHOP_CATEGORIES.map((c) => c.key);
   const rows: PricingRow[] = products
     .sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category) || a.name.localeCompare(b.name))

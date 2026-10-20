@@ -6,6 +6,7 @@ import { ADMIN_NAV } from '@/components/portal/ui';
 import { AdminPageHeader, headerButton } from '@/components/admin/IndexTable';
 import { AdminProductsIndex, type ProductRowView } from '@/components/admin/AdminProductsIndex';
 import { getSession, loginUrl } from '@/lib/auth-server';
+import { withLiveCosts } from '@/lib/pharmacy-prices';
 import { catalogStore, getCatalog, getPharmacyEntries } from '@/lib/catalog';
 import { SHOP_CATEGORIES, offersTwelveMonth } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
@@ -26,7 +27,7 @@ export default async function AdminProductsPage() {
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const [products, pharmacy, shipping] = await Promise.all([getCatalog(), getPharmacyEntries(), getShippingSettings()]);
+  const [products, pharmacy, shipping] = await Promise.all([getCatalog(), getPharmacyEntries().then(withLiveCosts), getShippingSettings()]);
   const note = STORE_NOTE[catalogStore()];
   const live = products.filter((p) => p.status === 'live').length;
 

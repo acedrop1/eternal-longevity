@@ -1,4 +1,5 @@
 import { getPrescriber } from '@/lib/prescriber';
+import { priceChangesSinceLastCheck } from '@/lib/pharmacy-prices';
 import { NextRequest, NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/cron-auth';
 import {
@@ -146,6 +147,22 @@ export async function GET(req: NextRequest) {
     refillsTomorrow,
     pausedPlans,
   };
+
+  // RxHere moved the price of something we sell: tell the team (admin only; prices aren't the prescriber's).
+  const priceChanges = await priceChangesSinceLastCheck().catch(() => []);
+  if (priceChanges.length && emailConfigured()) {
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `RxHere changed ${priceChanges.length} ${priceChanges.length === 1 ? 'price' : 'prices'}`,
+      html: noticeEmail({
+        eyebrow: 'Pharmacy prices',
+        heading: `RxHere changed the price of ${priceChanges.length} ${priceChanges.length === 1 ? 'product' : 'products'} we sell`,
+        body: 'Margins in admin already use the new prices. Customer prices have not changed: decide whether to adjust them or push back with RxHere.',
+        rows: priceChanges.map((c) => [c.name, `$${c.from.toFixed(2)} → $${c.to.toFixed(2)} per unit`]),
+        cta: { label: 'Open Pharmacy', href: `${SITE_URL}/portal/admin/pharmacy` },
+      }),
+    }).catch(() => undefined);
+  }
 
   if (!emailConfigured()) {
     // Still return the numbers so the route is useful (and testable) before

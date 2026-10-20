@@ -1,6 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getCatalog, getPharmacyEntries } from './catalog';
+import { livePrices } from './pharmacy-prices';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
 import { getTransfer, listRefunds, type FrameTransfer } from './frame';
 import type { Order } from './orders';
@@ -28,11 +29,19 @@ type Db = ReturnType<typeof createSupabaseAdminClient>;
 const untyped = (db: Db) => db as unknown as SupabaseClient;
 const MIGRATION_HINT = '(have supabase/migrations/0025_order_costs.sql and 0026_frame_payments.sql been run?)';
 
-/** Per product: cost per unit, units per 30 days, storage (for the shipping method). */
+/**
+ * Per product: cost per unit, units per 30 days, storage (for the shipping method).
+ * The unit cost is RxHere's live price when it answers within 3 seconds (it is
+ * what they charge us), else the stored cost.
+ */
 export async function costTable(): Promise<CostTable> {
-  const [products, rx] = await Promise.all([getCatalog(), getPharmacyEntries()]);
+  const [products, rx, live] = await Promise.all([getCatalog(), getPharmacyEntries(), livePrices(3_000)]);
   return Object.fromEntries(
-    products.map((p) => [p.id, { unitCost: rx[p.id]?.unitCost ?? 0, quantity: rx[p.id]?.quantity ?? 1, storage: p.storage }]),
+    products.map((p) => {
+      const e = rx[p.id];
+      const unitCost = (e?.sku ? live?.get(e.sku) : undefined) ?? e?.unitCost ?? 0;
+      return [p.id, { unitCost, quantity: e?.quantity ?? 1, storage: p.storage }];
+    }),
   );
 }
 

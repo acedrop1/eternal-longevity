@@ -19,6 +19,7 @@ import { PRODUCT_STATUSES, catalogStore, getCatalogProduct, pharmacyEntryFor, wr
 import { cleanPharmacy, type StoredPharmacy } from './pharmacy-catalog';
 import { createSupabaseAdminClient } from './supabase/admin';
 import { toProductInput } from './product-input';
+import { PRODUCT_CATEGORY } from './intake-categories';
 
 export interface ProductInput {
   id: string;
@@ -125,6 +126,10 @@ export async function saveProductAction(input: ProductInput): Promise<ProductRes
   // The gate: a live product must carry what its page and a certifier expect.
   if (input.status === 'live') {
     if (NEVER_LIVE.has(id)) return { ok: false, message: 'This product can never be listed publicly.' };
+    // A product the assessment doesn't know would be sold with no screening questions.
+    if (!PRODUCT_CATEGORY[id]) {
+      return { ok: false, message: 'This product isn’t in the assessment yet, so it can’t go live. Save it as a draft and ask for its assessment questions to be added.' };
+    }
     const missing = [
       !image && 'a photo',
       !text(input.shortDescription, 240) && 'a short description',
