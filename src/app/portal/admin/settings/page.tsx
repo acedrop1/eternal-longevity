@@ -17,6 +17,7 @@ import { listCatalog, rxhereConfigured, rxhereSandbox } from '@/lib/rxhere';
 import { catalogItems, type RxHereCatalogItem } from '@/lib/rxhere-rules';
 import { getPharmacyEntries } from '@/lib/catalog';
 import { SectionCard } from '@/components/admin/IndexTable';
+import { RxHereSandboxTest } from '@/components/admin/RxHereSandboxTest';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import {
   createSupabaseAdminClient,
@@ -128,6 +129,7 @@ export default async function AdminSettingsPage() {
             description="RxHere's products and our price. Copy a product's ID into Admin → Products → (product) → Pharmacy ID to send its orders automatically."
             flush
           >
+            {rxhereSandbox() && <RxHereSandboxTest />}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px]">
                 <thead className="bg-milk">

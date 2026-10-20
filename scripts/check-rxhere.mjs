@@ -2,6 +2,7 @@
 // Usage: JITI_ALIAS='{"@/":"<repo>/src/"}' npx jiti scripts/check-rxhere.mjs
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import { PHARMACY_CATALOG, mergePharmacy } from '../src/lib/pharmacy-catalog.ts';
 import { buildPrescriptionPayload, parseWebhook, signatureValid, validDea, isCatalogId } from '../src/lib/rxhere-rules.ts';
 
 const body = JSON.stringify({ event: 'order.shipped', order_id: 'abc', order_number: 'X-1', tracking_number: '1Z', tracking_carrier: 'ups', occurred_at: '2026-10-19T18:22:03.005Z' });
@@ -42,4 +43,10 @@ assert.equal(buildPrescriptionPayload({ ...base, address: { line1: '1 Main St' }
 assert.equal(buildPrescriptionPayload({ ...base, prescriber: { ...base.prescriber, licenses: {} } }).error, 'no_license');
 assert.equal(buildPrescriptionPayload({ ...base, prescriber: { ...base.prescriber, dea: 'BAD' } }).payload.prescriber.dea_number, undefined);
 assert.equal(buildPrescriptionPayload({ ...base, cadence: 'quarterly' }).payload.prescriptions[0].days_supply, 90);
+// An old partner-API SKU saved in admin never hides the seed's catalog id; a saved catalog id wins.
+const seed = PHARMACY_CATALOG.enclomiphene;
+assert.equal(isCatalogId(seed.sku), true);
+assert.equal(mergePharmacy(seed, { sku: 'HR-ECC' }).sku, seed.sku);
+assert.equal(mergePharmacy(seed, { sku: '00000000-0000-4000-8000-000000000000' }).sku, '00000000-0000-4000-8000-000000000000');
+assert.equal(Object.values(PHARMACY_CATALOG).every((i) => isCatalogId(i.sku)), true);
 console.log('rxhere rules: all checks passed');
