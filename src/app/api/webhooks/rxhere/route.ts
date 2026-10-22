@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
   if (raw.length > MAX_BODY) return NextResponse.json({ error: 'Too large.' }, { status: 413 });
   // Over the exact bytes received: re-serialising parsed JSON would not match.
   if (!signatureValid(raw, req.headers.get('x-webhook-signature'), secret)) {
+    // Logged (no body) so a secret that doesn't match RxHere's shows up in the logs.
+    console.warn('[rxhere webhook] signature did not match', req.headers.get('x-webhook-signature') ? 'signed' : 'unsigned');
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
   let w: RxHereWebhook | null = null;

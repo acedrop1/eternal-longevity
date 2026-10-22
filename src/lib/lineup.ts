@@ -169,7 +169,7 @@ export function audienceOf(item: LineupItem): Audience | 'all' {
   return only === 'm' ? 'men' : only === 'f' ? 'women' : 'all';
 }
 
-/** "For men" / "For women", or '' for a product for everyone (the card tag). */
+/** "For men" / "For women", or '' for a product for everyone (search keywords). */
 export function audienceLabel(item: LineupItem): string {
   const who = audienceOf(item);
   return who === 'all' ? '' : who === 'men' ? 'For men' : 'For women';

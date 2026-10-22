@@ -24,6 +24,13 @@ export function phoneHref(raw?: string | null): string {
 }
 
 /**
+ * The business's clock. Times are rendered on the server (UTC) and again in
+ * the browser; one fixed zone makes both print the same text, so React never
+ * sees a mismatch (error #418), and staff all read the same time.
+ */
+const ET = 'America/New_York';
+
+/**
  * Feb 10, 2000 from a stored date.
  *
  * A `date` column comes back as 'YYYY-MM-DD'. Passing that to `new Date()`
@@ -42,10 +49,12 @@ export function formatDate(value?: string | null): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    // A timestamp is shown in Eastern time (see formatDateTime); a date-only value was built in local time above.
+    ...(dateOnly ? {} : { timeZone: ET }),
   });
 }
 
-/** Feb 10, 2000 · 3:24 PM */
+/** Feb 10, 2000 · 3:24 PM (Eastern) */
 export function formatDateTime(value?: string | number | null): string {
   if (value === null || value === undefined || value === '') return '—';
   const d = new Date(value);
@@ -54,7 +63,8 @@ export function formatDateTime(value?: string | number | null): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    timeZone: ET,
+  })} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ET })}`;
 }
 
 /** Age in whole years from a date of birth. Null when it cannot be computed. */
