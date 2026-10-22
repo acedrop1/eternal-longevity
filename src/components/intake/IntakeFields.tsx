@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Check, X } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Eye, EyeOff, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Field, CONSENT_ITEMS, PASSWORD_RULES } from '@/lib/intakeSchema';
 import { FileUpload, PhotoUpload } from './MediaFields';
@@ -49,6 +50,9 @@ function CheckBox({ on, className }: { on: boolean; className?: string }) {
 
 const inputBad = 'ring-red-600/50 focus:ring-red-600/50';
 
+/** Consent ids shown as small fine-print rows under the main consent tiles. */
+const FINE_PRINT = ['sms_alerts', 'marketing_email'];
+
 /** MMDDYYYY digits -> ISO yyyy-mm-dd, or null when it isn't a real date (02/31). */
 function isoFromDobDigits(d: string): string | null {
   if (!/^\d{8}$/.test(d)) return null;
@@ -77,6 +81,19 @@ export function FieldRenderer({
   // Spread onto whichever element owns the answer (input, select or group).
   const a11y = { 'aria-invalid': invalid || undefined, 'aria-describedby': describedBy || undefined };
   const input = cn(inputBase, invalid && inputBad);
+  const [showPw, setShowPw] = useState(false);
+  const pwType = showPw ? 'text' : 'password';
+  const showPwToggle = (
+    <button
+      type="button"
+      onClick={() => setShowPw((v) => !v)}
+      aria-pressed={showPw}
+      className="inline-flex items-center gap-1.5 rounded-md text-[13px] font-medium text-ink/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
+    >
+      {showPw ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+      {showPw ? 'Hide password' : 'Show password'}
+    </button>
+  );
   switch (field.type) {
     case 'multi-select':
       return (
@@ -428,17 +445,20 @@ export function FieldRenderer({
 
     case 'password':
       return (
-        <input
-          id={`fld-${field.id}`}
-          aria-label={field.label || undefined}
-          {...a11y}
-          type="password"
-          enterKeyHint={enterKeyHint}
-          value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={field.placeholder}
-          className={input}
-        />
+        <div>
+          <input
+            id={`fld-${field.id}`}
+            aria-label={field.label || undefined}
+            {...a11y}
+            type={pwType}
+            enterKeyHint={enterKeyHint}
+            value={(value as string) ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            className={input}
+          />
+          <div className="mt-2">{showPwToggle}</div>
+        </div>
       );
 
     case 'consent-stack': {
@@ -491,7 +511,7 @@ export function FieldRenderer({
           </button>
 
           {/* Individual consent rows */}
-          {CONSENT_ITEMS.filter((c) => !field.hideItems?.includes(c.id)).map((c) => {
+          {CONSENT_ITEMS.filter((c) => !field.hideItems?.includes(c.id) && !FINE_PRINT.includes(c.id)).map((c) => {
             const checked = !!consents[c.id];
             return (
               <button
@@ -518,6 +538,26 @@ export function FieldRenderer({
               </button>
             );
           })}
+
+          {/* Text alerts and marketing email: light fine-print rows, as on most checkouts. */}
+          <div className="space-y-2.5 px-1 pt-2">
+            {CONSENT_ITEMS.filter((c) => FINE_PRINT.includes(c.id) && !field.hideItems?.includes(c.id)).map((c) => {
+              const checked = !!consents[c.id];
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={checked}
+                  onClick={() => onChange({ ...consents, [c.id]: !checked })}
+                  className="flex w-full items-start gap-2.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                >
+                  <CheckBox on={checked} className="mt-0.5 h-4 w-4 rounded" />
+                  <span className="text-[12px] leading-snug text-ink/60 md:text-[12.5px]">{c.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       );
     }
@@ -532,7 +572,7 @@ export function FieldRenderer({
               id={`fld-${field.id}`}
               aria-label={field.label || undefined}
               {...a11y}
-              type="password"
+              type={pwType}
               autoComplete="new-password"
               enterKeyHint="next"
               value={acc.password ?? ''}
@@ -546,7 +586,7 @@ export function FieldRenderer({
             <input
               id={`fld-${field.id}-confirm`}
               aria-label={field.label || undefined}
-              type="password"
+              type={pwType}
               autoComplete="new-password"
               enterKeyHint="done"
               value={acc.confirm ?? ''}
@@ -555,6 +595,7 @@ export function FieldRenderer({
               className={input}
             />
           </div>
+          {showPwToggle}
 
           {/* Live password checklist — unmet rules turn red once typing starts. */}
           <ul className="space-y-2">

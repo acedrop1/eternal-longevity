@@ -28,10 +28,12 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
           },
-          // Card fields: Frame.js loads from js.framepayments.com. Its docs do not
-          // name the card iframe, 3D Secure or fraud-signal hosts, so the
-          // framepayments.com wildcard covers them in connect-src and frame-src.
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.framepayments.com https://maps.googleapis.com https://connect.facebook.net https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://maps.gstatic.com https://*.supabase.co https://static.legitscript.com https://www.facebook.com; media-src 'self'; connect-src 'self' https://api.framepayments.com https://*.framepayments.com https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://places.googleapis.com https://www.facebook.com https://connect.facebook.net https://accounts.google.com/gsi/; frame-src https://js.framepayments.com https://*.framepayments.com https://accounts.google.com/gsi/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+          // Card fields: Frame.js (js.framepayments.com) also loads its own
+          // metrics and fraud scripts from *.framepayments.com, Evervault for card
+          // encryption (script js.evervault.com, iframe ui-components.evervault.com,
+          // fetch keys.evervault.com) and a fraud pixel from hexagon-analytics.com.
+          // Seen loading in a browser Oct 22, 2026; missing any of them, init fails.
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.framepayments.com https://js.evervault.com https://maps.googleapis.com https://connect.facebook.net https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://maps.gstatic.com https://*.supabase.co https://static.legitscript.com https://www.facebook.com https://hexagon-analytics.com; media-src 'self'; connect-src 'self' https://api.framepayments.com https://*.framepayments.com https://*.evervault.com https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://places.googleapis.com https://www.facebook.com https://connect.facebook.net https://accounts.google.com/gsi/; frame-src https://js.framepayments.com https://*.framepayments.com https://*.evervault.com https://accounts.google.com/gsi/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {

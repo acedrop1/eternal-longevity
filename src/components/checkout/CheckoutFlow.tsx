@@ -1409,7 +1409,7 @@ export function CheckoutFlow({
                 asking for it first meant reaching an empty field with nothing
                 to fill it from — which reads as a form that does not work.
               */}
-              <div className="grid gap-4 sm:grid-cols-[1fr_2fr_1fr]">
+              <div className="grid gap-4 sm:grid-cols-[7rem_minmax(0,1fr)_11rem]">
                 <div>
                   <FieldLabel htmlFor="ship-zip">ZIP</FieldLabel>
                   <input
