@@ -124,7 +124,7 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const saved = isMember ? await getAssessmentDraft(entry) : null;
   // Already ordered, or already on a plan: no second assessment, no second order.
   const held = isMember && requested ? (await heldProductsFor(user.id)).get(requested.id) : undefined;
-  // Declined by Dr. Elder and not reassessed since: the questions again, last answers pre-filled.
+  // Declined, cancelled since, or answers too old: the questions again, last answers pre-filled.
   const priorDecline = isMember && requested ? (await reassessNeeded(user.id)).get(requested.id) : undefined;
   // Already assessed for this product: straight to choosing a plan. A renewal (?renew=) or a decline still re-asks.
   const assessed = Boolean(
@@ -199,9 +199,12 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           member={member}
           draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
           renewal={Boolean(renew && requested && isMember)}
-          previouslyDeclined={
+          reassess={
             priorDecline
-              ? new Date(priorDecline.declinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+              ? {
+                  reason: priorDecline.reason,
+                  date: new Date(priorDecline.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }),
+                }
               : undefined
           }
           seed={seed}

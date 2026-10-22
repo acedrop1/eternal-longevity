@@ -102,40 +102,67 @@ export async function pendingMediaFor(
   };
 }
 
-export type PriorDecline = { orderNumber: string; declinedAt: string; note: string | null };
+/** Why a product needs its questions answered again before it can be ordered. */
+export type ReassessReason = 'declined' | 'cancelled' | 'stale';
+export type PriorDecline = {
+  reason: ReassessReason;
+  /** When the reason arose (the decline, the cancellation, or the last assessment for 'stale'). */
+  at: string;
+  /** Declines only: the order he declined and his note. */
+  orderNumber?: string;
+  note?: string | null;
+};
+
+/** Health answers older than this are re-confirmed before a new order (pre-filled). */
+export const ANSWERS_MAX_AGE_DAYS = 180;
 
 /**
- * Products Dr. Elder declined for this member that still need a fresh
- * assessment: no assessment covering the product has been submitted since
- * the decline. Reordering one sends them back through its questions (their
- * last answers pre-filled), so he never re-reviews the answers he declined.
+ * Products this member must answer again (their last answers pre-filled)
+ * before ordering, so Dr. Elder never reviews a new order on answers that may
+ * no longer hold:
+ *   declined:  he declined it, and no assessment covering it since
+ *   cancelled: they cancelled its plan after their last assessment
+ *   stale:     their last assessment is older than ANSWERS_MAX_AGE_DAYS
+ * A prescription that ran its term is handled by the renewal path (?renew=).
  */
 export async function reassessNeeded(userId: string): Promise<Map<string, PriorDecline>> {
   const out = new Map<string, PriorDecline>();
   if (!supabaseAdminConfigured()) return out;
   const db = createSupabaseAdminClient();
-  const { data: orders } = await db
-    .from('orders')
-    .select('id, order_number, physician_note, updated_at')
-    .eq('user_id', userId)
-    .eq('status', 'declined-clinical');
-  if (!orders?.length) return out;
-  const ids = orders.map((o) => o.id);
-  const [{ data: items }, { data: updates }, { data: intake }] = await Promise.all([
-    db.from('order_items').select('order_id, product_id').in('order_id', ids),
-    db.from('order_updates').select('order_id, created_at').in('order_id', ids).eq('status_change', 'declined-clinical'),
+  const [{ data: orders }, { data: plans }, { data: intake }] = await Promise.all([
+    db.from('orders').select('id, order_number, physician_note, updated_at').eq('user_id', userId).eq('status', 'declined-clinical'),
+    db.from('subscriptions').select('product_id, updated_at').eq('user_id', userId).eq('status', 'canceled'),
     db.from('intake_submissions').select('answers, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
-  const declinedAt = (o: (typeof orders)[number]) => updates?.find((u) => u.order_id === o.id)?.created_at ?? o.updated_at;
   const answers = intake?.answers && typeof intake.answers === 'object' && !Array.isArray(intake.answers) ? (intake.answers as Record<string, unknown>) : {};
-  for (const o of orders) {
-    const at = declinedAt(o);
-    for (const i of (items ?? []).filter((x) => x.order_id === o.id)) {
-      // Cleared by an assessment for this product submitted after the decline.
-      const cleared = intake && intake.created_at > at && intakeCovers(answers, i.product_id);
-      const prev = out.get(i.product_id);
-      if (!cleared && (!prev || prev.declinedAt < at)) {
-        out.set(i.product_id, { orderNumber: o.order_number, declinedAt: at, note: o.physician_note });
+  const lastAt = intake?.created_at ?? '';
+  // Answered (for this product) after `at`: the reason no longer applies.
+  const answeredSince = (productId: string, at: string) => Boolean(intake) && lastAt > at && intakeCovers(answers, productId);
+
+  // Stale: every product their last assessment covered, once it's past the limit.
+  if (intake && Date.now() - new Date(lastAt).getTime() > ANSWERS_MAX_AGE_DAYS * 86_400_000) {
+    for (const id of intakeProductIds(answers)) out.set(id, { reason: 'stale', at: lastAt });
+  }
+
+  // Cancelled since the last assessment.
+  for (const p of plans ?? []) {
+    if (!answeredSince(p.product_id, p.updated_at)) out.set(p.product_id, { reason: 'cancelled', at: p.updated_at });
+  }
+
+  // Declined, and not answered again since (the strongest reason, so it wins).
+  if (orders?.length) {
+    const ids = orders.map((o) => o.id);
+    const [{ data: items }, { data: updates }] = await Promise.all([
+      db.from('order_items').select('order_id, product_id').in('order_id', ids),
+      db.from('order_updates').select('order_id, created_at').in('order_id', ids).eq('status_change', 'declined-clinical'),
+    ]);
+    for (const o of orders) {
+      const at = updates?.find((u) => u.order_id === o.id)?.created_at ?? o.updated_at;
+      for (const i of (items ?? []).filter((x) => x.order_id === o.id)) {
+        const prev = out.get(i.product_id);
+        if (!answeredSince(i.product_id, at) && !(prev?.reason === 'declined' && prev.at > at)) {
+          out.set(i.product_id, { reason: 'declined', at, orderNumber: o.order_number, note: o.physician_note });
+        }
       }
     }
   }

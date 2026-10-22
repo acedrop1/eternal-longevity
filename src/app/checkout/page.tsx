@@ -74,27 +74,34 @@ export default async function CheckoutPage() {
     // Never asked, or declined by Dr. Elder and not answered again since: questions first, before address or card.
     const owed = [...new Set(items.map((i) => i.productId))]
       .filter((id) => !intakeCovers(answers, id) || redo.has(id))
-      .map((id) => ({ id, name: getAnyShopProduct(id)?.name ?? 'This treatment', declined: redo.get(id) }));
+      .map((id) => ({ id, name: getAnyShopProduct(id)?.name ?? 'This treatment', redo: redo.get(id) }));
     if (owed.length) {
       const first = owed[0];
-      const declinedOn = first.declined
-        ? new Date(first.declined.declinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
-        : null;
+      const on = first.redo
+        ? new Date(first.redo.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' })
+        : '';
+      const why =
+        first.redo?.reason === 'declined'
+          ? `Dr. Elder didn’t approve ${first.name} on ${on}, so he needs your current answers before you order it again.`
+          : first.redo?.reason === 'cancelled'
+            ? `You cancelled ${first.name} on ${on}, so Dr. Elder needs your current answers before restarting it.`
+            : first.redo?.reason === 'stale'
+              ? `Your health answers are from ${on}. Before a new order, Dr. Elder needs to know they’re still current.`
+              : '';
       return (
         <main className="relative min-h-screen bg-white text-ink">
           <div className="mx-auto max-w-[640px] px-5 pb-20 pt-24 text-center md:pt-32">
             <h1 className="mb-4 text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] [text-wrap:balance] md:text-[40px]">
-              {declinedOn
-                ? `Update your answers for ${first.name}.`
+              {first.redo
+                ? `${first.redo.reason === 'declined' ? 'Update' : 'Confirm'} your answers for ${first.name}.`
                 : owed.length === 1
                   ? `A few questions about ${first.name} first.`
                   : 'A few questions first.'}
             </h1>
-            {declinedOn ? (
+            {first.redo ? (
               <p className="mb-8 rounded-inner bg-butter-soft px-5 py-4 text-left text-[16px] leading-relaxed text-ink ring-1 ring-butter-deep/50">
-                Dr. Elder didn&rsquo;t approve {first.name} on {declinedOn}, so he needs your current answers before you
-                order it again. Your last answers are filled in: check each one, update anything that&rsquo;s changed,
-                and you come straight back here. You&rsquo;re charged only if he approves.
+                {why} Your last answers are filled in: check each one, update anything that&rsquo;s changed, and you come
+                straight back here. You&rsquo;re charged only if he approves.
               </p>
             ) : (
               <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
@@ -109,7 +116,7 @@ export default async function CheckoutPage() {
                   href={`/start?product=${encodeURIComponent(p.id)}`}
                   className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
                 >
-                  {p.declined ? `Update my ${p.name} answers` : `Answer the ${p.name} questions`}
+                  {p.redo ? `${p.redo.reason === 'declined' ? 'Update' : 'Confirm'} my ${p.name} answers` : `Answer the ${p.name} questions`}
                 </Link>
               ))}
               <Link

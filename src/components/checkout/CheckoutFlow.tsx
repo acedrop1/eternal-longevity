@@ -193,7 +193,7 @@ const ORDER_ERROR: Record<string, string> = {
   promo_unavailable: 'That code is no longer available, so we removed it. Check your total and place your order again.',
   already_ordered: 'You already have one of these treatments, on a plan or on its way. Remove it to continue, or manage it in your portal.',
   not_assessed: 'One of these treatments needs a few questions of its own first.',
-  reassess: 'Dr. Elder didn’t approve this treatment last time, so he needs your current answers first. Your last answers are filled in; update anything that’s changed.',
+  reassess: 'Dr. Elder needs your current answers for this treatment first. Your last answers are filled in; update anything that’s changed.',
   duplicate_product: 'The same treatment is in your cart twice. Keep one plan to continue.',
   not_authorized: 'Please sign in to place your order.',
   order_in_progress: 'Your order is already being placed. Give it a moment, then check your portal before trying again.',

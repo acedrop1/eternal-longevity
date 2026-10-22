@@ -448,7 +448,7 @@ async function placeOrder(input: {
   // Demo stores no intakes, so there is nothing to check against there.
   const unassessed = supabaseAdminConfigured() ? ids.find((id) => !intakeCovers(answers, id)) : undefined;
   if (unassessed) return { ok: false, error: 'not_assessed', productId: unassessed };
-  // Declined by Dr. Elder and not reassessed since: back through its questions first.
+  // Declined, cancelled since, or answers too old: back through its questions first (pre-filled).
   const redo = supabaseAdminConfigured() ? await reassessNeeded(user.id) : new Map();
   const reassess = ids.find((id) => redo.has(id));
   if (reassess) return { ok: false, error: 'reassess', productId: reassess };
