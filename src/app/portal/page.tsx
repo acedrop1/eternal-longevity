@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { DismissibleCard } from '@/components/portal/DismissibleCard';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getPendingVisit } from '@/lib/intake-actions';
@@ -103,8 +105,20 @@ export default async function MemberPortalPage() {
    * plan" (continuing it is that step). Anything urgent (payment, the
    * prescriber, needs-info, a decision) still shows, above the draft.
    */
-  const step =
+  const nextStep =
     next && unfinished && (next.eyebrow === 'Get started' || next.title.endsWith('assessment is complete')) ? null : next;
+  /*
+   * Notices (a decline, a cancellation) can be closed with their X (el_dismissed cookie, set by
+   * DismissibleCard) and leave on their own NOTICE_DAYS after the event. Steps that need action stay.
+   */
+  const NOTICE_DAYS = 14;
+  const dismissed = new Set(decodeURIComponent((await cookies()).get('el_dismissed')?.value ?? '').split(',').filter(Boolean));
+  const step =
+    nextStep?.notice && (dismissed.has(nextStep.notice.key) || Date.now() - nextStep.notice.at > NOTICE_DAYS * 86_400_000)
+      ? null
+      : nextStep;
+  const draftKey = unfinished ? `draft-${unfinished.entry}-${unfinished.updatedAt}` : '';
+  const draft = unfinished && !dismissed.has(draftKey) ? unfinished : null;
   const firstName = (user.name ?? 'there').trim().split(/\s+/)[0];
 
   return (
@@ -112,7 +126,7 @@ export default async function MemberPortalPage() {
       <PageHeader
         title={`Hi ${firstName}.`}
         intro={
-          pendingVisit || preview || media.photos || unfinished || step
+          pendingVisit || preview || media.photos || draft || step
             ? 'One thing needs your attention.'
             : latest
               ? 'Everything is on track.'
@@ -148,6 +162,7 @@ export default async function MemberPortalPage() {
       {/* One next step, named for the product it is about. Urgent ones sit
           above an unfinished assessment; see `step`. */}
       {step && (
+        <MaybeDismiss cardKey={step.notice?.key}>
         <section
           aria-labelledby="next-step"
           className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
@@ -168,9 +183,11 @@ export default async function MemberPortalPage() {
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
           </Link>
         </section>
+        </MaybeDismiss>
       )}
       {/* An assessment they started and left: the first thing to offer back. */}
-      {unfinished && (
+      {draft && (
+        <DismissibleCard cardKey={draftKey}>
         <section
           aria-labelledby="resume-visit"
           className="rounded-shell bg-butter-soft p-5 ring-1 ring-butter-deep md:p-6"
@@ -180,7 +197,7 @@ export default async function MemberPortalPage() {
             id="resume-visit"
             className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
           >
-            {unfinished.title}
+            {draft.title}
           </h2>
           <div className="mt-4 flex items-center gap-3">
             <div
@@ -189,25 +206,26 @@ export default async function MemberPortalPage() {
               aria-label="Assessment progress"
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuenow={unfinished.progress}
+              aria-valuenow={draft.progress}
             >
-              <div className="h-full rounded-full bg-butter-deep" style={{ width: `${unfinished.progress}%` }} />
+              <div className="h-full rounded-full bg-butter-deep" style={{ width: `${draft.progress}%` }} />
             </div>
             <span className="flex-none text-[14px] font-medium tabular-nums text-ink/70">
-              {unfinished.progress}% done
+              {draft.progress}% done
             </span>
           </div>
           <p className="mt-2 text-[14px] text-ink/70">
-            Your answers are saved. Last updated {formatDate(unfinished.updatedAt)}.
+            Your answers are saved. Last updated {formatDate(draft.updatedAt)}.
           </p>
           <Link
-            href={unfinished.href}
+            href={draft.href}
             className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
           >
             Continue
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
           </Link>
         </section>
+        </DismissibleCard>
       )}
 
       {/* Your treatments: one card per order on its way and per plan. */}
@@ -310,4 +328,9 @@ export default async function MemberPortalPage() {
       </p>
     </PortalShell>
   );
+}
+
+/** A notice gets the close button; a step that needs action renders as is. */
+function MaybeDismiss({ cardKey, children }: { cardKey?: string; children: React.ReactNode }) {
+  return cardKey ? <DismissibleCard cardKey={cardKey}>{children}</DismissibleCard> : <>{children}</>;
 }

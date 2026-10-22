@@ -11,6 +11,15 @@ export interface NextStep {
   title: string;
   body: string;
   cta: { label: string; href: string };
+  /** Informational notices only (a decline, a cancellation): the member can close it, and it
+   *  expires on its own. `at` is when it happened (ms). Steps that need action have neither. */
+  notice?: { key: string; at: number };
+}
+
+/** When a terminal order got there: its status-change update, else when it was placed. */
+function noticeFor(o: Order): NextStep['notice'] {
+  const at = [...(o.updates ?? [])].reverse().find((u) => u.statusChange === o.status)?.at ?? o.placedAt;
+  return { key: `order-${o.id}-${o.status}`, at };
 }
 
 
@@ -102,6 +111,7 @@ export function memberNextStep(input: {
         title: `${product.name} isn’t the right fit for you`,
         body: 'Based on your health answers, your order was closed and you have not been charged. Questions? Message your care team.',
         cta: { label: 'Message your care team', href: '/portal/messages?thread=support' },
+        notice: noticeFor(last),
       };
     }
     if (last?.status === 'declined-clinical') {
@@ -110,6 +120,7 @@ export function memberNextStep(input: {
         title: `Dr. Elder didn’t approve ${product.name}`,
         body: 'His note is on your order, and you have not been charged. If you have questions, message him directly.',
         cta: { label: 'Message Dr. Elder', href: '/portal/messages?thread=doctor' },
+        notice: noticeFor(last),
       };
     }
     if (last?.status === 'denied-admin') {
@@ -119,6 +130,7 @@ export function memberNextStep(input: {
         title: `Your ${product.name} order was cancelled`,
         body: 'The reason is on your order. If you were charged, it is refunded in full. Questions? Message your care team.',
         cta: { label: 'Message your care team', href: '/portal/messages?thread=support' },
+        notice: noticeFor(last),
       };
     }
     const ordered = orders.some(
