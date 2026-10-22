@@ -56,7 +56,9 @@ export function HairQuiz({ className }: { className?: string }) {
   const q = QUESTIONS[i];
 
   // Warm the assessment (and its loading screen) so the last tap moves at once.
-  useEffect(() => router.prefetch('/start?category=hair'), [router]);
+  useEffect(() => {
+    router.prefetch('/start?category=hair');
+  }, [router]);
 
   const go = (answers: Record<string, string>) => {
     // In words, for Admin → Marketing's quiz breakdown.

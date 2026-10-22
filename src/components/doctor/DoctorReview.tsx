@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -120,6 +121,7 @@ export function DoctorReview({
   const hoursWaiting = Math.max(0, Math.floor((Date.now() - order.placedAt) / 3_600_000));
   const pending = order.status === 'assigned' && !done;
   const formRef = useRef<HTMLDivElement>(null);
+  const choiceRef = useRef<HTMLDivElement>(null);
   const [badgeLabel, badgeTone] = statusBadge(done === 'signed' ? 'signed' : done === 'declined' ? 'declined-clinical' : order.status);
 
   // A form opened from the bottom bar lands at the top of the record: bring it into view.
@@ -623,6 +625,7 @@ export function DoctorReview({
 
       {open === 'change' && (
         <Modal
+          wide
           title="Change prescription"
           subtitle="The order switches to what you pick. Your note, the change and the new price go to the patient; nothing is charged until you sign."
           onClose={() => {
@@ -655,8 +658,11 @@ export function DoctorReview({
               {actionError}
             </p>
           )}
+          {/* Desktop: products scroll on the left, the choice (plan, note) stays in view on the right. */}
+          <div className="md:grid md:grid-cols-[minmax(0,1fr)_340px] md:gap-6">
+          <div className="min-w-0">
           <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">1 · Product</p>
-          <div role="radiogroup" aria-label="Product" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div role="radiogroup" aria-label="Product" className="grid grid-cols-3 gap-2.5 lg:grid-cols-4">
             {options.map((o) => {
               const on = o.id === rxProduct;
               return (
@@ -668,30 +674,56 @@ export function DoctorReview({
                   onClick={() => {
                     setRxProduct(o.id);
                     setRxPlan(o.tiers.find((x) => x.key === rxPlan)?.key ?? o.tiers[0]?.key ?? '');
+                    // Phone (one column): bring the plan and note into view.
+                    if (window.matchMedia('(max-width: 767px)').matches) {
+                      window.setTimeout(() => choiceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                    }
                   }}
                   className={cn(
                     'group flex flex-col overflow-hidden rounded-inner bg-white text-left ring-1 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
                     on ? 'ring-2 ring-ink shadow-[0_6px_20px_-10px_rgba(17,17,17,0.45)]' : 'ring-ink/12 hover:ring-ink/30',
                   )}
                 >
-                  <span className="relative block aspect-[4/3] w-full bg-milk" style={o.swatch && !o.shot ? { background: o.swatch } : undefined}>
-                    {o.image && <Image src={o.image} alt="" fill sizes="(min-width: 640px) 220px, 45vw" className="object-contain p-2" />}
+                  <span className="relative block aspect-square w-full bg-milk" style={o.swatch && !o.shot ? { background: o.swatch } : undefined}>
+                    {o.image && <Image src={o.image} alt="" fill sizes="(min-width: 1024px) 150px, 30vw" className="object-contain p-1.5" />}
                     {o.id === line?.productId && (
-                      <span className="absolute left-2 top-2 rounded-full bg-butter px-2 py-0.5 text-[12px] font-semibold text-ink">Ordered</span>
+                      <span className="absolute left-1.5 top-1.5 rounded-full bg-butter px-1.5 py-0.5 text-[11px] font-semibold text-ink">Ordered</span>
                     )}
                     {on && (
-                      <span aria-hidden className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-ink text-[13px] text-white">
+                      <span aria-hidden className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-ink text-[13px] text-white">
                         ✓
                       </span>
                     )}
                   </span>
-                  <span className="px-3 py-2.5 text-[14px] font-semibold leading-snug text-ink">{o.name}</span>
+                  <span className="px-2.5 py-2 text-[13px] font-semibold leading-snug text-ink">{o.name}</span>
                 </button>
               );
             })}
           </div>
 
-          <p className="mb-2 mt-6 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">2 · Plan</p>
+          </div>
+
+          {/* The choice: sticky beside the grid on desktop, under it on a phone. */}
+          <div ref={choiceRef} className="mt-6 scroll-mt-4 md:sticky md:top-0 md:mt-0 md:self-start">
+          {(() => {
+            const picked = options.find((o) => o.id === rxProduct);
+            return (
+              picked && (
+                <div className="mb-5 flex items-center gap-3 rounded-inner bg-butter-soft p-3 ring-1 ring-butter-deep/40">
+                  <span className="relative h-16 w-16 flex-none overflow-hidden rounded-thumb bg-milk" style={picked.swatch && !picked.shot ? { background: picked.swatch } : undefined}>
+                    {picked.image && <Image src={picked.image} alt="" fill sizes="64px" className="object-contain p-1" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-ink/55">
+                      {picked.id === line?.productId ? 'Ordered' : 'Switching to'}
+                    </span>
+                    <span className="block text-[16px] font-semibold leading-snug text-ink">{picked.name}</span>
+                  </span>
+                </div>
+              )
+            );
+          })()}
+          <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">2 · Plan</p>
           <div role="radiogroup" aria-label="Plan" className="flex flex-wrap gap-2">
             {rxTiers.map((t) => {
               const on = t.key === rxTier?.key;
@@ -723,6 +755,8 @@ export function DoctorReview({
               className={textArea}
             />
           </label>
+          </div>
+          </div>
         </Modal>
       )}
 
@@ -1148,18 +1182,25 @@ export function AnswerGrid({ items }: { items: { label: string; value: string; f
   );
 }
 
-/** A centred pop-up over the record: Esc or the backdrop closes it, the page behind stops scrolling. */
+/**
+ * A centred pop-up over the record: Esc or the backdrop closes it, the page behind stops scrolling.
+ * Portalled to <body>: the portal's route animation transforms the content column, which would
+ * make `fixed` relative to the page instead of the screen.
+ */
 function Modal({
   title,
   subtitle,
   onClose,
   footer,
+  wide = false,
   children,
 }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
   footer?: React.ReactNode;
+  /** Room for a two-column body (Change prescription). */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -1175,7 +1216,7 @@ function Modal({
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={panel}
@@ -1183,7 +1224,7 @@ function Modal({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[24px] bg-white shadow-2xl focus:outline-none sm:rounded-[24px]"
+        className={cn('flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[24px] bg-white shadow-2xl focus:outline-none sm:rounded-[24px]', wide ? 'max-w-6xl' : 'max-w-3xl')}
       >
         <div className="flex items-start gap-3 border-b border-ink/10 bg-butter-soft px-5 py-4">
           <div className="min-w-0 flex-1">
@@ -1204,14 +1245,18 @@ function Modal({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
         {footer && <div className="border-t border-ink/10 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 /** His thread with the patient, newest at the bottom; order tags shown as tags. */
 function MessageList({ messages }: { messages: PortalMessage[] }) {
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [messages.length]);
+  // Braces on purpose: newer browsers return a Promise from scrollIntoView, and React would call it as a cleanup.
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: 'end' });
+  }, [messages.length]);
   if (!messages.length) {
     return <p className="py-8 text-center text-[15px] text-ink/60">No messages with this patient yet. Write the first one below.</p>;
   }

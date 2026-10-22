@@ -29,7 +29,9 @@ export function LandingQuiz({ questions, href, className }: { questions: QuizQue
   const q = QUESTIONS[i];
 
   // Warm the assessment (and its loading screen) so the last tap moves at once.
-  useEffect(() => router.prefetch(href), [router, href]);
+  useEffect(() => {
+    router.prefetch(href);
+  }, [router, href]);
 
   const go = (answers: Record<string, string>) => {
     // In words, for Admin → Marketing's quiz breakdown.
