@@ -11,6 +11,7 @@ import { Search } from './Search';
 import { ShopMenu } from './ShopMenu';
 import { CartButton } from '@/components/cart/CartButton';
 import { useListedCategories } from '@/components/lineup/Lineup';
+import { AudienceLink } from '@/components/lineup/Audience';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
@@ -198,7 +199,7 @@ export function Header({ categoryStrip = false, overlay = false }: { categoryStr
   );
 }
 
-/** Frosted category strip: Shop all + each category, current one highlighted. */
+/** Frosted category strip: Shop all + each category, current one highlighted. Keeps the For men / For women filter. */
 function CategoryStrip({ glass, onPhoto }: { glass: string; onPhoto: boolean }) {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement>(null);
@@ -220,7 +221,7 @@ function CategoryStrip({ glass, onPhoto }: { glass: string; onPhoto: boolean }) 
         {items.map((c) => {
           const active = pathname === c.href;
           return (
-            <Link
+            <AudienceLink
               key={c.href}
               href={c.href}
               aria-current={active ? 'page' : undefined}
@@ -233,7 +234,7 @@ function CategoryStrip({ glass, onPhoto }: { glass: string; onPhoto: boolean }) 
                 <Image src={c.img} alt="" fill sizes="32px" className="object-cover" />
               </span>
               <span className="whitespace-nowrap">{c.label}</span>
-            </Link>
+            </AudienceLink>
           );
         })}
       </nav>

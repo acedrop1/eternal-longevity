@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { LineupRow, useListedCategories } from '@/components/lineup/Lineup';
-import { ALL_ITEMS, CATEGORIES, FORM_LABEL } from '@/lib/lineup';
+import { ALL_ITEMS, CATEGORIES, FORM_LABEL, audienceLabel } from '@/lib/lineup';
 import { cn } from '@/lib/utils';
 
 const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
@@ -34,7 +34,7 @@ const INDEX = ALL_ITEMS.map(({ item, category }) => ({
   item,
   tint: category.tint,
   words: words(
-    [item.name, item.what, FORM_LABEL[item.form], KEYWORDS[item.slug] ?? '', ...CATEGORIES.filter((c) => c.items.includes(item)).map((c) => c.name)].join(' ')
+    [item.name, item.what, FORM_LABEL[item.form], audienceLabel(item), KEYWORDS[item.slug] ?? '', ...CATEGORIES.filter((c) => c.items.includes(item)).map((c) => c.name)].join(' ')
   ),
 }));
 

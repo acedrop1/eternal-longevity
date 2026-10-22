@@ -11,6 +11,7 @@
  */
 
 import { cadenceTiersForProduct, defaultTier, type ShopProduct } from '@/lib/shopProducts';
+import { sexOnly } from '@/lib/recommend';
 
 /**
  * Also list rows whose product isn't live yet, as "Coming soon" with no price,
@@ -20,6 +21,8 @@ import { cadenceTiersForProduct, defaultTier, type ShopProduct } from '@/lib/sho
 export const LIST_DRAFTS = false;
 
 export type Form = 'injection' | 'nasal' | 'capsule' | 'tablet' | 'cream' | 'foam';
+
+export type Audience = 'men' | 'women';
 
 export interface LineupItem {
   slug: string;
@@ -78,8 +81,8 @@ const PRIMARY: Category[] = [
     tint: 'bg-[#FFE4D6]',
     items: [
       { slug: 'pt-141', name: 'PT-141 injection', what: 'Peptide that supports healthy desire', form: 'injection', live: 'pt-141' },
-      { slug: 'sildenafil-tadalafil', name: 'Sildenafil + tadalafil', what: 'For men: supports sexual performance, two in one', form: 'tablet', live: 'sildenafil-tadalafil', badge: 'New', image: '/brand/products/sildenafil-tadalafil.jpg' },
-      { slug: 'sildenafil', name: 'Sildenafil', what: 'For men: supports sexual performance, as needed', form: 'capsule', live: 'sildenafil', image: '/brand/products/sildenafil.jpg' },
+      { slug: 'sildenafil-tadalafil', name: 'Sildenafil + tadalafil', what: 'Supports sexual performance, two in one', form: 'tablet', live: 'sildenafil-tadalafil', badge: 'New', image: '/brand/products/sildenafil-tadalafil.jpg' },
+      { slug: 'sildenafil', name: 'Sildenafil', what: 'Supports sexual performance, as needed', form: 'capsule', live: 'sildenafil', image: '/brand/products/sildenafil.jpg' },
       { slug: 'oxytocin', name: 'Oxytocin', what: 'Peptide hormone that supports intimacy', form: 'tablet', live: 'oxytocin', image: '/brand/products/oxytocin.jpg' },
     ],
   },
@@ -90,8 +93,8 @@ const PRIMARY: Category[] = [
     image: '/brand/cat-hormones.jpg',
     tint: 'bg-sky/40',
     items: [
-      { slug: 'enclomiphene', name: 'Enclomiphene', what: 'For men: supports healthy testosterone levels', form: 'capsule', live: 'enclomiphene', badge: 'New', image: '/brand/products/enclomiphene.jpg' },
-      { slug: 'hrt-cream', name: 'Estradiol + progesterone cream', what: 'For women: supports hormonal balance during midlife', form: 'cream', live: 'hrt-cream', image: '/brand/products/hrt-cream.jpg' },
+      { slug: 'enclomiphene', name: 'Enclomiphene', what: 'Supports healthy testosterone levels', form: 'capsule', live: 'enclomiphene', badge: 'New', image: '/brand/products/enclomiphene.jpg' },
+      { slug: 'hrt-cream', name: 'Estradiol + progesterone cream', what: 'Supports hormonal balance during midlife', form: 'cream', live: 'hrt-cream', image: '/brand/products/hrt-cream.jpg' },
     ],
     also: ['oxytocin'],
   },
@@ -102,13 +105,13 @@ const PRIMARY: Category[] = [
     image: '/brand/cat-hair.jpg',
     tint: 'bg-milk-deep',
     items: [
-      { slug: 'fin-min-capsule', name: 'Finasteride + minoxidil', what: 'For men: one daily capsule for fuller-looking hair', form: 'capsule', live: 'fin-min-capsule', badge: 'New', image: '/brand/products/fin-min-capsule.jpg' },
-      { slug: 'fin-min-foam', name: 'Finasteride + minoxidil foam', what: 'For men: scalp foam, no pill', form: 'foam', live: 'fin-min-foam', image: '/brand/products/fin-min-foam.jpg' },
-      { slug: 'min-12-fin', name: 'Minoxidil 12% + finasteride', what: 'For men: higher-strength topical foam', form: 'foam', live: 'min-12-fin', image: '/brand/products/min-12-fin.jpg' },
-      { slug: 'fin-min-tret', name: 'Hair foam + tretinoin', what: 'For men: finasteride, minoxidil & tretinoin', form: 'foam', live: 'fin-min-tret', badge: 'New', image: '/brand/products/fin-min-tret.jpg' },
-      { slug: 'finasteride', name: 'Finasteride', what: 'For men: supports fuller-looking hair', form: 'tablet', live: 'finasteride', image: '/brand/products/finasteride.jpg' },
+      { slug: 'fin-min-capsule', name: 'Finasteride + minoxidil', what: 'One daily capsule for fuller-looking hair', form: 'capsule', live: 'fin-min-capsule', badge: 'New', image: '/brand/products/fin-min-capsule.jpg' },
+      { slug: 'fin-min-foam', name: 'Finasteride + minoxidil foam', what: 'Scalp foam, no pill', form: 'foam', live: 'fin-min-foam', image: '/brand/products/fin-min-foam.jpg' },
+      { slug: 'min-12-fin', name: 'Minoxidil 12% + finasteride', what: 'Higher-strength topical foam', form: 'foam', live: 'min-12-fin', image: '/brand/products/min-12-fin.jpg' },
+      { slug: 'fin-min-tret', name: 'Hair foam + tretinoin', what: 'Finasteride, minoxidil & tretinoin', form: 'foam', live: 'fin-min-tret', badge: 'New', image: '/brand/products/fin-min-tret.jpg' },
+      { slug: 'finasteride', name: 'Finasteride', what: 'Supports fuller-looking hair', form: 'tablet', live: 'finasteride', image: '/brand/products/finasteride.jpg' },
       { slug: 'oral-minoxidil', name: 'Oral minoxidil', what: 'Low-dose tablet, prescribed off-label for hair density', form: 'tablet', live: 'oral-minoxidil', image: '/brand/products/oral-minoxidil.jpg' },
-      { slug: 'spironolactone', name: 'Spironolactone', what: 'For women: supports fuller-looking hair & clear skin', form: 'capsule', live: 'spironolactone', image: '/brand/products/spironolactone.jpg' },
+      { slug: 'spironolactone', name: 'Spironolactone', what: 'Supports fuller-looking hair & clear skin', form: 'capsule', live: 'spironolactone', image: '/brand/products/spironolactone.jpg' },
     ],
   },
   {
@@ -154,6 +157,26 @@ export function listedCategories(liveIds: Iterable<string>): Category[] {
 /** Each listed product once (home category first), for counts and search. */
 export const listedItems = (cats: Category[]) =>
   [...new Map(cats.flatMap((c) => c.items.map((item) => [item.slug, { item, category: c }] as const))).values()];
+
+/**
+ * Who a product is for, from the same men-only / women-only list the
+ * assessment uses (recommend.sexOnly), or 'all'. Drives the shop's For men /
+ * For women filter. A string, not undefined: it crosses to the browser in an
+ * array, where undefined doesn't survive.
+ */
+export function audienceOf(item: LineupItem): Audience | 'all' {
+  const only = item.live ? sexOnly(item.live) : null;
+  return only === 'm' ? 'men' : only === 'f' ? 'women' : 'all';
+}
+
+/** "For men" / "For women", or '' for a product for everyone (the card tag). */
+export function audienceLabel(item: LineupItem): string {
+  const who = audienceOf(item);
+  return who === 'all' ? '' : who === 'men' ? 'For men' : 'For women';
+}
+
+/** The ?for= value, if it names an audience. */
+export const audienceParam = (v: string | null | undefined): Audience | null => (v === 'men' || v === 'women' ? v : null);
 
 /** "1 treatment" / "N treatments", or "Coming soon" for none. */
 export const countLabel = (n: number) => (n ? `${n} ${n === 1 ? 'treatment' : 'treatments'}` : 'Coming soon');

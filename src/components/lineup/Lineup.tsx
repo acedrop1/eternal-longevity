@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Droplet, Droplets, Pill, SprayCan, Syringe, Tablets, type LucideIcon } from 'lucide-react';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
-import { FORM_LABEL, countLabel, fromPrice, hrefFor, listedCategories, type Category, type Form, type LineupItem } from '@/lib/lineup';
+import { FORM_LABEL, audienceLabel, countLabel, fromPrice, hrefFor, listedCategories, type Category, type Form, type LineupItem } from '@/lib/lineup';
 import type { ShopProduct } from '@/lib/shopProducts';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +52,7 @@ function Badge({ children }: { children: string }) {
 /** rhode-style row: thumbnail, name, what it's for, form and price. */
 export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: string; onNavigate?: () => void }) {
   const live = useLive(item);
+  const who = audienceLabel(item);
   return (
     <Link
       href={hrefFor(item, live)}
@@ -67,6 +68,7 @@ export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: 
         <span className="mt-0.5 block truncate text-[13px] text-ink-soft">{item.what}</span>
         <span className="mt-1 block text-[12px] text-ink/60">
           {FORM_LABEL[item.form]}
+          {who && ` · ${who}`}
           {live && ` · from $${fromPrice(live)}/mo`}
         </span>
       </span>
@@ -77,6 +79,7 @@ export function LineupRow({ item, tint, onNavigate }: { item: LineupItem; tint: 
 /** Grid card for category pages: same shape and glass as the product tiles. */
 export function LineupCard({ item, tint }: { item: LineupItem; tint: string }) {
   const live = useLive(item);
+  const who = audienceLabel(item);
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-shell bg-milk shadow-[0_30px_60px_-36px_rgba(17,17,17,0.5)]">
       {/* The photo in its own 4:5 box (the shots' shape), whole: the name panel sits below it, not over it. */}
@@ -97,6 +100,12 @@ export function LineupCard({ item, tint }: { item: LineupItem; tint: string }) {
       {live && item.badge && (
         <span className="absolute right-2 top-2.5 md:right-4 md:top-5">
           <Badge>{item.badge}</Badge>
+        </span>
+      )}
+      {/* Only products for one side are tagged; no tag means it's for everyone. */}
+      {who && (
+        <span className={cn('absolute bottom-2 left-2 rounded-full px-2.5 py-1 text-[11px] font-semibold md:bottom-4 md:left-4 md:px-3.5 md:py-1.5 md:text-[13px]', CARD_GLASS)}>
+          {who}
         </span>
       )}
       </div>

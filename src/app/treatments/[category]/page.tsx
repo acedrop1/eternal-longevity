@@ -5,8 +5,9 @@ import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { ArrowDot, ClosingBand, HomeFAQ, HowItWorks } from '@/components/home/HomeSections';
 import { LineupCard } from '@/components/lineup/Lineup';
+import { AudienceCount, AudienceFilter, AudienceShown } from '@/components/lineup/Audience';
 import { getLiveProducts } from '@/lib/catalog';
-import { CATEGORIES, countLabel, getCategory, listedCategories } from '@/lib/lineup';
+import { CATEGORIES, audienceOf, getCategory, listedCategories } from '@/lib/lineup';
 import { pageMeta } from '@/lib/seo';
 
 type Props = { params: Promise<{ category: string }> };
@@ -36,11 +37,17 @@ export default async function CategoryPage({ params }: Props) {
             <div>
               <h1 className="text-[36px] font-semibold leading-[0.95] tracking-[-0.05em] text-ink md:text-[72px]">{c.name}</h1>
               <p className="mt-2 max-w-[520px] text-[15px] leading-relaxed text-ink-soft md:mt-3 md:text-[17px]">{c.line}</p>
+              {/* Only where the category has something for one audience only. */}
+              {c.items.some((i) => audienceOf(i) !== 'all') && (
+                <div className="mt-5">
+                  <AudienceFilter />
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {/* Phones: the count drops so the products start on the first screen. */}
               <span className="hidden rounded-full bg-milk px-4 py-2 text-[13px] font-medium text-ink md:inline">
-                {countLabel(c.items.length)}<span className="hidden md:inline"> · Nothing charged unless a physician approves</span>
+                <AudienceCount fors={c.items.map(audienceOf)} label /><span className="hidden md:inline"> · Nothing charged unless a physician approves</span>
               </span>
               <Link
                 href={`/start?category=${c.slug}`}
@@ -56,7 +63,9 @@ export default async function CategoryPage({ params }: Props) {
           {c.items.length ? (
             <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
               {c.items.map((item) => (
-                <LineupCard key={item.slug} item={item} tint={c.tint} />
+                <AudienceShown key={item.slug} fors={[audienceOf(item)]}>
+                  <LineupCard item={item} tint={c.tint} />
+                </AudienceShown>
               ))}
             </div>
           ) : (

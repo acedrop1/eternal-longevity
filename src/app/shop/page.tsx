@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Header } from '@/components/nav/Header';
 import { Footer } from '@/components/sections/Footer';
 import { ArrowDot, ClosingBand, HomeFAQ, HowItWorks } from '@/components/home/HomeSections';
 import { LineupCard } from '@/components/lineup/Lineup';
+import { AudienceCount, AudienceFilter, AudienceLink, AudienceShown } from '@/components/lineup/Audience';
 import { getLiveProducts } from '@/lib/catalog';
-import { LIST_DRAFTS, countLabel, listedCategories, listedItems } from '@/lib/lineup';
+import { LIST_DRAFTS, audienceOf, countLabel, listedCategories, listedItems } from '@/lib/lineup';
 import { pageMeta } from '@/lib/seo';
 
 export const metadata: Metadata = pageMeta(
@@ -30,6 +30,9 @@ export default async function PublicShopPage() {
               <p className="mt-2 max-w-[520px] text-[15px] leading-relaxed text-ink-soft md:mt-4 md:text-[16px]">
                 Made to order by a licensed 503A pharmacy, and prescribed only after a physician reviews your assessment.
               </p>
+              <div className="mt-5">
+                <AudienceFilter />
+              </div>
             </div>
             <p className="hidden rounded-full bg-milk px-4 py-2 text-[13px] font-medium text-ink md:block">
               {countLabel(total)} · Prescription required
@@ -39,35 +42,41 @@ export default async function PublicShopPage() {
           {/* Jump links to each category section. */}
           <nav aria-label="Categories" className="mb-16 hidden flex-wrap gap-2 md:flex">
             {categories.map((c) => (
-              <a key={c.slug} href={`#${c.slug}`} className="rounded-full bg-milk px-4 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-butter">
-                {c.name} <span className="font-medium text-ink/60">{c.items.length}</span>
-              </a>
+              <AudienceShown key={c.slug} fors={c.items.map(audienceOf)}>
+                <a href={`#${c.slug}`} className="rounded-full bg-milk px-4 py-2 text-[14px] font-semibold text-ink transition-colors hover:bg-butter">
+                  {c.name} <span className="font-medium text-ink/60"><AudienceCount fors={c.items.map(audienceOf)} /></span>
+                </a>
+              </AudienceShown>
             ))}
           </nav>
 
           <div className="flex flex-col gap-12 md:gap-24">
             {categories.map((c) => (
-              <div key={c.slug} id={c.slug} className="scroll-mt-44">
+              <AudienceShown key={c.slug} fors={c.items.map(audienceOf)}>
+              <div id={c.slug} className="scroll-mt-44">
                 <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
                   <div>
                     <h2 className="text-[28px] font-semibold leading-none tracking-[-0.05em] text-ink md:text-[48px]">{c.name}</h2>
                     <p className="mt-2 text-[14px] text-ink-soft md:text-[15px]">{c.line}</p>
                   </div>
                   {/* Phones: a plain "See all" beside the title; desktop: the pill. */}
-                  <Link href={`/treatments/${c.slug}`} className="flex min-h-[44px] shrink-0 items-center text-[15px] font-semibold text-ink underline decoration-ink/30 underline-offset-4 md:hidden">
+                  <AudienceLink href={`/treatments/${c.slug}`} className="flex min-h-[44px] shrink-0 items-center text-[15px] font-semibold text-ink underline decoration-ink/30 underline-offset-4 md:hidden">
                     See all
-                  </Link>
-                  <Link href={`/treatments/${c.slug}`} className="group hidden items-center gap-2 rounded-full bg-milk py-1.5 pl-4 pr-1.5 text-[14px] font-semibold text-ink md:flex">
+                  </AudienceLink>
+                  <AudienceLink href={`/treatments/${c.slug}`} className="group hidden items-center gap-2 rounded-full bg-milk py-1.5 pl-4 pr-1.5 text-[14px] font-semibold text-ink md:flex">
                     Shop {c.name.toLowerCase()}
                     <ArrowDot className="bg-butter ring-0" />
-                  </Link>
+                  </AudienceLink>
                 </div>
                 <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
                   {c.items.map((item) => (
-                    <LineupCard key={item.slug} item={item} tint={c.tint} />
+                    <AudienceShown key={item.slug} fors={[audienceOf(item)]}>
+                      <LineupCard item={item} tint={c.tint} />
+                    </AudienceShown>
                   ))}
                 </div>
               </div>
+              </AudienceShown>
             ))}
           </div>
           {!LIST_DRAFTS && <p className="mt-12 text-[15px] text-ink-soft md:mt-16">More treatments coming soon.</p>}
