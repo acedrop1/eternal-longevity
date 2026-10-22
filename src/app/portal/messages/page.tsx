@@ -59,10 +59,11 @@ export default async function MemberMessagesPage({
 
   return (
     <PortalShell user={user} nav={MEMBER_NAV}>
-      <PageHeader title="Messages" />
       <MemberChat
         threads={{ support, doctor }}
         initialChannel={initialChannel}
+        // A link (an email, a notification) to one conversation opens it, phone included.
+        openOnLoad={thread === 'doctor' || thread === 'support' ? thread : null}
         // The care team spoke last: a reply is waiting on the member.
         waiting={(['doctor', 'support'] as const).filter((c) => ({ support, doctor })[c].at(-1)?.senderRole === 'staff')}
       />
