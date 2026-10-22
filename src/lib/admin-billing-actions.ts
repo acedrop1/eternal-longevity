@@ -196,6 +196,10 @@ export async function adminRefundOrder(input: {
   orderNumber: string;
   amountDollars?: number;
   reason?: string;
+  /** Also cancel the order (unshipped only). Off: a refund only; the order carries on. */
+  alsoCancel?: boolean;
+  /** Email the member their refund receipt (default on). */
+  notify?: boolean;
 }): Promise<AdminBillingResult> {
   const blocked = await guard();
   if (blocked) return blocked;
@@ -247,16 +251,16 @@ export async function adminRefundOrder(input: {
     const full = cents === undefined || cents === order.total_cents;
 
     /*
-     * A full refund of an order that has not shipped is a cancellation. Left
-     * as a refund alone, the order stayed live: the board still offered it to
-     * place, the plan kept renewing, and the pharmacy could still ship it. The
-     * cancel path does all of it in one go (and refunds, so it is not done
-     * twice here). A partial refund leaves the order as it is.
+     * Refund and cancel are separate. Only when admin also asks to cancel
+     * (unshipped orders) does a full refund go through the cancel path, which
+     * stops the pharmacy and the plan and refunds once. Otherwise this is a
+     * refund only and the order carries on.
      */
-    if (full && ORDER_FROM.deny.includes(order.status)) {
+    if (input.alsoCancel && full && ORDER_FROM.deny.includes(order.status)) {
       const cancelled = await denyOrderAction(
         order.order_number,
         input.reason?.trim() || 'Refunded in full.',
+        input.notify !== false,
       );
       if (cancelled.ok) {
         revalidatePath('/portal/admin/fulfillment');
@@ -306,7 +310,7 @@ export async function adminRefundOrder(input: {
         .eq('id', order.id);
     }
 
-    if (order.member_email) {
+    if (order.member_email && input.notify !== false) {
       const msg = refundedEmail({
         firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
         orderNumber: order.order_number,
@@ -324,9 +328,12 @@ export async function adminRefundOrder(input: {
 
     revalidatePath('/portal/admin/fulfillment');
     revalidatePath('/portal/orders');
+    const stillShipping = ORDER_FROM.deny.includes(order.status);
     return {
       ok: true,
-      message: `Refund ${status} for ${order.order_number}.`,
+      message: `Refund ${status} for ${order.order_number}.${
+        stillShipping ? ' The order is still active and will ship; cancel it too if it shouldn’t.' : ''
+      }`,
     };
   } catch (err) {
     return { ok: false, message: errorMessage(err) };

@@ -11,6 +11,7 @@ import {
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
 import { addOrderNoteAction } from '@/lib/orders-db';
+import { adminRefundOrder } from '@/lib/admin-billing-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
 import type { OrderExtras } from '@/lib/order-detail';
 import type { Economics } from '@/lib/profit';
@@ -128,6 +129,12 @@ export function OrderDetail({
   useEffect(() => {
     if (cancelling) cancelDialog.current?.showModal();
   }, [cancelling]);
+  // Refund is its own action: money back (full or part) without cancelling, unless admin asks.
+  const [refunding, setRefunding] = useState(false);
+  const refundDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (refunding) refundDialog.current?.showModal();
+  }, [refunding]);
 
   return (
     <div className="space-y-5">
@@ -157,17 +164,29 @@ export function OrderDetail({
             {admin && o && (
               <MoreActions>
                 {(close) => (
-                  <MenuItem
-                    danger
-                    disabled={!cancel}
-                    hint={cancel ? undefined : 'Not once it has shipped or closed'}
-                    onClick={() => {
-                      close();
-                      setCancelling(true);
-                    }}
-                  >
-                    Cancel order
-                  </MenuItem>
+                  <>
+                    <MenuItem
+                      disabled={!o.paidAt}
+                      hint={o.paidAt ? undefined : 'Nothing was charged'}
+                      onClick={() => {
+                        close();
+                        setRefunding(true);
+                      }}
+                    >
+                      Refund…
+                    </MenuItem>
+                    <MenuItem
+                      danger
+                      disabled={!cancel}
+                      hint={cancel ? undefined : 'Not once it has shipped or closed'}
+                      onClick={() => {
+                        close();
+                        setCancelling(true);
+                      }}
+                    >
+                      Cancel order…
+                    </MenuItem>
+                  </>
                 )}
               </MoreActions>
             )}
@@ -505,6 +524,18 @@ export function OrderDetail({
           <CancelOrder order={o} startOpen onClose={() => cancelDialog.current?.close()} />
         </dialog>
       )}
+
+      {refunding && o && (
+        <dialog
+          ref={refundDialog}
+          aria-label={`Refund ${ref}`}
+          onClose={() => setRefunding(false)}
+          onClick={(e) => e.target === e.currentTarget && refundDialog.current?.close()}
+          className="!m-auto w-[calc(100%-32px)] max-w-md rounded-shell bg-transparent p-0 backdrop:bg-ink/40 backdrop:backdrop-blur-sm"
+        >
+          <RefundOrder order={o} canCancel={Boolean(cancel)} onClose={() => refundDialog.current?.close()} />
+        </dialog>
+      )}
     </div>
   );
 }
@@ -734,5 +765,136 @@ function Timeline({ order: o }: { order?: Order }) {
         <p className="text-[14px] text-ink/55">{o ? 'Nothing on the timeline yet.' : 'No member order is linked to this shipment.'}</p>
       )}
     </SectionCard>
+  );
+}
+
+/**
+ * Refund, separate from cancel: full or part of the payment back. The order carries on unless
+ * "Also cancel" is ticked (unshipped orders only), which stops the pharmacy and the plan too.
+ */
+function RefundOrder({ order, canCancel, onClose }: { order: Order; canCancel: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const [full, setFull] = useState(true);
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [notify, setNotify] = useState(true);
+  const [alsoCancel, setAlsoCancel] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const part = Number(amount);
+  const partOk = Number.isFinite(part) && part > 0 && part <= order.total;
+  const ready = !busy && (full || partOk);
+
+  async function submit() {
+    if (!ready) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await adminRefundOrder({
+        orderNumber: order.id,
+        amountDollars: full ? undefined : part,
+        reason: reason.trim() || undefined,
+        alsoCancel: full && canCancel && alsoCancel,
+        notify,
+      });
+      setResult(res);
+      if (res.ok) router.refresh();
+    } catch {
+      setResult({ ok: false, message: 'Could not refund just now. Nothing was refunded. Try again.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (result?.ok) {
+    return (
+      <div className="rounded-inner bg-white p-5 text-[14px] leading-relaxed text-ink ring-1 ring-ink/10">
+        <p className="font-semibold">Done.</p>
+        <p className="mt-1 text-ink/75">{result.message}</p>
+        <button type="button" onClick={onClose} className={cn(headerButton, 'mt-4')}>
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-inner bg-white p-5 ring-1 ring-ink/10">
+      <h2 className="text-[17px] font-semibold text-ink">Refund {order.id.match(/^\d+$/) ? `#${order.id}` : order.id}</h2>
+      <p className="mt-1 text-[13px] leading-relaxed text-ink/65">
+        Returns money to their card. The order itself carries on unless you also cancel it.
+      </p>
+
+      <div role="radiogroup" aria-label="Amount" className="mt-4 space-y-2 text-[14px] text-ink">
+        <label className="flex items-center gap-2">
+          <input type="radio" checked={full} onChange={() => setFull(true)} className="accent-ink" />
+          Full payment: ${order.total.toFixed(2)}
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" checked={!full} onChange={() => setFull(false)} className="accent-ink" />
+          Part of it:
+          <span className="relative">
+            <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/50">$</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              max={order.total}
+              value={amount}
+              onFocus={() => setFull(false)}
+              onChange={(e) => setAmount(e.target.value)}
+              aria-label="Refund amount"
+              className="h-9 w-28 rounded-thumb bg-white pl-6 pr-2 text-[15px] ring-1 ring-ink/15 focus:outline-none focus:ring-2 focus:ring-ink/30"
+            />
+          </span>
+        </label>
+        {!full && amount && !partOk && (
+          <p className="text-[13px] text-red-700">Enter an amount between $0.01 and ${order.total.toFixed(2)}.</p>
+        )}
+      </div>
+
+      <label className="mt-4 block">
+        <span className="mb-1 block text-[13px] font-medium text-ink/70">Reason (optional, shown on their receipt)</span>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={2}
+          placeholder="Test order."
+          className="w-full resize-none rounded-inner bg-white px-3 py-2 text-[15px] text-ink ring-1 ring-ink/15 placeholder:text-ink/45 focus:outline-none focus:ring-2 focus:ring-ink/30"
+        />
+      </label>
+
+      {full && canCancel && (
+        <label className="mt-3 flex items-start gap-2 text-[14px] text-ink/85">
+          <input type="checkbox" checked={alsoCancel} onChange={(e) => setAlsoCancel(e.target.checked)} className="mt-1 accent-ink" />
+          <span>
+            Also cancel the order
+            <span className="block text-[13px] text-ink/60">
+              It hasn&rsquo;t shipped. Without this, it still goes to the pharmacy and ships, and its plan keeps renewing.
+            </span>
+          </span>
+        </label>
+      )}
+      <label className="mt-3 flex items-start gap-2 text-[14px] text-ink/85">
+        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-1 accent-ink" />
+        <span>Email them the refund receipt.</span>
+      </label>
+
+      {result && !result.ok && (
+        <p role="alert" className="mt-3 rounded-inner border border-red-600/20 bg-red-50 px-3 py-2 text-[14px] text-red-700">
+          {result.message}
+        </p>
+      )}
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <button type="button" disabled={!ready} onClick={submit} className={cn(headerButton, 'disabled:opacity-40')}>
+          {busy ? 'Refunding…' : full ? `Refund $${order.total.toFixed(2)}` : partOk ? `Refund $${part.toFixed(2)}` : 'Refund'}
+        </button>
+        <button type="button" disabled={busy} onClick={onClose} className={secondaryButton}>
+          Keep as is
+        </button>
+      </div>
+    </div>
   );
 }

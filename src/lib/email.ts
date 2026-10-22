@@ -1020,6 +1020,8 @@ export function orderCancelledByTeamEmail(input: {
   orderNumber: string;
   reason: string;
   refunded: boolean;
+  /** Charged, and the payment is not refunded with this cancel (admin chose to handle it separately). */
+  chargeKept?: boolean;
 }): { subject: string; html: string } {
   return {
     subject: `We cancelled ${orderRef(input.orderNumber)}`,
@@ -1027,12 +1029,14 @@ export function orderCancelledByTeamEmail(input: {
       `<h1 style="${H1}">We&rsquo;ve cancelled this order.</h1>
        <p style="${P}">Hi ${escapeHtml(input.firstName)}, our team cancelled ${escapeHtml(
          orderRef(input.orderNumber),
-       )}. This is not a medical decision and no prescriber has reviewed it.</p>
+       )}. This is not a medical decision.</p>
        <p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>
        <p style="margin:0;"><strong style="color:${INK};">${
          input.refunded
            ? 'Anything you were charged has been refunded in full.'
-           : 'You haven&rsquo;t been charged anything.'
+           : input.chargeKept
+             ? 'Your payment hasn&rsquo;t been refunded with this cancellation; we&rsquo;ll be in touch about it.'
+             : 'You haven&rsquo;t been charged anything.'
        }</strong> If you think this is a mistake, just reply to this email and we&rsquo;ll take another look.</p>`,
     ),
   };

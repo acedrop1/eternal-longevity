@@ -68,6 +68,9 @@ export function CancelOrder({
   const [open, setOpen] = useState(startOpen);
   const [reason, setReason] = useState('');
   const [notify, setNotify] = useState(true);
+  // Charged orders: refund with the cancel (default), or keep the payment and refund separately.
+  const charged = Boolean(order.paidAt);
+  const [refund, setRefund] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // What the cancel left for a person to do (refund failed, cancel in the pharmacy portal).
@@ -113,8 +116,8 @@ export function CancelOrder({
         Why are you cancelling?
       </div>
       <p className="mb-3 text-xs leading-relaxed text-ink/65">
-        Anything charged is refunded in full. It is not recorded as a
-        clinical decision.
+        Cancelling stops the order: it won&rsquo;t go to the pharmacy or ship, and its plan won&rsquo;t renew. It is
+        not recorded as a clinical decision.
       </p>
       <textarea
         aria-label="Reason for cancelling"
@@ -127,6 +130,17 @@ export function CancelOrder({
         placeholder="The pharmacy cannot ship to the address on this order. Please add a street address and place it again."
         className="w-full resize-none rounded-inner bg-white px-4 py-3 text-[16px] text-ink ring-1 ring-ink/10 placeholder:text-ink/55 focus:outline-none focus:ring-red-500/40"
       />
+      {charged ? (
+        <label className="mt-3 flex items-start gap-2 text-[14px] text-ink/80">
+          <input type="checkbox" checked={refund} onChange={(e) => setRefund(e.target.checked)} className="mt-1 accent-red-700" />
+          <span>
+            Refund the ${order.total.toFixed(2)} payment in full.
+            <span className="block text-[13px] text-ink/60">Untick to cancel only and keep the payment (refund it later with Refund).</span>
+          </span>
+        </label>
+      ) : (
+        <p className="mt-3 text-[13px] text-ink/60">Nothing was charged on this order, so there&rsquo;s nothing to refund.</p>
+      )}
       <label className="mt-3 flex items-start gap-2 text-[14px] text-ink/80">
         <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-1 accent-red-700" />
         <span>
@@ -148,7 +162,7 @@ export function CancelOrder({
             setBusy(true);
             setError(null);
             try {
-              const res = await denyOrderAction(order.id, reason.trim(), notify);
+              const res = await denyOrderAction(order.id, reason.trim(), notify, charged && refund);
               if (res.ok) {
                 setOpen(false);
                 setReason('');
@@ -178,7 +192,7 @@ export function CancelOrder({
               : 'bg-ink/10 text-ink/65',
           )}
         >
-          {busy ? 'Cancelling…' : 'Cancel and refund'}
+          {busy ? 'Cancelling…' : charged && refund ? 'Cancel and refund' : 'Cancel order'}
         </button>
         <button
           type="button"

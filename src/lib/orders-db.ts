@@ -751,6 +751,8 @@ export async function denyOrderAction(
   note: string,
   /** False: cancel quietly, so admin can write the member their own email. */
   notify = true,
+  /** False: cancel only and keep the payment (refund it separately with Refund, or not at all). */
+  refund = true,
 ): Promise<ActionResult & { refunded?: boolean; refundError?: string; cancelByHand?: boolean }> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
@@ -763,7 +765,7 @@ export async function denyOrderAction(
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('member_name, member_email')
+    .select('member_name, member_email, paid_confirmed_at')
     .eq('id', id)
     .maybeSingle();
 
@@ -780,18 +782,18 @@ export async function denyOrderAction(
   // Off the board, and cancelled at the pharmacy if it already went and hasn't shipped.
   const { cancelByHand } = await withdrawFromPharmacy(orderNumber);
 
-  // Whatever was charged goes back, described the way it actually happened.
-  const refund = await refundDeclinedOrder(
-    orderNumber,
-    'Our team cancelled this order.',
-  );
+  // Whatever was charged goes back (unless admin chose to keep it), described the way it actually happened.
+  const refunded = refund
+    ? await refundDeclinedOrder(orderNumber, 'Our team cancelled this order.')
+    : { ok: true, refunded: false as const };
 
   if (notify && order?.member_email) {
     const msg = orderCancelledByTeamEmail({
       firstName: (order.member_name ?? '').trim().split(/\s+/)[0] || 'there',
       orderNumber,
       reason,
-      refunded: refund.refunded === true,
+      refunded: refunded.refunded === true,
+      chargeKept: !refund && Boolean(order.paid_confirmed_at),
     });
     try {
       await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
@@ -803,8 +805,8 @@ export async function denyOrderAction(
   revalidatePortal();
   return {
     ok: true,
-    refunded: refund.refunded === true,
-    refundError: refund.ok ? undefined : refund.error,
+    refunded: refunded.refunded === true,
+    refundError: refunded.ok ? undefined : 'error' in refunded ? refunded.error : undefined,
     cancelByHand,
   };
 }
