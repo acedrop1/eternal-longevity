@@ -6,13 +6,11 @@ import {
   useMemo,
   useRef,
   useState,
-  useTransition,
   type KeyboardEvent,
 } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Stethoscope, Wallet } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
 import { Wordmark } from '@/components/nav/Wordmark';
 import { useOrders } from '@/components/orders/OrdersProvider';
@@ -217,7 +215,6 @@ export function CheckoutFlow({
   addons = [],
   healthNext = false,
 }: CheckoutFlowProps) {
-  const router = useRouter();
   const {
     resolvedItems,
     subtotal: cartSubtotal,
@@ -225,7 +222,6 @@ export function CheckoutFlow({
     removeItem,
     setCadence,
     addItem,
-    clear: clearCart,
   } = useCart();
   const { products: catalog } = useCatalog();
   const { placeOrder } = useOrders();
@@ -234,7 +230,6 @@ export function CheckoutFlow({
     addAddress,
     addCard,
   } = useMemberProfile();
-  const [, startTransition] = useTransition();
 
   // --- Saved-profile pickers ---
   // 'new' means the user is filling in a fresh address/card; otherwise it's the saved id.
@@ -743,11 +738,13 @@ export function CheckoutFlow({
       // Nothing to clear.
     }
 
-    // Clear the cart and route to success
-    startTransition(() => {
-      clearCart();
-      router.push(res.orderNumber ? `/checkout/success?ref=${encodeURIComponent(res.orderNumber)}` : '/checkout/success');
-    });
+    /*
+     * The server already emptied the saved cart. A full page load, not router.push in a
+     * transition: clearing the cart here fires a save action, and that action, the push and the
+     * success page's own redirect (to the health questions) racing each other broke the App
+     * Router's hook order (React error #310, "Application error" after every order).
+     */
+    window.location.assign(res.orderNumber ? `/checkout/success?ref=${encodeURIComponent(res.orderNumber)}` : '/checkout/success');
   }
 
   // --- Enter-key advance helper ---

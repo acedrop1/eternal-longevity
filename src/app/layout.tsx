@@ -49,6 +49,8 @@ const ORG_JSON_LD = {
   },
 };
 
+const CRASH_REPORTER = `(function(){var n=0;function send(w,e){try{if(n++>=5)return;var m=e&&(e.message||e.reason&&e.reason.message||String(e.reason||e));var st=e&&(e.error&&e.error.stack||e.reason&&e.reason.stack)||'';var b=JSON.stringify({where:w,message:String(m||'').slice(0,500),stack:String(st).split('\\n').slice(0,6).join('\\n').slice(0,1500),path:location.pathname});if(!(navigator.sendBeacon&&navigator.sendBeacon('/api/client-error',new Blob([b],{type:'application/json'}))))fetch('/api/client-error',{method:'POST',body:b,keepalive:true,headers:{'content-type':'application/json'}})}catch(_){}}window.addEventListener('error',function(e){send('window',e)});window.addEventListener('unhandledrejection',function(e){send('promise',e)})})();`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -139,6 +141,10 @@ export default async function RootLayout({
           attributes into <body> before React hydrates. */}
       <body suppressHydrationWarning>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD).replace(/</g, '\\u003c') }} />
+        {/* Crash reporter: errors that escape React (the router, chunk loading, promises) still reach
+            the server log via /api/client-error. Inline so it runs before the app; message, first stack
+            lines and path only; at most 5 a page. */}
+        <script dangerouslySetInnerHTML={{ __html: CRASH_REPORTER }} />
         <SmoothScroll />
         <CatalogProvider products={products}>{children}</CatalogProvider>
         <AdPixel />

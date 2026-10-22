@@ -686,6 +686,14 @@ async function placeOrder(input: {
     await releaseToDoctor(orderNumber);
   }
 
+  // Ordered items leave the saved cart here, in the same request: the browser then does a
+  // plain page load to the confirmation instead of a cart-save action racing the navigation.
+  const { data: prof } = await db.from('profiles').select('cart').eq('id', user.id).maybeSingle();
+  if (Array.isArray(prof?.cart)) {
+    const left = (prof.cart as { productId?: string }[]).filter((it) => !ids.includes(String(it?.productId)));
+    await db.from('profiles').update({ cart: left as unknown as Json }).eq('id', user.id);
+  }
+
   revalidatePortal();
   return { ok: true, orderNumber: created[0] };
 }
