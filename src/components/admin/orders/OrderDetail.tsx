@@ -142,7 +142,7 @@ export function OrderDetail({
 
       <header className="space-y-2">
         <Link
-          href={admin ? '/portal/admin/fulfillment' : '/portal/doctor/fulfillment'}
+          href={admin ? '/portal/admin/orders' : '/portal/doctor/fulfillment'}
           className="inline-flex min-h-[32px] items-center gap-1 text-[14px] font-medium text-ink/65 hover:text-ink"
         >
           <span aria-hidden>←</span> Orders
