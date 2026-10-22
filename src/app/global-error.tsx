@@ -1,5 +1,8 @@
 'use client';
 
+/* Plain <a> on purpose: the router may be what crashed, so these do a full page load. */
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 import { useEffect } from 'react';
 import { reportClientError } from '@/lib/report-client-error';
 
