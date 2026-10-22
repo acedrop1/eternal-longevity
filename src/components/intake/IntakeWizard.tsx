@@ -177,6 +177,8 @@ interface IntakeWizardProps {
   draft?: { answers: Answers; screen: string | null };
   /** Pre only: renewing a plan whose prescription ran its term (/start?renew=). */
   renewal?: boolean;
+  /** Dr. Elder declined this product on this date: the questions again, last answers pre-filled. */
+  previouslyDeclined?: string;
   /** Pre only: answers already chosen on a landing page (/hair). Pre-filled, still shown. */
   seed?: Answers;
   /** Admin → Settings → Marketing sign-up: offer the marketing-email box (pre-checked) or leave it out. */
@@ -200,6 +202,7 @@ export function IntakeWizard({
   member,
   draft,
   renewal = false,
+  previouslyDeclined,
   seed,
   marketingEmail = true,
 }: IntakeWizardProps = {}) {
@@ -842,6 +845,13 @@ export function IntakeWizard({
             Start over
           </button>
         </div>
+      )}
+      {previouslyDeclined && product && mode === 'pre' && (
+        <p role="note" className="mb-4 rounded-inner bg-butter-soft px-4 py-3 text-[15px] leading-relaxed text-ink ring-1 ring-butter-deep/50">
+          <strong className="font-semibold">Dr. Elder didn&rsquo;t approve {product.name} on {previouslyDeclined}.</strong>{' '}
+          Your last answers are filled in. Check each one and update anything that&rsquo;s changed, and he&rsquo;ll review them
+          again. You&rsquo;re charged only if he approves.
+        </p>
       )}
       {renewal && product && mode === 'pre' && (
         <p role="note" className="mb-4 rounded-inner bg-milk px-4 py-3 text-[14px] leading-relaxed text-ink">

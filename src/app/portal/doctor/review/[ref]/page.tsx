@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DOCTOR_NAV } from '@/components/portal/ui';
-import { DoctorReview, type RxOption } from '@/components/doctor/DoctorReview';
+import { DoctorReview, type PriorDeclineView, type RxOption } from '@/components/doctor/DoctorReview';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import { getSession, loginUrl } from '@/lib/auth-server';
 import { getOrder, ordersDbConfigured } from '@/lib/orders-db';
 import { doctorThreadStatuses, reviewsForOrders, type PatientReview } from '@/lib/clinical-review';
@@ -38,6 +39,7 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
   let thread: ThreadStatus | undefined;
   let defaultSig = '';
   let messages: PortalMessage[] = [];
+  let priorDeclines: PriorDeclineView[] = [];
   let sample = false;
 
   if (live) {
@@ -51,6 +53,34 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
       ]);
       // The latest of his thread with this patient, for the Message patient pop-up.
       messages = msgs.slice(-30);
+      // Has he declined this product for them before? He should know before deciding again.
+      if (order.userId && supabaseAdminConfigured()) {
+        const db = createSupabaseAdminClient();
+        const productIds = order.lines.map((l) => l.productId);
+        const { data: past } = await db
+          .from('orders')
+          .select('id, order_number, physician_note, updated_at')
+          .eq('user_id', order.userId)
+          .eq('status', 'declined-clinical')
+          .neq('order_number', order.id)
+          .order('updated_at', { ascending: false })
+          .limit(10);
+        const pastIds = (past ?? []).map((o) => o.id);
+        const { data: pastItems } = pastIds.length
+          ? await db.from('order_items').select('order_id, product_id, product_name').in('order_id', pastIds).in('product_id', productIds)
+          : { data: [] };
+        priorDeclines = (past ?? []).flatMap((o) => {
+          const hit = (pastItems ?? []).find((i) => i.order_id === o.id);
+          return hit
+            ? [{
+                orderNumber: o.order_number,
+                product: hit.product_name,
+                date: new Date(o.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }),
+                note: o.physician_note,
+              }]
+            : [];
+        });
+      }
       review = reviews[order.id];
       thread = threads[order.userId ?? ''];
       // Only the sig prefill crosses to the client, never the pharmacy mapping.
@@ -97,6 +127,7 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
         defaultSig={defaultSig}
         options={options}
         messages={messages}
+        priorDeclines={priorDeclines}
         sample={sample}
       />
     </PortalShell>

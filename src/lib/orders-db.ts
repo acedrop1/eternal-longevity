@@ -53,7 +53,7 @@ import {
 } from '@/lib/order-rules';
 import type { Database } from '@/lib/database.types';
 import { releaseToDoctor } from '@/lib/release-to-doctor';
-import { canOrder, intakeStateFor, latestIntakeAnswers } from '@/lib/intake-status';
+import { canOrder, intakeStateFor, latestIntakeAnswers, reassessNeeded } from '@/lib/intake-status';
 import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { claimCheckout, releaseCheckout } from '@/lib/order-lock';
@@ -448,6 +448,10 @@ async function placeOrder(input: {
   // Demo stores no intakes, so there is nothing to check against there.
   const unassessed = supabaseAdminConfigured() ? ids.find((id) => !intakeCovers(answers, id)) : undefined;
   if (unassessed) return { ok: false, error: 'not_assessed', productId: unassessed };
+  // Declined by Dr. Elder and not reassessed since: back through its questions first.
+  const redo = supabaseAdminConfigured() ? await reassessNeeded(user.id) : new Map();
+  const reassess = ids.find((id) => redo.has(id));
+  if (reassess) return { ok: false, error: 'reassess', productId: reassess };
 
   /*
    * Name, plan and price come from the catalogue, never from the request.

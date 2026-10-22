@@ -8,7 +8,7 @@ import { getCatalogProduct, getLiveProduct, getLiveProducts } from '@/lib/catalo
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
 import { carriedAnswers, knownAnswerIds } from '@/lib/intake-rules';
-import { assessmentDone, intakeStateFor, latestIntakeAnswers, type IntakeState } from '@/lib/intake-status';
+import { assessmentDone, intakeStateFor, latestIntakeAnswers, reassessNeeded, type IntakeState } from '@/lib/intake-status';
 import { getAssessmentDraft } from '@/lib/assessment-drafts';
 import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
@@ -124,8 +124,12 @@ export default async function StartPage({ searchParams }: StartPageProps) {
   const saved = isMember ? await getAssessmentDraft(entry) : null;
   // Already ordered, or already on a plan: no second assessment, no second order.
   const held = isMember && requested ? (await heldProductsFor(user.id)).get(requested.id) : undefined;
-  // Already assessed for this product: straight to choosing a plan. A renewal (?renew=) still re-asks.
-  const assessed = Boolean(isMember && requested && !renew && state && assessmentDone(state as IntakeState) && intakeCovers(onFile, requested.id));
+  // Declined by Dr. Elder and not reassessed since: the questions again, last answers pre-filled.
+  const priorDecline = isMember && requested ? (await reassessNeeded(user.id)).get(requested.id) : undefined;
+  // Already assessed for this product: straight to choosing a plan. A renewal (?renew=) or a decline still re-asks.
+  const assessed = Boolean(
+    isMember && requested && !renew && !priorDecline && state && assessmentDone(state as IntakeState) && intakeCovers(onFile, requested.id),
+  );
 
   return (
     <main className="relative min-h-screen bg-white text-ink">
@@ -195,6 +199,11 @@ export default async function StartPage({ searchParams }: StartPageProps) {
           member={member}
           draft={saved ? { answers: saved.answers, screen: saved.screen } : undefined}
           renewal={Boolean(renew && requested && isMember)}
+          previouslyDeclined={
+            priorDecline
+              ? new Date(priorDecline.declinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+              : undefined
+          }
           seed={seed}
           marketingEmail={(await getMarketingSettings()).email}
         />

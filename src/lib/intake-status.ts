@@ -5,6 +5,7 @@ import {
 import { supabaseConfigured } from '@/lib/env';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { intakeProductIds, outstandingMedia } from '@/lib/intake-rules';
+import { intakeCovers } from '@/lib/purchase-rules';
 
 export type IntakeState = 'none' | 'awaiting_visit' | 'submitted' | 'declined';
 
@@ -99,4 +100,44 @@ export async function pendingMediaFor(
     photos: steps.some((s) => s.fields.some((f) => f.type === 'photo-upload')),
     needsPhotos: intakeProductIds(a).some((id) => ['hair', 'skin'].includes(PRODUCT_CATEGORY[id])),
   };
+}
+
+export type PriorDecline = { orderNumber: string; declinedAt: string; note: string | null };
+
+/**
+ * Products Dr. Elder declined for this member that still need a fresh
+ * assessment: no assessment covering the product has been submitted since
+ * the decline. Reordering one sends them back through its questions (their
+ * last answers pre-filled), so he never re-reviews the answers he declined.
+ */
+export async function reassessNeeded(userId: string): Promise<Map<string, PriorDecline>> {
+  const out = new Map<string, PriorDecline>();
+  if (!supabaseAdminConfigured()) return out;
+  const db = createSupabaseAdminClient();
+  const { data: orders } = await db
+    .from('orders')
+    .select('id, order_number, physician_note, updated_at')
+    .eq('user_id', userId)
+    .eq('status', 'declined-clinical');
+  if (!orders?.length) return out;
+  const ids = orders.map((o) => o.id);
+  const [{ data: items }, { data: updates }, { data: intake }] = await Promise.all([
+    db.from('order_items').select('order_id, product_id').in('order_id', ids),
+    db.from('order_updates').select('order_id, created_at').in('order_id', ids).eq('status_change', 'declined-clinical'),
+    db.from('intake_submissions').select('answers, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  const declinedAt = (o: (typeof orders)[number]) => updates?.find((u) => u.order_id === o.id)?.created_at ?? o.updated_at;
+  const answers = intake?.answers && typeof intake.answers === 'object' && !Array.isArray(intake.answers) ? (intake.answers as Record<string, unknown>) : {};
+  for (const o of orders) {
+    const at = declinedAt(o);
+    for (const i of (items ?? []).filter((x) => x.order_id === o.id)) {
+      // Cleared by an assessment for this product submitted after the decline.
+      const cleared = intake && intake.created_at > at && intakeCovers(answers, i.product_id);
+      const prev = out.get(i.product_id);
+      if (!cleared && (!prev || prev.declinedAt < at)) {
+        out.set(i.product_id, { orderNumber: o.order_number, declinedAt: at, note: o.physician_note });
+      }
+    }
+  }
+  return out;
 }

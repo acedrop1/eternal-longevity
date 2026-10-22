@@ -42,6 +42,14 @@ const alertBox = 'rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 t
 const ACTIVE = ['signed', 'compounding', 'shipped'];
 
 /** What he can prescribe instead: each live product and its plans, priced from the catalogue. */
+/** An earlier order of the same product that he declined for this patient. */
+export interface PriorDeclineView {
+  orderNumber: string;
+  product: string;
+  date: string;
+  note: string | null;
+}
+
 export interface RxOption {
   id: string;
   name: string;
@@ -68,6 +76,7 @@ export function DoctorReview({
   defaultSig,
   options = [],
   messages = [],
+  priorDeclines = [],
   sample = false,
 }: {
   order: Order;
@@ -82,6 +91,8 @@ export function DoctorReview({
   options?: RxOption[];
   /** His latest messages with this patient, for the Message patient pop-up. */
   messages?: PortalMessage[];
+  /** Earlier orders of this product he declined for this patient. */
+  priorDeclines?: PriorDeclineView[];
   /** Dev-only fixture order. */
   sample?: boolean;
 }) {
@@ -292,6 +303,7 @@ export function DoctorReview({
               </ReviewChip>
             )}
             {review?.photosPending && <ReviewChip>Photos pending</ReviewChip>}
+            {priorDeclines.length > 0 && <ReviewChip>Previously declined</ReviewChip>}
             <ThreadChip status={thread} />
           </>
         }
@@ -335,6 +347,27 @@ export function DoctorReview({
           )
         }
       />
+
+      {priorDeclines.length > 0 && (
+        <section role="note" className="rounded-inner border border-amber-600/30 bg-amber-50 px-4 py-3.5">
+          <p className="text-[15px] font-semibold text-amber-900">
+            You declined {priorDeclines[0].product} for this patient before
+            {priorDeclines.length > 1 ? ` (${priorDeclines.length} times)` : ''}.
+          </p>
+          <ul className="mt-2 space-y-2">
+            {priorDeclines.map((d) => (
+              <li key={d.orderNumber} className="text-[14px] leading-relaxed text-amber-950">
+                <Link href={`/portal/doctor/review/${encodeURIComponent(d.orderNumber)}`} className="font-semibold underline underline-offset-2">
+                  {orderRef(d.orderNumber)}
+                </Link>{' '}
+                · {d.date}
+                {d.note && <span className="mt-0.5 block whitespace-pre-wrap text-amber-900/85">Your note: “{d.note}”</span>}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[13px] text-amber-900/75">They answered the questions again for this order (their earlier answers were pre-filled for them to update).</p>
+        </section>
+      )}
 
       {sample && (
         <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[15px] text-amber-900 md:text-[14px]">
