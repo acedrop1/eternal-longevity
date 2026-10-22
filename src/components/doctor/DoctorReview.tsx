@@ -122,6 +122,8 @@ export function DoctorReview({
   const pending = order.status === 'assigned' && !done;
   const formRef = useRef<HTMLDivElement>(null);
   const choiceRef = useRef<HTMLDivElement>(null);
+  // Change prescription: filter the product cards by name.
+  const [rxQuery, setRxQuery] = useState('');
   const [badgeLabel, badgeTone] = statusBadge(done === 'signed' ? 'signed' : done === 'declined' ? 'declined-clinical' : order.status);
 
   // A form opened from the bottom bar lands at the top of the record: bring it into view.
@@ -661,9 +663,31 @@ export function DoctorReview({
           {/* Desktop: products scroll on the left, the choice (plan, note) stays in view on the right. */}
           <div className="md:grid md:grid-cols-[minmax(0,1fr)_340px] md:gap-6">
           <div className="min-w-0">
-          <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">1 · Product</p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">1 · Product</p>
+            <label className="relative w-full sm:w-64">
+              <span className="sr-only">Search products</span>
+              <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/50">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                type="search"
+                value={rxQuery}
+                onChange={(e) => setRxQuery(e.target.value)}
+                placeholder="Search products…"
+                className="h-11 w-full rounded-full bg-white pl-9 pr-4 text-[16px] text-ink ring-1 ring-ink/15 placeholder:text-ink/50 focus:outline-none focus:ring-2 focus:ring-ink/30 md:h-10 md:text-[14px]"
+              />
+            </label>
+          </div>
+          {(() => {
+            const q = rxQuery.trim().toLowerCase();
+            return q && !options.some((o) => o.name.toLowerCase().includes(q)) ? (
+              <p className="rounded-inner bg-milk px-4 py-6 text-center text-[15px] text-ink/65">No product matches “{rxQuery.trim()}”.</p>
+            ) : null;
+          })()}
           <div role="radiogroup" aria-label="Product" className="grid grid-cols-3 gap-2.5 lg:grid-cols-4">
-            {options.map((o) => {
+            {options.filter((o) => o.name.toLowerCase().includes(rxQuery.trim().toLowerCase())).map((o) => {
               const on = o.id === rxProduct;
               return (
                 <button
