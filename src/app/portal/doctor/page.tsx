@@ -29,6 +29,11 @@ export default async function DoctorPortalPage() {
    */
   const orders = await listOrders().catch(() => []);
   const assigned = orders.filter((o) => o.status === "assigned");
+  // Placed, but the patient hasn't finished the health questions asked after checkout: shown
+  // (not signable) so he sees what's coming the moment admin does.
+  const comingUp = orders
+    .filter((o) => o.status === "awaiting-visit" || o.status === "pending-admin")
+    .sort((a, b) => b.placedAt - a.placedAt);
   let [reviews, threads, inbox]: [Record<string, PatientReview>, Record<string, ThreadStatus>, MessageThread[]] =
     await Promise.all([
       reviewsForOrders(assigned.map((o) => o.id)).catch(() => ({})),
@@ -67,7 +72,8 @@ export default async function DoctorPortalPage() {
           title="Clinical queue"
           subtitle={
             <span className="text-[15px] md:text-[14px]">
-              Welcome back, {greeting}. Every order arrives here the moment a member checks out. Signing charges
+              Welcome back, {greeting}. An order is ready for you once the patient answers the health questions
+              after checkout; until then it waits under Coming up. Signing charges
               their card and puts the order on{" "}
               <Link href="/portal/doctor/fulfillment" className="underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink">
                 Orders
@@ -87,6 +93,43 @@ export default async function DoctorPortalPage() {
           messagesAwaiting={inbox.filter((t) => t.awaitingReply).length}
           sampleOrders={sampleOrders}
         />
+
+        {comingUp.length > 0 && (
+          <section aria-labelledby="coming-up" className="rounded-inner border border-ink/[0.1] bg-white">
+            <div className="flex items-baseline justify-between gap-3 border-b border-ink/10 px-4 py-3">
+              <h2 id="coming-up" className="text-[16px] font-semibold text-ink md:text-[15px]">
+                Coming up <span className="font-medium tabular-nums text-ink/50">{comingUp.length}</span>
+              </h2>
+              <p className="text-[13px] text-ink/60">Waiting on the patient&rsquo;s health questions. Not ready to sign yet.</p>
+            </div>
+            <ul>
+              {comingUp.map((o) => (
+                <li key={o.id} className="border-b border-ink/[0.06] last:border-0">
+                  <Link
+                    href={`/portal/doctor/review/${encodeURIComponent(o.id)}`}
+                    className="flex items-center justify-between gap-4 px-4 py-3 text-ink/70 hover:bg-milk/60"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px] font-semibold text-ink/80">{o.memberName}</span>
+                      <span className="block truncate text-[13.5px]">
+                        Order #{o.id} · {o.lines.map((l) => l.productName).join(", ")}
+                      </span>
+                    </span>
+                    <span className="flex-none text-right text-[13px]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-milk px-2.5 py-1 font-medium text-ink/70">
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink/35" />
+                        Health questions pending
+                      </span>
+                      <span className="mt-1 block tabular-nums text-ink/50">
+                        {new Date(o.placedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </PortalShell>
   );
