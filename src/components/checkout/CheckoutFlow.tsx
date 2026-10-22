@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { ShieldCheck, Stethoscope, Wallet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
+import { Wordmark } from '@/components/nav/Wordmark';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { useMemberProfile } from '@/components/profile/MemberProfileProvider';
 import { formatAddressOneLine, type SavedAddress } from '@/lib/memberProfile';
@@ -854,8 +855,7 @@ export function CheckoutFlow({
           href="/portal"
           className="flex items-center gap-3 text-ink"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Eternal Longevity" className="h-6 w-auto" />
+          <Wordmark href={null} className="text-[26px] text-[#F2D060] md:text-[30px]" />
           <span className="hidden text-[13px] font-medium text-ink/65 sm:inline">
             Checkout
           </span>

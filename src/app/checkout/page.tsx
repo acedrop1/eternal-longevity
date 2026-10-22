@@ -7,7 +7,7 @@ import { checkoutPrefill } from '@/lib/checkout-prefill';
 import { cardOnFile, frameAccountFor, paymentsConfigured } from '@/lib/payments';
 import { supabaseAdminConfigured } from '@/lib/supabase/admin';
 import Link from 'next/link';
-import { latestIntakeAnswers } from '@/lib/intake-status';
+import { latestIntakeAnswers, reassessNeeded } from '@/lib/intake-status';
 import { loadCart } from '@/lib/profile-db';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { heldProductsFor } from '@/lib/held-products';
@@ -61,32 +61,47 @@ export default async function CheckoutPage() {
   let holding = new Map<string, 'order' | 'plan'>();
   let cartIds: string[] = [];
   if (supabaseAdminConfigured()) {
-    const [{ items }, onFile, holds] = await Promise.all([
+    const [{ items }, onFile, holds, redo] = await Promise.all([
       loadCart(),
       latestIntakeAnswers(user.id),
       heldProductsFor(user.id),
+      reassessNeeded(user.id),
     ]);
     answers = onFile;
     holding = holds;
     cartIds = items.map((i) => i.productId);
     held = Object.fromEntries([...holding].filter(([id]) => items.some((i) => i.productId === id)));
+    // Never asked, or declined by Dr. Elder and not answered again since: questions first, before address or card.
     const owed = [...new Set(items.map((i) => i.productId))]
-      .filter((id) => !intakeCovers(answers, id))
-      .map((id) => ({ id, name: getAnyShopProduct(id)?.name ?? 'This treatment' }));
+      .filter((id) => !intakeCovers(answers, id) || redo.has(id))
+      .map((id) => ({ id, name: getAnyShopProduct(id)?.name ?? 'This treatment', declined: redo.get(id) }));
     if (owed.length) {
       const first = owed[0];
+      const declinedOn = first.declined
+        ? new Date(first.declined.declinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+        : null;
       return (
         <main className="relative min-h-screen bg-white text-ink">
           <div className="mx-auto max-w-[640px] px-5 pb-20 pt-24 text-center md:pt-32">
             <h1 className="mb-4 text-[28px] font-semibold leading-[1.05] tracking-[-0.04em] [text-wrap:balance] md:text-[40px]">
-              {owed.length === 1
-                ? `A few questions about ${first.name} first.`
-                : 'A few questions first.'}
+              {declinedOn
+                ? `Update your answers for ${first.name}.`
+                : owed.length === 1
+                  ? `A few questions about ${first.name} first.`
+                  : 'A few questions first.'}
             </h1>
-            <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
-              Dr. Elder reviews every treatment on its own, so each one needs its medical questions answered before
-              checkout. It takes a few minutes, your details are already filled in, and you come straight back here.
-            </p>
+            {declinedOn ? (
+              <p className="mb-8 rounded-inner bg-butter-soft px-5 py-4 text-left text-[16px] leading-relaxed text-ink ring-1 ring-butter-deep/50">
+                Dr. Elder didn&rsquo;t approve {first.name} on {declinedOn}, so he needs your current answers before you
+                order it again. Your last answers are filled in: check each one, update anything that&rsquo;s changed,
+                and you come straight back here. You&rsquo;re charged only if he approves.
+              </p>
+            ) : (
+              <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
+                Dr. Elder reviews every treatment on its own, so each one needs its medical questions answered before
+                checkout. It takes a few minutes, your details are already filled in, and you come straight back here.
+              </p>
+            )}
             <div className="flex flex-col items-center gap-3">
               {owed.map((p) => (
                 <Link
@@ -94,7 +109,7 @@ export default async function CheckoutPage() {
                   href={`/start?product=${encodeURIComponent(p.id)}`}
                   className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink"
                 >
-                  Answer the {p.name} questions
+                  {p.declined ? `Update my ${p.name} answers` : `Answer the ${p.name} questions`}
                 </Link>
               ))}
               <Link
