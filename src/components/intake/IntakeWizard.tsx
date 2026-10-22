@@ -1057,10 +1057,11 @@ export function IntakeWizard({
         <div className="mt-8 flex items-center gap-3">
           {backButton}
           {validation.ok && (
+            // Same butter button as the other screens (an answer already picked, or carried in, still needs Continue).
             <button
               type="button"
               onClick={() => advance()}
-              className="min-h-[44px] rounded-full px-5 py-3 text-[14px] font-semibold text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink"
+              className="ml-auto inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-butter px-6 py-3 text-[15px] font-semibold text-ink transition-[transform,background-color] hover:-translate-y-0.5 hover:bg-butter-deep md:min-h-[44px] md:flex-none"
             >
               Continue →
             </button>

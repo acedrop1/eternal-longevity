@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { IntakeWizard } from '@/components/intake/IntakeWizard';
 import type { Offer } from '@/components/intake/Recommendation';
 import { getSession } from '@/lib/auth-server';
+import { loadCart } from '@/lib/profile-db';
 import { getCatalogProduct, getLiveProduct, getLiveProducts } from '@/lib/catalog';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import { isCategoryKey } from '@/lib/intakeSchema';
@@ -67,6 +68,17 @@ export default async function StartPage({ searchParams }: StartPageProps) {
     if (format && ['pill', 'foam', 'either'].includes(format)) seed.hr_format = format;
   }
 
+  // The plan they already picked: ?plan= from the product page, else the plan in their cart for it
+  // (Add to cart → checkout → these questions), so the plan step doesn't jump to a different plan.
+  const viewer = await getSession();
+  const cartPlan =
+    !plan && requested && viewer?.role === 'member'
+      ? (await loadCart().catch(() => ({ items: [] as { productId: string; cadence: string }[] }))).items.find(
+          (i) => i.productId === requested.id,
+        )?.cadence
+      : undefined;
+  const pickedPlan = plan ?? cartPlan;
+
   // Everything live the assessment can recommend, priced as the product pages price it.
   const what = new Map(ALL_ITEMS.map(({ item: i }) => [i.live ?? i.slug, i.what]));
   const shipSettings = await getShippingSettings();
@@ -88,8 +100,8 @@ export default async function StartPage({ searchParams }: StartPageProps) {
             tiers,
             // The plan picked on the product page (?plan=) comes preselected.
             defaultCadence:
-              p.id === requested?.id && tiers.some((t) => t.key === plan)
-                ? (plan as (typeof tiers)[number]['key'])
+              p.id === requested?.id && tiers.some((t) => t.key === pickedPlan)
+                ? (pickedPlan as (typeof tiers)[number]['key'])
                 : defaultTier(tiers).key,
             shipping: shippingNote(shipSettings),
           },

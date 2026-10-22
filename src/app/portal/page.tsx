@@ -71,8 +71,14 @@ export default async function MemberPortalPage() {
       created_at: m.createdAt,
     })),
   ).me;
+  // What his last message was. A question only if he used Ask for more information (the order
+  // is still with him and its latest note from him is the question); a decline has its own card.
+  const aboutRef = question?.state === 'waiting' ? question.question.match(/^About order #(\d+)/)?.[1] : undefined;
+  const aboutOrder = aboutRef ? orders.find((o) => o.id === aboutRef) : undefined;
+  const lastFromHim = aboutOrder?.updates?.filter((u) => u.role === 'physician').sort((a, b) => b.at - a.at)[0];
+  const isQuestion = aboutOrder?.status === 'assigned' && Boolean(lastFromHim?.note.startsWith('Your prescriber has a question'));
   const preview =
-    question?.state === 'waiting'
+    question?.state === 'waiting' && aboutOrder?.status !== 'declined-clinical'
       ? question.question.length > 140
         ? `${question.question.slice(0, 140).trimEnd()}…`
         : question.question
@@ -124,7 +130,7 @@ export default async function MemberPortalPage() {
             id="dr-question"
             className="text-[22px] font-semibold leading-[1.1] tracking-[-0.03em] text-ink md:text-[26px]"
           >
-            Dr. Elder has a question for you
+            {isQuestion ? 'Dr. Elder has a question for you' : 'New message from Dr. Elder'}
           </h2>
           <p className="mt-3 whitespace-pre-wrap break-words rounded-inner bg-white px-4 py-3 text-[15px] leading-relaxed text-ink ring-1 ring-ink/5">
             {preview}
@@ -133,7 +139,7 @@ export default async function MemberPortalPage() {
             href="/portal/messages?thread=doctor"
             className="group mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-ink/85 sm:inline-flex sm:w-auto"
           >
-            Reply
+            {isQuestion ? 'Reply' : 'Read and reply'}
             <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
           </Link>
         </section>

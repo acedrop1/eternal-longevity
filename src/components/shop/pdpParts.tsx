@@ -18,6 +18,21 @@ import { FDA_DISCLAIMER, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_HREF, SUPPO
  */
 
 /** Product photo. A clean vial render shows as is; a stock photo is dimmed and named. */
+/** The plan that saves the most (shown as "Best value"); none when no plan saves anything. */
+function bestValueKey(tiers: CadenceTier[]): CadenceTier['key'] | undefined {
+  const best = tiers.reduce<CadenceTier | undefined>((b, t) => ((t.saved ?? 0) > (b?.saved ?? 0) ? t : b), undefined);
+  return best && (best.saved ?? 0) > 0 ? best.key : undefined;
+}
+
+/** Small ink tag on the top edge of the best-value plan card. */
+function BestValueTag() {
+  return (
+    <span className="pointer-events-none absolute -top-2.5 right-4 rounded-full bg-ink px-2.5 py-[3px] text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm">
+      Best value
+    </span>
+  );
+}
+
 export function ProductImage({
   product,
   sizes,
@@ -133,8 +148,9 @@ export function PlanSegments({
   pulse?: boolean;
 }) {
   // Phones: one row per plan, like an iOS list: a 56px target, a radio that reads by shape, label left, price right.
+  const best = bestValueKey(tiers);
   return (
-    <div role="radiogroup" aria-label="Plan" className="space-y-2">
+    <div role="radiogroup" aria-label="Plan" className="space-y-3">
       {tiers.map((t) => {
         const on = t.key === selected;
         return (
@@ -145,11 +161,12 @@ export function PlanSegments({
             aria-checked={on}
             onClick={() => onSelect(t.key)}
             className={cn(
-              'flex min-h-[56px] w-full items-center gap-3 rounded-inner px-4 py-3 text-left transition-[box-shadow,background-color] duration-300',
+              'relative flex min-h-[56px] w-full items-center gap-3 rounded-inner px-4 py-3 text-left transition-[box-shadow,background-color] duration-300',
               on ? 'bg-white ring-2 ring-ink' : 'bg-milk ring-1 ring-transparent'
             )}
             style={pulse && on ? { boxShadow: '0 0 0 5px rgba(247,221,116,0.7)' } : undefined}
           >
+            {t.key === best && <BestValueTag />}
             <span aria-hidden className={cn('grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2', on ? 'border-ink' : 'border-ink/30')}>
               {on && <span className="h-3 w-3 rounded-full bg-ink" />}
             </span>
@@ -181,9 +198,10 @@ export function PlanOptions({
   pulse?: boolean;
 }) {
   const active = tiers.find((t) => t.key === selected) ?? tiers[0];
+  const best = bestValueKey(tiers);
   return (
     <div>
-      <div role="radiogroup" aria-label="Plan" className="space-y-2">
+      <div role="radiogroup" aria-label="Plan" className="space-y-2.5">
         {tiers.map((t) => {
           const on = t.key === selected;
           return (
@@ -194,11 +212,12 @@ export function PlanOptions({
               aria-checked={on}
               onClick={() => onSelect(t.key)}
               className={cn(
-                'flex w-full items-center gap-4 rounded-inner px-4 py-4 text-left transition-[box-shadow,background-color] duration-300',
+                'relative flex w-full items-center gap-4 rounded-inner px-4 py-4 text-left transition-[box-shadow,background-color] duration-300',
                 on ? 'bg-white ring-2 ring-ink' : 'bg-milk ring-1 ring-transparent hover:ring-ink/20'
               )}
               style={pulse && on ? { boxShadow: '0 0 0 6px rgba(247,221,116,0.6)' } : undefined}
             >
+              {t.key === best && <BestValueTag />}
               {/* Radio dot: the selected state reads by shape, not only by colour. */}
               <span
                 aria-hidden
