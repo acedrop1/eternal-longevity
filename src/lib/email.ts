@@ -532,9 +532,9 @@ export function orderConfirmationEmail(input: {
     shippingRow(input.shipping) +
     (input.discount > 0 ? moneyRow('Discount', -input.discount) : '');
   return {
-    subject: `You’re all set: ${orderRef(input.orderNumber)} is confirmed`,
+    subject: `You’re approved: ${orderRef(input.orderNumber)} is going to the pharmacy`,
     html: shell(
-      `<div style="${EYEBROW}">ORDER CONFIRMED</div>
+      `<div style="${EYEBROW}">APPROVED · ORDER CONFIRMED</div>
        <h1 style="${H1}">You&rsquo;re all set, ${escapeHtml(input.firstName)}.</h1>
        <p style="${P}">${
          input.total > 0 ? 'Payment went through and your' : 'Your code covered this one in full, so nothing was charged. Your'
@@ -980,20 +980,28 @@ export function prescriberQuestionEmail(input: {
 
 export function declinedEmail(input: {
   firstName: string;
-  reason?: string;
+  orderNumber: string;
+  /** "Finasteride + Minoxidil" — what was ordered. */
+  products?: string;
+  /** Money had moved and is being refunded (a refund email follows); otherwise nothing was charged. */
+  refunded?: boolean;
 }): { subject: string; html: string } {
   return {
-    subject: 'About your Eternal Longevity visit',
+    subject: `About ${orderRef(input.orderNumber)}: your prescriber couldn’t approve it`,
     html: shell(
-      `<h1 style="${H1}">Your prescriber couldn&rsquo;t approve this treatment.</h1>
-       <p style="${P}">Thanks for your visit, ${escapeHtml(input.firstName)}. A licensed prescriber reviewed it and decided this treatment isn&rsquo;t appropriate for you right now. That&rsquo;s a clinical decision, and it&rsquo;s made to keep you safe.</p>
-       <p style="${P}"><strong style="color:${INK};">You haven&rsquo;t been charged anything.</strong> There&rsquo;s no payment link and no order to cancel.</p>
-       ${
-         input.reason
-           ? `<p style="${P}padding:16px 18px;${PANEL}">${escapeHtml(input.reason)}</p>`
-           : ''
-       }
-       <p style="margin:0;">Want to talk it through? Reply to this email or message us from your portal. We&rsquo;d also encourage you to raise it with your own physician.</p>`,
+      `<div style="${EYEBROW}">ORDER NOT APPROVED</div>
+       <h1 style="${H1}">Your prescriber couldn&rsquo;t approve this treatment.</h1>
+       <p style="${P}">Thanks for your visit, ${escapeHtml(input.firstName)}. A licensed prescriber reviewed ${escapeHtml(
+         orderRef(input.orderNumber),
+       )}${input.products ? ` (${escapeHtml(input.products)})` : ''} and decided it isn&rsquo;t right for you right now. That&rsquo;s a clinical decision, made to keep you safe.</p>
+       <p style="${P}"><strong style="color:${INK};">${
+         input.refunded
+           ? 'Anything you were charged is being refunded in full.</strong> You&rsquo;ll get a separate email when it&rsquo;s on its way.'
+           : 'You haven&rsquo;t been charged anything.</strong> There&rsquo;s nothing to pay and nothing to cancel.'
+       }</p>
+       <p style="${P}">Dr. Elder left you a note explaining why. It&rsquo;s in your portal, not in this email, to keep your health information private. You can reply to him there.</p>
+       <div style="margin:24px 0 0;">${button('Read his note', `${SITE_URL}/portal/messages?thread=doctor`)}</div>
+       <p style="${NOTE}">We&rsquo;d also encourage you to talk it through with your own physician.</p>`,
     ),
   };
 }

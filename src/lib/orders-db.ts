@@ -21,6 +21,7 @@ import { chargeOnApproval } from '@/lib/pay-on-approval';
 import { alertCareTeam, autoSubmitToPharmacy, withdrawFromPharmacy } from '@/lib/auto-pharmacy';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import {
+  declinedEmail,
   noticeEmail,
   orderCancelledByTeamEmail,
   orderReceivedEmail,
@@ -1190,7 +1191,7 @@ export async function declineClinicalAction(
   const db = createSupabaseAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('user_id, member_name, member_email')
+    .select('user_id, member_name, member_email, paid_at')
     .eq('id', id)
     .maybeSingle();
 
@@ -1222,7 +1223,13 @@ export async function declineClinicalAction(
    * their portal thread and on the order, and the email says where.
    */
   if (order?.member_email) {
-    const msg = prescriberMessageEmail();
+    const { data: items } = await db.from('order_items').select('product_name').eq('order_id', id);
+    const msg = declinedEmail({
+      firstName: (order.member_name ?? '').split(' ')[0] || 'there',
+      orderNumber,
+      products: (items ?? []).map((i) => i.product_name).filter(Boolean).join(', ') || undefined,
+      refunded: Boolean(order.paid_at),
+    });
     try {
       await sendEmail({ to: order.member_email, subject: msg.subject, html: msg.html });
     } catch {
