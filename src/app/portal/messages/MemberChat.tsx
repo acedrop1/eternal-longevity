@@ -204,7 +204,15 @@ export function MemberChat({
       </section>
 
       {/* Conversation */}
-      <section aria-label={meta.label} className={cn('min-w-0', selected ? 'block' : 'hidden md:block')}>
+      {/* Fills the screen below the top bar (and above the phone tab bar), so the composer sits at the bottom. */}
+      <section
+        aria-label={meta.label}
+        className={cn(
+          // Phone: 100dvh minus top bar (4.25rem), page padding (2rem + 2rem) and tab bar (4.5rem + safe area).
+          'min-h-[calc(100dvh-13rem-env(safe-area-inset-bottom))] min-w-0 flex-col md:min-h-[calc(100dvh-7.5rem)]',
+          selected ? 'flex' : 'hidden md:flex',
+        )}
+      >
         <div className="flex items-center gap-3 border-b border-ink/[0.06] pb-4">
           <button
             type="button"
@@ -223,7 +231,7 @@ export function MemberChat({
           </div>
         </div>
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 flex-1 space-y-4">
           {all.length === 0 && (
             <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
               <Avatar channel={channel} size="lg" />
