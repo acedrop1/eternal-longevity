@@ -60,6 +60,8 @@ type ShippingMethodId = (typeof SHIPPING_OPTIONS)[number]['id'];
 
 /** The address typed so far, for this tab only, so a refresh keeps it. Cleared once the order is placed. */
 const SHIPPING_DRAFT = 'el-checkout-shipping';
+const PROGRESS_DRAFT = 'el-checkout-progress';
+const SECTIONS: SectionKey[] = ['email', 'shipping', 'method', 'payment'];
 
 interface CheckoutFlowProps {
   defaultEmail: string;
@@ -508,6 +510,58 @@ export function CheckoutFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subtotal]);
 
+  // Reopen the step they were on, and their promo code, after a refresh (same tab, like the address).
+  const [progressRestored, setProgressRestored] = useState(false);
+  const pendingPromo = useRef<string | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(PROGRESS_DRAFT) ?? 'null') as {
+        open?: SectionKey;
+        completed?: Partial<Record<SectionKey, boolean>>;
+        promo?: string;
+      } | null;
+      if (!saved || typeof saved !== 'object') return;
+      if (saved.open && SECTIONS.includes(saved.open)) setOpen(saved.open);
+      if (saved.completed) {
+        setCompleted((c) => ({ ...c, ...Object.fromEntries(SECTIONS.map((k) => [k, saved.completed?.[k] === true])) }));
+      }
+      if (typeof saved.promo === 'string' && saved.promo) pendingPromo.current = saved.promo;
+      setProgressRestored(true);
+    } catch {
+      // Storage blocked or corrupt: checkout starts at step one.
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(
+        PROGRESS_DRAFT,
+        JSON.stringify({ open, completed, promo: promo?.ok && promo.code ? promo.code : '' }),
+      );
+    } catch {
+      // Private mode / quota: a refresh just starts over.
+    }
+  }, [open, completed, promo]);
+  // A restored step only counts if its answers still check out; otherwise reopen the first one that doesn't.
+  useEffect(() => {
+    if (!progressRestored) return;
+    const valid: Record<SectionKey, boolean> = { email: emailValid, shipping: shippingValid, method: methodValid, payment: true };
+    const firstBad = SECTIONS.findIndex((k) => completed[k] && !valid[k]);
+    if (firstBad < 0) return;
+    setCompleted((c) => ({ ...c, ...Object.fromEntries(SECTIONS.slice(firstBad).map((k) => [k, false])) }));
+    setOpen(SECTIONS[firstBad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progressRestored]);
+  // The saved code is checked again by the server, once the cart has a price.
+  useEffect(() => {
+    const code = pendingPromo.current;
+    if (!code || subtotal <= 0) return;
+    pendingPromo.current = null;
+    setPromoInput(code);
+    checkPromoAction(code, Math.round(subtotal * 100))
+      .then(setPromo)
+      .catch(() => {});
+  }, [subtotal, progressRestored]);
+
   async function applyPromo() {
     if (!promoInput.trim() || promoBusy) return;
     setPromoBusy(true);
@@ -681,6 +735,7 @@ export function CheckoutFlow({
     placed.current = true;
     try {
       window.sessionStorage.removeItem(SHIPPING_DRAFT);
+      window.sessionStorage.removeItem(PROGRESS_DRAFT);
     } catch {
       // Nothing to clear.
     }
