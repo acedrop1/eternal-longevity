@@ -38,6 +38,57 @@ import { sendSms } from '@/lib/sms';
 import { SITE_URL } from '@/lib/site';
 import { orderRef } from '@/lib/format';
 
+type OrderMoney = {
+  id: string;
+  order_number: string;
+  member_name: string | null;
+  member_email: string | null;
+  shipping_address: unknown;
+  subtotal_cents: number | null;
+  shipping_cents: number | null;
+  discount_cents: number | null;
+  promo_code: string | null;
+  total_cents: number | null;
+};
+
+const usd = (cents: number | null | undefined) => `$${((cents ?? 0) / 100).toFixed(2)}`;
+
+/**
+ * What was ordered and what it comes to, for the team's order emails (the
+ * Shopify-style "you have a new order" summary). Team inbox only: it names
+ * the products, so it never goes to anyone outside Eternal Longevity.
+ */
+async function orderSummary(
+  db: ReturnType<typeof createSupabaseAdminClient>,
+  order: OrderMoney,
+): Promise<{ rows: [string, string][]; total: string }> {
+  const { data: items } = await db
+    .from('order_items')
+    .select('product_name, cadence_label, quantity, unit_price_cents')
+    .eq('order_id', order.id);
+  const total = usd(order.total_cents);
+  const addr = (order.shipping_address ?? {}) as { city?: string; state?: string };
+  const rows: [string, string][] = [
+    ['Order', orderRef(order.order_number)],
+    ['Member', order.member_name ?? 'A member'],
+    ...(order.member_email ? ([['Email', order.member_email]] as [string, string][]) : []),
+    ...(items ?? []).map(
+      (i): [string, string] => [
+        'Item',
+        `${i.product_name}${i.cadence_label ? ` · ${i.cadence_label}` : ''} · ×${i.quantity ?? 1} · ${usd((i.unit_price_cents ?? 0) * (i.quantity ?? 1))}`,
+      ],
+    ),
+    ['Subtotal', usd(order.subtotal_cents)],
+    ...((order.discount_cents ?? 0) > 0
+      ? ([['Discount', `−${usd(order.discount_cents)}${order.promo_code ? ` (${order.promo_code})` : ''}`]] as [string, string][])
+      : []),
+    ['Shipping', (order.shipping_cents ?? 0) > 0 ? usd(order.shipping_cents) : 'Free'],
+    ['Total', `${total}, charged when the prescriber approves`],
+    ...(addr.city || addr.state ? ([['Ship to', [addr.city, addr.state].filter(Boolean).join(', ')]] as [string, string][]) : []),
+  ];
+  return { rows, total };
+}
+
 /** Mailbox stores and freight forwarders — not a residence, not shippable. */
 const PO_BOX = /\b(p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*box)\b/i;
 const FORWARDER =
@@ -74,7 +125,7 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
   const { data: order } = await db
     .from('orders')
     .select(
-      'id, order_number, user_id, member_name, member_email, status, shipping_address',
+      'id, order_number, user_id, member_name, member_email, status, shipping_address, subtotal_cents, shipping_cents, discount_cents, promo_code, total_cents',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
@@ -118,17 +169,15 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
           });
           // The team hears about every order the moment it is placed; the prescriber only once it's reviewable.
           const who = order.member_name ?? 'A member';
+          const summary = await orderSummary(db, order);
           await sendEmail({
             to: SUPPORT_EMAIL,
-            subject: `New order placed — ${orderRef(order.order_number)}`,
+            subject: `New order placed — ${orderRef(order.order_number)} · ${summary.total} · ${who}`,
             html: noticeEmail({
               eyebrow: 'New order',
-              heading: `${who} placed an order`,
+              heading: `${who} placed an order · ${summary.total}`,
               body: 'It is waiting on their health questions (asked right after checkout). It goes to the prescriber the moment they finish. Nothing is charged until he signs.',
-              rows: [
-                ['Order', orderRef(order.order_number)],
-                ['Member', who],
-              ],
+              rows: summary.rows,
               cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
             }),
           }).catch(() => undefined);
@@ -183,20 +232,18 @@ export async function releaseToDoctor(orderNumber: string): Promise<{
    * or nobody has looked at a case in a day.
    */
   try {
+    const summary = await orderSummary(db, order);
     await sendEmail({
       to: SUPPORT_EMAIL,
-      subject: `New order for review — ${orderRef(order.order_number)}`,
+      subject: `New order for review — ${orderRef(order.order_number)} · ${summary.total} · ${memberName}`,
       html: noticeEmail({
         eyebrow: 'New order',
-        heading: `${memberName} placed an order`,
+        heading: `${memberName} placed an order · ${summary.total}`,
         body:
           order.status === 'awaiting-visit'
             ? 'They finished their health questions, so it is with the prescriber now. Nothing is charged until he signs.'
             : 'It has gone straight to the prescriber. Nothing is charged until he signs.',
-        rows: [
-          ['Order', orderRef(order.order_number)],
-          ['Member', memberName],
-        ],
+        rows: summary.rows,
         cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
       }),
     });

@@ -1,6 +1,7 @@
 'use client';
 
 import { startTransition, useEffect } from 'react';
+import { reportClientError } from '@/lib/report-client-error';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Wordmark } from '@/components/nav/Wordmark';
@@ -36,6 +37,7 @@ export default function PortalError({
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.error('Caught by app/portal/error.tsx:', error);
+    reportClientError(error, 'portal');
   }, [error]);
 
   return (

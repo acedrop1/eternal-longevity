@@ -66,6 +66,16 @@ export function CheckoutCardStep({
 
   return (
     <form onSubmit={onSubmit}>
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <CardBrands />
+        <span className="inline-flex items-center gap-1.5 text-[12.5px] text-ink/60">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="4" y="11" width="16" height="10" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+          Encrypted by our payment processor
+        </span>
+      </div>
       <div className="rounded-inner bg-milk p-3 md:p-4">
         <FrameCardField ref={field} accountId={accountId} onCompleteChange={setComplete} />
       </div>
@@ -90,5 +100,39 @@ export function CheckoutCardStep({
         {amountLabel}. If they decide it is not right for you, it never is.
       </p>
     </form>
+  );
+}
+
+/** Accepted card brands, drawn inline (no image requests, no icon package). */
+function CardBrands() {
+  const chip = 'grid h-6 w-[38px] place-items-center rounded-[4px] bg-white ring-1 ring-ink/12';
+  return (
+    <ul aria-label="Cards accepted: Visa, Mastercard, American Express, Discover" className="flex items-center gap-1.5">
+      <li className={chip}>
+        <svg viewBox="0 0 38 24" width="38" height="24" aria-hidden>
+          <text x="19" y="16.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="10.5" fontWeight="800" fontStyle="italic" fill="#1a1f71">VISA</text>
+        </svg>
+      </li>
+      <li className={chip}>
+        <svg viewBox="0 0 38 24" width="38" height="24" aria-hidden>
+          <circle cx="15.5" cy="12" r="6.5" fill="#eb001b" />
+          <circle cx="22.5" cy="12" r="6.5" fill="#f79e1b" />
+          <path d="M19 6.5a6.5 6.5 0 0 1 0 11a6.5 6.5 0 0 1 0-11z" fill="#ff5f00" />
+        </svg>
+      </li>
+      <li className={chip}>
+        <svg viewBox="0 0 38 24" width="38" height="24" aria-hidden>
+          <rect x="3" y="4" width="32" height="16" rx="2" fill="#1f72cd" />
+          <text x="19" y="15.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="7.5" fontWeight="800" fill="#fff">AMEX</text>
+        </svg>
+      </li>
+      <li className={chip}>
+        <svg viewBox="0 0 38 24" width="38" height="24" aria-hidden>
+          <text x="16" y="14.6" textAnchor="end" fontFamily="Arial, Helvetica, sans-serif" fontSize="5.8" fontWeight="800" fill="#231f20">DISC</text>
+          <circle cx="18.6" cy="12.6" r="2.3" fill="#f68121" />
+          <text x="21.2" y="14.6" fontFamily="Arial, Helvetica, sans-serif" fontSize="5.8" fontWeight="800" fill="#231f20">VER</text>
+        </svg>
+      </li>
+    </ul>
   );
 }

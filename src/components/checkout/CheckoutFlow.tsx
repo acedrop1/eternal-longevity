@@ -532,6 +532,7 @@ export function CheckoutFlow({
     }
   }, []);
   useEffect(() => {
+    if (placed.current) return; // the order is in; don't save progress for a checkout that's finished
     try {
       window.sessionStorage.setItem(
         PROGRESS_DRAFT,
