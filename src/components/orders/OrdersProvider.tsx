@@ -222,14 +222,16 @@ export function OrdersProvider({
           promoCode: draft.promoCode,
           consent,
         });
-        if (res.ok) router.refresh();
+        // No router.refresh() on success: checkout does a full page load to the confirmation, and
+        // refreshing /checkout first (its cart now empty on the server) raced it and showed
+        // "Your cart is empty" instead of the health questions.
         return res;
       } catch (err) {
         console.error('[orders] placeOrder threw:', err);
         return { ok: false, error: 'network' };
       }
     },
-    [live, router],
+    [live],
   );
 
   const approve = useCallback<OrdersAPI['approve']>(

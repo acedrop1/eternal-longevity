@@ -690,6 +690,9 @@ export function CheckoutFlow({
      * catalogue, checks the state and the intake, and saves the card for a
      * charge only once the prescriber approves. Nothing is charged here.
      */
+    // From here the cart may empty under us (the server clears it with the order): never show
+    // the empty-cart screen mid-order. Reset only if the order fails.
+    placed.current = true;
     const res = await placeOrder({
       memberName: shippingAddressForOrder.fullName,
       memberEmail: email,
@@ -714,6 +717,7 @@ export function CheckoutFlow({
       charges: chargesAccepted ? (chargesTextRef.current?.textContent ?? '') : '',
     });
     if (!res.ok) {
+      placed.current = false;
       setIsPaying(false);
       const heldName =
         res.error === 'already_ordered' ? lines.find((l) => l.productId === res.productId)?.name : undefined;
