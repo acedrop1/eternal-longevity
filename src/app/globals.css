@@ -321,6 +321,7 @@ select:-webkit-autofill {
    should not animate because we thought it looked nice. */
 @media (prefers-reduced-motion: reduce) {
   .anim-route { animation: none; }
+  [class*='navload'] { animation: none; width: 100%; }
   .animate-ping { animation: none; opacity: 0.7; }
 }
 
@@ -370,3 +371,9 @@ select:-webkit-autofill {
  * condensed display face set font-normal + fontStretch inline; this lifts
  * those without touching every page. */
 .font-display.font-normal { font-weight: 600; letter-spacing: -0.045em; }
+
+/* Portal nav: the loading bar's sweep while a tab's page loads. */
+@keyframes navload {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}

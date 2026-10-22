@@ -28,27 +28,70 @@ interface PortalNavProps {
  * the navigation is in flight the instant it starts, which is the difference
  * between an app that feels immediate and one that feels slow.
  */
-function NavDot({ isActive }: { isActive: boolean }) {
-  const { pending } = useLinkStatus();
+/** A thin butter bar across the top of the screen while a tab's page loads. */
+function TopBar() {
   return (
-    <span
-      aria-hidden
-      className={cn(
-        'h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors',
-        pending
-          ? 'animate-ping bg-butter-deep'
-          : isActive
-            ? 'bg-butter-deep'
-            : 'bg-ink/20 group-hover:bg-ink/40',
-      )}
-    />
+    <span aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[3px] overflow-hidden bg-butter/40">
+      <span className="block h-full w-1/3 animate-[navload_1.1s_ease-in-out_infinite] rounded-full bg-butter-deep" />
+    </span>
   );
 }
 
-/** Same idea for the mobile row, which has no dot to pulse. */
-function PillLabel({ label }: { label: string }) {
+const pillOn = 'bg-white text-ink shadow-sm ring-1 ring-ink/5';
+
+/**
+ * The desktop item's visible body. Inside the Link so useLinkStatus sees the
+ * click: a pending tab looks selected at once (white pill, spinner) instead
+ * of waiting for the server.
+ */
+function RailItem({ isActive, label, badge }: { isActive: boolean; label: string; badge?: number }) {
   const { pending } = useLinkStatus();
-  return <span className={cn(pending && 'opacity-60')}>{label}</span>;
+  const on = isActive || pending;
+  return (
+    <span
+      className={cn(
+        'flex min-h-[44px] items-center gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] transition-colors',
+        on ? pillOn : 'text-ink/65 group-hover:bg-white/60 group-hover:text-ink',
+      )}
+    >
+      {pending ? (
+        <span aria-hidden className="h-3 w-3 flex-shrink-0 animate-spin rounded-full border-[1.5px] border-butter-deep border-t-transparent" />
+      ) : (
+        <span
+          aria-hidden
+          className={cn('h-1.5 w-1.5 flex-shrink-0 rounded-full transition-colors', isActive ? 'bg-butter-deep' : 'bg-ink/20 group-hover:bg-ink/40')}
+        />
+      )}
+      <span className="flex-1 truncate">{label}</span>
+      {!!badge && (
+        <span className="inline-flex min-w-[1.4rem] items-center justify-center rounded-full bg-ink px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white tabular-nums">
+          {badge}
+        </span>
+      )}
+      {pending && <TopBar />}
+    </span>
+  );
+}
+
+/** Same for the mobile strip. */
+function PillItem({ isActive, label, badge }: { isActive: boolean; label: string; badge?: number }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      className={cn(
+        'flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold tracking-[-0.01em] transition-colors',
+        isActive || pending ? pillOn : 'text-ink/60 group-hover:bg-white/60 group-hover:text-ink',
+      )}
+    >
+      {label}
+      {!!badge && (
+        <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-butter px-1 text-[11px] font-semibold leading-[1.25rem] text-ink tabular-nums">
+          {badge}
+        </span>
+      )}
+      {pending && <TopBar />}
+    </span>
+  );
 }
 
 /**
@@ -83,19 +126,9 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'flex h-11 flex-shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold tracking-[-0.01em] transition-colors',
-                  isActive
-                    ? 'bg-white text-ink shadow-sm ring-1 ring-ink/5'
-                    : 'text-ink/60 hover:bg-white/60 hover:text-ink'
-                )}
+                className="group flex-shrink-0 rounded-full"
               >
-                <PillLabel label={item.label} />
-                {!!item.badge && (
-                  <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-butter px-1 text-[11px] font-semibold leading-[1.25rem] text-ink tabular-nums">
-                    {item.badge}
-                  </span>
-                )}
+                <PillItem isActive={isActive} label={item.label} badge={item.badge} />
               </Link>
             );
           })}
@@ -112,23 +145,8 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
           const isActive = item.href === activeHref;
           return (
             <li key={item.href}>
-              <Link
-                href={item.href}
-                aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'group flex min-h-[44px] items-center gap-3 rounded-full px-4 py-2.5 text-[15px] font-medium tracking-[-0.01em] transition-colors',
-                  isActive
-                    ? 'bg-white text-ink shadow-sm ring-1 ring-ink/5'
-                    : 'text-ink/65 hover:bg-white/60 hover:text-ink'
-                )}
-              >
-                <NavDot isActive={isActive} />
-                <span className="flex-1 truncate">{item.label}</span>
-                {!!item.badge && (
-                  <span className="inline-flex min-w-[1.4rem] items-center justify-center rounded-full bg-ink px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white tabular-nums">
-                    {item.badge}
-                  </span>
-                )}
+              <Link href={item.href} aria-current={isActive ? 'page' : undefined} className="group block rounded-full">
+                <RailItem isActive={isActive} label={item.label} badge={item.badge} />
               </Link>
             </li>
           );
