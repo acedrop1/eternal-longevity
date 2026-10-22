@@ -11,6 +11,7 @@ import { getShippingSettings } from '@/lib/shipping-settings';
 import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { signWindowOpen } from '@/lib/reauth';
 import { orderRef } from '@/lib/format';
+import { listThreadMessages, type PortalMessage } from '@/lib/messages-db';
 import type { Order } from '@/lib/orders';
 import type { ThreadStatus } from '@/lib/prescriber-view';
 
@@ -36,16 +37,20 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
   let review: PatientReview | undefined;
   let thread: ThreadStatus | undefined;
   let defaultSig = '';
+  let messages: PortalMessage[] = [];
   let sample = false;
 
   if (live) {
     order = await getOrder(ref).catch(() => null);
     if (order) {
-      const [reviews, threads, pharmacy] = await Promise.all([
+      const [reviews, threads, pharmacy, msgs] = await Promise.all([
         reviewsForOrders([order.id]).catch(() => ({}) as Record<string, PatientReview>),
         doctorThreadStatuses([order.userId ?? '']),
         getPharmacyEntries(),
+        order.userId ? listThreadMessages(order.userId, 'doctor').catch(() => []) : Promise.resolve([]),
       ]);
+      // The latest of his thread with this patient, for the Message patient pop-up.
+      messages = msgs.slice(-30);
       review = reviews[order.id];
       thread = threads[order.userId ?? ''];
       // Only the sig prefill crosses to the client, never the pharmacy mapping.
@@ -70,7 +75,14 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
   if (order.status === 'assigned' && order.lines.length === 1) {
     const [products, ship] = await Promise.all([getLiveProducts(), getShippingSettings()]);
     options = products
-      .map((p) => ({ id: p.id, name: p.name, tiers: cadenceTiersForProduct(p, ship.pricePerShipment).map((t) => ({ key: t.key, label: t.label, total: t.total })) }))
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        image: p.image,
+        swatch: p.swatch,
+        shot: p.shot ?? false,
+        tiers: cadenceTiersForProduct(p, ship.pricePerShipment).map((t) => ({ key: t.key, label: t.label, total: t.total })),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -84,6 +96,7 @@ export default async function DoctorReviewPage({ params }: { params: Promise<{ r
         thread={thread}
         defaultSig={defaultSig}
         options={options}
+        messages={messages}
         sample={sample}
       />
     </PortalShell>

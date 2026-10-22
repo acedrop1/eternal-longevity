@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useOrders } from '@/components/orders/OrdersProvider';
 import { addOrderNoteAction, changePrescriptionAction, requestInfoFromPatientAction, requestPhotosAction } from '@/lib/orders-db';
+import { replyMessageAction, type PortalMessage } from '@/lib/messages-db';
 import { waited } from '@/lib/order-health';
 import { STATUS_LABEL, type Order } from '@/lib/orders';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,9 @@ import { sentenceCase } from '@/components/portal/ui';
 const body = 'text-[15px] leading-relaxed md:text-[14px]';
 const primaryBtn = cn(headerButton, 'min-h-[44px] md:min-h-[34px] disabled:opacity-40');
 const outlineBtn = cn(secondaryButton, 'min-h-[44px] md:min-h-[34px] disabled:opacity-60');
+/** The decision button in the brand's butter, so the one action that matters is the one the eye finds. */
+const signBtn =
+  'inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-butter px-5 text-[15px] font-semibold text-ink ring-1 ring-butter-deep transition-colors hover:bg-butter-deep disabled:cursor-not-allowed disabled:opacity-40 md:min-h-[38px] md:text-[14px]';
 const dangerBtn =
   'inline-flex min-h-[44px] items-center justify-center whitespace-nowrap rounded-full bg-white px-4 text-[14px] font-semibold text-red-700 ring-1 ring-red-600/25 transition-colors hover:bg-red-50 disabled:opacity-60 md:min-h-[34px]';
 const textArea =
@@ -40,6 +44,10 @@ const ACTIVE = ['signed', 'compounding', 'shipped'];
 export interface RxOption {
   id: string;
   name: string;
+  /** Product photo; shown whole (object-contain) on its swatch. */
+  image?: string;
+  swatch?: string;
+  shot?: boolean;
   tiers: { key: string; label: string; total: number }[];
 }
 
@@ -58,6 +66,7 @@ export function DoctorReview({
   thread,
   defaultSig,
   options = [],
+  messages = [],
   sample = false,
 }: {
   order: Order;
@@ -70,6 +79,8 @@ export function DoctorReview({
   defaultSig: string;
   /** Products and plans he can switch the order to (Change prescription). */
   options?: RxOption[];
+  /** His latest messages with this patient, for the Message patient pop-up. */
+  messages?: PortalMessage[];
   /** Dev-only fixture order. */
   sample?: boolean;
 }) {
@@ -78,7 +89,13 @@ export function DoctorReview({
   const order = orders.find((o) => o.id === initial.id) ?? initial;
   const catFlags = review ? categoryFlagCount(review.categories) : 0;
   const router = useRouter();
-  const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask' | 'change'>(null);
+  const [open, setOpen] = useState<null | 'sign' | 'decline' | 'ask' | 'change' | 'message'>(null);
+  const [msgDraft, setMsgDraft] = useState('');
+  const [msgError, setMsgError] = useState<string | null>(null);
+  const [msgBusy, setMsgBusy] = useState(false);
+  const [sentMsgs, setSentMsgs] = useState<PortalMessage[]>([]);
+  // The server's copy arrived with the refresh: drop the optimistic ones.
+  useEffect(() => setSentMsgs([]), [messages]);
   const [note, setNote] = useState('');
   const [password, setPassword] = useState('');
   // The sig, prefilled with the directions he approved for this product.
@@ -107,7 +124,7 @@ export function DoctorReview({
 
   // A form opened from the bottom bar lands at the top of the record: bring it into view.
   useEffect(() => {
-    if (open) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (open === 'sign' || open === 'ask' || open === 'decline') formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [open]);
 
   const startSign = () => {
@@ -224,6 +241,30 @@ export function DoctorReview({
     }
   };
 
+  // Tagged with this order, like his other messages, so the patient sees which order it's about.
+  const orderTag = `About order #${order.id}${order.lines.length ? ` (${order.lines.map((l) => l.productName).join(', ')})` : ''}:`;
+  const sendMessage = async () => {
+    const text = msgDraft.trim();
+    if (!text || !order.userId || msgBusy) return;
+    setMsgBusy(true);
+    setMsgError(null);
+    const body = `${orderTag} ${text}`;
+    try {
+      const res = await replyMessageAction(order.userId, 'doctor', body);
+      if (res.ok) {
+        setSentMsgs((m) => [...m, { id: `sent-${Date.now()}`, senderRole: 'staff', body, createdAt: new Date().toISOString() }]);
+        setMsgDraft('');
+        router.refresh();
+      } else {
+        setMsgError(res.error ?? 'Could not send. Try again.');
+      }
+    } catch {
+      setMsgError('Could not send. Try again.');
+    } finally {
+      setMsgBusy(false);
+    }
+  };
+
   const photosButton = review?.photosRequestable && (
     <button type="button" disabled={busy !== null} onClick={requestPhotos} className={outlineBtn}>
       {busy === 'photos' && <Spinner />}
@@ -278,7 +319,12 @@ export function DoctorReview({
                   Change prescription
                 </button>
               )}
-              <button type="button" disabled={busy !== null} onClick={startSign} className={primaryBtn}>
+              {order.userId && (
+                <button type="button" onClick={() => setOpen('message')} className={outlineBtn}>
+                  Message patient
+                </button>
+              )}
+              <button type="button" disabled={busy !== null} onClick={startSign} className={signBtn}>
                 Approve &amp; sign prescription
               </button>
             </div>
@@ -373,7 +419,7 @@ export function DoctorReview({
                       type="button"
                       disabled={(!password && needPassword) || !directions.trim() || busy !== null}
                       onClick={sign}
-                      className={primaryBtn}
+                      className={signBtn}
                     >
                       {busy === 'sign' && <Spinner />}
                       {busy === 'sign' ? 'Processing payment…' : 'Confirm and sign'}
@@ -428,79 +474,6 @@ export function DoctorReview({
                     >
                       Cancel
                     </button>
-                  </div>
-                </SectionCard>
-              )}
-
-              {open === 'change' && (
-                <SectionCard title="Prescribe something different">
-                  {actionError && (
-                    <p role="alert" className={cn(alertBox, 'mb-3')}>
-                      {actionError}
-                    </p>
-                  )}
-                  <p className={cn(body, 'mb-4 text-ink/65')}>
-                    For after you&rsquo;ve talked it through with them. The order switches to what you pick here, priced
-                    from the catalogue (their discount and free first box carry over). Your note, the change and the new
-                    price go to their thread and they&rsquo;re emailed. Nothing is charged until you sign.
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Product</span>
-                      <select
-                        value={rxProduct}
-                        onChange={(e) => {
-                          setRxProduct(e.target.value);
-                          const t = options.find((o) => o.id === e.target.value)?.tiers ?? [];
-                          setRxPlan(t.find((x) => x.key === rxPlan)?.key ?? t[0]?.key ?? '');
-                        }}
-                        className={cn(textArea, 'min-h-[44px] md:min-h-[38px]')}
-                      >
-                        {options.map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.name}
-                            {o.id === line?.productId ? ' (ordered)' : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Plan</span>
-                      <select value={rxTier?.key ?? ''} onChange={(e) => setRxPlan(e.target.value)} className={cn(textArea, 'min-h-[44px] md:min-h-[38px]')}>
-                        {rxTiers.map((t) => (
-                          <option key={t.key} value={t.key}>
-                            {t.label} · ${t.total.toLocaleString('en-US')}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <label className="mt-3 block">
-                    <span className="mb-1.5 block text-[14px] font-medium text-ink md:text-[13px]">Note to the patient</span>
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      rows={3}
-                      placeholder="As we discussed, a lower strength suits you better to start. We can step up at your next refill."
-                      className={textArea}
-                    />
-                  </label>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <button type="button" disabled={!note.trim() || !rxTier || rxSame || busy !== null} onClick={change} className={primaryBtn}>
-                      {busy === 'change' && <Spinner />}
-                      {busy === 'change' ? 'Changing…' : 'Change and tell the patient'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpen(null);
-                        setNote('');
-                      }}
-                      className={outlineBtn}
-                    >
-                      Cancel
-                    </button>
-                    {rxSame && <span className={cn(body, 'text-ink/55')}>Pick a different product or plan.</span>}
                   </div>
                 </SectionCard>
               )}
@@ -581,11 +554,8 @@ export function DoctorReview({
           <SectionCard title="Order">
             {order.lines.map((l) => (
               <div key={l.productId} className="flex items-center gap-3 py-1">
-                <div
-                  className="relative h-12 w-12 flex-none overflow-hidden rounded-thumb border border-ink/10 bg-milk"
-                  style={l.swatch ? { background: l.swatch } : undefined}
-                >
-                  {l.image && <Image src={l.image} alt={l.productName} fill priority sizes="48px" className="object-contain opacity-50" />}
+                <div className="relative h-16 w-16 flex-none overflow-hidden rounded-thumb border border-ink/10 bg-milk">
+                  {l.image && <Image src={l.image} alt={l.productName} fill priority sizes="64px" className="object-contain p-1" />}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-medium text-ink md:text-[14px]">{l.productName}</p>
@@ -635,23 +605,177 @@ export function DoctorReview({
               )}
             </div>
             {order.userId && (
-              <Link
-                href={`/portal/doctor/messages?u=${encodeURIComponent(order.userId)}`}
-                className="mt-2 inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[14px]"
-              >
-                {thread ? 'Open thread' : 'Go to messages'}
-              </Link>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setOpen('message')} className={signBtn}>
+                  Message patient
+                </button>
+                <Link
+                  href={`/portal/doctor/messages?u=${encodeURIComponent(order.userId)}`}
+                  className="inline-flex min-h-[44px] items-center text-[15px] font-medium text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0 md:text-[14px]"
+                >
+                  Open in Messages
+                </Link>
+              </div>
             )}
           </SectionCard>
         </aside>
       </div>
+
+      {open === 'change' && (
+        <Modal
+          title="Change prescription"
+          subtitle="The order switches to what you pick. Your note, the change and the new price go to the patient; nothing is charged until you sign."
+          onClose={() => {
+            setOpen(null);
+            setNote('');
+            setActionError(null);
+          }}
+          footer={
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {rxSame && <span className={cn(body, 'mr-auto text-ink/60')}>Pick a different product or plan.</span>}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(null);
+                  setNote('');
+                }}
+                className={outlineBtn}
+              >
+                Cancel
+              </button>
+              <button type="button" disabled={!note.trim() || !rxTier || rxSame || busy !== null} onClick={change} className={signBtn}>
+                {busy === 'change' && <Spinner />}
+                {busy === 'change' ? 'Changing…' : 'Change and tell the patient'}
+              </button>
+            </div>
+          }
+        >
+          {actionError && (
+            <p role="alert" className={cn(alertBox, 'mb-4')}>
+              {actionError}
+            </p>
+          )}
+          <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">1 · Product</p>
+          <div role="radiogroup" aria-label="Product" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {options.map((o) => {
+              const on = o.id === rxProduct;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => {
+                    setRxProduct(o.id);
+                    setRxPlan(o.tiers.find((x) => x.key === rxPlan)?.key ?? o.tiers[0]?.key ?? '');
+                  }}
+                  className={cn(
+                    'group flex flex-col overflow-hidden rounded-inner bg-white text-left ring-1 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink',
+                    on ? 'ring-2 ring-ink shadow-[0_6px_20px_-10px_rgba(17,17,17,0.45)]' : 'ring-ink/12 hover:ring-ink/30',
+                  )}
+                >
+                  <span className="relative block aspect-[4/3] w-full bg-milk" style={o.swatch && !o.shot ? { background: o.swatch } : undefined}>
+                    {o.image && <Image src={o.image} alt="" fill sizes="(min-width: 640px) 220px, 45vw" className="object-contain p-2" />}
+                    {o.id === line?.productId && (
+                      <span className="absolute left-2 top-2 rounded-full bg-butter px-2 py-0.5 text-[12px] font-semibold text-ink">Ordered</span>
+                    )}
+                    {on && (
+                      <span aria-hidden className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-ink text-[13px] text-white">
+                        ✓
+                      </span>
+                    )}
+                  </span>
+                  <span className="px-3 py-2.5 text-[14px] font-semibold leading-snug text-ink">{o.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mb-2 mt-6 text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">2 · Plan</p>
+          <div role="radiogroup" aria-label="Plan" className="flex flex-wrap gap-2">
+            {rxTiers.map((t) => {
+              const on = t.key === rxTier?.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setRxPlan(t.key)}
+                  className={cn(
+                    'min-h-[44px] rounded-full px-4 text-[14px] font-semibold ring-1 transition-colors',
+                    on ? 'bg-butter text-ink ring-butter-deep' : 'bg-white text-ink ring-ink/15 hover:bg-milk',
+                  )}
+                >
+                  {t.label} · ${t.total.toLocaleString('en-US')}
+                </button>
+              );
+            })}
+          </div>
+
+          <label className="mt-6 block">
+            <span className="mb-2 block text-[13px] font-semibold uppercase tracking-[0.06em] text-ink/55">3 · Note to the patient</span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="As we discussed, a lower strength suits you better to start. We can step up at your next refill."
+              className={textArea}
+            />
+          </label>
+        </Modal>
+      )}
+
+      {open === 'message' && order.userId && (
+        <Modal
+          title={`Message ${order.memberName}`}
+          subtitle={`Tagged with ${orderRef(order.id)}. They're emailed that a message is waiting.`}
+          onClose={() => {
+            setOpen(null);
+            setMsgError(null);
+          }}
+          footer={
+            <div>
+              {msgError && <p className={cn(alertBox, 'mb-2')}>{msgError}</p>}
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={msgDraft}
+                  onChange={(e) => setMsgDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  rows={2}
+                  aria-label="Message to the patient"
+                  placeholder="Write to the patient…"
+                  className={cn(textArea, 'flex-1')}
+                />
+                <button type="button" disabled={!msgDraft.trim() || msgBusy} onClick={sendMessage} className={signBtn}>
+                  {msgBusy && <Spinner />}
+                  {msgBusy ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+              <Link
+                href={`/portal/doctor/messages?u=${encodeURIComponent(order.userId)}`}
+                className="mt-3 inline-flex min-h-[44px] items-center text-[14px] font-semibold text-ink underline decoration-ink/30 underline-offset-[3px] hover:decoration-ink md:min-h-0"
+              >
+                Open in Messages →
+              </Link>
+            </div>
+          }
+        >
+          <MessageList messages={[...messages, ...sentMsgs]} />
+        </Modal>
+      )}
 
       {/* Phone and tablet: the decision stays in reach under the record. Sticky,
           not fixed, so it takes its own room at the end and never covers it. */}
       {pending && open === null && (
         <div className="sticky bottom-0 z-30 -mx-2 lg:hidden">
           <div className="flex items-center gap-2 border-t border-ink/10 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-            <button type="button" disabled={busy !== null} onClick={startSign} className={cn(primaryBtn, 'flex-1 text-[15px]')}>
+            <button type="button" disabled={busy !== null} onClick={startSign} className={cn(signBtn, 'flex-1')}>
               Approve &amp; sign
             </button>
             <MoreMenu>
@@ -675,6 +799,16 @@ export function DoctorReview({
                       }}
                     >
                       Change prescription
+                    </MenuItem>
+                  )}
+                  {order.userId && (
+                    <MenuItem
+                      onClick={() => {
+                        close();
+                        setOpen('message');
+                      }}
+                    >
+                      Message patient
                     </MenuItem>
                   )}
                   {review?.photosRequestable && (
@@ -897,7 +1031,7 @@ function ReviewSections({ review }: { review: PatientReview }) {
 
   return (
     <>
-      <SectionCard title="Patient summary">
+      <SectionCard title="Patient summary" className="border-butter-deep/50 bg-butter-soft">
         <Strip
           items={[
             ['Date of birth', review.dob],
@@ -952,11 +1086,11 @@ function ReviewSections({ review }: { review: PatientReview }) {
 /** Short facts, read across in one line rather than stacked into rows. */
 function Strip({ items }: { items: [string, string][] }) {
   return (
-    <div className="flex flex-wrap gap-x-8 gap-y-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {items.map(([label, value]) => (
-        <div key={label}>
-          <div className="text-[13px] text-ink/60">{label}</div>
-          <div className="mt-0.5 text-[17px] font-semibold text-ink md:text-[16px]">{value}</div>
+        <div key={label} className="rounded-inner bg-white/80 px-3.5 py-2.5 ring-1 ring-butter-deep/30">
+          <div className="text-[13px] font-medium text-ink/65">{label}</div>
+          <div className="mt-0.5 text-[18px] font-semibold tabular-nums text-ink">{value}</div>
         </div>
       ))}
     </div>
@@ -970,28 +1104,7 @@ function Strip({ items }: { items: [string, string][] }) {
  * where it sits, as well as in "Needs your attention".
  */
 function Answers({ lines }: { lines: { label: string; value: string; flag?: boolean }[] }) {
-  return (
-    <dl className="grid gap-x-8 sm:grid-cols-2">
-      {lines.map((l) => (
-        <div
-          key={l.label}
-          className={cn(
-            'border-b border-ink/[0.07] py-3',
-            l.value.length > 40 && 'sm:col-span-2',
-            l.flag && '-mx-3 rounded-inner border-transparent bg-amber-50 px-3',
-          )}
-        >
-          <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/60 md:text-[13px]">
-            <span>{l.label}</span>
-            {l.flag && <ReviewChip />}
-          </dt>
-          <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-medium leading-snug md:text-[15px]', l.flag ? 'text-amber-900' : 'text-ink')}>
-            {l.value}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
+  return <AnswerGrid items={lines} />;
 }
 
 function Money({ label, value, strong, zeroLabel }: { label: string; value: number; strong?: boolean; zeroLabel?: string }) {
@@ -1001,6 +1114,130 @@ function Money({ label, value, strong, zeroLabel }: { label: string; value: numb
       <dd className={cn('tabular-nums text-[15px] md:text-[14px]', strong ? 'font-semibold text-ink' : 'text-ink/85')}>
         {value === 0 && zeroLabel ? zeroLabel : `${value < 0 ? '−' : ''}$${Math.abs(value)}`}
       </dd>
+    </div>
+  );
+}
+
+/**
+ * Question and answer as a tile: the question small, the answer large, so the
+ * eye reads the answers down the page. Short answers sit two to a row; long
+ * ones span. A flagged answer is amber and tagged where it sits.
+ */
+export function AnswerGrid({ items }: { items: { label: string; value: string; flag?: boolean }[] }) {
+  return (
+    <dl className="grid gap-2.5 sm:grid-cols-2">
+      {items.map((l) => (
+        <div
+          key={l.label}
+          className={cn(
+            'rounded-inner px-4 py-3',
+            l.value.length > 40 && 'sm:col-span-2',
+            l.flag ? 'bg-amber-50 ring-1 ring-amber-600/30' : 'bg-milk',
+          )}
+        >
+          <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/65">
+            <span>{l.label}</span>
+            {l.flag && <ReviewChip />}
+          </dt>
+          <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-semibold leading-snug', l.flag ? 'text-amber-900' : 'text-ink')}>
+            {l.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A centred pop-up over the record: Esc or the backdrop closes it, the page behind stops scrolling. */
+function Modal({
+  title,
+  subtitle,
+  onClose,
+  footer,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  onClose: () => void;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panel.current?.focus();
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[24px] bg-white shadow-2xl focus:outline-none sm:rounded-[24px]"
+      >
+        <div className="flex items-start gap-3 border-b border-ink/10 bg-butter-soft px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[19px] font-semibold leading-tight text-ink">{title}</h2>
+            {subtitle && <p className="mt-1 text-[14px] leading-snug text-ink/70">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-10 w-10 flex-none place-items-center rounded-full bg-white text-ink ring-1 ring-ink/10 hover:bg-milk"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        {footer && <div className="border-t border-ink/10 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+/** His thread with the patient, newest at the bottom; order tags shown as tags. */
+function MessageList({ messages }: { messages: PortalMessage[] }) {
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [messages.length]);
+  if (!messages.length) {
+    return <p className="py-8 text-center text-[15px] text-ink/60">No messages with this patient yet. Write the first one below.</p>;
+  }
+  return (
+    <div className="space-y-3">
+      {messages.map((m) => {
+        const mine = m.senderRole !== 'member';
+        const tag = m.body.match(/^About order #(\d+)(?: \(([^)]*)\))?:\s*/);
+        return (
+          <div key={m.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+            <div className={cn('max-w-[85%] rounded-[18px] px-4 py-2.5', mine ? 'rounded-br-md bg-ink text-white' : 'rounded-bl-md bg-milk text-ink')}>
+              {tag && (
+                <span className={cn('mb-1 inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold', mine ? 'bg-white/15' : 'bg-white')}>
+                  Order #{tag[1]}
+                  {tag[2] ? ` · ${tag[2]}` : ''}
+                </span>
+              )}
+              <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{tag ? m.body.slice(tag[0].length) : m.body}</p>
+              <span className={cn('mt-1 block text-[12px] tabular-nums', mine ? 'text-white/60' : 'text-ink/55')}>
+                {new Date(m.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <div ref={end} />
     </div>
   );
 }

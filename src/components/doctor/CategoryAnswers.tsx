@@ -19,27 +19,27 @@ export function ReviewChip({ children = 'Review' }: { children?: React.ReactNode
 export function CategoryAnswers({ sections }: { sections: CategorySection[] }) {
   if (!sections.length) return null;
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {sections.map((s) => (
         <div key={s.key}>
-          <div className="mb-1 text-[15px] font-semibold text-ink">{s.title}</div>
+          <div className="mb-2.5 inline-flex items-center gap-2 rounded-full bg-butter px-3 py-1 text-[14px] font-semibold text-ink">{s.title}</div>
           {s.items.length > 0 && (
-            // Question above answer, left-aligned (same as the doctor's other answer cards).
-            <dl className="grid gap-x-8 sm:grid-cols-2">
+            // Question small, answer large, as tiles (same as the doctor's other answer cards).
+            <dl className="grid gap-2.5 sm:grid-cols-2">
               {s.items.map((i) => (
                 <div
                   key={i.label}
                   className={cn(
-                    'border-b border-ink/[0.07] py-3',
+                    'rounded-inner px-4 py-3',
                     i.value.length > 40 && 'sm:col-span-2',
-                    i.flag && '-mx-3 rounded-inner border-transparent bg-amber-50 px-3',
+                    i.flag ? 'bg-amber-50 ring-1 ring-amber-600/30' : 'bg-milk',
                   )}
                 >
-                  <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/60 md:text-[13px]">
+                  <dt className="flex items-start justify-between gap-3 text-[14px] leading-snug text-ink/65">
                     <span>{i.label}</span>
                     {i.flag && <ReviewChip />}
                   </dt>
-                  <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-medium leading-snug md:text-[15px]', i.flag ? 'text-amber-900' : 'text-ink')}>
+                  <dd className={cn('mt-1 whitespace-pre-wrap break-words text-[17px] font-semibold leading-snug', i.flag ? 'text-amber-900' : 'text-ink')}>
                     {i.value}
                   </dd>
                 </div>
