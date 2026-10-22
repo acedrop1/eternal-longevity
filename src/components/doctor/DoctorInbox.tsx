@@ -9,6 +9,7 @@
  */
 
 import { useMemo, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { replyMessageAction, type MessageThread, type PortalMessage } from '@/lib/messages-db';
 import { cn } from '@/lib/utils';
@@ -30,13 +31,24 @@ const initials = (name: string) =>
 
 type Tab = 'all' | 'awaiting';
 
+/** One of the patient's orders, as a link in the conversation. */
+export type ThreadOrder = { ref: string; status: string; products: string };
+
+/** "About order #N (products):" leads his messages about an order (lib/orders-db orderLabel). */
+const ORDER_PREFIX = /^About order #(\d+)(?: \(([^)]*)\))?:\s*/;
+
+const reviewHref = (ref: string) => `/portal/doctor/review/${encodeURIComponent(ref)}`;
+
 export function DoctorInbox({
   threads,
   messagesByUser,
+  ordersByUser = {},
   initialUserId,
 }: {
   threads: MessageThread[];
   messagesByUser: Record<string, PortalMessage[]>;
+  /** The patient's orders, newest first. */
+  ordersByUser?: Record<string, ThreadOrder[]>;
   initialUserId?: string;
 }) {
   const linked = threads.some((t) => t.userId === initialUserId) ? initialUserId! : null;
@@ -52,6 +64,10 @@ export function DoctorInbox({
 
   const active = threads.find((t) => t.userId === activeId) ?? null;
   const messages = activeId ? (messagesByUser[activeId] ?? []) : [];
+  const orders = activeId ? (ordersByUser[activeId] ?? []) : [];
+  // The order this conversation is about: the last one a message named, else the newest.
+  const lastNamed = [...messages].reverse().map((m) => m.body.match(ORDER_PREFIX)?.[1]).find(Boolean);
+  const focusRef = lastNamed ?? orders[0]?.ref;
   const awaiting = threads.filter((t) => t.awaitingReply).length;
 
   const visible = useMemo(() => {
@@ -198,6 +214,26 @@ export function DoctorInbox({
             )}
           </div>
         )}
+        {active && orders.length > 0 && (
+          <nav aria-label="This patient's orders" className="flex gap-2 overflow-x-auto border-b border-ink/10 px-3 py-2 md:px-4">
+            {orders.slice(0, 6).map((o) => (
+              <Link
+                key={o.ref}
+                href={reviewHref(o.ref)}
+                className={cn(
+                  'inline-flex min-h-[36px] flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[13px] font-semibold ring-1 transition-colors',
+                  o.ref === focusRef ? 'bg-ink text-white ring-ink' : 'bg-white text-ink ring-ink/15 hover:bg-milk',
+                )}
+                title="Open this order"
+              >
+                Order #{o.ref}
+                {o.products && <span className="font-medium opacity-75">· {o.products}</span>}
+                <span className="font-medium opacity-60">· {o.status}</span>
+                <span aria-hidden>→</span>
+              </Link>
+            ))}
+          </nav>
+        )}
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-milk/40 p-3 md:p-4">
           {messages.map((m) => {
             const mine = m.senderRole !== 'member';
@@ -209,7 +245,26 @@ export function DoctorInbox({
                     mine ? 'bg-ink text-white' : 'bg-white text-ink/90 ring-1 ring-ink/10',
                   )}
                 >
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                  {(() => {
+                    const tag = m.body.match(ORDER_PREFIX);
+                    return (
+                      <>
+                        {tag && (
+                          <Link
+                            href={reviewHref(tag[1])}
+                            className={cn(
+                              'mb-1 inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-semibold underline-offset-2 hover:underline',
+                              mine ? 'bg-white/15 text-white' : 'bg-milk text-ink',
+                            )}
+                          >
+                            <span className="truncate">Order #{tag[1]}{tag[2] ? ` · ${tag[2]}` : ''}</span>
+                            <span aria-hidden>→</span>
+                          </Link>
+                        )}
+                        <p className="whitespace-pre-wrap break-words">{tag ? m.body.slice(tag[0].length) : m.body}</p>
+                      </>
+                    );
+                  })()}
                   <span className={cn('mt-1 block text-[12px] tabular-nums', mine ? 'text-white/65' : 'text-ink/55')}>
                     {fmtTime(m.createdAt)}
                   </span>
