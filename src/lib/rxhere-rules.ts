@@ -247,7 +247,7 @@ export function buildPrescriptionPayload(
 /* -------------------------------- webhooks -------------------------------- */
 
 /** Our names for the guide's events (§7). */
-export const RXHERE_EVENTS = ['PAID', 'INVOICED', 'SHIPPED', 'DELIVERED', 'EXCEPTION'] as const;
+export const RXHERE_EVENTS = ['PAID', 'INVOICED', 'FULFILLED', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED', 'PAYMENT_FAILED'] as const;
 export type RxHereEvent = (typeof RXHERE_EVENTS)[number];
 const EVENT_MAP: Record<string, RxHereEvent> = {
   'order.paid': 'PAID',
@@ -255,6 +255,10 @@ const EVENT_MAP: Record<string, RxHereEvent> = {
   'order.shipped': 'SHIPPED',
   'order.delivered': 'DELIVERED',
   'order.exception': 'EXCEPTION',
+  // Sent too (Peter Sporn, Oct 22 2026), beyond the guide's five.
+  'order.fulfilled': 'FULFILLED',
+  'order.cancelled': 'CANCELLED',
+  'order.payment_failed': 'PAYMENT_FAILED',
 };
 
 export interface RxHereWebhook {
@@ -311,7 +315,7 @@ export interface WebhookPlan {
   steps: Step[];
   /** A member-timeline entry beyond what the steps write. */
   timeline: { label: string; body: string } | null;
-  alert: 'exception' | 'no_tracking' | null;
+  alert: 'exception' | 'no_tracking' | 'cancelled' | 'payment_failed' | null;
 }
 
 const PRE_SHIP: RowStatus[] = ['draft', 'submitted'];
@@ -330,7 +334,13 @@ export function planWebhookEvent(w: RxHereWebhook, row: RowStatus): WebhookPlan 
   switch (w.event) {
     case 'PAID':
     case 'INVOICED':
+    case 'FULFILLED':
       return none;
+    case 'PAYMENT_FAILED':
+      return { ...none, alert: 'payment_failed' };
+    case 'CANCELLED':
+      // Ours to decide (refund, re-place): a person looks; nothing moves on its own.
+      return { ...none, alert: 'cancelled' };
     case 'SHIPPED':
       if (!w.trackingNumber) return { ...none, alert: 'no_tracking' };
       return { ...none, steps: [...PRE_SHIP, 'accepted'].includes(row) ? ['shipped'] : [] };
@@ -352,7 +362,8 @@ export function planWebhookEvent(w: RxHereWebhook, row: RowStatus): WebhookPlan 
 
 /*
  * The pharmacy status shown to staff. Phases only move forward, and DELIVERED
- * is final. AWAITING_PAYMENT is ours: RxHere could not charge our card.
+ * and CANCELLED are final. AWAITING_PAYMENT is ours: RxHere could not charge our card
+ * when the order was placed; PAYMENT_FAILED is the same, reported later.
  */
 const PHASE: Record<string, number> = {
   SENDING: 0,
@@ -362,9 +373,12 @@ const PHASE: Record<string, number> = {
   AWAITING_PAYMENT: 1,
   PAID: 1,
   INVOICED: 1,
+  PAYMENT_FAILED: 1,
+  FULFILLED: 1.5,
   SHIPPED: 2,
   EXCEPTION: 2,
   DELIVERED: 3,
+  CANCELLED: 3,
 };
 
 /** The new status, or null to leave it. Unknown current values (the API's own words) count as just sent. */

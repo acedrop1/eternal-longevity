@@ -1,8 +1,8 @@
 /**
  * The pharmacy's order webhook (RxHere Integration Guide §7).
  *
- * RxHere posts order.paid, order.invoiced, order.shipped, order.delivered and
- * order.exception, signed in X-Webhook-Signature (HMAC-SHA256 of the raw body
+ * RxHere posts order.paid, order.invoiced, order.fulfilled, order.shipped,
+ * order.delivered, order.exception, order.cancelled and order.payment_failed, signed in X-Webhook-Signature (HMAC-SHA256 of the raw body
  * with our signing secret). It retries a slow or failing answer, so the
  * request does only the minimum: check the signature, parse, and record the
  * event (order_id + event + occurred_at is unique, so a retry inserts nothing
@@ -146,6 +146,20 @@ async function applyEvent(w: RxHereWebhook): Promise<void> {
       eyebrow: 'Delivery exception',
       heading: 'A delivery hit a problem',
       body: 'The carrier reported an exception (delay, address or reschedule). Check the order in the RxHere portal.',
+    });
+  } else if (plan.alert === 'cancelled') {
+    await alertCareTeam({
+      orderNumber: order.order_number,
+      eyebrow: 'Pharmacy cancelled',
+      heading: 'The pharmacy cancelled an order',
+      body: 'RxHere cancelled this order on their side. Check the reason in the RxHere portal, then refund or re-place it from the order page.',
+    });
+  } else if (plan.alert === 'payment_failed') {
+    await alertCareTeam({
+      orderNumber: order.order_number,
+      eyebrow: 'Pharmacy payment failed',
+      heading: 'RxHere could not charge our card',
+      body: 'The order waits at the pharmacy until it is paid. Update the card on file in the RxHere portal.',
     });
   } else if (plan.alert === 'no_tracking') {
     await alertCareTeam({

@@ -39,7 +39,7 @@ import { TERMINAL_ORDER, monthsPerShipment } from '@/lib/order-rules';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import { pharmacyEntryFor } from '@/lib/catalog';
 import { buildPrescriptionPayload, type PayloadError } from '@/lib/rxhere-rules';
-import { postPrescription, rxhereConfigured, rxhereSandbox, type RxHereErrorCode } from '@/lib/rxhere';
+import { cancelPharmacyOrder, postPrescription, rxhereConfigured, rxhereSandbox, type RxHereErrorCode } from '@/lib/rxhere';
 
 export async function autoSubmitToPharmacy(
   orderNumber: string,
@@ -520,9 +520,9 @@ export async function sendToPharmacyApi(
 
 /**
  * Staff cancelled an order: take it off the board and, if it already went to
- * the pharmacy and hasn't shipped, tell the care team to cancel it in the
- * RxHere portal (the API has no cancel). `cancelByHand` says so to whoever
- * pressed cancel.
+ * the pharmacy and hasn't shipped, cancel it there through the API. When the
+ * API can't (placed by hand, or RxHere refuses), the care team is told to do
+ * it in the RxHere portal, and `cancelByHand` says so to whoever pressed cancel.
  */
 export async function withdrawFromPharmacy(orderNumber: string): Promise<{ cancelByHand: boolean }> {
   if (!supabaseAdminConfigured()) return { cancelByHand: false };
@@ -557,7 +557,15 @@ export async function withdrawFromPharmacy(orderNumber: string): Promise<{ cance
       ? byHand('This order was cancelled here after it was placed with the pharmacy by hand. Cancel it in the pharmacy portal before it ships.')
       : { cancelByHand: false };
   }
-  // The API has no cancel: a person cancels it in the RxHere portal before it ships.
+  const res = await cancelPharmacyOrder(order.pharmacy_order_id);
+  if (res.ok) {
+    await db
+      .from('orders')
+      .update({ pharmacy_status: 'CANCELLED', pharmacy_updated_at: new Date().toISOString() })
+      .eq('id', order.id);
+    return { cancelByHand: false };
+  }
+  // Refused (already shipped, or RxHere unreachable): a person checks the portal.
   return byHand(
     `This order was cancelled here. Cancel RxHere order ${order.pharmacy_order_id} in the RxHere portal before it ships.`,
   );

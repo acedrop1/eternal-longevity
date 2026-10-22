@@ -1,8 +1,8 @@
 /**
  * The pharmacy's practice ordering API (RxHere, run by VitaRelay, Inc.):
  * read the catalog, post prescriptions, read an order. The Oct 18 2026
- * Integration Guide. There is no cancel and no shipping-rate endpoint: a cancel
- * is a person's job in the RxHere portal.
+ * Integration Guide, plus POST /orders/{id}/cancel (works until the order
+ * ships; Peter Sporn, Oct 22 2026). There is no shipping-rate endpoint.
  *
  * Server-only. Configured entirely from env and never logged:
  *   RXHERE_API_TOKEN       the practice API key. vr_test_… is the sandbox: every
@@ -122,4 +122,9 @@ export function postPrescription(payload: RxHerePrescriptionPayload): Promise<Rx
 /** By RxHere's order_id. */
 export function getPharmacyOrder(orderId: string): Promise<RxHereResult<Record<string, unknown>>> {
   return call('GET', `/orders/${encodeURIComponent(orderId)}`);
+}
+
+/** Cancel at the pharmacy, by RxHere's order_id. Refused once the order has shipped. */
+export function cancelPharmacyOrder(orderId: string): Promise<RxHereResult<Record<string, unknown>>> {
+  return call('POST', `/orders/${encodeURIComponent(orderId)}/cancel`);
 }

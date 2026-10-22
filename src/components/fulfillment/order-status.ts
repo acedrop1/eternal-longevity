@@ -60,6 +60,8 @@ const PHARMACY: Record<string, [string, BadgeTone]> = {
   AWAITING_PAYMENT: ['Pharmacy card declined', 'critical'],
   PAID: ['Paid at pharmacy', 'info'],
   INVOICED: ['Invoiced by pharmacy', 'info'],
+  PAYMENT_FAILED: ['Pharmacy card declined', 'critical'],
+  FULFILLED: ['Filled at pharmacy', 'info'],
   COMPOUNDING: ['Compounding', 'info'],
   QA_PENDING: ['Pharmacy QA', 'info'],
   SHIPPED: ['Shipped by pharmacy', 'success'],
