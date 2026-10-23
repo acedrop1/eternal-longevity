@@ -80,7 +80,7 @@ function rulePick(category: CategoryKey, a: Record<string, unknown>): Pick {
         : { primary: 'enclomiphene', why: 'For men.' };
     case 'hair':
       if (a.sex === 'f') {
-        return { primary: 'spironolactone', why: 'For women.', alternative: 'oral-minoxidil', reason: 'A low-dose daily tablet, if you would like another option.' };
+        return { primary: 'spironolactone', why: 'For women.', alternative: 'oral-minoxidil', reason: 'A low-dose daily capsule, if you would like another option.' };
       }
       if (a.hr_format === 'foam') return { primary: 'fin-min-foam', why: 'You said you would prefer a scalp foam.' };
       if (a.hr_format === 'pill') return { primary: 'fin-min-capsule', why: 'Finasteride and minoxidil together, in one daily capsule.' };

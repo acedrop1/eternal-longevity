@@ -65,16 +65,16 @@ export const PHARMACY_CATALOG: Record<string, PharmacyItem> = {
   'min-12-fin': { sku: '4baf58e7-093e-49ca-82f6-fa00ec6f02c1', name: 'Minoxidil 12% + Finasteride Topical Foam', strength: 'Finasteride 0.25 mg / Minoxidil 12%', size: '30 mL', dosageForm: 'Topical Foam', defaultSig: null, quantity: 1, unitCost: 25 },
   'fin-min-tret': { sku: '3d58950c-8b4a-483f-accc-3027264a5291', name: 'Finasteride + Minoxidil + Tretinoin Topical Foam', strength: 'Finasteride 0.25 mg / Minoxidil 5 mg / Tretinoin 0.03%', size: '30 mL', dosageForm: 'Topical Foam', defaultSig: null, quantity: 1, unitCost: 25 },
   finasteride: { sku: '759fa50e-4f90-4e40-89b7-00488887a5af', name: 'Finasteride', strength: '1 mg', size: '30 Tablets', dosageForm: 'Oral Tablet', defaultSig: null, quantity: 30, unitCost: 0.85 },
-  'oral-minoxidil': { sku: 'b0e0941e-5c4a-4496-af27-c8b29c2ba73d', name: 'Minoxidil', strength: '2.5 mg', size: '30 Tablets', dosageForm: 'Oral Tablet', defaultSig: null, quantity: 30, unitCost: 0.85 },
+  'oral-minoxidil': { sku: 'b0e0941e-5c4a-4496-af27-c8b29c2ba73d', name: 'Minoxidil', strength: '2.5 mg', size: '30 Capsules', dosageForm: 'Oral Capsule', defaultSig: null, quantity: 30, unitCost: 0.85 },
   spironolactone: { sku: 'f9ed0864-1b5e-4db4-8b5c-6bfbe86eeecf', name: 'Spironolactone SR', strength: '55 mg', size: '30 Capsules', dosageForm: 'Oral Capsule, Sustained Release', defaultSig: null, quantity: 30, unitCost: 0.75 },
 
   // Skin
-  'glow-cream': { sku: 'b07040e6-6318-40b4-80a3-9a3b491ff647', name: 'Tretinoin + Hyaluronic Acid + Vitamin C Cream', strength: 'Tretinoin 0.05% / Hyaluronic Acid 0.1% / Vitamin C 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 35 },
+  'glow-cream': { sku: 'b07040e6-6318-40b4-80a3-9a3b491ff647', name: 'Tretinoin + Hyaluronic Acid + Vitamin C Cream', strength: 'Tretinoin 0.05% / Hyaluronic Acid 0.1% / Vitamin C 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 31.5 },
   tretinoin: { sku: '60f1df3c-1e5e-4ab6-b9c3-7463787d8389', name: 'Tretinoin Cream', strength: '0.02%', size: '30 mL', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 21 },
-  'clear-skin-cream': { sku: 'd359c4c6-7a1e-442a-a8b0-bdba81919944', name: 'Tretinoin + Clindamycin Cream', strength: 'Tretinoin 0.1% / Clindamycin 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 35 },
-  brightening: { sku: 'e9e95161-220f-4874-a17d-fcdc95c64c5f', name: 'Hydroquinone + Vitamin C Cream', strength: 'Hydroquinone 4% / Vitamin C 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 35 },
-  'even-tone-cream': { sku: '94b7e7a2-d1a0-4261-89ff-6076230b66d0', name: 'Hydroquinone + Tretinoin + Hydrocortisone Cream', strength: 'Hydroquinone 8% / Tretinoin 0.05% / Hydrocortisone 2.5%', size: '20 g Tube', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 35 },
-  'hq-free': { sku: '6183e54d-1933-4d2a-94e8-7285949c098e', name: 'Kojic Acid + Vitamin C + Hyaluronic Acid Cream', strength: 'Kojic Acid 5% / Vitamin C 2% / Hyaluronic Acid 0.5%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 35 },
+  'clear-skin-cream': { sku: 'd359c4c6-7a1e-442a-a8b0-bdba81919944', name: 'Tretinoin + Clindamycin Cream', strength: 'Tretinoin 0.1% / Clindamycin 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 31.5 },
+  brightening: { sku: 'e9e95161-220f-4874-a17d-fcdc95c64c5f', name: 'Hydroquinone + Vitamin C Cream', strength: 'Hydroquinone 4% / Vitamin C 2%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 31.5 },
+  'even-tone-cream': { sku: '94b7e7a2-d1a0-4261-89ff-6076230b66d0', name: 'Hydroquinone + Tretinoin + Hydrocortisone Cream', strength: 'Hydroquinone 8% / Tretinoin 0.05% / Hydrocortisone 2.5%', size: '20 g Tube', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 31.5 },
+  'hq-free': { sku: '6183e54d-1933-4d2a-94e8-7285949c098e', name: 'Kojic Acid + Vitamin C + Hyaluronic Acid Cream', strength: 'Kojic Acid 5% / Vitamin C 2% / Hyaluronic Acid 0.5%', size: '30 g Jar', dosageForm: 'Topical Cream', defaultSig: null, quantity: 1, unitCost: 31.5 },
   'clear-skin-capsules': { sku: '739e7406-8ebf-44a0-910c-28d5e79d1eac', name: 'Doxycycline', strength: '50 mg', size: '30 Capsules', dosageForm: 'Oral Capsule', defaultSig: null, quantity: 30, unitCost: 0.55 },
 };
 

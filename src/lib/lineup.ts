@@ -110,7 +110,7 @@ const PRIMARY: Category[] = [
       { slug: 'min-12-fin', name: 'Minoxidil 12% + finasteride', what: 'Higher-strength topical foam', form: 'foam', live: 'min-12-fin', image: '/brand/products/min-12-fin.jpg' },
       { slug: 'fin-min-tret', name: 'Hair foam + tretinoin', what: 'Finasteride, minoxidil & tretinoin', form: 'foam', live: 'fin-min-tret', badge: 'New', image: '/brand/products/fin-min-tret.jpg' },
       { slug: 'finasteride', name: 'Finasteride', what: 'Supports fuller-looking hair', form: 'tablet', live: 'finasteride', image: '/brand/products/finasteride.jpg' },
-      { slug: 'oral-minoxidil', name: 'Oral minoxidil', what: 'Low-dose tablet, prescribed off-label for hair density', form: 'tablet', live: 'oral-minoxidil', image: '/brand/products/oral-minoxidil.jpg' },
+      { slug: 'oral-minoxidil', name: 'Oral minoxidil', what: 'Low-dose capsule, prescribed off-label for hair density', form: 'capsule', live: 'oral-minoxidil', image: '/brand/products/oral-minoxidil.jpg' },
       { slug: 'spironolactone', name: 'Spironolactone', what: 'Supports fuller-looking hair & clear skin', form: 'capsule', live: 'spironolactone', image: '/brand/products/spironolactone.jpg' },
     ],
   },

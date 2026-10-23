@@ -1541,21 +1541,21 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
   {
     id: 'oral-minoxidil',
     name: 'Oral Minoxidil',
-    tagline: 'Low-Dose Daily Tablet',
+    tagline: 'Low-Dose Daily Capsule',
     category: 'skin-hair',
     shortDescription:
-      'Low-dose minoxidil in a once-daily tablet, prescribed off-label to support hair density in men and women.',
+      'Low-dose minoxidil in a once-daily capsule, prescribed off-label to support hair density in men and women.',
     longDescription:
       'Minoxidil is FDA-approved as a tablet for blood pressure, at much higher doses, and as a topical for the scalp. Low-dose oral minoxidil for hair is off-label; published studies, mostly small and observational, have looked at hair density in men and women. What we dispense is compounded, and compounded preparations are not FDA-approved. Even at 2.5 mg a day it can lower blood pressure and cause fluid retention, so your prescriber needs to know about your heart health and any blood-pressure medicines. Consistent daily use is part of the plan, and any effect depends on continuing it.',
-    bestFor: 'Men and women who prefer a tablet to a topical.',
+    bestFor: 'Men and women who prefer a pill to a topical.',
     benefits: [
       'Studied for hair density at low doses',
-      'One small tablet a day',
+      'One small capsule a day',
       'Nothing to apply to the scalp',
       'Used by both men and women',
     ],
     whatsIncluded: [
-      '30 tablets of compounded Minoxidil 2.5 mg',
+      '30 capsules of compounded Minoxidil 2.5 mg',
       'Ongoing messaging with your prescriber',
     ],
     delivery: 'oral',
