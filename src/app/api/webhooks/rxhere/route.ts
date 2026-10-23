@@ -45,14 +45,21 @@ export async function POST(req: NextRequest) {
     console.warn('[rxhere webhook] signature did not match', req.headers.get('x-webhook-signature') ? 'signed' : 'unsigned');
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
+  let body: unknown = null;
   let w: RxHereWebhook | null = null;
   try {
-    w = parseWebhook(JSON.parse(raw));
+    body = JSON.parse(raw);
+    w = parseWebhook(body);
   } catch {
-    // Falls through to the 400.
+    // Falls through below.
   }
-  // Not retryable either way: a body we can't read won't read better next time.
-  if (!w) return NextResponse.json({ error: 'Unrecognised payload.' }, { status: 400 });
+  if (!w) {
+    // Signed by RxHere but not an order event we act on (a test ping, a new event type): logged by name only, and
+    // acknowledged so it isn't retried. Not retryable either way: a body we can't read won't read better next time.
+    const event = body && typeof body === 'object' ? String((body as Record<string, unknown>).event ?? '').slice(0, 60) : '';
+    console.warn('[rxhere webhook] signed, not an order event we act on:', event || '(no event name)');
+    return NextResponse.json({ received: true, ignored: true });
+  }
 
   const db = createSupabaseAdminClient();
   const { data: rec, error } = await db
