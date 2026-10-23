@@ -7,7 +7,7 @@
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
-import { monthsPerShipment } from '@/lib/order-rules';
+import { monthsPerCycle } from '@/lib/order-rules';
 import type { PharmacyItem } from '@/lib/pharmacy-catalog';
 
 /* --------------------------------- orders --------------------------------- */
@@ -113,11 +113,11 @@ export function allergiesFrom(answers: Record<string, unknown>): string[] | unde
 }
 
 /**
- * Units on the order: a month's supply × the months this box covers × the
- * line quantity. A 12 month plan ships two 6-month boxes, so 6, not 12.
+ * Units on the order: a month's supply × the months in the plan × the line
+ * quantity. Every plan is one order for the whole cycle: a 12 month plan is 12.
  */
 export function pharmacyQuantity(item: Pick<PharmacyItem, 'quantity'>, cadence: string, lineQty: number): number {
-  return Math.max(1, item.quantity) * monthsPerShipment(cadence) * Math.max(1, lineQty);
+  return Math.max(1, item.quantity) * monthsPerCycle(cadence) * Math.max(1, lineQty);
 }
 
 /** The catalog id: a UUID. An old partner-API SKU (AA-NAD-02…) is not one and is never sent. */
@@ -235,7 +235,7 @@ export function buildPrescriptionPayload(
           dosage_form: opt(item.dosageForm),
           sig,
           quantity,
-          days_supply: 30 * monthsPerShipment(input.cadence),
+          days_supply: 30 * monthsPerCycle(input.cadence),
         },
       ],
       shipping_destination_type: 'patient_direct',

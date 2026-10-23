@@ -20,7 +20,7 @@ import { SERVICEABLE_STATES, STATE_NAMES } from '@/lib/intakeSchema';
 import { SERVICE_AREA_OR, SITE_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/site';
 import { monthsPerCycle } from '@/lib/order-rules';
 import { shippingChargeCents, shippingLabelFor } from '@/lib/shipping';
-import { cadenceTiersForProduct, shipmentsPerCycle, type CadenceTier } from '@/lib/shopProducts';
+import { cadenceTiersForProduct, type CadenceTier } from '@/lib/shopProducts';
 import { useCatalog } from '@/components/catalog/CatalogProvider';
 import { cityForZip } from '@/lib/njZips';
 import {
@@ -437,17 +437,11 @@ export function CheckoutFlow({
         qty: it.quantity,
         perMonth: it.perMonth,
         total: it.total * it.quantity,
-        // Each item is its own order: one box, two for a 12 month plan, all
-        // charged now. The basket's first line takes the free first box, as
-        // placeOrder prices it. Every renewal pays for its boxes.
-        shipments: shipmentsPerCycle(it.cadence),
-        shipping:
-          shippingChargeCents({
-            pricePerShipment,
-            shipments: shipmentsPerCycle(it.cadence),
-            firstOrder: firstBoxFree && i === 0,
-          }) / 100,
-        renewalShipping: pricePerShipment * shipmentsPerCycle(it.cadence),
+        // Each item is its own order and ships in one box. The basket's first
+        // line takes the free first box, as placeOrder prices it. Every
+        // renewal pays shipping.
+        shipping: shippingChargeCents({ pricePerShipment, firstOrder: firstBoxFree && i === 0 }) / 100,
+        renewalShipping: pricePerShipment,
         shippingLabel: shippingLabelFor(it.product),
         sub: it.product.cycleLength,
         image: it.product.image,
@@ -997,8 +991,7 @@ export function CheckoutFlow({
                             </div>
                           )}
                           <div className="mt-0.5 text-[13px] text-ink/65">
-                            {l.shippingLabel}
-                            {l.shipments > 1 ? ' · 2 boxes' : ''} · {l.shipping ? `$${l.shipping}` : 'Free'}
+                            {l.shippingLabel} · {l.shipping ? `$${l.shipping}` : 'Free'}
                           </div>
                           {held[l.productId] && (
                             <p className="mt-1.5 text-[13px] leading-snug text-red-700">
@@ -1748,7 +1741,7 @@ export function CheckoutFlow({
                     <span key={l.key} className="mt-1 block pl-3">
                       · {l.name}
                       {l.qty > 1 ? ` ×${l.qty}` : ''}:{' '}
-                      {`$${l.total} + $${l.renewalShipping} shipping = $${l.total + l.renewalShipping} every ${n === 1 ? 'month' : `${n} months`}${l.shipments > 1 ? ' (shipped in two boxes, six months apart)' : ''}, automatically, until I cancel.`}
+                      {`$${l.total} + $${l.renewalShipping} shipping = $${l.total + l.renewalShipping} every ${n === 1 ? 'month' : `${n} months`}, automatically, until I cancel.`}
                     </span>
                   );
                 })}

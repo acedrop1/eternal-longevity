@@ -39,7 +39,7 @@ export interface ProductInput {
   contraindications: string[];
   /** sixMonth 0 or missing: the product has no 6 month plan. annual is the 12-month price, required only with twelveMonthPlan. */
   pricing: { monthly: number; quarterly: number; sixMonth?: number; annual: number };
-  /** Sell the 12 month plan (billed once a year, ships every 6 months). */
+  /** Sell the 12 month plan (billed once a year, ships all at once). */
   twelveMonthPlan: boolean;
   image: string;
   popular: boolean;

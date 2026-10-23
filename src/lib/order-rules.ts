@@ -6,7 +6,6 @@
  */
 
 import type { OrderStatus, SubscriptionStatus } from '@/lib/database.types';
-import { shipmentsPerCycle } from '@/lib/shopProducts';
 import { shippingChargeCents } from '@/lib/shipping';
 
 /* --------------------------------- orders --------------------------------- */
@@ -87,40 +86,24 @@ export function monthsPerCycle(cadence: string): number {
 }
 
 /**
- * Months one box covers: the cycle split over its boxes. A 12 month plan
- * ships two 6-month boxes, so the pharmacy is sent 6 months at a time.
+ * What one renewal charges, in cents: the plan's total plus shipping on its
+ * one box (a renewal never ships free). `planDollars` is the tier total,
+ * whole dollars.
  */
-export function monthsPerShipment(cadence: string): number {
-  return monthsPerCycle(cadence) / shipmentsPerCycle(cadence);
+export function perCycleCents(planDollars: number, pricePerShipment: number): number {
+  return Math.round(planDollars * 100) + shippingChargeCents({ pricePerShipment, firstOrder: false });
 }
 
 /**
- * What one renewal charges, in cents: the plan's total plus shipping on
- * every box in the cycle (a renewal never ships free; a 12 month plan pays
- * both boxes up front). `planDollars` is the tier total, whole dollars.
- */
-export function perCycleCents(planDollars: number, cadence: string, pricePerShipment: number): number {
-  return (
-    Math.round(planDollars * 100) +
-    shippingChargeCents({ pricePerShipment, shipments: shipmentsPerCycle(cadence), firstOrder: false })
-  );
-}
-
-/**
- * Whether a prescription covers the next `boxes` shipments, `monthsApart`
- * apart, starting today: a refill for each, and still in date on the last.
- * A renewal checks the whole cycle (both boxes of a 12 month plan), so a year
- * is never billed on a prescription that cannot ship its second box.
+ * Whether a prescription covers the next shipment: a refill left, and still
+ * in date today. Every plan ships once per cycle, a 12 month plan included.
  */
 export function rxCovers(
   rx: { expires_at: string | null; refills_remaining: number | null } | null,
   todayIso: string,
-  boxes = 1,
-  monthsApart = 0,
 ): boolean {
   if (!rx) return false;
-  const last = addMonthsIso(todayIso, monthsApart * (boxes - 1));
-  return (rx.refills_remaining ?? 0) >= boxes && (rx.expires_at === null || rx.expires_at >= last);
+  return (rx.refills_remaining ?? 0) >= 1 && (rx.expires_at === null || rx.expires_at >= todayIso);
 }
 
 /**
@@ -166,7 +149,7 @@ export function addMonthsIso(iso: string, months: number): string {
 
 /**
  * Shipments a prescription still covers: box dates from `nextIso`, `months`
- * apart (monthsPerShipment), that fall before it expires. Same count the prescription is
+ * apart (monthsPerCycle), that fall before it expires. Same count the prescription is
  * written with (a 12-month monthly prescription: first shipment + 11).
  */
 export function refillsBetween(

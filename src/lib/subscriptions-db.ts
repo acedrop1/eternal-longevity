@@ -21,7 +21,6 @@ import {
   cadenceOfLabel,
   memberMoveFrom,
   monthsPerCycle,
-  monthsPerShipment,
   perCycleCents,
   refillsBetween,
 } from '@/lib/order-rules';
@@ -55,7 +54,7 @@ async function ownSubscription(subId: string) {
   const db = await createSupabaseServerClient();
   const { data } = await db
     .from('subscriptions')
-    .select('id, product_id, status, cadence_label, next_billing_date, prescription_id, next_shipment_date')
+    .select('id, product_id, status, cadence_label, next_billing_date, prescription_id')
     .eq('id', subId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -74,9 +73,8 @@ async function prescriptionFor(id: string | null) {
 
 /**
  * Switch a subscription to a different billing cadence. Takes effect at the
- * next billing date: nothing is charged now and the date stays. Leaving a
- * 12 month plan mid-year keeps its paid second box (next_shipment_date).
- * The 12 month plan is only a choice where the product offers it (its tier
+ * next billing date: nothing is charged now and the date stays. The 12 month
+ * plan is only a choice where the product offers it (its tier
  * exists only then).
  */
 export async function changeSubscriptionPlanAction(
@@ -101,8 +99,8 @@ export async function changeSubscriptionPlanAction(
     .from('subscriptions')
     .update({
       cadence_label: tier.label,
-      // Plan + shipping on every box of the cycle, as renewSubscription bills it.
-      per_cycle_cents: perCycleCents(tier.total, plan, pricePerShipment),
+      // Plan + shipping, as renewSubscription bills it.
+      per_cycle_cents: perCycleCents(tier.total, pricePerShipment),
     })
     .eq('id', sub.id);
   if (error) {
@@ -114,17 +112,14 @@ export async function changeSubscriptionPlanAction(
    * Refills were counted for the plan the prescription was written on. A
    * monthly plan moved to quarterly would otherwise keep eleven refills it can
    * never use; quarterly moved to monthly would run out months early. Recount
-   * the boxes that still fit before it expires on the new cadence, plus a
-   * 12 month plan's second box if it is still owed.
+   * the boxes that still fit before it expires on the new cadence.
    */
   const rx = await prescriptionFor(sub.prescription_id);
   if (rx?.expires_at) {
     await admin
       .from('prescriptions')
       .update({
-        refills_remaining:
-          refillsBetween(sub.next_billing_date ?? today(), rx.expires_at, monthsPerShipment(plan)) +
-          (sub.next_shipment_date ? 1 : 0),
+        refills_remaining: refillsBetween(sub.next_billing_date ?? today(), rx.expires_at, monthsPerCycle(plan)),
       })
       .eq('id', rx.id);
   }

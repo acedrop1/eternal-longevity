@@ -128,7 +128,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'How much does treatment cost?',
-    a: 'Pricing depends on the product. On the 1 month plan it runs {{monthly}} a month. The 3 month plan brings that down to {{quarterly}} a month, billed every three months, and the 6 month plan to {{sixMonth}} a month, billed every six months. Tablets and capsules also have a 12 month plan at {{annual}} a month, billed once a year and shipped in two boxes six months apart. {{shipping}}, and each renewal pays shipping on its boxes. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.',
+    a: 'Pricing depends on the product. On the 1 month plan it runs {{monthly}} a month. The 3 month plan brings that down to {{quarterly}} a month, billed every three months, and the 6 month plan to {{sixMonth}} a month, billed every six months. Tablets and capsules also have a 12 month plan at {{annual}} a month, billed once a year and shipped all at once. {{shipping}}, and each renewal pays shipping. You save a card at checkout and are only charged once the physician approves your prescription. Exact pricing is on each product page.',
   },
   {
     category: 'Pricing',
@@ -143,7 +143,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Pricing',
     q: 'What is your refund policy?',
-    a: "If the prescriber declines, you are not charged. Once the pharmacy has prepared or shipped your medication we can't refund it, because compounded medications can't be re-dispensed. On a 12 month plan, the second box ships unless you cancel before it's sent; cancel before then and we refund the unshipped second box, prorated. If a shipment arrives damaged, contact us within 7 days and we'll replace it at no cost.",
+    a: "If the prescriber declines, you are not charged. Once the pharmacy has prepared or shipped your medication we can't refund it, because compounded medications can't be re-dispensed. A 12 month plan ships your full year’s supply in one order, so once it has been prepared it can’t be refunded. If a shipment arrives damaged, contact us within 7 days and we'll replace it at no cost.",
   },
 
   // === Safety ===
@@ -165,7 +165,7 @@ export const FAQS: FAQ[] = [
   {
     category: 'Safety',
     q: 'How are medications shipped?',
-    a: "Every order ships 2-day; temperature-sensitive medications are packed cold in insulated packaging. {{shipping}}. Renewals pay shipping on each box, and a 12 month plan's second box is billed with the year. You'll get a tracking number when your order ships.",
+    a: "Every order ships 2-day; temperature-sensitive medications are packed cold in insulated packaging. {{shipping}}. Renewals pay shipping on each order; a 12 month plan ships once, with the year. You'll get a tracking number when your order ships.",
   },
   {
     category: 'Safety',

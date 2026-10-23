@@ -1980,10 +1980,9 @@ export function getRelatedProducts(p: ShopProduct, limit = 3): ShopProduct[] {
 }
 
 /**
- * 12 month plans: oral solids only (tablets, capsules, troches). Compounded
- * oral solids usually carry a 180-day beyond-use date, so the year is billed
- * once and shipped in two 6-month boxes (see lib/annual-shipments). Creams,
- * injectables and sprays keep shorter plans.
+ * 12 month plans: oral solids only (tablets, capsules, troches). The year is
+ * billed once and shipped once: one pharmacy order for the full 12-month
+ * supply. Creams, injectables and sprays keep shorter plans.
  */
 export const TWELVE_MONTH_PLAN: ReadonlySet<string> = new Set([
   'sildenafil',
@@ -2001,11 +2000,6 @@ export const TWELVE_MONTH_PLAN: ReadonlySet<string> = new Set([
 /** Whether this product sells a 12 month plan: its own setting, else the launch list. */
 export function offersTwelveMonth(p: Pick<ShopProduct, 'id' | 'twelveMonthPlan'>): boolean {
   return p.twelveMonthPlan ?? TWELVE_MONTH_PLAN.has(p.id);
-}
-
-/** Boxes shipped per billing cycle: a 12 month plan ships twice. */
-export function shipmentsPerCycle(cadence: string): number {
-  return cadence === 'annual' ? 2 : 1;
 }
 
 /** Cadence helper. Return per-month price and discount label. */
@@ -2033,10 +2027,10 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
   const s = p.pricing.sixMonth;
   const y = offersTwelveMonth(p) ? p.pricing.annual : 0;
   // What a longer plan saves against ordering monthly, shipping included:
-  // every monthly order ships (and pays shipping) on its own, a 3- or 6-month
-  // plan ships once, a 12 month plan twice.
+  // every monthly order ships (and pays shipping) on its own, a longer plan
+  // ships once.
   const ship = shipPrice;
-  const saved = (months: number, total: number, shipments: number) => m * months + ship * months - (total + ship * shipments);
+  const saved = (months: number, total: number) => m * months + ship * months - (total + ship);
   const saveLine = (dollars: number, months: number) =>
     `Save $${dollars} vs. ${months} monthly orders, shipping included`;
   const common = [
@@ -2052,9 +2046,8 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
     total: number,
     billing: string,
     shipping: string,
-    shipments = 1,
   ): CadenceTier => {
-    const dollars = saved(months, total, shipments);
+    const dollars = saved(months, total);
     return {
       key,
       label,
@@ -2079,7 +2072,7 @@ export function cadenceTiersForProduct(p: ShopProduct, shipPrice: number = shipp
     },
     plan('quarterly', '3 month plan', 3, q, 'Billed every 3 months', 'Ships every 3 months'),
     ...(s ? [plan('sixMonth', '6 month plan', 6, s, 'Billed every 6 months', 'Ships every 6 months')] : []),
-    ...(y ? [plan('annual', '12 month plan', 12, y, 'Billed every 12 months', 'Ships every 6 months', 2)] : []),
+    ...(y ? [plan('annual', '12 month plan', 12, y, 'Billed every 12 months', 'Ships all at once')] : []),
   ];
 }
 

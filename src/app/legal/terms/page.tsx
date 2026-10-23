@@ -71,7 +71,7 @@ export default async function TermsPage() {
         {
           heading: 'Subscriptions & Cancellation',
           paragraphs: [
-            'Treatment is sold as a plan that renews monthly, every three months, every six months or, for some medications, every twelve months. By choosing a plan at checkout, you authorise us to charge your saved card at the start of each period until the plan ends. A 12 month plan is billed once a year, up front, and ships in two boxes about six months apart; shipping for both boxes is charged with the year.',
+            'Treatment is sold as a plan that renews monthly, every three months, every six months or, for some medications, every twelve months. By choosing a plan at checkout, you authorise us to charge your saved card at the start of each period until the plan ends. A 12 month plan is billed once a year, up front, and ships the full year’s supply in one order; shipping for that order is charged with the year.',
             'Renewals ship on the same prescription, without a new review by the prescriber, until the prescription expires or runs out of refills. At that point the plan pauses until the prescriber reviews it again. The prescriber can pause or stop a plan at any time, and a new product always needs a new review.',
             `You can pause, change, or cancel your plan at any time from Portal › Treatments, or by emailing ${SUPPORT_EMAIL}. There is no cancellation fee, no minimum term, and no requirement to call anyone. Cancelling stops all future charges; it does not refund a supply the pharmacy has already prepared. See our Refund Policy.`,
           ],

@@ -35,7 +35,7 @@ import { SITE_URL } from '@/lib/site';
 import type { Json } from '@/lib/database.types';
 import { orderRef as orderLabel } from '@/lib/format';
 import { getPrescriber } from '@/lib/prescriber';
-import { TERMINAL_ORDER, monthsPerShipment } from '@/lib/order-rules';
+import { TERMINAL_ORDER } from '@/lib/order-rules';
 import { advanceFulfillment } from '@/lib/fulfillment-core';
 import { pharmacyEntryFor } from '@/lib/catalog';
 import { buildPrescriptionPayload, type PayloadError } from '@/lib/rxhere-rules';
@@ -169,9 +169,9 @@ export async function autoSubmitToPharmacy(
     }
   }
 
-  // A 12 month plan ships 6 months a box; say so to whoever places it by hand.
+  // A 12 month plan is the whole year in one order; say so to whoever places it by hand.
   const line = items?.[0];
-  const cadence = `${line?.cadence_label ?? 'First cycle'}${line?.cadence === 'annual' ? ` · ${monthsPerShipment('annual')}-month box` : ''}`;
+  const cadence = `${line?.cadence_label ?? 'First cycle'}${line?.cadence === 'annual' ? ' · 12-month supply' : ''}`;
   const { error: insErr } = await db.from('fulfillment_orders').insert({
     order_ref: orderRef,
     user_id: order.user_id,

@@ -18,7 +18,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { emailConfigured, noticeEmail, orderConfirmationEmail, sendEmail, SUPPORT_EMAIL } from '@/lib/email';
 import { autoSubmitToPharmacy } from '@/lib/auto-pharmacy';
 import { AWAITING_PAYMENT, TERMINAL_ORDER, monthsPerCycle } from '@/lib/order-rules';
-import { shipmentsPerCycle } from '@/lib/shopProducts';
 import { getShippingSettings } from '@/lib/shipping-settings';
 import { shippingChargeCents } from '@/lib/shipping';
 import { orderRef } from '@/lib/format';
@@ -177,7 +176,7 @@ async function alertMismatch(t: FrameTransfer, order: Pick<OrderRow, 'order_numb
   }
 }
 
-/** What each line renews at (full price plus every box's shipping) and how often, for the confirmation email. */
+/** What each line renews at (full price plus shipping) and how often, for the confirmation email. */
 export async function renewalsFor(items: { unit_price_cents: number | null; quantity: number | null; cadence: string | null }[]) {
   const ship = await getShippingSettings();
   return items
@@ -185,7 +184,7 @@ export async function renewalsFor(items: { unit_price_cents: number | null; quan
     .map((i) => ({
       amountCents:
         (i.unit_price_cents ?? 0) * (i.quantity ?? 1) +
-        shippingChargeCents({ pricePerShipment: ship.pricePerShipment, shipments: shipmentsPerCycle(i.cadence!), firstOrder: false }),
+        shippingChargeCents({ pricePerShipment: ship.pricePerShipment, firstOrder: false }),
       months: monthsPerCycle(i.cadence!),
     }));
 }

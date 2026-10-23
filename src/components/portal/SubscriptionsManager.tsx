@@ -35,8 +35,6 @@ export interface Subscription {
   /** 'Oct 30, 2026' for display, and the stored 'YYYY-MM-DD'. */
   nextBillingDate: string;
   nextBillingIso: string | null;
-  /** 12 month plans: when the paid second box ships ('YYYY-MM-DD'), null once it has. */
-  nextShipmentIso?: string | null;
   /** Straight from the database. The page re-renders after every action. */
   status: Status;
   image: string;
@@ -63,7 +61,7 @@ const EVERY: Record<PlanKey, string> = {
   monthly: 'every month',
   quarterly: 'every 3 months',
   sixMonth: 'every 6 months',
-  annual: 'billed yearly · ships every 6 months',
+  annual: 'billed yearly · ships all at once',
 };
 
 const CANCEL_REASONS = [
@@ -184,8 +182,6 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
           const note = notice[s.id];
           const annual = planOf(s.cadenceLabel) === 'annual';
           const per = PER[planOf(s.cadenceLabel)];
-          // A 12 month plan's next box: the paid second box if still owed, else the next year's first.
-          const nextBox = s.nextShipmentIso ?? (annual ? s.nextBillingIso : null);
 
           return (
             <article key={s.id} className={cn(panel, 'p-4 transition-opacity sm:p-6', isCancelled && 'opacity-60')}>
@@ -201,7 +197,7 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                   <p className="mt-0.5 text-[15px] text-ink/70">
                     {planName(s.cadenceLabel)}{s.cycleLabel ? ` · ${s.cycleLabel}` : ''}
                   </p>
-                  {annual && <p className="mt-0.5 text-[15px] text-ink/70">Billed yearly · ships every 6 months</p>}
+                  {annual && <p className="mt-0.5 text-[15px] text-ink/70">Billed yearly · ships all at once</p>}
                 </div>
               </div>
 
@@ -227,14 +223,6 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
                   </dd>
                 </div>
               </dl>
-
-              {/* Shown on any plan with a box still owed: a member who left a 12 month plan mid-year still gets box 2. */}
-              {(isActive || isPaused) && nextBox && (annual || s.nextShipmentIso) && (
-                <p className="mt-3 text-[15px] text-ink/80">
-                  Next box ships around <span className="font-semibold tabular-nums text-ink">{shortDate(nextBox)}</span>
-                  {s.nextShipmentIso ? ', already paid for.' : '.'}
-                </p>
-              )}
 
               {(isCancelled || declined || isPaused) && (
                 <p className="mt-3 text-[15px] leading-relaxed text-ink/80">
@@ -359,9 +347,6 @@ export function SubscriptionsManager({ subscriptions }: { subscriptions: Subscri
             <p className={sheetCopy}>
               Nothing is charged today. Your new plan starts with your next refill
               {changing.sub.nextBillingIso ? ` on ${shortDate(changing.sub.nextBillingIso)}` : ''}.
-              {changing.sub.nextShipmentIso
-                ? ` The second box of your current year still ships around ${shortDate(changing.sub.nextShipmentIso)}.`
-                : ''}
             </p>
             <fieldset className="mt-5 space-y-2">
               <legend className="sr-only">Plan</legend>

@@ -29,7 +29,6 @@ export interface SubRow {
   perCycle: number;
   status: 'active' | 'paused' | 'pending_review' | 'canceled';
   nextBilling: string | null;
-  nextShipment: string | null;
   lastCharged: string | null;
   refillsLeft: number | null;
   rxExpires: string | null;
@@ -136,7 +135,6 @@ export function AdminSubscriptions({ rows }: { rows: SubRow[] }) {
               {shown.map((r) => {
                 const d = daysUntil(r.nextBilling);
                 const overdue = r.status === 'active' && d !== null && d < 0;
-                const ship = daysUntil(r.nextShipment);
                 const [label, tone] = STATUS[r.status];
                 return (
                   <tr key={r.id} className="relative block border-t border-ink/10 px-4 py-3 first:border-t-0 hover:bg-milk/70 md:table-row md:p-0">
@@ -166,9 +164,6 @@ export function AdminSubscriptions({ rows }: { rows: SubRow[] }) {
                             {r.status === 'paused' ? 'paused' : when(d)}
                           </div>
                         </>
-                      )}
-                      {r.nextShipment && r.status !== 'canceled' && ship !== null && ship >= 0 && (
-                        <div className="text-[13px] text-ink/60">2nd box ships {shortDate(Date.parse(`${r.nextShipment.slice(0, 10)}T12:00:00`))}</div>
                       )}
                     </td>
                     <td className={cn(td, 'inline-block pr-4 tabular-nums md:table-cell')}>

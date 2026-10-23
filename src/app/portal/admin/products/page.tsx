@@ -41,19 +41,19 @@ export default async function AdminProductsPage() {
     from: fromPrice(p),
     hasSku: Boolean(pharmacy[p.id]?.sku),
     // Admin only (this page redirects everyone else): profit on each plan, from lib/profit,
-    // at the renewal price (every box pays shipping; a 12 month plan ships 2).
+    // at the renewal price (every box pays shipping; every plan ships one).
     plans: pharmacy[p.id]?.unitCost
       ? (
           [
-            ['1 month plan', p.pricing.monthly, 1, 1],
-            ['3 month plan', p.pricing.quarterly, 3, 1],
-            ['6 month plan', p.pricing.sixMonth ?? 0, 6, 1],
-            ['12 month plan', offersTwelveMonth(p) ? p.pricing.annual : 0, 12, 2],
+            ['1 month plan', p.pricing.monthly, 1],
+            ['3 month plan', p.pricing.quarterly, 3],
+            ['6 month plan', p.pricing.sixMonth ?? 0, 6],
+            ['12 month plan', offersTwelveMonth(p) ? p.pricing.annual : 0, 12],
           ] as const
         )
           .filter(([, price]) => price > 0)
-          .map(([label, price, months, shipments]) => {
-            const e = planEconomics(price, shipping.pricePerShipment, months, { ...pharmacy[p.id], storage: p.storage }, { shipments });
+          .map(([label, price, months]) => {
+            const e = planEconomics(price, shipping.pricePerShipment, months, { ...pharmacy[p.id], storage: p.storage });
             return { label, profit: e.profit, margin: e.margin };
           })
       : [],

@@ -57,11 +57,11 @@ const pct = (m: number | null) => (m === null ? '—' : `${Math.round(m * 100)}%
 const signed = (cents: number) => (cents < 0 ? `−${formatMoney(-cents)}` : formatMoney(cents));
 
 type PlanKey = 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
-const PLANS: { key: PlanKey; label: string; months: number; boxes: number }[] = [
-  { key: 'monthly', label: '1 month', months: 1, boxes: 1 },
-  { key: 'quarterly', label: '3 months', months: 3, boxes: 1 },
-  { key: 'sixMonth', label: '6 months', months: 6, boxes: 1 },
-  { key: 'annual', label: '12 months', months: 12, boxes: 2 },
+const PLANS: { key: PlanKey; label: string; months: number }[] = [
+  { key: 'monthly', label: '1 month', months: 1 },
+  { key: 'quarterly', label: '3 months', months: 3 },
+  { key: 'sixMonth', label: '6 months', months: 6 },
+  { key: 'annual', label: '12 months', months: 12 },
 ];
 
 export function AdminProductEditor({
@@ -109,13 +109,13 @@ export function AdminProductEditor({
   const dirty = p.isNew || JSON.stringify(p) !== JSON.stringify(baseline);
 
   /** One plan as a variant row: price, per month, saving and live profit (renewal and first order). */
-  const variant = (key: PlanKey, months: number, boxes: number) => {
+  const variant = (key: PlanKey, months: number) => {
     const price = key === 'sixMonth' ? (p.pricing.sixMonth ?? 0) : p.pricing[key];
     const offered = key === 'annual' ? p.twelveMonthPlan : true;
     const save = p.pricing.monthly && price ? Math.round((1 - price / (p.pricing.monthly * months)) * 100) : 0;
     const cost = { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage };
-    const e = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost, { shipments: boxes }) : null;
-    const first = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost, { shipments: boxes, firstOrder: true }) : null;
+    const e = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost) : null;
+    const first = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost, { firstOrder: true }) : null;
     return { price, offered, save, e, first };
   };
 
@@ -349,8 +349,8 @@ export function AdminProductEditor({
                   </tr>
                 </thead>
                 <tbody>
-                  {PLANS.map(({ key, label, months, boxes }) => {
-                    const v = variant(key, months, boxes);
+                  {PLANS.map(({ key, label, months }) => {
+                    const v = variant(key, months);
                     const off = key === 'annual' && !p.twelveMonthPlan;
                     return (
                       <tr key={key} className={cn('border-t border-ink/10', off && 'text-ink/40')}>
@@ -362,7 +362,7 @@ export function AdminProductEditor({
                               Offer
                             </label>
                           )}
-                          {boxes > 1 && <span className="block text-[12px] text-ink/55">Billed yearly · ships in 2 boxes</span>}
+                          {key === 'annual' && <span className="block text-[12px] text-ink/55">Billed yearly · ships all at once</span>}
                         </td>
                         <td className="w-[130px] px-3 py-2">
                           <Money label={`${label} price`} value={v.price} disabled={off} onChange={(val) => setPrice(key, val)} />

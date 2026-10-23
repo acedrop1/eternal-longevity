@@ -44,7 +44,6 @@ export async function loadSubscriptions(userId: string): Promise<Subscription[]>
       cycleLabel: product?.cycleLength ?? '',
       cadenceLabel: r.cadence_label ?? '',
       perMonth: Math.round((r.per_cycle_cents ?? 0) / 100),
-      nextShipmentIso: r.next_shipment_date ? String(r.next_shipment_date).slice(0, 10) : null,
       nextBillingIso: r.next_billing_date ? String(r.next_billing_date).slice(0, 10) : null,
       nextBillingDate: r.next_billing_date
         ? new Date(r.next_billing_date).toLocaleDateString('en-US', {
@@ -58,12 +57,12 @@ export async function loadSubscriptions(userId: string): Promise<Subscription[]>
       swatch: product?.swatch ?? '#1a1a1a',
       declined: r.status === 'paused' && declined.has(String(r.product_id)),
       // The plans changeSubscriptionPlanAction can switch to, at the renewal
-      // price: the plan plus shipping on every box in the cycle.
+      // price: the plan plus shipping.
       tiers: product
         ? cadenceTiersForProduct(product, ship).map((t) => ({
             key: t.key as PlanKey,
             label: t.label,
-            perCycle: perCycleCents(t.total, t.key, ship) / 100,
+            perCycle: perCycleCents(t.total, ship) / 100,
           }))
         : [],
     } as Subscription;

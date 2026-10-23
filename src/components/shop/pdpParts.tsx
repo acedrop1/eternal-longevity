@@ -84,13 +84,13 @@ export function ProductImage({
   );
 }
 
-/** "Billed $149 monthly", "Billed $402 every 3 months", "Billed $1248 once a year · ships every 6 months". */
+/** "Billed $149 monthly", "Billed $402 every 3 months", "Billed $1248 once a year · ships all at once". */
 /** Whole dollars with a thousands separator: 1248 -> 1,248. */
 export const usd = (n: number) => n.toLocaleString('en-US');
 
 export const billedLine = (t: CadenceTier) =>
   t.key === 'annual'
-    ? `Billed $${usd(t.total)} once a year · ships every 6 months`
+    ? `Billed $${usd(t.total)} once a year · ships all at once`
     : `Billed $${usd(t.total)} ${t.key === 'monthly' ? 'monthly' : `every ${t.key === 'sixMonth' ? 6 : 3} months`}`;
 
 /** "Free shipping on your first order · $20 per box after" (Admin → Settings). */
@@ -251,8 +251,8 @@ export function PlanOptions({
         })}
       </div>
 
-      {/* What the selected plan actually includes: whether medication ships
-          monthly, every 3 or every 6 months is the thing people want to know. */}
+      {/* What the selected plan actually includes: how often medication ships
+          is the thing people want to know. */}
       <ul className="mt-5 space-y-2">
         {active.breakdown.map((line) => (
           <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-ink-soft">
@@ -362,9 +362,9 @@ export function ProductDetails({
               {coldChain(product)
                 ? '2-day shipping from our licensed 503A pharmacy, in temperature-controlled packaging.'
                 : '2-day shipping from our licensed 503A pharmacy.'}{' '}
-              {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12 month plan ships in
-              two boxes six months apart, with the second box&rsquo;s shipping billed with the year. Tracking is
-              available in your portal once your order ships.
+              {shippingNote(shipping)}. Each renewal ships again and pays shipping for its box; a 12 month plan ships
+              the full year&rsquo;s supply in one order. Tracking is available in your portal once your order
+              ships.
             </p>
           </Row>
           {ordering && (

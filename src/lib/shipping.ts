@@ -9,9 +9,9 @@
  *
  * One price for every shipment: $5 by default, set in Admin → Settings (the
  * pharmacy charges us $25 2-day; the plan prices carry the rest). A
- * member's first order ships free (firstOrderFree). After that every box
- * pays: renewals, and the second box of a 12 month plan (charged up front
- * with the year, see shipmentsPerCycle in lib/shopProducts).
+ * member's first order ships free (firstOrderFree). After that every order
+ * pays, renewals included. Every plan ships once per billing cycle, a 12
+ * month plan included.
  */
 
 export type ShippingMethod = '2_DAY' | 'OVERNIGHT';
@@ -35,14 +35,12 @@ export const SHIPPING_LABEL: Record<ShippingMethod, string> = {
 };
 
 /**
- * Shipping on one order, in cents: per box, with the first box of a member's
- * first order free. `shipments` is boxes in this billing cycle (2 for a
- * 12 month plan), `firstOrder` whether the member has never had an order
- * paid before. Checkout, the server and renewals all charge through this.
+ * Shipping on one order, in cents: one box per billing cycle, free on a
+ * member's first order (`firstOrder`: no order paid before). Checkout, the
+ * server and renewals all charge through this.
  */
-export function shippingChargeCents(input: { pricePerShipment: number; shipments: number; firstOrder: boolean }): number {
-  const paidBoxes = Math.max(0, input.shipments - (input.firstOrder ? 1 : 0));
-  return paidBoxes * input.pricePerShipment * 100;
+export function shippingChargeCents(input: { pricePerShipment: number; firstOrder: boolean }): number {
+  return input.firstOrder ? 0 : input.pricePerShipment * 100;
 }
 
 /** What one shipment of this product costs the customer, in whole dollars. */

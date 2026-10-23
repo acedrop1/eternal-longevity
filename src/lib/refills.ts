@@ -18,14 +18,12 @@ import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { SITE_URL } from '@/lib/site';
 import { nextOrderNumber } from '@/lib/order-number';
 import { getLiveProduct } from '@/lib/catalog';
-import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getShippingSettings } from '@/lib/shipping-settings';
 import {
   AWAITING_PAYMENT,
-  addMonthsIso,
   cadenceOfLabel,
   monthsPerCycle,
-  monthsPerShipment,
   perCycleCents,
   rxCovers,
 } from '@/lib/order-rules';
@@ -42,12 +40,12 @@ export const PRESCRIPTION_MONTHS = 12;
 
 /**
  * Refills a cadence earns inside one prescription, after the first box. One
- * refill per box: a 12 month plan's second 6-month box is its one refill.
+ * refill per box: a 12 month plan ships its year at once, so it has none.
  */
 export function refillsFor(cadence: string): number {
   // Legacy one-time orders (no longer sold) signed after the switch: nothing recurs.
   if (cadence === 'once') return 0;
-  return Math.floor(PRESCRIPTION_MONTHS / monthsPerShipment(cadence)) - 1;
+  return Math.floor(PRESCRIPTION_MONTHS / monthsPerCycle(cadence)) - 1;
 }
 
 function addMonths(from: Date, months: number): Date {
@@ -138,13 +136,12 @@ export async function writePrescriptionForOrder(
   if (cadence === 'once') return { ok: true, prescriptionId: rx.id };
 
   /*
-   * What a renewal charges: the plan plus shipping on every box of the cycle
+   * What a renewal charges: the plan plus shipping on its box
    * (renewals never ship free, even when this first order did). Shown in the
    * portal; renewSubscription recomputes it from the catalogue when it bills.
    */
   const { pricePerShipment } = await getShippingSettings();
   const planCents = items.reduce((sum, i) => sum + (i.unit_price_cents ?? 0) * (i.quantity ?? 1), 0);
-  const annual = shipmentsPerCycle(cadence) > 1;
 
   await db.from('subscriptions').insert({
     user_id: order.user_id,
@@ -153,21 +150,16 @@ export async function writePrescriptionForOrder(
     prescription_id: rx.id,
     status: 'active',
     cadence_label: String(items[0].cadence_label ?? '1 month plan'),
-    per_cycle_cents: perCycleCents(planCents / 100, cadence, pricePerShipment),
+    per_cycle_cents: perCycleCents(planCents / 100, pricePerShipment),
     next_billing_date: isoDate(addMonths(now, monthsPerCycle(cadence))),
     last_charged_at: now.toISOString(),
-    // 12 month plan: box 2 in six months, once this order is paid (lib/annual-shipments).
-    ...(annual && {
-      next_shipment_date: addMonthsIso(isoDate(now), monthsPerShipment(cadence)),
-      next_shipment_order_id: order.id,
-    }),
   });
 
   return { ok: true, prescriptionId: rx.id };
 }
 
 /**
- * Where a refill (or a 12 month plan's second box) ships: where they live now.
+ * Where a refill ships: where they live now.
  * The primary address on their account wins over the last order's, so a
  * member who moves between cycles gets it at the new address. Null shipTo
  * when there is no address in a state we serve.
@@ -238,17 +230,11 @@ export async function renewSubscription(
   const { data: sub } = await db
     .from('subscriptions')
     .select(
-      'id, user_id, product_id, product_name, per_cycle_cents, cadence_label, prescription_id, next_billing_date, stripe_subscription_id, next_shipment_date',
+      'id, user_id, product_id, product_name, per_cycle_cents, cadence_label, prescription_id, next_billing_date, stripe_subscription_id',
     )
     .eq('id', subscriptionId)
     .maybeSingle();
   if (!sub) return { subscriptionId, result: 'error', detail: 'not_found' };
-  /*
-   * Last year's second box hasn't gone yet (a plan paused past it, or its
-   * charge still settling). Billing now would overwrite it, so wait: the
-   * box-2 cron runs before this one, and the summary email shows the wait.
-   */
-  if (sub.next_shipment_date) return { subscriptionId, result: 'error', detail: 'second_box_still_owed' };
   // A custom plan the old processor billed itself (Admin → Billing, before
   // 2026-10). It has no prescription to renew against; a person decides.
   if (sub.stripe_subscription_id) {
@@ -269,12 +255,10 @@ export async function renewSubscription(
   // started on: charging a 6-month total and then renewing a month later
   // would bill six times over.
   const cadence = cadenceOfLabel(sub.cadence_label, String(rx?.cadence ?? 'monthly'));
-  // Every box of the cycle: a year is never billed on a prescription that
-  // cannot ship its second box.
-  const lapsed = !rxCovers(rx, today, shipmentsPerCycle(cadence), monthsPerShipment(cadence)) || !product;
+  const lapsed = !rxCovers(rx, today) || !product;
 
   /*
-   * Out of date, out of refills (for every box this cycle ships), or a
+   * Out of date, out of refills, or a
    * product we no longer sell (withheld or back to draft). Charging here would be dispensing without a current
    * prescription or shipping something off the catalogue, so the plan pauses
    * and goes back for review instead.
@@ -331,12 +315,12 @@ export async function renewSubscription(
    * Members keep the price they signed up at: a renewal bills the stored
    * per-cycle amount (set at signing, and again when the member switches
    * plan, at that day's prices). Only a plan with nothing stored is priced
-   * now: the plan's price plus shipping on every box of the cycle at today's
-   * rate (Admin → Settings); a 12 month plan pays both boxes up front.
+   * now: the plan's price plus shipping on its box at today's rate
+   * (Admin → Settings).
    */
   const { pricePerShipment } = await getShippingSettings();
   const plan = cadenceTiersForProduct(product, pricePerShipment).find((t) => t.key === cadence);
-  const current = plan ? perCycleCents(plan.total, cadence, pricePerShipment) : 0;
+  const current = plan ? perCycleCents(plan.total, pricePerShipment) : 0;
   const amount = (sub.per_cycle_cents ?? 0) > 0 ? (sub.per_cycle_cents as number) : current;
   if (amount <= 0) return { subscriptionId, result: 'error', detail: 'zero_amount' };
   // Receipt lines: plan + shipping when the stored amount is today's, else all as the item.
@@ -449,14 +433,7 @@ export async function renewSubscription(
       .eq('id', rx.id),
     db
       .from('subscriptions')
-      .update({
-        last_charged_at: new Date().toISOString(),
-        // 12 month plan: box 2 in six months, once this charge is confirmed paid.
-        ...(shipmentsPerCycle(cadence) > 1 && {
-          next_shipment_date: addMonthsIso(today, monthsPerShipment(cadence)),
-          next_shipment_order_id: order.id,
-        }),
-      })
+      .update({ last_charged_at: new Date().toISOString() })
       .eq('id', sub.id),
     paid &&
       db.from('order_updates').insert({

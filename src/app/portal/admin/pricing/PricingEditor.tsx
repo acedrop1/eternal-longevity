@@ -23,11 +23,11 @@ export interface PricingRow {
 }
 
 type PlanKey = 'monthly' | 'quarterly' | 'sixMonth' | 'annual';
-const PLANS: { key: PlanKey; label: string; months: number; boxes: number }[] = [
-  { key: 'monthly', label: '1 month', months: 1, boxes: 1 },
-  { key: 'quarterly', label: '3 months', months: 3, boxes: 1 },
-  { key: 'sixMonth', label: '6 months', months: 6, boxes: 1 },
-  { key: 'annual', label: '12 months', months: 12, boxes: 2 },
+const PLANS: { key: PlanKey; label: string; months: number }[] = [
+  { key: 'monthly', label: '1 month', months: 1 },
+  { key: 'quarterly', label: '3 months', months: 3 },
+  { key: 'sixMonth', label: '6 months', months: 6 },
+  { key: 'annual', label: '12 months', months: 12 },
 ];
 
 const POSITION: Record<Position, [string, 'success' | 'neutral' | 'critical']> = {
@@ -97,10 +97,10 @@ export function PricingEditor({ rows, shipping }: { rows: PricingRow[]; shipping
   );
 }
 
-function economics(r: PricingRow, key: PlanKey, months: number, boxes: number, shipping: ShippingSettings, firstOrder = false) {
+function economics(r: PricingRow, key: PlanKey, months: number, shipping: ShippingSettings, firstOrder = false) {
   const price = planPrice(r, key);
   if (!(price > 0) || !(r.unitCost > 0) || (key === 'annual' && !r.twelveMonthPlan)) return null;
-  return planEconomics(price, shipping.pricePerShipment, months, { unitCost: r.unitCost, quantity: r.quantity, storage: r.storage }, { shipments: boxes, firstOrder });
+  return planEconomics(price, shipping.pricePerShipment, months, { unitCost: r.unitCost, quantity: r.quantity, storage: r.storage }, { firstOrder });
 }
 
 function MarketCell({ comp }: { comp?: PricingRow['comp'] }) {
@@ -124,9 +124,9 @@ function ViewRow({ row: r, shipping, onEdit, disabled }: { row: PricingRow; ship
         <div className="text-[12px] text-ink/55">{r.sub}</div>
       </td>
       <td className="px-2 py-3 text-right tabular-nums text-ink">{r.unitCost > 0 ? usd(Math.round(monthCost(r) * 100)) : <span className="text-amber-800">Not set</span>}</td>
-      {PLANS.map(({ key, months, boxes }) => {
+      {PLANS.map(({ key, months }) => {
         const price = planPrice(r, key);
-        const e = economics(r, key, months, boxes, shipping);
+        const e = economics(r, key, months, shipping);
         const off = key === 'annual' && !r.twelveMonthPlan;
         return (
           <td key={key} className="px-2 py-3 text-right tabular-nums">
@@ -216,11 +216,11 @@ function EditRow({
           />
           <div className="mt-1 text-right text-[12px] text-ink/55">per 30 days</div>
         </td>
-        {PLANS.map(({ key, label, months, boxes }) => {
+        {PLANS.map(({ key, label, months }) => {
           const price = planPrice(r, key);
           const off = key === 'annual' && !r.twelveMonthPlan;
-          const e = economics(r, key, months, boxes, shipping);
-          const first = economics(r, key, months, boxes, shipping, true);
+          const e = economics(r, key, months, shipping);
+          const first = economics(r, key, months, shipping, true);
           return (
             <td key={key} className="w-[136px] px-2 py-3 text-right tabular-nums">
               {key === 'annual' && (

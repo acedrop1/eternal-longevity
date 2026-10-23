@@ -38,7 +38,7 @@ import { allow, clientKey, LIMITS } from '@/lib/rate-limit';
 import type { Order, OrderLine, OrderStatus, OrderUpdate, UpdateAuthorRole } from '@/lib/orders';
 import { SERVICEABLE_STATES } from '@/lib/intakeSchema';
 import { zipInState } from '@/lib/intake-rules';
-import { cadenceTiersForProduct, shipmentsPerCycle } from '@/lib/shopProducts';
+import { cadenceTiersForProduct } from '@/lib/shopProducts';
 import { getLiveProducts } from '@/lib/catalog';
 import { orderTotalCents, shippingChargeCents } from '@/lib/shipping';
 import { getShippingSettings } from '@/lib/shipping-settings';
@@ -526,9 +526,8 @@ async function placeOrder(input: {
 
   /*
    * Shipping and tax are set here, not taken from the request. Shipping is per
-   * box at the price in Admin → Settings (one box per order, two for a
-   * 12 month plan, both charged now). A member's first order ships its first
-   * box free: the first line of the basket takes it (lib/first-box), the rest
+   * box at the price in Admin → Settings (one box per order, a 12 month plan
+   * included). A member's first order ships its first box free: the first line of the basket takes it (lib/first-box), the rest
    * pay. The promo only touches shipping when it waives it. No sales tax is charged: prescription
    * drugs are exempt in every state we serve (NJ, NY, PA, MI). If a taxable
    * item is ever sold, compute it here (with a tax-rate service) rather
@@ -558,11 +557,7 @@ async function placeOrder(input: {
   for (const [i, line] of lines.entries()) {
     const subtotalCents = lineSubtotal(line);
     const firstOrder = freeBox && i === 0;
-    const shippingCents = shippingChargeCents({
-      pricePerShipment: shipSettings.pricePerShipment,
-      shipments: shipmentsPerCycle(line.cadence),
-      firstOrder,
-    });
+    const shippingCents = shippingChargeCents({ pricePerShipment: shipSettings.pricePerShipment, firstOrder });
     const taxCents = share(cartTaxCents, i);
     const itemDiscountCents = share(cartDiscountCents, i);
     const totalCents = orderTotalCents({ subtotalCents, shippingCents, taxCents, discountCents: itemDiscountCents, freeShipping });
@@ -928,13 +923,9 @@ export async function changePrescriptionAction(
   const subtotalCents = Math.round(tier.total * 100) * quantity;
 
   // The free first box stays with the order: it had one if it paid less shipping than full price.
-  const fullShipBefore = shippingChargeCents({
-    pricePerShipment: ship.pricePerShipment,
-    shipments: shipmentsPerCycle(item.cadence as OrderLine['cadence']),
-    firstOrder: false,
-  });
+  const fullShipBefore = shippingChargeCents({ pricePerShipment: ship.pricePerShipment, firstOrder: false });
   const firstOrder = Number(order.shipping_cents ?? 0) < fullShipBefore;
-  const shippingCents = shippingChargeCents({ pricePerShipment: ship.pricePerShipment, shipments: shipmentsPerCycle(tier.key), firstOrder });
+  const shippingCents = shippingChargeCents({ pricePerShipment: ship.pricePerShipment, firstOrder });
 
   // The code they used, on its own terms (already redeemed, so not re-checked against its limit).
   let itemDiscountCents = 0;
