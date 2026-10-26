@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { SectionCard, fieldInput, fieldLabel, headerButton, secondaryButton } from '@/components/admin/IndexTable';
 import { previewCustomEmailAction, sendCustomEmailAction } from '@/lib/admin-email-actions';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 export interface TemplateView {
   id: string;
@@ -53,6 +54,7 @@ function Composer() {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, start] = useTransition();
+  const [confirm, confirmDialog] = useConfirm();
 
   const doPreview = () =>
     start(async () => {
@@ -61,7 +63,7 @@ function Composer() {
     });
   const doSend = () =>
     start(async () => {
-      if (!window.confirm(`Send this email to ${to}?`)) return;
+      if (!(await confirm({ title: `Send this email to ${to}?`, confirmLabel: 'Send' }))) return;
       const r = await sendCustomEmailAction({ to, name, subject, body });
       setResult(r);
       if (r.ok) {
@@ -75,6 +77,7 @@ function Composer() {
 
   return (
     <SectionCard title="Send a branded email" description="Same look as every email we send: logo, “Hi {first name},” and the team sign-off. Replies go to support@etlongevity.com.">
+      {confirmDialog}
       <div className="grid gap-3 p-4 md:grid-cols-2">
         <label>
           <span className={fieldLabel}>To (email)</span>

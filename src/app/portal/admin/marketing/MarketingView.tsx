@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { formatMoney } from '@/lib/format';
 import { PRESETS, change, type DateRange, type Preset } from '@/lib/profit';
 import type { MarketingData, MarketingTotals, SourceRow } from '@/lib/marketing-data';
@@ -470,6 +471,7 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
   const [name, setName] = useState('');
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, start] = useTransition();
+  const [confirm, confirmDialog] = useConfirm();
   const slug = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const q = new URLSearchParams();
   if (slug(source)) q.set('utm_source', slug(source));
@@ -497,7 +499,7 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
     });
   const remove = (id: string) =>
     start(async () => {
-      if (!window.confirm('Delete this saved link? Links already sent keep working.')) return;
+      if (!(await confirm({ title: 'Delete this saved link?', body: 'Links already sent keep working.', confirmLabel: 'Delete', danger: true }))) return;
       const res = await deleteLinkAction(id);
       if (res.ok && res.links) setLinks(res.links);
       else setNote({ ok: false, text: res.message });
@@ -508,6 +510,7 @@ function LinkBuilder({ siteUrl, pages, saved }: { siteUrl: string; pages: NamedP
       title="Link builder"
       description="Make a tagged link for an email, text, ad or post, so its visits and sales show up above under its own name. Save it to reuse later."
     >
+      {confirmDialog}
       <div className="grid gap-3 md:grid-cols-5">
         <label className="md:col-span-1">
           <span className={fieldLabel}>Where it’s posted</span>

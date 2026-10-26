@@ -3,21 +3,32 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { setLandingPublishedAction } from '@/lib/landing-actions';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 /** Publish or unpublish one landing page, with a confirm before it goes public. */
 export function PublishToggle({ slug, published }: { slug: string; published: boolean }) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirm, confirmDialog] = useConfirm();
   const flip = () =>
     start(async () => {
-      if (!published && !window.confirm(`Publish /${slug}? Anyone with the link can see it, and ads can point to it. Make sure the wording is approved.`)) return;
+      if (
+        !published &&
+        !(await confirm({
+          title: `Publish /${slug}?`,
+          body: 'Anyone with the link can see it, and ads can point to it. Make sure the wording is approved.',
+          confirmLabel: 'Publish',
+        }))
+      )
+        return;
       const res = await setLandingPublishedAction(slug, !published);
       if (!res.ok) setError(res.message);
       else router.refresh();
     });
   return (
     <>
+      {confirmDialog}
       <button
         type="button"
         onClick={flip}
