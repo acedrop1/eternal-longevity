@@ -22,6 +22,7 @@ import Lenis from 'lenis';
 /** Route prefixes that keep native scrolling. */
 const NATIVE_SCROLL_ROUTES = [
   '/portal',
+  '/studio',
   '/checkout',
   '/start',
   '/login',

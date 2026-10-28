@@ -10,7 +10,7 @@ import { captureAttribution, track } from '@/lib/attribution';
  * Nothing leaves our servers. Portal, sign-in and payment pages are skipped.
  */
 // Subscribe, preferences and privacy-request handle contact details: no analytics there (Mo's brief, section 2).
-const SKIP = /^\/(portal|login|auth|pay|forgot-password|checkin|unsubscribe|subscribe|marketing-preferences|privacy-request)/;
+const SKIP = /^\/(portal|studio|login|auth|pay|forgot-password|checkin|unsubscribe|subscribe|marketing-preferences|privacy-request)/;
 const SESSION = 'el_visit';
 
 export function SiteTracker() {
