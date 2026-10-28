@@ -783,13 +783,17 @@ function GridTab({
   };
 
   const posts = items.filter((i) => i.kind === 'post' && (i.brand === brand || i.brand === 'both'));
-  // Planned posts: any not yet dragged go first (latest date first), then the dragged order.
+  // Posts with a picture: planned (latest date first), then posted (latest first).
+  // Any not yet dragged go first; the rest follow the dragged order.
   const order = page.order ?? [];
-  const byDate = posts.filter((i) => !isFinished(i.status) && coverOf(i).file).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999'));
-  const planned = [...byDate.filter((i) => !order.includes(i.id)), ...order.flatMap((id) => byDate.filter((i) => i.id === id))];
   const posted = posts.filter((i) => isFinished(i.status) && coverOf(i).file).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
+  const byDate = [
+    ...posts.filter((i) => !isFinished(i.status) && coverOf(i).file).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999')),
+    ...posted,
+  ];
+  const planned = [...byDate.filter((i) => !order.includes(i.id)), ...order.flatMap((id) => byDate.filter((i) => i.id === id))];
   const shots = page.live;
-  const total = planned.length + posted.length + shots.length;
+  const total = planned.length + shots.length;
   const view = {
     name: page.name,
     bio: page.bio,
@@ -821,24 +825,32 @@ function GridTab({
   const dragProps = (seg: 'plan' | 'shot', key: string) =>
     mouse
       ? {
-          layout: true,
+          layout: 'position' as const,
           drag: true,
           dragSnapToOrigin: true,
           dragElastic: 0,
           dragMomentum: false,
-          whileDrag: { scale: 1.06, zIndex: 30, boxShadow: '0 12px 30px rgba(0,0,0,0.25)', cursor: 'grabbing' },
-          transition: { type: 'spring' as const, stiffness: 600, damping: 45 },
+          dragTransition: { bounceStiffness: 700, bounceDamping: 42 },
+          whileDrag: { scale: 1.05, zIndex: 30, boxShadow: '0 16px 36px rgba(0,0,0,0.22)', cursor: 'grabbing' },
+          transition: { type: 'spring' as const, stiffness: 520, damping: 40, mass: 0.7 },
+          style: { willChange: 'transform' },
           'data-tile': `${seg}:${key}`,
           onDragStart: () => {
             dragged.current = true;
             setMoving({ seg, keys: seg === 'plan' ? planned.map((i) => i.id) : shots.map((f) => f.path) });
           },
           onDrag: (_: unknown, info: { point: { x: number; y: number } }) => {
-            const hit = document
-              .elementsFromPoint(info.point.x - window.scrollX, info.point.y - window.scrollY)
-              .map((el) => el.closest('[data-tile]')?.getAttribute('data-tile'))
-              .find((t) => t && t.startsWith(`${seg}:`) && t !== `${seg}:${key}`);
-            if (!hit) return;
+            const x = info.point.x - window.scrollX;
+            const y = info.point.y - window.scrollY;
+            const el = document
+              .elementsFromPoint(x, y)
+              .map((e) => e.closest<HTMLElement>('[data-tile]'))
+              .find((t) => t && t.dataset.tile?.startsWith(`${seg}:`) && t.dataset.tile !== `${seg}:${key}`);
+            if (!el) return;
+            // Swap only once well inside the other tile, so tiles don't flicker back and forth at the edges.
+            const r = el.getBoundingClientRect();
+            if (x < r.left + r.width * 0.2 || x > r.right - r.width * 0.2 || y < r.top + r.height * 0.2 || y > r.bottom - r.height * 0.2) return;
+            const hit = el.dataset.tile!;
             const m = movingRef.current;
             if (!m) return;
             const keys = m.keys.filter((k) => k !== key);
@@ -1044,7 +1056,7 @@ function GridTab({
               {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-7 w-7" strokeWidth={1.8} />}
               New post
             </button>
-            {[...shownPlanned, ...posted].map((i) => {
+            {shownPlanned.map((i) => {
               const c = coverOf(i);
               const plan = !isFinished(i.status);
               return (
@@ -1053,14 +1065,19 @@ function GridTab({
                   type="button"
                   onPointerDown={() => (dragged.current = false)}
                   onClick={() => !dragged.current && open(i)}
-                  {...(plan ? dragProps('plan', i.id) : {})}
-                  className={cn('relative aspect-[3/4] overflow-hidden bg-white', plan && 'ring-2 ring-inset ring-butter-deep', plan && mouse && 'cursor-grab')}
+                  {...dragProps('plan', i.id)}
+                  className={cn('relative aspect-[3/4] overflow-hidden bg-white', plan && 'ring-2 ring-inset ring-butter-deep', mouse && 'cursor-grab')}
                 >
                   <GridTile file={c.file} at={c.at} alt={i.title} />
                   {c.file?.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
-                  {plan && (
-                    <span className="absolute bottom-1.5 left-1.5 rounded-[5px] bg-butter px-1.5 py-[3px] text-[10px] font-bold leading-none text-ink shadow-sm">
-                      {i.due ? shortDay(i.due) : 'No date'}
+                  {(plan ? i.due : (i.completedOn ?? i.due)) && (
+                    <span
+                      className={cn(
+                        'absolute left-1.5 top-1.5 rounded-[5px] px-1.5 py-[3px] text-[10px] font-bold leading-none shadow-sm',
+                        plan ? 'bg-butter text-ink' : 'bg-white/90 text-ink/70',
+                      )}
+                    >
+                      {shortDay((plan ? i.due : (i.completedOn ?? i.due))!)}
                     </span>
                   )}
                 </motion.button>
@@ -1126,7 +1143,7 @@ function GridTab({
           />
           <ul className="space-y-1.5 px-1 text-[13px] leading-snug text-ink/50">
             <li>New post: upload a picture, or reuse one already in the studio. It opens so you can add the caption and post date.</li>
-            <li>Yellow outline and date = planned. Tap a post to open it; drag it with the mouse to move it.</li>
+            <li>Yellow date = planned, white date = posted. Tap a post to open it; drag any post with the mouse to move it.</li>
             <li>Video posts: open one and pick its cover under Cover.</li>
             <li>Only posts with an uploaded picture or video show here. A post with just a Drive link stays off the grid until the file is uploaded.</li>
             <li>Tap the profile photo or Edit profile to match the real page. Collab posts show on both pages.</li>
