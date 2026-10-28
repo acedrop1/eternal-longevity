@@ -133,6 +133,18 @@ export async function studioSession(): Promise<{ ok: boolean; user: StudioUser |
   return { ok: true, user: publicUser(u) };
 }
 
+/** Notes that someone has the studio open, at most every 5 minutes, so "last seen" is true without a fresh sign-in. */
+export async function touchStudio(id: string): Promise<void> {
+  try {
+    const s = await loadStored();
+    const u = s.users.find((x) => x.id === id);
+    if (!u || (u.lastSeen && Date.now() - Date.parse(u.lastSeen) < 5 * 60_000)) return;
+    await putStored({ ...s, users: s.users.map((x) => (x.id === id ? { ...x, lastSeen: new Date().toISOString() } : x)) });
+  } catch {
+    // Presence is a nicety.
+  }
+}
+
 export async function requireStudio(): Promise<StudioUser> {
   const s = await studioSession();
   if (!s.user) throw new Error('Your studio session ended. Enter your code again.');

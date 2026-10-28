@@ -83,6 +83,8 @@ export interface StudioUser {
   active: boolean;
   hasCode: boolean;
   lastLogin: string | null;
+  /** Last time they had the studio open (updated at most every few minutes). */
+  lastSeen?: string | null;
 }
 
 export interface StudioSettings {
@@ -151,6 +153,17 @@ export const FLOW: Record<Kind, Status[]> = {
 
 export const isFinished = (s: Status) => s === 'done' || s === 'posted';
 export const finishedStatus = (k: Kind): Status => (k === 'post' || k === 'story' ? 'posted' : 'done');
+
+/** "Active today · 2:41 PM", "Last here Yesterday", "Never signed in". */
+export function presence(u: Pick<StudioUser, 'lastSeen' | 'lastLogin'>, today = todayET()): { text: string; today: boolean } {
+  const last = [u.lastSeen, u.lastLogin].filter(Boolean).sort().pop();
+  if (!last) return { text: 'Never signed in', today: false };
+  const d = todayET(new Date(last));
+  const time = new Date(last).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+  if (d === today) return { text: `Active today · last seen ${time}`, today: true };
+  const diff = Math.round((Date.parse(today) - Date.parse(d)) / 86_400_000);
+  return { text: `Last here ${diff === 1 ? 'yesterday' : new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`, today: false };
+}
 
 /** Today in Eastern time, YYYY-MM-DD. */
 export function todayET(d = new Date()): string {

@@ -42,6 +42,7 @@ import {
   canAssign,
   finishedStatus,
   isFinished,
+  presence,
   todayET,
   type Brand,
   type GuideSection,
@@ -244,7 +245,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'activity' && manager && (
             <ActivityTab
               events={initial.activity}
-              people={settings.people}
+              users={settings.users.filter((u) => u.active)}
               open={(id) => {
                 const i = items.find((x) => x.id === id);
                 if (i) open(i);
@@ -498,7 +499,7 @@ function TeamProgress({ items, users }: { items: StudioItem[]; users: StudioUser
               <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-[13px] font-bold text-butter">{initials(u.name)}</span>
               <div>
                 <p className="text-[16px] font-semibold">{u.name}</p>
-                <p className="text-[12px] text-ink/45">{u.lastLogin ? `Last signed in ${dayLabel(todayET(new Date(u.lastLogin)), today).toLowerCase()}` : 'Hasn’t signed in yet'}</p>
+                <p className={cn('text-[12px]', presence(u, today).today ? 'text-emerald-700' : 'text-orange-600')}>{presence(u, today).text}</p>
               </div>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-2">
@@ -716,7 +717,8 @@ function InspoTab({ items, me, open, upsert }: { items: StudioItem[]; me: Studio
 
 const timeET = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
 
-function ActivityTab({ events, people, open }: { events: StudioEvent[]; people: string[]; open: (id: string) => void }) {
+function ActivityTab({ events, users, open }: { events: StudioEvent[]; users: StudioUser[]; open: (id: string) => void }) {
+  const people = users.map((u) => u.name);
   const [who, setWho] = useState('all');
   const today = todayET();
   const list = events.filter((e) => who === 'all' || e.by === who);
@@ -726,10 +728,10 @@ function ActivityTab({ events, people, open }: { events: StudioEvent[]; people: 
   const summary = (name: string) => {
     const mine = events.filter((e) => e.by === name && todayET(new Date(e.at)) === today);
     const count = (re: RegExp) => mine.filter((e) => re.test(e.action)).length;
-    const firstIn = [...mine].reverse().find((e) => e.action === 'signed in');
+    const u = users.find((x) => x.name === name);
     return {
       name,
-      signedIn: firstIn ? timeET(firstIn.at) : null,
+      here: u ? presence(u, today) : { text: 'Never signed in', today: false },
       stats: [
         { n: count(/^marked (done|posted)/), label: 'finished' },
         { n: count(/^sent for review/), label: 'sent for review' },
@@ -751,7 +753,7 @@ function ActivityTab({ events, people, open }: { events: StudioEvent[]; people: 
         {shown.map((s) => (
           <div key={s.name} className="rounded-[18px] bg-white p-4">
             <p className="text-[16px] font-semibold">{s.name} today</p>
-            <p className={cn('text-[13px]', s.signedIn ? 'text-ink/50' : 'text-orange-600')}>{s.signedIn ? `First signed in at ${s.signedIn}` : 'Hasn’t signed in today'}</p>
+            <p className={cn('text-[13px]', s.here.today ? 'text-emerald-700' : 'text-orange-600')}>{s.here.text}</p>
             <dl className="mt-3 grid grid-cols-2 gap-2">
               {s.stats.map((x) => (
                 <div key={x.label} className="rounded-[10px] bg-black/[0.03] px-3 py-2">
@@ -764,6 +766,9 @@ function ActivityTab({ events, people, open }: { events: StudioEvent[]; people: 
         ))}
       </div>
 
+      {(!events.length || todayET(new Date(events[events.length - 1].at)) === today) && (
+        <p className="-mt-3 px-5 pb-5 text-[13px] text-ink/40 lg:px-1">The log started on Oct 28, so work from before then isn’t counted. “Last seen” is always current.</p>
+      )}
       {list.length === 0 && (
         <Group>
           <Empty>Nothing yet. Every sign-in, check-off, upload, note and approval shows up here from now on.</Empty>
@@ -1125,7 +1130,7 @@ function TeamPanel({ settings, me, onSettings }: { settings: StudioSettings; me:
         {settings.users.map((u) => {
           const self = u.id === me.id;
           const expanded = openId === u.id;
-          const status = !u.active ? 'Access off' : !u.hasCode && !self ? 'No code yet' : u.lastLogin ? `Last in ${dayLabel(todayET(new Date(u.lastLogin)))}` : 'Hasn’t signed in yet';
+          const status = !u.active ? 'Access off' : !u.hasCode && !self ? 'No code yet' : presence(u).text;
           return (
             <div key={u.id} className="[&+&]:border-t [&+&]:border-black/[0.06]">
               <button type="button" onClick={() => setOpenId(expanded ? null : u.id)} className="flex min-h-[60px] w-full items-center gap-3 px-4 py-2 text-left hover:bg-black/[0.015]">
