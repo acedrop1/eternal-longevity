@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   Activity,
   BookOpen,
@@ -708,10 +709,10 @@ const coverOf = (i: StudioItem): { file?: StudioFile; at?: number } => {
 
 function GridTile({ file, alt, at }: { file?: StudioFile | null; alt: string; at?: number }) {
   if (file?.url && file.type.startsWith('video/'))
-    return <video key={at} src={`${file.url}#t=${at || 0.1}`} muted playsInline preload="metadata" className="h-full w-full object-cover" />;
+    return <video key={at} src={`${file.url}#t=${at || 0.1}`} muted playsInline preload="metadata" className="pointer-events-none h-full w-full select-none object-cover" />;
   if (file?.url)
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={file.url} alt={alt} className="h-full w-full object-cover" />;
+    return <img src={file.url} alt={alt} draggable={false} className="pointer-events-none h-full w-full select-none object-cover" />;
   return <span className="grid h-full w-full place-items-center bg-[#efefef] p-2 text-center text-[11px] font-semibold leading-tight text-[#737373]">{alt || 'No image yet'}</span>;
 }
 
@@ -807,42 +808,58 @@ function GridTab({
       };
 
   // Drag with the mouse: planned posts among themselves, screenshots among themselves.
-  const [drag, setDrag] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
-  const dropOn = (target: string) => {
-    const from = drag;
-    setDrag(null);
-    setOver(null);
-    if (!from || from === target) return;
-    const ids = planned.map((i) => i.id);
-    if (ids.includes(from) && ids.includes(target)) {
-      const next = ids.filter((x) => x !== from);
-      next.splice(next.indexOf(target) + (ids.indexOf(from) < ids.indexOf(target) ? 1 : 0), 0, from);
-      return save({ ...page, order: next });
-    }
-    const paths = page.live.map((f) => f.path);
-    if (paths.includes(from) && paths.includes(target)) {
-      const next = page.live.filter((f) => f.path !== from);
-      const at = next.findIndex((f) => f.path === target) + (paths.indexOf(from) < paths.indexOf(target) ? 1 : 0);
-      next.splice(at, 0, page.live[paths.indexOf(from)]);
-      save({ ...page, live: next });
-    }
+  // While dragging, the order lives in `moving`; the others slide aside (layout animation).
+  type Moving = { seg: 'plan' | 'shot'; keys: string[] } | null;
+  const [moving, setMovingState] = useState<Moving>(null);
+  const movingRef = useRef<Moving>(null);
+  const setMoving = (m: Moving) => {
+    movingRef.current = m;
+    setMovingState(m);
   };
-  const dnd = (key: string) => ({
-    draggable: true,
-    onDragStart: (e: React.DragEvent) => {
-      e.dataTransfer.effectAllowed = 'move';
-      setDrag(key);
-    },
-    onDragOver: (e: React.DragEvent) => {
-      if (!drag) return;
-      e.preventDefault();
-      setOver(key);
-    },
-    onDragLeave: () => setOver((o) => (o === key ? null : o)),
-    onDrop: (e: React.DragEvent) => (e.preventDefault(), dropOn(key)),
-    onDragEnd: () => (setDrag(null), setOver(null)),
-  });
+  const dragged = useRef(false);
+  // Mouse and trackpad only, so phones still scroll the grid with a finger.
+  const [mouse, setMouse] = useState(false);
+  useEffect(() => setMouse(window.matchMedia('(pointer: fine)').matches), []);
+  const planKeys = moving?.seg === 'plan' ? moving.keys : planned.map((i) => i.id);
+  const shotKeys = moving?.seg === 'shot' ? moving.keys : shots.map((f) => f.path);
+  const shownPlanned = planKeys.flatMap((k) => planned.filter((i) => i.id === k));
+  const shownShots = shotKeys.flatMap((k) => shots.filter((f) => f.path === k));
+  const dragProps = (seg: 'plan' | 'shot', key: string) =>
+    mouse
+      ? {
+          layout: true,
+          drag: true,
+          dragSnapToOrigin: true,
+          dragElastic: 0,
+          dragMomentum: false,
+          whileDrag: { scale: 1.06, zIndex: 30, boxShadow: '0 12px 30px rgba(0,0,0,0.25)', cursor: 'grabbing' },
+          transition: { type: 'spring' as const, stiffness: 600, damping: 45 },
+          'data-tile': `${seg}:${key}`,
+          onDragStart: () => {
+            dragged.current = true;
+            setMoving({ seg, keys: seg === 'plan' ? planned.map((i) => i.id) : shots.map((f) => f.path) });
+          },
+          onDrag: (_: unknown, info: { point: { x: number; y: number } }) => {
+            const hit = document
+              .elementsFromPoint(info.point.x - window.scrollX, info.point.y - window.scrollY)
+              .map((el) => el.closest('[data-tile]')?.getAttribute('data-tile'))
+              .find((t) => t && t.startsWith(`${seg}:`) && t !== `${seg}:${key}`);
+            if (!hit) return;
+            const m = movingRef.current;
+            if (!m) return;
+            const keys = m.keys.filter((k) => k !== key);
+            keys.splice(m.keys.indexOf(hit.slice(seg.length + 1)), 0, key);
+            if (keys.join() !== m.keys.join()) setMoving({ seg, keys });
+          },
+          onDragEnd: () => {
+            const m = movingRef.current;
+            setMoving(null);
+            if (m?.seg === 'plan' && m.keys.join() !== planned.map((i) => i.id).join()) save({ ...page, order: m.keys });
+            if (m?.seg === 'shot' && m.keys.join() !== shots.map((f) => f.path).join())
+              save({ ...page, live: m.keys.flatMap((k) => page.live.filter((f) => f.path === k)) });
+          },
+        }
+      : {};
 
   const save = async (next: GridPage) => {
     setError(null);
@@ -1040,21 +1057,17 @@ function GridTab({
               {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-7 w-7" strokeWidth={1.8} />}
               New post
             </button>
-            {[...planned, ...posted].map((i) => {
+            {[...shownPlanned, ...posted].map((i) => {
               const c = coverOf(i);
               const plan = !isFinished(i.status);
               return (
-                <button
+                <motion.button
                   key={i.id}
                   type="button"
-                  onClick={() => open(i)}
-                  {...(plan ? dnd(i.id) : {})}
-                  className={cn(
-                    'relative aspect-[3/4] overflow-hidden',
-                    plan && 'cursor-grab ring-2 ring-inset ring-butter-deep active:cursor-grabbing',
-                    drag === i.id && 'opacity-40',
-                    over === i.id && drag !== i.id && 'ring-4 ring-ink',
-                  )}
+                  onPointerDown={() => (dragged.current = false)}
+                  onClick={() => !dragged.current && open(i)}
+                  {...(plan ? dragProps('plan', i.id) : {})}
+                  className={cn('relative aspect-[3/4] overflow-hidden bg-white', plan && 'ring-2 ring-inset ring-butter-deep', plan && mouse && 'cursor-grab')}
                 >
                   <GridTile file={c.file} at={c.at} alt={i.title} />
                   {c.file?.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
@@ -1063,7 +1076,7 @@ function GridTab({
                       {i.due ? shortDay(i.due) : 'No date'}
                     </span>
                   )}
-                </button>
+                </motion.button>
               );
             })}
             {synced?.media.map((m) => (
@@ -1076,12 +1089,8 @@ function GridTab({
                 {m.type === 'CAROUSEL_ALBUM' && <Copy className="absolute right-1.5 top-1.5 h-[18px] w-[18px] text-white drop-shadow" />}
               </a>
             ))}
-            {shots.map((f, n) => (
-              <div
-                key={f.path}
-                {...dnd(f.path)}
-                className={cn('relative aspect-[3/4] cursor-grab overflow-hidden active:cursor-grabbing', drag === f.path && 'opacity-40', over === f.path && drag !== f.path && 'ring-4 ring-inset ring-ink')}
-              >
+            {shownShots.map((f, n) => (
+              <motion.div key={f.path} {...dragProps('shot', f.path)} className={cn('relative aspect-[3/4] overflow-hidden bg-white', mouse && 'cursor-grab')}>
                 <GridTile file={f} alt="Live post" />
                 {f.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
                 {arrange && (
@@ -1097,7 +1106,7 @@ function GridTab({
                     </button>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
           <input ref={newInput} type="file" accept="image/*,video/*" hidden onChange={(e) => (newFromUpload(e.target.files), (e.target.value = ''))} />
