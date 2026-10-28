@@ -134,7 +134,7 @@ function allowedEdit(raw: Partial<StudioItem>, prev: StudioItem | null, user: St
     if (!MEMBER_KINDS.includes(raw.kind as never)) raw = { ...raw, kind: prev.kind };
     return { ...raw, status: verdictKept(raw.status) as StudioItem['status'] };
   }
-  return { ...prev, status: verdictKept(raw.status) as StudioItem['status'], files: raw.files, links: raw.links, platforms: raw.platforms, cover: raw.cover };
+  return { ...prev, status: verdictKept(raw.status) as StudioItem['status'], files: raw.files, links: raw.links, platforms: raw.platforms, cover: raw.cover, format: raw.format };
 }
 
 export async function saveStudioItem(raw: Partial<StudioItem>): Promise<Result<StudioItem>> {
@@ -255,7 +255,8 @@ export async function saveStudioSettings(next: Partial<Pick<StudioSettings, 'tar
 }
 
 /** The Grid tab: anyone signed in sets a page's handle and its screenshots of live posts. */
-export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<Result<GridPage>> {
+/** `removed` lists screenshots deleted on purpose; any other screenshot already saved is kept, so two people at once can't erase each other's uploads. */
+export async function saveStudioGrid(brand: GridBrand, page: GridPage, removed: string[] = []): Promise<Result<GridPage>> {
   return run(async () => {
     const user = await requireStudio();
     if (brand !== 'longevity' && brand !== 'hair') throw new Error('Bad page.');
@@ -264,8 +265,16 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
     if (handle && !/^[\w.]+$/.test(handle)) throw new Error('A handle is letters, numbers, dots and underscores only.');
     const ours = (f: unknown): f is StudioFile =>
       typeof (f as StudioFile)?.path === 'string' && (f as StudioFile).path.startsWith(`grid-${brand}/`) && !(f as StudioFile).path.includes('..');
-    const file = (f: StudioFile) => ({ path: f.path, name: String(f.name ?? '').slice(0, 120), type: String(f.type ?? '').slice(0, 60), size: Number(f.size) || 0 });
-    const live = (Array.isArray(page.live) ? page.live : []).filter(ours).slice(0, 90).map(file);
+    const file = (f: StudioFile) => ({
+      path: f.path,
+      name: String(f.name ?? '').slice(0, 120),
+      type: String(f.type ?? '').slice(0, 60),
+      size: Number(f.size) || 0,
+      ...(f.reel === true ? { reel: true } : {}),
+    });
+    const sent = (Array.isArray(page.live) ? page.live : []).filter(ours).slice(0, 90).map(file);
+    const gone = new Set(Array.isArray(removed) ? removed : []);
+    const live = [...sent, ...grid[brand].live.filter((f) => !gone.has(f.path) && !sent.some((x) => x.path === f.path))];
     const t = (v: unknown, max: number) => String(v ?? '').slice(0, max);
     const next: GridPage = {
       handle,
@@ -276,7 +285,7 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
       posts: t(page.posts, 12),
       followers: t(page.followers, 12),
       following: t(page.following, 12),
-      avatar: ours(page.avatar) ? file(page.avatar) : null,
+      avatar: ours(page.avatar) ? file(page.avatar) : (grid[brand].avatar ?? null),
       order: (Array.isArray(page.order) ? page.order : []).filter((id) => typeof id === 'string' && /^[\w-]{8,64}$/.test(id)).slice(0, 200),
     };
     await putGrid({ ...grid, [brand]: next });

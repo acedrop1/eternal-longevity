@@ -392,6 +392,7 @@ export function cleanItem(raw: Partial<StudioItem>, prev: StudioItem | null, who
       raw.cover && typeof raw.cover === 'object'
         ? { at: Math.max(0, Math.min(3600, Number(raw.cover.at) || 0)), path: ownPath(id, raw.cover.path) ? raw.cover.path : undefined }
         : null,
+    format: raw.format === 'post' || raw.format === 'reel' ? raw.format : null,
     comments: prev?.comments ?? [],
     completedOn: finished ? (prev?.completedOn ?? day(raw.completedOn) ?? todayET()) : null,
     completedBy: finished ? (prev && (prev.status === 'done' || prev.status === 'posted') ? (prev.completedBy ?? null) : who) : null,

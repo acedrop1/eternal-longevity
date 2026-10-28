@@ -16,6 +16,8 @@ export interface StudioFile {
   name: string;
   type: string;
   size: number;
+  /** Grid screenshots only: this live post is a reel. */
+  reel?: boolean;
   /** Signed read link, added on the way out; never stored. */
   url?: string;
 }
@@ -49,6 +51,8 @@ export interface StudioItem {
   files: StudioFile[];
   /** Video cover for the grid: a moment in the video, or one of its uploaded images. */
   cover?: { at?: number; path?: string } | null;
+  /** Post or reel on Instagram; unset means "reel if its file is a video". */
+  format?: 'post' | 'reel' | null;
   comments: StudioComment[];
   /** YYYY-MM-DD it was posted or done; what the daily rings count. */
   completedOn: string | null;

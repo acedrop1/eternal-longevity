@@ -526,6 +526,20 @@ export function ItemSheet({
             </div>
           )}
 
+          {full && item.kind === 'post' && (
+            <div>
+              <Heading>Type on Instagram</Heading>
+              <Segmented<'post' | 'reel'>
+                value={item.format ?? (item.files.some((f) => f.type.startsWith('video/')) ? 'reel' : 'post')}
+                onChange={(v) => set('format', v)}
+                options={[
+                  { value: 'post', label: 'Post (photo)' },
+                  { value: 'reel', label: 'Reel (video)' },
+                ]}
+              />
+            </div>
+          )}
+
           {full && content && (
             <div className="flex flex-wrap gap-2">
               {PLATFORMS.map((p) => {

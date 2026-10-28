@@ -709,6 +709,10 @@ const coverOf = (i: StudioItem): { file?: StudioFile; at?: number } => {
   return { file: custom ?? media, at: custom ? undefined : i.cover?.at };
 };
 
+/** Reel on Instagram: as marked on the post, otherwise when its file is a video. */
+const isReel = (i: StudioItem) => (i.format ? i.format === 'reel' : !!coverOf(i).file?.type.startsWith('video/'));
+const shotIsReel = (f: StudioFile) => f.reel ?? f.type.startsWith('video/');
+
 function GridTile({ file, alt, at }: { file?: StudioFile | null; alt: string; at?: number }) {
   if (file?.url && file.type.startsWith('video/'))
     return <video key={at} src={`${file.url}#t=${at || 0.1}`} muted playsInline preload="metadata" className="pointer-events-none h-full w-full select-none object-cover" />;
@@ -744,6 +748,7 @@ function GridTab({
 }) {
   const [brand, setBrand] = useState<GridBrand>('longevity');
   const [arrange, setArrange] = useState(false);
+  const [feed, setFeed] = useState<'grid' | 'reels'>('grid');
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<GridPage>(grid[brand]);
   const [busy, setBusy] = useState(0);
@@ -867,10 +872,10 @@ function GridTab({
         }
       : {};
 
-  const save = async (next: GridPage) => {
+  const save = async (next: GridPage, removed: string[] = []) => {
     setError(null);
     onSaved(brand, next);
-    const r = await saveStudioGrid(brand, next);
+    const r = await saveStudioGrid(brand, next, removed);
     if (!r.ok) setError(r.error);
   };
   const upload = async (files: FileList | null) => {
@@ -995,12 +1000,23 @@ function GridTab({
 
           {/* Tabs */}
           <div className="mt-4 grid grid-cols-3 border-t border-[#dbdbdb]">
-            <span className="flex h-11 items-center justify-center border-b border-black">
-              <Grid3x3 className="h-6 w-6" strokeWidth={1.8} />
-            </span>
-            <span className="flex h-11 items-center justify-center text-[#737373]">
-              <SquarePlay className="h-6 w-6" strokeWidth={1.8} />
-            </span>
+            {(
+              [
+                ['grid', Grid3x3, 'Posts'],
+                ['reels', SquarePlay, 'Reels'],
+              ] as const
+            ).map(([v, Icon, label]) => (
+              <button
+                key={v}
+                type="button"
+                aria-label={label}
+                aria-pressed={feed === v}
+                onClick={() => setFeed(v)}
+                className={cn('flex h-11 items-center justify-center', feed === v ? 'border-b border-black' : 'text-[#737373]')}
+              >
+                <Icon className="h-6 w-6" strokeWidth={1.8} />
+              </button>
+            ))}
             <span className="flex h-11 items-center justify-center text-[#737373]">
               <SquareUser className="h-6 w-6" strokeWidth={1.8} />
             </span>
@@ -1056,7 +1072,7 @@ function GridTab({
               {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-7 w-7" strokeWidth={1.8} />}
               New post
             </button>
-            {shownPlanned.map((i) => {
+            {shownPlanned.filter((i) => feed === 'grid' || isReel(i)).map((i) => {
               const c = coverOf(i);
               const plan = !isFinished(i.status);
               return (
@@ -1065,11 +1081,11 @@ function GridTab({
                   type="button"
                   onPointerDown={() => (dragged.current = false)}
                   onClick={() => !dragged.current && open(i)}
-                  {...dragProps('plan', i.id)}
+                  {...(feed === 'grid' ? dragProps('plan', i.id) : {})}
                   className={cn('relative aspect-[3/4] overflow-hidden bg-white', plan && 'ring-2 ring-inset ring-butter-deep', mouse && 'cursor-grab')}
                 >
                   <GridTile file={c.file} at={c.at} alt={i.title} />
-                  {c.file?.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
+                  {isReel(i) && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
                   {(plan ? i.due : (i.completedOn ?? i.due)) && (
                     <span
                       className={cn(
@@ -1083,19 +1099,28 @@ function GridTab({
                 </motion.button>
               );
             })}
-            {shownShots.map((f, n) => (
-              <motion.div key={f.path} {...dragProps('shot', f.path)} className={cn('relative aspect-[3/4] overflow-hidden bg-white', mouse && 'cursor-grab')}>
+            {shownShots.filter((f) => feed === 'grid' || shotIsReel(f)).map((f) => (
+              <motion.div key={f.path} {...(feed === 'grid' ? dragProps('shot', f.path) : {})} className={cn('relative aspect-[3/4] overflow-hidden bg-white', mouse && 'cursor-grab')}>
                 <GridTile file={f} alt="Live post" />
-                {f.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
+                {shotIsReel(f) && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
                 {arrange && (
                   <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1">
-                    <button type="button" aria-label="Move earlier" onClick={() => move(n, -1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
+                    <button type="button" aria-label="Move earlier" onClick={() => move(page.live.findIndex((x) => x.path === f.path), -1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
                       ‹
                     </button>
-                    <button type="button" aria-label="Remove" onClick={() => save({ ...page, live: page.live.filter((x) => x.path !== f.path) })} className="grid h-7 w-7 place-items-center rounded-full bg-white">
+                    <button type="button" aria-label="Remove" onClick={() => save({ ...page, live: page.live.filter((x) => x.path !== f.path) }, [f.path])} className="grid h-7 w-7 place-items-center rounded-full bg-white">
                       <Trash2 className="h-3.5 w-3.5 text-red-600" />
                     </button>
-                    <button type="button" aria-label="Move later" onClick={() => move(n, 1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
+                    <button
+                      type="button"
+                      aria-label={shotIsReel(f) ? 'Mark as a post' : 'Mark as a reel'}
+                      aria-pressed={shotIsReel(f)}
+                      onClick={() => save({ ...page, live: page.live.map((x) => (x.path === f.path ? { ...x, reel: !shotIsReel(f) } : x)) })}
+                      className={cn('grid h-7 w-7 place-items-center rounded-full', shotIsReel(f) ? 'bg-ink text-white' : 'bg-white')}
+                    >
+                      <SquarePlay className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" aria-label="Move later" onClick={() => move(page.live.findIndex((x) => x.path === f.path), 1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
                       ›
                     </button>
                   </div>
@@ -1144,6 +1169,7 @@ function GridTab({
           <ul className="space-y-1.5 px-1 text-[13px] leading-snug text-ink/50">
             <li>New post: upload a picture, or reuse one already in the studio. It opens so you can add the caption and post date.</li>
             <li>Yellow date = planned, white date = posted. Tap a post to open it; drag any post with the mouse to move it.</li>
+            <li>Post or reel: open a post and pick under Type. For screenshots of live posts, tap Arrange, then ▶ marks it a reel. The ▶ tab shows reels only.</li>
             <li>Video posts: open one and pick its cover under Cover.</li>
             <li>Only posts with an uploaded picture or video show here. A post with just a Drive link stays off the grid until the file is uploaded.</li>
             <li>Tap the profile photo or Edit profile to match the real page. Collab posts show on both pages.</li>
