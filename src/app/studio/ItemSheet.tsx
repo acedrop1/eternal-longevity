@@ -269,8 +269,25 @@ export function ItemSheet({
     setBusy(false);
   };
 
+  // A collab post is one post on both pages: taking it off one page keeps it on the other.
+  const removeFrom = async (page: 'longevity' | 'hair') => {
+    setBusy(true);
+    const r = await persist({ ...item, brand: page === 'hair' ? 'longevity' : 'hair' });
+    setBusy(false);
+    if (r) onClose();
+  };
+
   const remove = async () => {
-    if (!(await confirm({ title: `Delete “${item.title || 'this'}”?`, body: 'Its files and notes go too. This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
+    const both = item.brand === 'both';
+    if (
+      !(await confirm({
+        title: `Delete “${item.title || 'this'}”${both ? ' from both pages' : ''}?`,
+        body: `${both ? 'It disappears from Longevity and Hair & Esthetics. ' : ''}Its files and notes go too. This cannot be undone.`,
+        confirmLabel: 'Delete',
+        danger: true,
+      }))
+    )
+      return;
     if (saved) {
       const r = await deleteStudioItem(item.id);
       if (!r.ok) return setError(r.error);
@@ -693,10 +710,19 @@ export function ItemSheet({
             </p>
           )}
 
+          {editable && !isNew && item.brand === 'both' && (
+            <div className="grid grid-cols-2 gap-2">
+              {(['longevity', 'hair'] as const).map((p) => (
+                <button key={p} type="button" disabled={busy} onClick={() => removeFrom(p)} className="h-12 rounded-[14px] bg-white px-2 text-[14px] font-semibold text-ink/70">
+                  Remove from {p === 'hair' ? 'Hair & Esthetics' : 'Longevity'}
+                </button>
+              ))}
+            </div>
+          )}
           {editable && !isNew && (
             <button type="button" onClick={remove} className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-white text-[16px] text-red-600">
               <Trash2 className="h-4 w-4" />
-              Delete
+              {item.brand === 'both' ? 'Delete from both pages' : 'Delete'}
             </button>
           )}
         </div>
