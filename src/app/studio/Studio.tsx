@@ -95,6 +95,8 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   const [tab, setTab] = useState<Tab>('today');
   const [sheet, setSheet] = useState<{ item: StudioItem; isNew: boolean } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Clicking outside or pressing Escape asks the open item to save first.
+  const closer = useRef<(() => void) | null>(null);
   const manager = canAssign(me.role);
   const crew = settings.users.find((u) => u.active && u.role === 'member')?.name ?? '';
 
@@ -261,7 +263,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
         </div>
       </nav>
 
-      <Sheet open={!!sheet} onClose={() => setSheet(null)} label="Item">
+      <Sheet open={!!sheet} onClose={() => (closer.current ? closer.current() : setSheet(null))} label="Item">
         {sheet && (
           <ItemSheet
             key={sheet.item.id}
@@ -269,7 +271,11 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
             isNew={sheet.isNew}
             me={me}
             people={settings.people}
-            onClose={() => setSheet(null)}
+            onClose={() => {
+              closer.current = null;
+              setSheet(null);
+            }}
+            bindClose={(fn) => (closer.current = fn)}
             onSaved={upsert}
             onDeleted={(id) => setItems((l) => l.filter((i) => i.id !== id))}
           />
@@ -333,24 +339,28 @@ function TodayTab({
   const stories = work.filter((i) => i.kind === 'story' && i.completedOn === today).length;
   const open = work.filter((i) => !isFinished(i.status));
   const review = open.filter((i) => i.status === 'review').sort(byDue);
-  const changes = open.filter((i) => i.status === 'changes').sort(byDue);
-  const rest = open.filter((i) => i.status !== 'review' && i.status !== 'changes');
+  // Content fixes their sent-back work first; Adam and Mo see it by date, with its status showing.
+  const fixes = manager ? [] : open.filter((i) => i.status === 'changes').sort(byDue);
+  const rest = open.filter((i) => i.status !== 'review' && (manager || i.status !== 'changes'));
   const late = rest.filter((i) => i.due && i.due < today).sort(byDue);
   const due = rest.filter((i) => i.due === today).sort(byDue);
   const week = rest.filter((i) => i.due && i.due > today && i.due <= addDays(today, 7)).sort(byDue);
+  const shown = new Set([...late, ...due, ...week].map((i) => i.id));
+  const waiting = manager ? open.filter((i) => i.status === 'changes' && !shown.has(i.id)).sort(byDue) : [];
+  const finishedToday = work.filter((i) => isFinished(i.status) && i.completedOn === today);
   const hour = Number(new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' }));
   const hello = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const date = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
-  const todo = late.length + due.length + changes.length;
+  const todo = late.length + due.length + fixes.length;
 
   const reviewGroup = review.length > 0 && (
     <Group title={manager ? 'Needs your review' : 'Waiting on Adam or Mo'} count={review.length} footer={manager ? 'Open one to approve it or ask for changes.' : undefined}>
       {review.map((i) => row(i, { check: false, status: false }))}
     </Group>
   );
-  const changesGroup = changes.length > 0 && (
-    <Group title={manager ? 'Sent back for changes' : 'Fix these first'} count={changes.length} footer={manager ? undefined : 'Open one to see exactly what to change.'}>
-      {changes.map((i) => row(i, { check: false, status: false }))}
+  const fixGroup = fixes.length > 0 && (
+    <Group title="Fix these first" count={fixes.length} footer="Open one to see exactly what to change.">
+      {fixes.map((i) => row(i, { check: false, status: false }))}
     </Group>
   );
 
@@ -409,7 +419,7 @@ function TodayTab({
         </section>
 
         <div>
-          {manager ? reviewGroup : changesGroup}
+          {manager ? reviewGroup : fixGroup}
           {late.length > 0 && (
             <Group title="Late" count={late.length}>
               {late.map((i) => row(i))}
@@ -418,10 +428,20 @@ function TodayTab({
           <Group title="Due today" count={due.length}>
             {due.length ? due.map((i) => row(i)) : <Empty>Nothing else due today.</Empty>}
           </Group>
-          {manager ? changesGroup : reviewGroup}
+          {!manager && reviewGroup}
           {week.length > 0 && (
             <Group title="Next 7 days" count={week.length}>
               {week.map((i) => row(i))}
+            </Group>
+          )}
+          {waiting.length > 0 && (
+            <Group title="Sent back, due later" count={waiting.length}>
+              {waiting.map((i) => row(i))}
+            </Group>
+          )}
+          {finishedToday.length > 0 && (
+            <Group title="Done today" count={finishedToday.length}>
+              {finishedToday.map((i) => row(i))}
             </Group>
           )}
           <div className="px-4 pb-4 lg:px-0">
@@ -442,11 +462,17 @@ function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: str
   const [view, setView] = useState<'open' | 'done'>('open');
   const [who, setWho] = useState<string>('all');
   const today = todayET();
-  const list = items.filter((i) => (i.kind === 'task' || i.kind === 'shoot') && (who === 'all' || i.assignee === who));
+  const mine = items.filter((i) => i.kind !== 'inspo' && (who === 'all' || i.assignee === who));
+  const list = mine.filter((i) => i.kind === 'task' || i.kind === 'shoot');
 
   const groups = useMemo(() => {
     if (view === 'done') {
-      return [{ title: 'Done', items: list.filter((i) => isFinished(i.status)).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? '')) }];
+      // Everything finished, tasks and posts alike, newest first.
+      const done = mine.filter((i) => isFinished(i.status)).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
+      return [...new Set(done.map((i) => i.completedOn ?? ''))].map((d) => ({
+        title: d ? dayLabel(d, today) : 'Earlier',
+        items: done.filter((i) => (i.completedOn ?? '') === d),
+      }));
     }
     const open = list.filter((i) => !isFinished(i.status)).sort(byDue);
     const week = addDays(today, 7);
@@ -457,13 +483,13 @@ function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: str
       { title: 'Later', items: open.filter((i) => i.due && i.due > week) },
       { title: 'No date', items: open.filter((i) => !i.due) },
     ];
-  }, [list, view, today]);
+  }, [list, mine, view, today]);
 
   return (
     <>
       <LargeTitle title="Tasks" sub={manager ? 'Everything you and Mo have assigned, by when it’s due.' : 'Everything assigned to you, by when it’s due. Tap a task to see exactly what to do.'} />
       <div className="space-y-3 px-4 pb-5 lg:flex lg:items-center lg:gap-4 lg:space-y-0 lg:px-0">
-        <Segmented className="lg:w-[260px]" value={view} onChange={setView} options={[{ value: 'open', label: 'To do' }, { value: 'done', label: 'Done' }]} />
+        <Segmented className="lg:w-[260px]" value={view} onChange={setView} options={[{ value: 'open', label: 'To do' }, { value: 'done', label: 'Done (all work)' }]} />
         {manager && <Chips value={who} onChange={setWho} options={[{ value: 'all', label: 'Everyone' }, ...people.map((p) => ({ value: p, label: p }))]} />}
       </div>
       {groups.every((g) => !g.items.length) && (

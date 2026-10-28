@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowUp, Check, FileText, Link2, Loader2, Paperclip, Play, Send, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -144,6 +144,7 @@ export function ItemSheet({
   me,
   people,
   onClose,
+  bindClose,
   onSaved,
   onDeleted,
 }: {
@@ -152,6 +153,7 @@ export function ItemSheet({
   me: StudioUser;
   people: string[];
   onClose: () => void;
+  bindClose?: (fn: () => void) => void;
   onSaved: (item: StudioItem) => void;
   onDeleted: (id: string) => void;
 }) {
@@ -164,6 +166,7 @@ export function ItemSheet({
   const [note, setNote] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const [confirm, confirmDialog] = useConfirm();
+  const [snap, setSnap] = useState(() => JSON.stringify(start));
 
   const manager = canAssign(me.role);
   // Adam and Mo edit anything; content edits only what they added themselves.
@@ -184,6 +187,7 @@ export function ItemSheet({
     }
     setSaved(true);
     setItem(r.data);
+    setSnap(JSON.stringify(r.data));
     onSaved(r.data);
     return r.data;
   };
@@ -195,6 +199,10 @@ export function ItemSheet({
     setBusy(false);
     if (r) onClose();
   };
+
+  // Closing by clicking outside keeps your edits; only Cancel throws them away.
+  const dirty = JSON.stringify(item) !== snap;
+  useEffect(() => bindClose?.(() => (dirty ? void done() : onClose())));
 
   const addFiles = async (list: FileList | null) => {
     if (!list?.length) return;
