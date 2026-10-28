@@ -54,7 +54,7 @@ import {
   type StudioUser,
 } from '@/lib/studio-types';
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
-import { BarButton, BrandDot, Chips, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
+import { BarButton, BrandDot, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
 
 type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity';
 type BrandFilter = 'all' | Brand;
@@ -238,7 +238,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
             <p className="mx-4 mb-2 rounded-[12px] bg-butter-soft px-4 py-2 text-[13px] text-ink/70 lg:mx-0 lg:mt-6">Local copy: changes are not saved to the live studio.</p>
           )}
           {tab === 'today' && <TodayTab items={visible} me={me} settings={settings} row={row} create={create} go={go} />}
-          {tab === 'tasks' && <TasksTab items={visible} people={settings.people} me={me} row={row} />}
+          {tab === 'tasks' && <TasksTab items={visible} people={settings.people} crew={crew} me={me} row={row} />}
           {tab === 'content' && <ContentTab items={visible} row={row} />}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
           {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
@@ -452,15 +452,17 @@ function TodayTab({
               {late.map((i) => row(i))}
             </Group>
           )}
-          <Group title="Due today" count={due.length}>
+          <Group title={dayTitle(today, today)} count={due.length}>
             {due.length ? due.map((i) => row(i)) : <Empty>Nothing else due today.</Empty>}
           </Group>
           {!manager && reviewGroup}
-          {week.length > 0 && (
-            <Group title="Next 7 days" count={week.length}>
-              {week.map((i) => row(i))}
-            </Group>
-          )}
+          {byDay(week, today, addDays(today, 7))
+            .filter((g) => g.items.length)
+            .map((g) => (
+              <Group key={g.title} title={g.title} count={g.items.length}>
+                {g.items.map((i) => row(i))}
+              </Group>
+            ))}
           {waiting.length > 0 && (
             <Group title="Sent back, due later" count={waiting.length}>
               {waiting.map((i) => row(i))}
@@ -528,10 +530,11 @@ function TeamProgress({ items, users }: { items: StudioItem[]; users: StudioUser
 
 /* ---------------- Tasks ---------------- */
 
-function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: string[]; me: StudioUser; row: RowFn }) {
+function TasksTab({ items, people, crew, me, row }: { items: StudioItem[]; people: string[]; crew: string; me: StudioUser; row: RowFn }) {
   const manager = canAssign(me.role);
   const [view, setView] = useState<'open' | 'done'>('open');
-  const [who, setWho] = useState<string>('all');
+  // Adam and Mo land on the content person's list: what Jacob has to do, day by day.
+  const [who, setWho] = useState<string>(canAssign(me.role) && crew ? crew : 'all');
   const today = todayET();
   const mine = items.filter((i) => i.kind !== 'inspo' && (who === 'all' || i.assignee === who));
   const list = mine;
@@ -545,15 +548,7 @@ function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: str
         items: done.filter((i) => (i.completedOn ?? '') === d),
       }));
     }
-    const open = list.filter((i) => !isFinished(i.status)).sort(byDue);
-    const week = addDays(today, 7);
-    return [
-      { title: 'Late', items: open.filter((i) => i.due && i.due < today) },
-      { title: 'Today', items: open.filter((i) => i.due === today) },
-      { title: 'This week', items: open.filter((i) => i.due && i.due > today && i.due <= week) },
-      { title: 'Later', items: open.filter((i) => i.due && i.due > week) },
-      { title: 'No date', items: open.filter((i) => !i.due) },
-    ];
+    return byDay(list.filter((i) => !isFinished(i.status)).sort(byDue), today);
   }, [list, mine, view, today]);
 
   return (

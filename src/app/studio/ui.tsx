@@ -112,6 +112,28 @@ export function dayLabel(d: string, today = todayET()): string {
   return date.toLocaleDateString('en-US', diff > 1 && diff < 7 ? { weekday: 'long' } : { month: 'short', day: 'numeric' });
 }
 
+/** A day heading people can't misread: "Today · Wed, Oct 28", "Tomorrow · Thu, Oct 29", "Friday · Oct 30". */
+export function dayTitle(d: string, today = todayET()): string {
+  const date = new Date(`${d}T12:00:00`);
+  const md = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const wd = date.toLocaleDateString('en-US', { weekday: 'long' });
+  const diff = Math.round((Date.parse(d) - Date.parse(today)) / 86_400_000);
+  if (diff === 0) return `Today · ${wd.slice(0, 3)}, ${md}`;
+  if (diff === 1) return `Tomorrow · ${wd.slice(0, 3)}, ${md}`;
+  return `${wd} · ${md}`;
+}
+
+/** Open work as Late, then one group per due day, then undated. */
+export function byDay(open: StudioItem[], today = todayET(), until?: string): { title: string; items: StudioItem[] }[] {
+  const dated = open.filter((i) => i.due && i.due >= today && (!until || i.due <= until));
+  const days = [...new Set(dated.map((i) => i.due!))].sort();
+  return [
+    { title: 'Late', items: open.filter((i) => i.due && i.due < today) },
+    ...days.map((d) => ({ title: dayTitle(d, today), items: dated.filter((i) => i.due === d) })),
+    ...(until ? [] : [{ title: 'No date yet', items: open.filter((i) => !i.due) }]),
+  ];
+}
+
 /** "Thu, Oct 29". */
 export const longDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
