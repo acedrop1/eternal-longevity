@@ -93,9 +93,22 @@ export interface StudioSettings {
   guide: GuideSection[];
 }
 
+/** One line in the Activity log: who did what, when. */
+export interface StudioEvent {
+  at: string;
+  by: string;
+  /** e.g. "sent for review", "marked done", "signed in". */
+  action: string;
+  itemId?: string;
+  itemTitle?: string;
+  detail?: string;
+}
+
 export interface StudioData {
   items: StudioItem[];
   settings: StudioSettings;
+  /** The Activity log, newest first (Adam and Mo only; empty for content). */
+  activity: StudioEvent[];
   /** False on a local build with no database: changes last until the server restarts. */
   live: boolean;
 }

@@ -10,6 +10,7 @@ import {
   STATUSES,
   type GuideSection,
   type StudioData,
+  type StudioEvent,
   type StudioFile,
   type StudioItem,
   type StudioLink,
@@ -168,6 +169,34 @@ async function write(key: string, value: unknown): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/*
+ * Activity log: one row per event, keyed studio-log:<ISO time>:<random> so the
+ * newest sort first and the main studio:% read never loads them.
+ * ponytail: never pruned; at a few hundred events a week it stays small for years.
+ */
+const LOG_PREFIX = 'studio-log:';
+
+export async function logEvent(e: Omit<StudioEvent, 'at'>): Promise<void> {
+  const at = new Date().toISOString();
+  try {
+    await write(`${LOG_PREFIX}${at}:${randomBytes(3).toString('hex')}`, { ...e, at });
+  } catch {
+    // The log never blocks the work itself.
+  }
+}
+
+export async function loadActivity(limit = 400): Promise<StudioEvent[]> {
+  if (!studioLive()) {
+    return [...memory]
+      .filter(([k]) => k.startsWith(LOG_PREFIX))
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, limit)
+      .map(([, v]) => v as StudioEvent);
+  }
+  const { data } = await table().select('value').like('key', `${LOG_PREFIX}%`).order('key', { ascending: false }).limit(limit);
+  return ((data ?? []) as { value: StudioEvent }[]).map((r) => r.value);
+}
+
 export async function removeItem(id: string): Promise<void> {
   if (!studioLive()) return void memory.delete(PREFIX + id);
   const { error } = await table().delete().eq('key', PREFIX + id);
@@ -196,11 +225,11 @@ export async function putStored(s: Stored): Promise<StudioSettings> {
   return publicSettings(s);
 }
 
-export async function loadStudio(): Promise<StudioData> {
+export async function loadStudio(withActivity = false): Promise<StudioData> {
   const rows = await readAll();
   const items = rows.filter((r) => r.key.startsWith(PREFIX)).map((r) => r.value as StudioItem);
   const settings = publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value));
-  return { items: await withUrls(items), settings, live: studioLive() };
+  return { items: await withUrls(items), settings, activity: withActivity ? await loadActivity() : [], live: studioLive() };
 }
 
 export async function loadSettings(): Promise<StudioSettings> {

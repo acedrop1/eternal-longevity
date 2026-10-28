@@ -11,6 +11,7 @@ import {
   ensureBucket,
   getItem,
   loadStored,
+  logEvent,
   newCode,
   putItem,
   putStored,
@@ -33,7 +34,42 @@ import {
   type StudioItem,
   type StudioSettings,
   type StudioUser,
+  STATUS_LABEL,
+  isFinished,
 } from '@/lib/studio-types';
+
+/** What changed between two versions of an item, in plain words for the Activity log. */
+function changes(prev: StudioItem | null, next: StudioItem): { action: string; detail?: string }[] {
+  if (!prev) return [{ action: `added a ${next.kind}`, detail: next.assignee ? `for ${next.assignee}` : undefined }];
+  const out: { action: string; detail?: string }[] = [];
+  if (prev.status !== next.status) {
+    const done = isFinished(next.status);
+    out.push({
+      action: done
+        ? next.status === 'posted'
+          ? 'marked posted'
+          : 'marked done'
+        : isFinished(prev.status)
+          ? 'reopened'
+          : next.status === 'review'
+            ? 'sent for review'
+            : `moved to ${STATUS_LABEL[next.status]}`,
+    });
+  }
+  const newFiles = next.files.filter((f) => !prev.files.some((p) => p.path === f.path));
+  if (newFiles.length) out.push({ action: `uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''} to`, detail: newFiles.map((f) => f.name).join(', ') });
+  const newLinks = next.links.filter((l) => !prev.links.some((p) => p.url === l.url));
+  if (newLinks.length) out.push({ action: `added ${newLinks.length} link${newLinks.length > 1 ? 's' : ''} to`, detail: newLinks.map((l) => l.url).join(' ') });
+  if (prev.due !== next.due) out.push({ action: 'changed the date on', detail: `${prev.due ?? 'none'} → ${next.due ?? 'none'}` });
+  if (prev.assignee !== next.assignee) out.push({ action: 'reassigned', detail: `${prev.assignee || 'anyone'} → ${next.assignee || 'anyone'}` });
+  if (prev.flagged !== next.flagged) out.push({ action: next.flagged ? 'flagged as urgent' : 'unflagged' });
+  if (prev.title !== next.title || prev.notes !== next.notes) out.push({ action: 'edited the instructions on' });
+  return out;
+}
+
+async function logChanges(prev: StudioItem | null, next: StudioItem, by: string): Promise<void> {
+  for (const c of changes(prev, next)) await logEvent({ by, action: c.action, itemId: next.id, itemTitle: next.title, detail: c.detail });
+}
 
 type Result<T = null> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -65,6 +101,7 @@ export async function unlockStudio(code: string): Promise<Result> {
   } catch {
     // Last-seen is a nicety; the sign-in already worked.
   }
+  await logEvent({ by: user.name, action: 'signed in' });
   return { ok: true, data: null };
 }
 
@@ -100,6 +137,7 @@ export async function saveStudioItem(raw: Partial<StudioItem>): Promise<Result<S
     const prev = raw.id ? await getItem(raw.id) : null;
     const item = cleanItem(allowedEdit(raw, prev, user), prev, user.name);
     await putItem(item);
+    await logChanges(prev, item, user.name);
     return (await withUrls([item]))[0];
   });
 }
@@ -113,6 +151,7 @@ export async function deleteStudioItem(id: string): Promise<Result> {
       await createSupabaseAdminClient().storage.from(BUCKET).remove(item.files.map((f) => f.path));
     }
     await removeItem(id);
+    if (item) await logEvent({ by: user.name, action: 'deleted', itemTitle: item.title });
     return null;
   });
 }
@@ -134,9 +173,15 @@ export async function commentOnStudioItem(
       if (verdict === 'approved' || verdict === 'changes') c.verdict = verdict;
       item.comments = [...item.comments, c];
     }
+    const before = item.status;
     if (verdict) item.status = verdict;
     item.updatedAt = new Date().toISOString();
     await putItem(item);
+    const said = text ? text.slice(0, 280) : undefined;
+    if (verdict === 'approved') await logEvent({ by: user.name, action: 'approved', itemId: id, itemTitle: item.title, detail: said });
+    else if (verdict === 'changes') await logEvent({ by: user.name, action: 'asked for changes on', itemId: id, itemTitle: item.title, detail: said });
+    else if (verdict === 'review' && before !== 'review') await logEvent({ by: user.name, action: 'sent for review', itemId: id, itemTitle: item.title, detail: said });
+    else if (said) await logEvent({ by: user.name, action: 'left a note on', itemId: id, itemTitle: item.title, detail: said });
     return (await withUrls([item]))[0];
   });
 }
@@ -201,6 +246,7 @@ export async function addStudioUser(name: string, role: Role): Promise<Result<{ 
     const s = await loadStored();
     if (s.users.some((u) => u.name.toLowerCase() === clean.toLowerCase())) throw new Error(`${clean} is already on the team.`);
     const { code, hash, salt } = newCode();
+    await logEvent({ by: (await requireAdmin()).name, action: `added ${clean} to the team and issued a code` });
     const user = { id: crypto.randomUUID(), name: clean, role: ROLES.includes(role) ? role : 'member', active: true, lastLogin: null, ver: 0, hash, salt };
     return { settings: await putStored({ ...s, users: [...s.users, user] }), code };
   });
@@ -214,6 +260,7 @@ export async function issueStudioCode(id: string): Promise<Result<{ settings: St
     if (!s.users.some((u) => u.id === id)) throw new Error('That person is not on the team.');
     const { code, hash, salt } = newCode();
     const users = s.users.map((u) => (u.id === id ? { ...u, hash, salt, ver: u.ver + 1 } : u));
+    await logEvent({ by: (await requireAdmin()).name, action: `issued a new code for ${s.users.find((u) => u.id === id)?.name}` });
     return { settings: await putStored({ ...s, users }), code };
   });
 }
@@ -243,6 +290,16 @@ export async function updateStudioUser(
               },
         );
     if (!users.some((u) => u.active && u.role === 'admin')) throw new Error('Keep at least one admin.');
+    await logEvent({
+      by: me.name,
+      action: change.remove
+        ? `removed ${target.name} from the team`
+        : change.active === false
+          ? `turned off ${target.name}’s access`
+          : change.active === true
+            ? `turned on ${target.name}’s access`
+            : `made ${target.name} ${change.role}`,
+    });
     users = users.slice(0, 30);
     return putStored({ ...s, users });
   });

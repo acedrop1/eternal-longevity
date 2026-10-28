@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  Activity,
   BookOpen,
   Check,
   CheckCircle2,
@@ -46,6 +47,7 @@ import {
   type GuideSection,
   type Role,
   type StudioData,
+  type StudioEvent,
   type StudioItem,
   type StudioSettings,
   type StudioUser,
@@ -53,7 +55,7 @@ import {
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
 import { BarButton, BrandDot, Chips, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
 
-type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide';
+type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity';
 type BrandFilter = 'all' | Brand;
 
 const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
@@ -62,6 +64,7 @@ const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
   { id: 'content', label: 'Content', icon: Clapperboard },
   { id: 'inspo', label: 'Inspo', icon: Images },
   { id: 'guide', label: 'Guide', icon: BookOpen },
+  { id: 'activity', label: 'Activity', icon: Activity },
 ];
 
 const BRAND_CHIPS: { value: BrandFilter; label: string; dot?: Brand }[] = [
@@ -98,6 +101,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   // Clicking outside or pressing Escape asks the open item to save first.
   const closer = useRef<(() => void) | null>(null);
   const manager = canAssign(me.role);
+  const tabs = manager ? TABS : TABS.filter((t) => t.id !== 'activity');
   const crew = settings.users.find((u) => u.active && u.role === 'member')?.name ?? '';
 
   useEffect(() => {
@@ -119,9 +123,9 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   useEffect(() => {
     try {
       const t = localStorage.getItem('studio-tab') as Tab | null;
-      if (t && TABS.some((x) => x.id === t)) setTab(t);
+      if (t && TABS.some((x) => x.id === t) && (t !== 'activity' || canAssign(me.role))) setTab(t);
     } catch {}
-  }, []);
+  }, [me.role]);
 
   const go = (t: Tab) => {
     setTab(t);
@@ -181,7 +185,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           </button>
         )}
         <nav aria-label="Studio" className="mt-6 space-y-1">
-          {TABS.map(({ id, label, icon: Icon }) => {
+          {tabs.map(({ id, label, icon: Icon }) => {
             const on = tab === id;
             const n = badge(id);
             return (
@@ -237,13 +241,23 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'content' && <ContentTab items={visible} row={row} />}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
           {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
+          {tab === 'activity' && manager && (
+            <ActivityTab
+              events={initial.activity}
+              people={settings.people}
+              open={(id) => {
+                const i = items.find((x) => x.id === id);
+                if (i) open(i);
+              }}
+            />
+          )}
         </main>
       </div>
 
       {/* Tab bar (phone) */}
       <nav aria-label="Studio" className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.08] bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-[720px]">
-          {TABS.map(({ id, label, icon: Icon }) => {
+          {tabs.map(({ id, label, icon: Icon }) => {
             const on = tab === id;
             const n = badge(id);
             return (
@@ -694,6 +708,95 @@ function InspoTab({ items, me, open, upsert }: { items: StudioItem[]; me: Studio
           })}
         </div>
       )}
+    </>
+  );
+}
+
+/* ---------------- Activity ---------------- */
+
+const timeET = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+
+function ActivityTab({ events, people, open }: { events: StudioEvent[]; people: string[]; open: (id: string) => void }) {
+  const [who, setWho] = useState('all');
+  const today = todayET();
+  const list = events.filter((e) => who === 'all' || e.by === who);
+  const days = [...new Set(list.map((e) => todayET(new Date(e.at))))];
+
+  // Today at a glance, per person.
+  const summary = (name: string) => {
+    const mine = events.filter((e) => e.by === name && todayET(new Date(e.at)) === today);
+    const count = (re: RegExp) => mine.filter((e) => re.test(e.action)).length;
+    const firstIn = [...mine].reverse().find((e) => e.action === 'signed in');
+    return {
+      name,
+      signedIn: firstIn ? timeET(firstIn.at) : null,
+      stats: [
+        { n: count(/^marked (done|posted)/), label: 'finished' },
+        { n: count(/^sent for review/), label: 'sent for review' },
+        { n: mine.filter((e) => /^uploaded/.test(e.action)).reduce((t, e) => t + (Number(e.action.match(/\d+/)?.[0]) || 0), 0), label: 'files uploaded' },
+        { n: count(/^left a note/), label: 'notes' },
+      ],
+    };
+  };
+  const shown = (who === 'all' ? people : [who]).map(summary);
+
+  return (
+    <>
+      <LargeTitle title="Activity" sub="Everything done in the studio, newest first. Only you and Mo see this." />
+      <div className="px-4 pb-5 lg:px-0">
+        <Chips value={who} onChange={setWho} options={[{ value: 'all', label: 'Everyone' }, ...people.map((p) => ({ value: p, label: p }))]} />
+      </div>
+
+      <div className="grid gap-3 px-4 pb-6 sm:grid-cols-2 lg:grid-cols-3 lg:px-0">
+        {shown.map((s) => (
+          <div key={s.name} className="rounded-[18px] bg-white p-4">
+            <p className="text-[16px] font-semibold">{s.name} today</p>
+            <p className={cn('text-[13px]', s.signedIn ? 'text-ink/50' : 'text-orange-600')}>{s.signedIn ? `First signed in at ${s.signedIn}` : 'Hasn’t signed in today'}</p>
+            <dl className="mt-3 grid grid-cols-2 gap-2">
+              {s.stats.map((x) => (
+                <div key={x.label} className="rounded-[10px] bg-black/[0.03] px-3 py-2">
+                  <dd className={cn('text-[20px] font-bold leading-none', !x.n && 'text-ink/25')}>{x.n}</dd>
+                  <dt className="mt-1 text-[12px] text-ink/50">{x.label}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+
+      {list.length === 0 && (
+        <Group>
+          <Empty>Nothing yet. Every sign-in, check-off, upload, note and approval shows up here from now on.</Empty>
+        </Group>
+      )}
+      <div className="lg:max-w-[820px]">
+        {days.map((d) => (
+          <Group key={d} title={dayLabel(d, today)} count={list.filter((e) => todayET(new Date(e.at)) === d).length}>
+            {list
+              .filter((e) => todayET(new Date(e.at)) === d)
+              .map((e, n) => {
+                const Row = e.itemId ? 'button' : 'div';
+                return (
+                  <Row
+                    key={e.at + n}
+                    {...(e.itemId ? { type: 'button' as const, onClick: () => open(e.itemId!) } : {})}
+                    className="flex w-full items-start gap-3 px-4 py-3 text-left [&+&]:border-t [&+&]:border-black/[0.06] enabled:hover:bg-black/[0.015]"
+                  >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-[12px] font-bold text-butter">{initials(e.by)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] leading-snug">
+                        <b className="font-semibold">{e.by}</b> {e.action}
+                        {e.itemTitle && <> <span className="font-semibold">“{e.itemTitle}”</span></>}
+                      </span>
+                      {e.detail && <span className="mt-0.5 block truncate text-[13px] text-ink/50">{e.detail}</span>}
+                    </span>
+                    <span className="shrink-0 text-[13px] tabular-nums text-ink/40">{timeET(e.at)}</span>
+                  </Row>
+                );
+              })}
+          </Group>
+        ))}
+      </div>
     </>
   );
 }
