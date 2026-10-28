@@ -279,7 +279,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'tasks' && <TasksTab items={visible} people={settings.people} crew={crew} me={me} row={row} />}
           {tab === 'content' && <ContentTab items={visible} row={row} />}
           {tab === 'grid' && (
-            <GridTab items={items} grid={settings.grid} instagram={initial.instagram} igReady={initial.igReady} open={open} create={create} onSaved={(b, g) => setSettings((s) => ({ ...s, grid: { ...s.grid, [b]: g } }))} />
+            <GridTab items={items} grid={settings.grid} open={open} create={create} onSaved={(b, g) => setSettings((s) => ({ ...s, grid: { ...s.grid, [b]: g } }))} />
           )}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
           {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
@@ -730,16 +730,12 @@ const igNum = (v?: string) => {
 function GridTab({
   items,
   grid,
-  instagram,
-  igReady,
   open,
   create,
   onSaved,
 }: {
   items: StudioItem[];
   grid: StudioSettings['grid'];
-  instagram: StudioData['instagram'];
-  igReady: boolean;
   open: (i: StudioItem) => void;
   create: (preset: Partial<StudioItem>) => void;
   onSaved: (b: GridBrand, g: GridPage) => void;
@@ -787,25 +783,21 @@ function GridTab({
   const posts = items.filter((i) => i.kind === 'post' && (i.brand === brand || i.brand === 'both'));
   // Planned posts: any not yet dragged go first (latest date first), then the dragged order.
   const order = page.order ?? [];
-  const byDate = posts.filter((i) => !isFinished(i.status)).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999'));
+  const byDate = posts.filter((i) => !isFinished(i.status) && coverOf(i).file).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999'));
   const planned = [...byDate.filter((i) => !order.includes(i.id)), ...order.flatMap((id) => byDate.filter((i) => i.id === id))];
-  // Once a page is connected, what's live comes from Instagram itself.
-  const ig = instagram[brand];
-  const synced = ig && !ig.error ? ig : null;
-  const posted = synced ? [] : posts.filter((i) => isFinished(i.status)).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
-  const shots = synced ? [] : page.live;
-  const total = planned.length + posted.length + shots.length + (synced?.media.length ?? 0);
-  const view = synced
-    ? { name: synced.name, bio: synced.bio, link: synced.website, avatar: synced.avatar, posts: synced.posts, followers: String(synced.followers), following: String(synced.following) }
-    : {
-        name: page.name,
-        bio: page.bio,
-        link: page.link,
-        avatar: page.avatar?.url,
-        posts: Number(String(page.posts ?? '').replace(/,/g, '')) || page.live.length + posted.length,
-        followers: page.followers,
-        following: page.following,
-      };
+  const posted = posts.filter((i) => isFinished(i.status) && coverOf(i).file).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
+  const shots = page.live;
+  const total = planned.length + posted.length + shots.length;
+  const view = {
+    name: page.name,
+    bio: page.bio,
+    link: page.link,
+    avatar: page.avatar?.url,
+    // What the real page shows, as entered in Edit profile.
+    posts: Number(String(page.posts ?? '').replace(/,/g, '')) || shots.length + posted.length,
+    followers: page.followers,
+    following: page.following,
+  };
 
   // Drag with the mouse: planned posts among themselves, screenshots among themselves.
   // While dragging, the order lives in `moving`; the others slide aside (layout animation).
@@ -897,7 +889,7 @@ function GridTab({
   };
 
   const field = 'w-full rounded-[8px] bg-[#efefef] px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-butter-deep';
-  const handle = synced?.username || page.handle || 'username';
+  const handle = page.handle || 'username';
   return (
     <>
       <LargeTitle title="Grid" sub="Each Instagram page as it will look. Planned posts sit on top with the day they go up." />
@@ -931,7 +923,7 @@ function GridTab({
               <p className="truncate text-[15px] font-semibold">{view.name || (brand === 'longevity' ? 'Eternal Longevity' : 'Eternal Hair & Esthetics')}</p>
               <div className="mt-1 grid grid-cols-3 text-[14px] leading-tight">
                 {[
-                  [String(view.posts + planned.length), 'posts'],
+                  [String(view.posts), 'posts'],
                   [igNum(view.followers), 'followers'],
                   [igNum(view.following), 'following'],
                 ].map(([n, l]) => (
@@ -973,13 +965,9 @@ function GridTab({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1.5 px-4 pt-3">
-              {synced ? (
-                <span className="grid h-8 place-items-center rounded-[8px] bg-[#efefef] text-[14px] font-semibold text-ink/60">Synced from Instagram</span>
-              ) : (
-                <button type="button" onClick={startEdit} className="h-8 rounded-[8px] bg-[#efefef] text-[14px] font-semibold">
-                  Edit profile
-                </button>
-              )}
+              <button type="button" onClick={startEdit} className="h-8 rounded-[8px] bg-[#efefef] text-[14px] font-semibold">
+                Edit profile
+              </button>
               <a
                 href={handle !== 'username' ? `https://www.instagram.com/${handle}/` : undefined}
                 target="_blank"
@@ -1014,9 +1002,6 @@ function GridTab({
                   </button>
                   <button type="button" onClick={() => setAdding('pick')} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#efefef] text-[15px] font-semibold">
                     <Images className="h-4 w-4" /> Use one already in the studio
-                  </button>
-                  <button type="button" onClick={() => startPost([])} className="h-10 w-full text-[14px] font-semibold text-ink/55">
-                    Plan it without a picture yet
                   </button>
                   <button type="button" onClick={() => setAdding(null)} className="h-9 w-full text-[14px] text-ink/40">
                     Cancel
@@ -1079,16 +1064,6 @@ function GridTab({
                 </motion.button>
               );
             })}
-            {synced?.media.map((m) => (
-              <a key={m.id} href={m.permalink} target="_blank" rel="noopener noreferrer" className="relative aspect-[3/4] overflow-hidden bg-[#efefef]">
-                {m.url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.url} alt="" className="h-full w-full object-cover" />
-                )}
-                {m.type === 'VIDEO' && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
-                {m.type === 'CAROUSEL_ALBUM' && <Copy className="absolute right-1.5 top-1.5 h-[18px] w-[18px] text-white drop-shadow" />}
-              </a>
-            ))}
             {shownShots.map((f, n) => (
               <motion.div key={f.path} {...dragProps('shot', f.path)} className={cn('relative aspect-[3/4] overflow-hidden bg-white', mouse && 'cursor-grab')}>
                 <GridTile file={f} alt="Live post" />
@@ -1126,37 +1101,10 @@ function GridTab({
           <button type="button" onClick={() => setAdding('choose')} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-butter text-[15px] font-semibold">
             <Plus className="h-4 w-4" /> New post
           </button>
-          {/* Instagram connection */}
-          <div className="rounded-[14px] bg-white p-4 ring-1 ring-black/[0.06]">
-            {synced ? (
-              <>
-                <p className="text-[15px] font-semibold text-emerald-700">● Live from Instagram</p>
-                <p className="mt-0.5 text-[13px] text-ink/50">@{synced.username}: profile and posts update on their own (every few minutes).</p>
-              </>
-            ) : (
-              <>
-                <p className="text-[15px] font-semibold">Pull the real page from Instagram</p>
-                <p className="mt-0.5 text-[13px] leading-snug text-ink/50">
-                  {ig?.error
-                    ? `The connection stopped working (${ig.error}). Connect again.`
-                    : igReady
-                      ? 'Log in once with this page’s Instagram account. Its photo, numbers, bio and posts then show here automatically.'
-                      : 'Not switched on yet: the Instagram app keys need adding first.'}
-                </p>
-                {igReady && (
-                  <a href={`/studio/instagram?connect=${brand}`} className="mt-3 flex h-10 items-center justify-center rounded-[10px] bg-[#4a5df9] text-[14px] font-semibold text-white">
-                    Connect {page.handle ? `@${page.handle}` : 'Instagram'}
-                  </a>
-                )}
-              </>
-            )}
-          </div>
-          {!synced && (
-            <button type="button" onClick={() => liveInput.current?.click()} disabled={busy > 0} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-white text-[15px] font-semibold ring-1 ring-black/[0.06] disabled:opacity-50">
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Or add screenshots of live posts'}
-            </button>
-          )}
-          {!synced && page.live.length > 0 && (
+          <button type="button" onClick={() => liveInput.current?.click()} disabled={busy > 0} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-white text-[15px] font-semibold ring-1 ring-black/[0.06] disabled:opacity-50">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Add posts already live'}
+          </button>
+          {page.live.length > 0 && (
             <button type="button" onClick={() => setArrange((v) => !v)} className={cn('h-11 w-full rounded-[12px] text-[15px] font-semibold', arrange ? 'bg-ink text-white' : 'bg-white ring-1 ring-black/[0.06]')}>
               {arrange ? 'Done arranging' : 'Arrange live posts'}
             </button>
@@ -1178,7 +1126,7 @@ function GridTab({
             <li>New post: upload a picture, or reuse one already in the studio. It opens so you can add the caption and post date.</li>
             <li>Yellow outline and date = planned. Tap a post to open it; drag it with the mouse to move it.</li>
             <li>Video posts: open one and pick its cover under Cover.</li>
-            <li>Tiles show a picture once the image or video itself is uploaded to the post (a Drive link alone shows the title).</li>
+            <li>Only posts with an uploaded picture or video show here. A post with just a Drive link stays off the grid until the file is uploaded.</li>
             <li>Tap the profile photo or Edit profile to match the real page. Collab posts show on both pages.</li>
           </ul>
         </div>
