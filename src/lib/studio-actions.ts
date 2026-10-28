@@ -29,6 +29,8 @@ import {
   MEMBER_KINDS,
   VERDICTS,
   canAssign,
+  type GridBrand,
+  type GridPage,
   type GuideSection,
   type Role,
   type StudioComment,
@@ -231,6 +233,27 @@ export async function saveStudioSettings(next: Partial<Pick<StudioSettings, 'tar
           }))
         : prev.guide,
     });
+  });
+}
+
+/** The Grid tab: anyone signed in sets a page's handle and its screenshots of live posts. */
+export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<Result<GridPage>> {
+  return run(async () => {
+    const user = await requireStudio();
+    if (brand !== 'longevity' && brand !== 'hair') throw new Error('Bad page.');
+    const prev = await loadStored();
+    const handle = String(page.handle ?? '').trim().replace(/^@/, '').slice(0, 30);
+    if (handle && !/^[\w.]+$/.test(handle)) throw new Error('A handle is letters, numbers, dots and underscores only.');
+    const live = (Array.isArray(page.live) ? page.live : [])
+      .filter((f) => typeof f?.path === 'string' && f.path.startsWith(`grid-${brand}/`) && !f.path.includes('..'))
+      .slice(0, 90)
+      .map((f) => ({ path: f.path, name: String(f.name ?? '').slice(0, 120), type: String(f.type ?? '').slice(0, 60), size: Number(f.size) || 0 }));
+    const next = { handle, live };
+    await putStored({ ...prev, grid: { ...prev.grid, [brand]: next } });
+    if (live.length !== prev.grid[brand].live.length || handle !== prev.grid[brand].handle) {
+      await logEvent({ by: user.name, action: `updated the ${handle ? '@' + handle : brand} grid`, detail: `${live.length} live posts` });
+    }
+    return next;
   });
 }
 

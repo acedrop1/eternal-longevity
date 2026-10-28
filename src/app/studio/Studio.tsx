@@ -13,6 +13,7 @@ import {
   Copy,
   Images,
   KeyRound,
+  LayoutGrid,
   Link2,
   Loader2,
   Minus,
@@ -33,6 +34,7 @@ import {
   issueStudioCode,
   lockStudio,
   saveReportNote,
+  saveStudioGrid,
   saveStudioItem,
   saveStudioSettings,
   updateStudioUser,
@@ -48,9 +50,12 @@ import {
   presence,
   todayET,
   type Brand,
+  type GridBrand,
+  type GridPage,
   type GuideSection,
   type Role,
   type StudioData,
+  type StudioFile,
   type StudioEvent,
   type StudioItem,
   type StudioMiss,
@@ -58,15 +63,16 @@ import {
   type StudioUser,
 } from '@/lib/studio-types';
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
-import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, StatusPill, dayLabel, type RowUpdate } from './ui';
+import { BRAND_COLOR, BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, StatusPill, dayLabel, type RowUpdate } from './ui';
 
-type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity' | 'report';
+type Tab = 'today' | 'tasks' | 'content' | 'grid' | 'inspo' | 'guide' | 'activity' | 'report';
 type BrandFilter = 'all' | Brand;
 
 const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
   { id: 'today', label: 'Today', icon: Sun },
   { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
   { id: 'content', label: 'Content', icon: Clapperboard },
+  { id: 'grid', label: 'Grid', icon: LayoutGrid },
   { id: 'inspo', label: 'Inspo', icon: Images },
   { id: 'guide', label: 'Guide', icon: BookOpen },
   { id: 'activity', label: 'Activity', icon: Activity },
@@ -265,6 +271,9 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'today' && <TodayTab items={visible} me={me} settings={settings} row={row} create={create} go={go} />}
           {tab === 'tasks' && <TasksTab items={visible} people={settings.people} crew={crew} me={me} row={row} />}
           {tab === 'content' && <ContentTab items={visible} row={row} />}
+          {tab === 'grid' && (
+            <GridTab items={items} grid={settings.grid} open={open} create={create} onSaved={(b, g) => setSettings((s) => ({ ...s, grid: { ...s.grid, [b]: g } }))} />
+          )}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
           {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
           {tab === 'report' && manager && (
@@ -681,6 +690,171 @@ function ContentTab({ items, row }: { items: StudioItem[]; row: RowFn }) {
 }
 
 /* ---------------- Inspo ---------------- */
+
+/* ---------------- Grid ---------------- */
+
+
+function GridTile({ file, alt }: { file?: StudioFile; alt: string }) {
+  if (file?.url && file.type.startsWith('video/'))
+    return <video src={`${file.url}#t=0.1`} muted playsInline preload="metadata" className="h-full w-full object-cover" />;
+  if (file?.url)
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={file.url} alt={alt} className="h-full w-full object-cover" />;
+  return <span className="grid h-full w-full place-items-center bg-black/[0.06] p-2 text-center text-[12px] font-semibold leading-tight text-ink/50">{alt || 'No image yet'}</span>;
+}
+
+/*
+ * How each Instagram page will look: planned posts on top (latest post date first),
+ * then posts marked posted here, then screenshots of what was already live.
+ * ponytail: order comes from post dates; live screenshots reorder with arrows. Drag-and-drop if that gets tedious.
+ */
+function GridTab({
+  items,
+  grid,
+  open,
+  create,
+  onSaved,
+}: {
+  items: StudioItem[];
+  grid: StudioSettings['grid'];
+  open: (i: StudioItem) => void;
+  create: (preset: Partial<StudioItem>) => void;
+  onSaved: (b: GridBrand, g: GridPage) => void;
+}) {
+  const [brand, setBrand] = useState<GridBrand>('longevity');
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [handle, setHandle] = useState(grid[brand].handle);
+  const input = useRef<HTMLInputElement>(null);
+  const page = grid[brand];
+  useEffect(() => setHandle(grid[brand].handle), [brand, grid]);
+
+  const posts = items.filter((i) => i.kind === 'post' && (i.brand === brand || i.brand === 'both'));
+  const media = (i: StudioItem) => i.files.find((f) => f.type.startsWith('image/') || f.type.startsWith('video/'));
+  const planned = posts.filter((i) => !isFinished(i.status)).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999'));
+  const posted = posts.filter((i) => isFinished(i.status)).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
+
+  const save = async (next: GridPage) => {
+    setError(null);
+    onSaved(brand, next);
+    const r = await saveStudioGrid(brand, next);
+    if (!r.ok) setError(r.error);
+  };
+
+  const addLive = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setError(null);
+    setBusy(files.length);
+    const { files: up, error: e } = await uploadFiles(`grid-${brand}`, files);
+    setBusy(0);
+    if (e) setError(e);
+    if (up.length) await save({ ...page, live: [...page.live, ...up] });
+  };
+  const move = (n: number, by: number) => {
+    const live = [...page.live];
+    const [f] = live.splice(n, 1);
+    live.splice(Math.max(0, Math.min(live.length, n + by)), 0, f);
+    save({ ...page, live });
+  };
+
+  const badge = 'absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none shadow-sm';
+  return (
+    <>
+      <LargeTitle title="Grid" sub="How each Instagram page will look. Planned posts sit on top with the day they go up." />
+      <div className="flex flex-wrap items-center gap-3 px-4 pb-5 lg:px-0">
+        <Segmented
+          value={brand}
+          onChange={(b) => (setBrand(b), setEditing(false))}
+          options={[
+            { value: 'longevity', label: 'Longevity' },
+            { value: 'hair', label: 'Hair & Esthetics' },
+          ]}
+          className="w-[280px]"
+        />
+      </div>
+
+      <div className="mx-4 max-w-[560px] rounded-[18px] bg-white pb-1 lg:mx-0">
+        {/* Profile header */}
+        <div className="flex items-center gap-4 px-4 py-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full text-[22px] font-bold" style={{ background: BRAND_COLOR[brand] }}>
+            {brand === 'longevity' ? 'EL' : 'EH'}
+          </span>
+          <div className="min-w-0 flex-1">
+            <label className="flex items-center text-[17px] font-semibold">
+              @
+              <input
+                value={handle}
+                onChange={(e) => setHandle(e.target.value.replace(/^@/, ''))}
+                onBlur={() => handle.trim() !== page.handle && save({ ...page, handle: handle.trim() })}
+                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                placeholder="username"
+                aria-label="Instagram username"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink/25"
+              />
+            </label>
+            <p className="text-[13px] text-ink/50">
+              {posted.length + page.live.length} posted · {planned.length} planned
+            </p>
+            {page.handle && (
+              <a href={`https://www.instagram.com/${page.handle}/`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold underline decoration-butter-deep decoration-2 underline-offset-2">
+                Open on Instagram
+              </a>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2 px-4 pb-3">
+          <button type="button" onClick={() => create({ kind: 'post', brand })} className="flex h-9 flex-1 items-center justify-center gap-1 rounded-[10px] bg-butter text-[14px] font-semibold">
+            <Plus className="h-4 w-4" /> Plan a post
+          </button>
+          <button type="button" onClick={() => input.current?.click()} disabled={busy > 0} className="flex h-9 flex-1 items-center justify-center gap-1 rounded-[10px] bg-black/[0.06] text-[14px] font-semibold disabled:opacity-50">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Add live posts'}
+          </button>
+          {page.live.length > 0 && (
+            <button type="button" onClick={() => setEditing((v) => !v)} className={cn('h-9 rounded-[10px] px-3 text-[14px] font-semibold', editing ? 'bg-ink text-white' : 'bg-black/[0.06]')}>
+              {editing ? 'Done' : 'Arrange'}
+            </button>
+          )}
+          <input ref={input} type="file" multiple accept="image/*,video/*" hidden onChange={(e) => (addLive(e.target.files), (e.target.value = ''))} />
+        </div>
+        {error && <p role="alert" className="mx-4 mb-3 rounded-[10px] bg-red-50 px-3 py-2 text-[14px] text-red-700">{error}</p>}
+
+        {/* The grid: newest top-left, 3 across, Instagram's 3:4 tiles */}
+        <div className="grid grid-cols-3 gap-[2px]">
+          {[...planned, ...posted].map((i) => (
+            <button key={i.id} type="button" onClick={() => open(i)} className={cn('relative aspect-[3/4] overflow-hidden bg-black/[0.04]', !isFinished(i.status) && 'outline-dashed outline-2 -outline-offset-2 outline-butter-deep')}>
+              <GridTile file={media(i)} alt={i.title} />
+              <span className={cn(badge, isFinished(i.status) ? 'bg-white/90 text-ink/70' : 'bg-butter text-ink')}>
+                {isFinished(i.status) ? `Posted ${i.completedOn ? shortDay(i.completedOn) : ''}` : i.due ? shortDay(i.due) : 'No date'}
+              </span>
+              {i.brand === 'both' && <span className={cn(badge, 'left-auto right-1.5 bg-white/90 text-ink/70')}>Collab</span>}
+            </button>
+          ))}
+          {page.live.map((f, n) => (
+            <div key={f.path} className="relative aspect-[3/4] overflow-hidden bg-black/[0.04]">
+              <GridTile file={f} alt="Live post" />
+              {editing && (
+                <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1">
+                  <button type="button" aria-label="Move earlier" onClick={() => move(n, -1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[15px] font-bold">‹</button>
+                  <button type="button" aria-label="Remove" onClick={() => save({ ...page, live: page.live.filter((x) => x.path !== f.path) })} className="grid h-8 w-8 place-items-center rounded-full bg-white">
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </button>
+                  <button type="button" aria-label="Move later" onClick={() => move(n, 1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[15px] font-bold">›</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        {planned.length + posted.length + page.live.length === 0 && (
+          <p className="px-4 py-8 text-center text-[14px] text-ink/45">Add screenshots of the posts already on the page, then plan posts to see them on top.</p>
+        )}
+      </div>
+      <p className="mx-4 mt-3 max-w-[560px] text-[13px] text-ink/40 lg:mx-0">
+        Dashed = planned, with its post date. To change the order of planned posts, change their post date. Collab posts show on both pages.
+      </p>
+    </>
+  );
+}
 
 function InspoTab({ items, me, open, upsert }: { items: StudioItem[]; me: StudioUser; open: (i: StudioItem) => void; upsert: (i: StudioItem) => void }) {
   const [brand, setBrand] = useState<BrandFilter>('all');

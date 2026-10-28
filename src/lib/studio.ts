@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import {
   BRANDS,
+  DEFAULT_GRID,
   DEFAULT_TARGETS,
   KINDS,
   PLATFORMS,
@@ -49,7 +50,7 @@ const SETTINGS_KEY = 'studio:settings';
  */
 
 type StoredUser = Omit<StudioUser, 'hasCode'> & { hash?: string; salt?: string; ver: number };
-type Stored = { users: StoredUser[]; targets: StudioSettings['targets']; guide: GuideSection[] };
+type Stored = { users: StoredUser[]; targets: StudioSettings['targets']; guide: GuideSection[]; grid: StudioSettings['grid'] };
 
 function signingKey(): string | null {
   const code = process.env.STUDIO_CODE?.trim();
@@ -87,6 +88,7 @@ function publicSettings(s: Stored): StudioSettings {
     users: s.users.map(publicUser),
     targets: s.targets,
     guide: s.guide,
+    grid: s.grid,
   };
 }
 
@@ -104,7 +106,7 @@ function normalise(raw: unknown): Stored {
       lastLogin: null,
       ver: 0,
     }));
-  return { users, targets: r.targets ?? DEFAULT_TARGETS, guide: r.guide ?? [] };
+  return { users, targets: r.targets ?? DEFAULT_TARGETS, guide: r.guide ?? [], grid: { ...DEFAULT_GRID, ...r.grid } };
 }
 
 /** Who a code belongs to, or null. */
@@ -269,7 +271,7 @@ export async function putNote(person: string, weekStart: string, text: string): 
 export async function loadStudio(withActivity = false): Promise<StudioData> {
   const rows = await readAll();
   const items = rows.filter((r) => r.key.startsWith(PREFIX)).map((r) => r.value as StudioItem);
-  const settings = publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value));
+  const settings = await gridUrls(publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value)));
   const misses = await recordMisses(items, rows.find((r) => r.key === MISSES_KEY)?.value);
   const notes = Object.fromEntries(rows.filter((r) => r.key.startsWith(NOTE_PREFIX)).map((r) => [r.key.slice(NOTE_PREFIX.length), String(r.value ?? '')]));
   return {
@@ -297,6 +299,12 @@ export async function ensureBucket(): Promise<void> {
     allowedMimeTypes: ['image/*', 'video/*', 'application/pdf'],
   });
   if (error && !/exists/i.test(error.message)) throw new Error(error.message);
+}
+
+async function gridUrls(s: StudioSettings): Promise<StudioSettings> {
+  const pages = Object.entries(s.grid) as [keyof StudioSettings['grid'], StudioSettings['grid']['hair']][];
+  const signed = await withUrls(pages.map(([k, g]) => ({ id: k, files: g.live }) as StudioItem));
+  return { ...s, grid: Object.fromEntries(pages.map(([k, g], n) => [k, { ...g, live: signed[n].files }])) as StudioSettings['grid'] };
 }
 
 export async function withUrls(items: StudioItem[]): Promise<StudioItem[]> {

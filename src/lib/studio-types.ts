@@ -87,12 +87,21 @@ export interface StudioUser {
   lastSeen?: string | null;
 }
 
+/** One Instagram page's grid preview: the handle and screenshots of posts already live (newest first). */
+export interface GridPage {
+  handle: string;
+  live: StudioFile[];
+}
+export type GridBrand = 'longevity' | 'hair';
+export const DEFAULT_GRID: Record<GridBrand, GridPage> = { longevity: { handle: 'etlongevity', live: [] }, hair: { handle: '', live: [] } };
+
 export interface StudioSettings {
   /** Names of active teammates, for the "Who" picker. */
   people: string[];
   users: StudioUser[];
   targets: { posts: number; stories: number };
   guide: GuideSection[];
+  grid: Record<GridBrand, GridPage>;
 }
 
 /** One line in the Activity log: who did what, when. */
