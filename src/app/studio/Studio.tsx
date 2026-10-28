@@ -9,10 +9,10 @@ import {
   Printer,
   Check,
   CheckCircle2,
-  ChevronDown,
+  ChevronLeft,
+  MoreHorizontal,
+  SquarePlay,
   Grid3x3,
-  Menu,
-  SquarePlus,
   SquareUser,
   Clapperboard,
   Copy,
@@ -40,6 +40,7 @@ import {
   lockStudio,
   saveReportNote,
   saveStudioGrid,
+  studioCopyFile,
   saveStudioItem,
   saveStudioSettings,
   updateStudioUser,
@@ -737,9 +738,39 @@ function GridTab({
   const [draft, setDraft] = useState<GridPage>(grid[brand]);
   const [busy, setBusy] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState<null | 'choose' | 'pick'>(null);
   const liveInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const newInput = useRef<HTMLInputElement>(null);
   const page = grid[brand];
+
+  // A new post starts from a fresh upload or a picture already somewhere in the studio.
+  const library = [...new Map(
+    [...items.flatMap((i) => i.files), ...grid.longevity.live, ...grid.hair.live]
+      .filter((f) => f.url && (f.type.startsWith('image/') || f.type.startsWith('video/')))
+      .map((f) => [f.path, f]),
+  ).values()].reverse();
+  const startPost = (files: StudioFile[], id = crypto.randomUUID()) => {
+    setAdding(null);
+    create({ id, kind: 'post', brand, platforms: ['Instagram'], files });
+  };
+  const newFromUpload = async (list: FileList | null) => {
+    if (!list?.length) return;
+    const id = crypto.randomUUID();
+    setBusy(list.length);
+    const { files: up, error: e } = await uploadFiles(id, list);
+    setBusy(0);
+    if (e) return setError(e);
+    startPost(up, id);
+  };
+  const newFromLibrary = async (f: StudioFile) => {
+    const id = crypto.randomUUID();
+    setBusy(1);
+    const r = await studioCopyFile(f, id);
+    setBusy(0);
+    if (!r.ok) return setError(r.error);
+    startPost([r.data], id);
+  };
 
   const posts = items.filter((i) => i.kind === 'post' && (i.brand === brand || i.brand === 'both'));
   const media = (i: StudioItem) => i.files.find((f) => f.type.startsWith('image/') || f.type.startsWith('video/'));
@@ -791,49 +822,38 @@ function GridTab({
         {/* The phone */}
         <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[28px] bg-white text-[#000] shadow-[0_1px_2px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06] lg:mx-0">
           {/* Top bar */}
-          <div className="flex h-[52px] items-center justify-between px-4">
-            <button type="button" onClick={() => switchTo(brand === 'longevity' ? 'hair' : 'longevity')} className="flex items-center gap-1 text-[20px] font-bold tracking-[-0.01em]">
+          <div className="flex h-[52px] items-center gap-3 px-3">
+            <ChevronLeft className="h-7 w-7" strokeWidth={1.8} />
+            <button type="button" onClick={() => switchTo(brand === 'longevity' ? 'hair' : 'longevity')} className="min-w-0 flex-1 truncate text-left text-[20px] font-bold tracking-[-0.01em]">
               {handle}
-              <ChevronDown className="h-5 w-5" strokeWidth={2.5} />
             </button>
-            <span className="flex items-center gap-5">
-              <SquarePlus className="h-[26px] w-[26px]" strokeWidth={1.8} />
-              <Menu className="h-[26px] w-[26px]" strokeWidth={1.8} />
-            </span>
+            <MoreHorizontal className="h-6 w-6" />
           </div>
 
           {/* Header */}
           <div className="flex items-center gap-5 px-4 pt-1">
-            <button
-              type="button"
-              onClick={() => avatarInput.current?.click()}
-              aria-label="Change profile photo"
-              className="shrink-0 rounded-full p-[3px]"
-              style={{ background: 'linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)' }}
-            >
-              <span className="block rounded-full bg-white p-[3px]">
-                <span className="grid h-[78px] w-[78px] place-items-center overflow-hidden rounded-full text-[22px] font-bold" style={{ background: BRAND_COLOR[brand] }}>
-                  {page.avatar?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={page.avatar.url} alt="" className="h-full w-full object-cover" />
-                  ) : brand === 'longevity' ? (
-                    'EL'
-                  ) : (
-                    'EH'
-                  )}
-                </span>
+            <button type="button" onClick={() => avatarInput.current?.click()} aria-label="Change profile photo" className="shrink-0 rounded-full">
+              <span className="grid h-[86px] w-[86px] place-items-center overflow-hidden rounded-full text-[22px] font-bold ring-1 ring-black/[0.08]" style={{ background: BRAND_COLOR[brand] }}>
+                {page.avatar?.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={page.avatar.url} alt="" className="h-full w-full object-cover" />
+                ) : brand === 'longevity' ? (
+                  'EL'
+                ) : (
+                  'EH'
+                )}
               </span>
             </button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[15px] font-semibold">{page.name || (brand === 'longevity' ? 'Eternal Longevity' : 'Eternal Hair & Esthetics')}</p>
-              <div className="mt-1.5 grid grid-cols-3 text-[13px] leading-tight">
+              <div className="mt-1 grid grid-cols-3 text-[14px] leading-tight">
                 {[
-                  [String(total), 'posts'],
+                  [String((Number(String(page.posts ?? '').replace(/,/g, '')) || page.live.length + posted.length) + planned.length), 'posts'],
                   [igNum(page.followers), 'followers'],
                   [igNum(page.following), 'following'],
                 ].map(([n, l]) => (
                   <span key={l}>
-                    <b className="block text-[16px] font-semibold">{n}</b>
+                    <b className="block text-[16px] font-semibold">{Number(n) >= 1000 && !/K|M/.test(n) ? Number(n).toLocaleString('en-US') : n}</b>
                     {l}
                   </span>
                 ))}
@@ -841,21 +861,29 @@ function GridTab({
             </div>
           </div>
           {page.bio && <p className="whitespace-pre-line px-4 pt-3 text-[14px] leading-snug">{page.bio}</p>}
+          {page.link && (
+            <p className="flex items-center gap-1 px-4 pt-0.5 text-[14px] font-semibold text-[#00376b]">
+              <Link2 className="h-4 w-4 -rotate-45" />
+              {page.link.replace(/^https?:\/\/(www\.)?/, '')}
+            </p>
+          )}
 
           {editing ? (
             <div className="space-y-2 px-4 pt-3">
               <input value={draft.handle} onChange={(e) => setDraft({ ...draft, handle: e.target.value.replace(/^@/, '') })} placeholder="Username" className={field} />
               <input value={draft.name ?? ''} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Name" className={field} />
               <textarea value={draft.bio ?? ''} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} placeholder="Bio" rows={3} className={cn(field, 'resize-none')} />
-              <div className="grid grid-cols-2 gap-2">
-                <input value={draft.followers ?? ''} onChange={(e) => setDraft({ ...draft, followers: e.target.value })} inputMode="numeric" placeholder="Followers" className={field} />
+              <input value={draft.link ?? ''} onChange={(e) => setDraft({ ...draft, link: e.target.value })} placeholder="Link (etlongevity.com)" className={field} />
+              <div className="grid grid-cols-3 gap-2">
+                <input value={draft.posts ?? ''} onChange={(e) => setDraft({ ...draft, posts: e.target.value })} inputMode="numeric" placeholder="Posts" className={field} />
+                <input value={draft.followers ?? ''} onChange={(e) => setDraft({ ...draft, followers: e.target.value })} placeholder="Followers" className={field} />
                 <input value={draft.following ?? ''} onChange={(e) => setDraft({ ...draft, following: e.target.value })} inputMode="numeric" placeholder="Following" className={field} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setEditing(false)} className="h-8 rounded-[8px] bg-[#efefef] text-[14px] font-semibold">
                   Cancel
                 </button>
-                <button type="button" onClick={() => (save({ ...page, ...draft, live: page.live, avatar: page.avatar }), setEditing(false))} className="h-8 rounded-[8px] bg-[#0095f6] text-[14px] font-semibold text-white">
+                <button type="button" onClick={() => (save({ ...page, ...draft, live: page.live, avatar: page.avatar }), setEditing(false))} className="h-8 rounded-[8px] bg-[#4a5df9] text-[14px] font-semibold text-white">
                   Save
                 </button>
               </div>
@@ -882,7 +910,7 @@ function GridTab({
               <Grid3x3 className="h-6 w-6" strokeWidth={1.8} />
             </span>
             <span className="flex h-11 items-center justify-center text-[#737373]">
-              <Clapperboard className="h-6 w-6" strokeWidth={1.8} />
+              <SquarePlay className="h-6 w-6" strokeWidth={1.8} />
             </span>
             <span className="flex h-11 items-center justify-center text-[#737373]">
               <SquareUser className="h-6 w-6" strokeWidth={1.8} />
@@ -890,13 +918,22 @@ function GridTab({
           </div>
 
           {/* Grid: newest top-left, 3 across, Instagram's 3:4 tiles */}
-          <div className="grid grid-cols-3 gap-px bg-white">
+          <div className="relative grid grid-cols-3 gap-px bg-white">
+            <button
+              type="button"
+              onClick={() => setAdding('choose')}
+              disabled={busy > 0}
+              className="flex aspect-[3/4] flex-col items-center justify-center gap-1 bg-[#fafafa] text-[13px] font-semibold text-ink/55 outline-dashed outline-2 -outline-offset-4 outline-black/15"
+            >
+              {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-7 w-7" strokeWidth={1.8} />}
+              New post
+            </button>
             {[...planned, ...posted].map((i) => {
               const m = media(i);
               return (
                 <button key={i.id} type="button" onClick={() => open(i)} className={cn('relative aspect-[3/4] overflow-hidden', !isFinished(i.status) && 'ring-2 ring-inset ring-butter-deep')}>
                   <GridTile file={m} alt={i.title} />
-                  {m?.type.startsWith('video/') && <Clapperboard className="absolute right-1.5 top-1.5 h-4 w-4 text-white drop-shadow" />}
+                  {m?.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
                   {!isFinished(i.status) && (
                     <span className="absolute bottom-1.5 left-1.5 rounded-[5px] bg-butter px-1.5 py-[3px] text-[10px] font-bold leading-none text-ink shadow-sm">
                       {i.due ? shortDay(i.due) : 'No date'}
@@ -908,7 +945,7 @@ function GridTab({
             {page.live.map((f, n) => (
               <div key={f.path} className="relative aspect-[3/4] overflow-hidden">
                 <GridTile file={f} alt="Live post" />
-                {f.type.startsWith('video/') && <Clapperboard className="absolute right-1.5 top-1.5 h-4 w-4 text-white drop-shadow" />}
+                {f.type.startsWith('video/') && <SquarePlay className="absolute right-1.5 top-1.5 h-[18px] w-[18px] fill-white/90 text-black/70 drop-shadow" />}
                 {arrange && (
                   <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1">
                     <button type="button" aria-label="Move earlier" onClick={() => move(n, -1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
@@ -925,6 +962,49 @@ function GridTab({
               </div>
             ))}
           </div>
+          {adding && (
+            <div className="border-t border-[#dbdbdb] bg-white p-4">
+              {adding === 'choose' ? (
+                <div className="space-y-2">
+                  <p className="text-center text-[15px] font-semibold">New post for @{handle}</p>
+                  <button type="button" onClick={() => newInput.current?.click()} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-butter text-[15px] font-semibold">
+                    <Upload className="h-4 w-4" /> Upload a photo or video
+                  </button>
+                  <button type="button" onClick={() => setAdding('pick')} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#efefef] text-[15px] font-semibold">
+                    <Images className="h-4 w-4" /> Use one already in the studio
+                  </button>
+                  <button type="button" onClick={() => startPost([])} className="h-10 w-full text-[14px] font-semibold text-ink/55">
+                    Plan it without a picture yet
+                  </button>
+                  <button type="button" onClick={() => setAdding(null)} className="h-9 w-full text-[14px] text-ink/40">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex items-center justify-between">
+                    <button type="button" onClick={() => setAdding('choose')} className="text-[14px] font-semibold text-ink/55">
+                      ‹ Back
+                    </button>
+                    <p className="text-[15px] font-semibold">Pick a picture</p>
+                    <span className="w-10" />
+                  </div>
+                  {library.length === 0 ? (
+                    <p className="py-6 text-center text-[14px] text-ink/45">Nothing uploaded yet. Add pictures in Inspo or upload one.</p>
+                  ) : (
+                    <div className="grid max-h-[360px] grid-cols-4 gap-1 overflow-y-auto">
+                      {library.map((f) => (
+                        <button key={f.path} type="button" onClick={() => newFromLibrary(f)} className="aspect-square overflow-hidden rounded-[4px] bg-[#efefef]">
+                          <GridTile file={f} alt={f.name} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          <input ref={newInput} type="file" accept="image/*,video/*" hidden onChange={(e) => (newFromUpload(e.target.files), (e.target.value = ''))} />
           {total === 0 && <p className="px-6 py-10 text-center text-[14px] text-[#737373]">No posts yet. Add the posts already on the page, then plan new ones.</p>}
         </div>
 
@@ -938,8 +1018,8 @@ function GridTab({
               { value: 'hair', label: 'Hair & Esthetics' },
             ]}
           />
-          <button type="button" onClick={() => create({ kind: 'post', brand })} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-butter text-[15px] font-semibold">
-            <Plus className="h-4 w-4" /> Plan a post
+          <button type="button" onClick={() => setAdding('choose')} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-butter text-[15px] font-semibold">
+            <Plus className="h-4 w-4" /> New post
           </button>
           <button type="button" onClick={() => liveInput.current?.click()} disabled={busy > 0} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-white text-[15px] font-semibold ring-1 ring-black/[0.06] disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Add posts already live'}
@@ -963,6 +1043,7 @@ function GridTab({
             }}
           />
           <ul className="space-y-1.5 px-1 text-[13px] leading-snug text-ink/50">
+            <li>New post: upload a picture, or reuse one already in the studio. It opens so you can add the caption and post date.</li>
             <li>Yellow outline and date = planned. Tap a post to open it.</li>
             <li>To reorder planned posts, change their post date.</li>
             <li>Tiles show a picture once the image or video itself is uploaded to the post (a Drive link alone shows the title).</li>

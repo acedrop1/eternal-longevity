@@ -206,6 +206,21 @@ export async function studioUploadSlot(itemId: string, name: string): Promise<Re
   });
 }
 
+/** Reuse a picture already in the studio on a new item: copied into that item's own folder. */
+export async function studioCopyFile(from: StudioFile, toItemId: string): Promise<Result<StudioFile>> {
+  return run(async () => {
+    await requireStudio();
+    if (!studioLive()) throw new Error('Copying works on the live site, not this local copy.');
+    if (!/^[\w-]{8,64}$/.test(toItemId) || !/^[\w-]{3,64}\/[\w.-]{1,160}$/.test(String(from?.path))) throw new Error('Bad file.');
+    const path = `${toItemId}/${Date.now()}-${from.path.split('/')[1].replace(/^\d+-/, '')}`;
+    const store = createSupabaseAdminClient().storage.from(BUCKET);
+    const { error } = await store.copy(from.path, path);
+    if (error) throw new Error(error.message);
+    const { data } = await store.createSignedUrl(path, 12 * 60 * 60);
+    return { path, name: String(from.name ?? '').slice(0, 200), type: String(from.type ?? '').slice(0, 100), size: Number(from.size) || 0, url: data?.signedUrl };
+  });
+}
+
 /** Signed read links for files just uploaded. */
 export async function studioFileUrls(paths: string[]): Promise<Result<Record<string, string>>> {
   return run(async () => {
@@ -255,6 +270,8 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
       live,
       name: t(page.name, 60),
       bio: t(page.bio, 300),
+      link: t(page.link, 100),
+      posts: t(page.posts, 12),
       followers: t(page.followers, 12),
       following: t(page.following, 12),
       avatar: ours(page.avatar) ? file(page.avatar) : null,

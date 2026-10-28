@@ -93,6 +93,9 @@ export interface GridPage {
   live: StudioFile[];
   name?: string;
   bio?: string;
+  link?: string;
+  /** Posts already on the page, as Instagram shows it. */
+  posts?: string;
   followers?: string;
   following?: string;
   avatar?: StudioFile | null;
