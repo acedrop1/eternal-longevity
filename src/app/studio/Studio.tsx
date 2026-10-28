@@ -395,7 +395,12 @@ function TodayTab({
 
       <div className="lg:grid lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8">
         <section className="px-4 pb-6 lg:sticky lg:top-8 lg:px-0">
-          <div className="flex items-center gap-5 rounded-[22px] bg-white p-5 lg:flex-col lg:items-stretch lg:text-center">
+          <button
+            type="button"
+            disabled={!posts && !stories}
+            onClick={() => document.getElementById('done-today')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex w-full items-center gap-5 rounded-[22px] bg-white p-5 text-left transition-shadow enabled:hover:shadow-[0_6px_20px_-12px_rgba(17,17,17,0.35)] lg:flex-col lg:items-stretch lg:text-center"
+          >
             <svg viewBox="0 0 120 120" className="h-[112px] w-[112px] shrink-0 lg:mx-auto lg:h-[160px] lg:w-[160px]" role="img" aria-label={`${posts} of ${settings.targets.posts} posts, ${stories} of ${settings.targets.stories} stories posted today`}>
               <Ring value={posts} goal={settings.targets.posts} r={50} color="#E6C54F" />
               <Ring value={stories} goal={settings.targets.stories} r={34} color="#111111" />
@@ -412,8 +417,9 @@ function TodayTab({
                 <span className="text-[16px] text-ink/30">/{settings.targets.stories}</span>
                 <span className="ml-1.5 text-[14px] font-semibold text-ink/50">stories</span>
               </p>
+              {(posts > 0 || stories > 0) && <p className="text-[13px] font-semibold text-ink/45 underline decoration-butter-deep decoration-2 underline-offset-2">See what was posted</p>}
             </div>
-          </div>
+          </button>
           {manager ? (
             <TeamProgress items={items} users={settings.users} />
           ) : (
@@ -461,9 +467,11 @@ function TodayTab({
             </Group>
           )}
           {finishedToday.length > 0 && (
-            <Group title="Done today" count={finishedToday.length}>
-              {finishedToday.map((i) => row(i))}
-            </Group>
+            <div id="done-today" className="scroll-mt-20">
+              <Group title="Done today" count={finishedToday.length}>
+                {finishedToday.map((i) => row(i))}
+              </Group>
+            </div>
           )}
           <div className="px-4 pb-4 lg:px-0">
             <button type="button" onClick={() => go('tasks')} className="h-11 w-full rounded-[12px] text-[15px] font-semibold text-ink/50 hover:bg-black/[0.03]">
