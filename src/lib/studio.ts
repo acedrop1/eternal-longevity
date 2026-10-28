@@ -50,7 +50,7 @@ const SETTINGS_KEY = 'studio:settings';
  */
 
 type StoredUser = Omit<StudioUser, 'hasCode'> & { hash?: string; salt?: string; ver: number };
-type Stored = { users: StoredUser[]; targets: StudioSettings['targets']; guide: GuideSection[]; grid: StudioSettings['grid'] };
+type Stored = { users: StoredUser[]; targets: StudioSettings['targets']; guide: GuideSection[] };
 
 function signingKey(): string | null {
   const code = process.env.STUDIO_CODE?.trim();
@@ -88,7 +88,7 @@ function publicSettings(s: Stored): StudioSettings {
     users: s.users.map(publicUser),
     targets: s.targets,
     guide: s.guide,
-    grid: s.grid,
+    grid: DEFAULT_GRID,
   };
 }
 
@@ -106,7 +106,7 @@ function normalise(raw: unknown): Stored {
       lastLogin: null,
       ver: 0,
     }));
-  return { users, targets: r.targets ?? DEFAULT_TARGETS, guide: r.guide ?? [], grid: { ...DEFAULT_GRID, ...r.grid } };
+  return { users, targets: r.targets ?? DEFAULT_TARGETS, guide: r.guide ?? [] };
 }
 
 /** Who a code belongs to, or null. */
@@ -235,6 +235,22 @@ export async function loadStored(): Promise<Stored> {
   return normalise((data as { value?: unknown } | null)?.value);
 }
 
+/*
+ * The Grid's pages live in their own row: settings is rewritten on every sign-in
+ * and presence tick, and an older copy of the app would drop fields it doesn't know.
+ */
+const GRID_KEY = 'studio:grid';
+
+export async function loadGrid(): Promise<StudioSettings['grid']> {
+  if (!studioLive()) return { ...DEFAULT_GRID, ...(memory.get(GRID_KEY) as object) };
+  const { data } = await table().select('value').eq('key', GRID_KEY).maybeSingle();
+  return { ...DEFAULT_GRID, ...((data as { value?: object } | null)?.value ?? {}) };
+}
+
+export async function putGrid(grid: StudioSettings['grid']): Promise<void> {
+  await write(GRID_KEY, grid);
+}
+
 export async function putStored(s: Stored): Promise<StudioSettings> {
   await write(SETTINGS_KEY, s);
   return publicSettings(s);
@@ -271,7 +287,10 @@ export async function putNote(person: string, weekStart: string, text: string): 
 export async function loadStudio(withActivity = false): Promise<StudioData> {
   const rows = await readAll();
   const items = rows.filter((r) => r.key.startsWith(PREFIX)).map((r) => r.value as StudioItem);
-  const settings = await gridUrls(publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value)));
+  const settings = await gridUrls({
+    ...publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value)),
+    grid: { ...DEFAULT_GRID, ...(rows.find((r) => r.key === GRID_KEY)?.value as Partial<StudioSettings['grid']>) },
+  });
   const misses = await recordMisses(items, rows.find((r) => r.key === MISSES_KEY)?.value);
   const notes = Object.fromEntries(rows.filter((r) => r.key.startsWith(NOTE_PREFIX)).map((r) => [r.key.slice(NOTE_PREFIX.length), String(r.value ?? '')]));
   return {

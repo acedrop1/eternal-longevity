@@ -10,11 +10,13 @@ import {
   cleanItem,
   ensureBucket,
   getItem,
+  loadGrid,
   loadStored,
   logEvent,
   putNote,
   newCode,
   putItem,
+  putGrid,
   putStored,
   removeItem,
   requireAdmin,
@@ -257,7 +259,7 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
   return run(async () => {
     const user = await requireStudio();
     if (brand !== 'longevity' && brand !== 'hair') throw new Error('Bad page.');
-    const prev = await loadStored();
+    const grid = await loadGrid();
     const handle = String(page.handle ?? '').trim().replace(/^@/, '').slice(0, 30);
     if (handle && !/^[\w.]+$/.test(handle)) throw new Error('A handle is letters, numbers, dots and underscores only.');
     const ours = (f: unknown): f is StudioFile =>
@@ -277,8 +279,8 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
       avatar: ours(page.avatar) ? file(page.avatar) : null,
       order: (Array.isArray(page.order) ? page.order : []).filter((id) => typeof id === 'string' && /^[\w-]{8,64}$/.test(id)).slice(0, 200),
     };
-    await putStored({ ...prev, grid: { ...prev.grid, [brand]: next } });
-    if (live.length !== prev.grid[brand].live.length || handle !== prev.grid[brand].handle) {
+    await putGrid({ ...grid, [brand]: next });
+    if (live.length !== grid[brand].live.length || handle !== grid[brand].handle) {
       await logEvent({ by: user.name, action: `updated the ${handle ? '@' + handle : brand} grid`, detail: `${live.length} live posts` });
     }
     return next;

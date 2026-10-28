@@ -116,6 +116,8 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   const router = useRouter();
   const [items, setItems] = useState(initial.items);
   const [settings, setSettings] = useState(initial.settings);
+  // Settings saved elsewhere come back without the Grid (it has its own row); keep ours.
+  const takeSettings = (next: StudioSettings) => setSettings((s) => ({ ...next, grid: s.grid }));
   const [tab, setTab] = useState<Tab>('today');
   const [sheet, setSheet] = useState<{ item: StudioItem; isNew: boolean } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -282,7 +284,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
             <GridTab items={items} grid={settings.grid} open={open} create={create} onSaved={(b, g) => setSettings((s) => ({ ...s, grid: { ...s.grid, [b]: g } }))} />
           )}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
-          {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
+          {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={takeSettings} />}
           {tab === 'report' && manager && (
             <ReportTab
               items={items}
@@ -354,7 +356,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
       </Sheet>
 
       <Sheet open={settingsOpen} onClose={() => setSettingsOpen(false)} label="Settings">
-        <SettingsSheet settings={settings} me={me} onClose={() => setSettingsOpen(false)} onSettings={setSettings} onImported={() => router.refresh()} />
+        <SettingsSheet settings={settings} me={me} onClose={() => setSettingsOpen(false)} onSettings={takeSettings} onImported={() => router.refresh()} />
       </Sheet>
     </div>
   );
