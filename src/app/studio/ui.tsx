@@ -180,16 +180,21 @@ export function CheckCircle({ on, onToggle, label }: { on: boolean; onToggle: ()
 }
 
 /** One item in a list: check, what it is, the first line of what to do, then due, who and status. */
+/** What the assignee did since Adam or Mo last touched the item; 'none' when nothing yet. */
+export type RowUpdate = { by: string; when: string; summary: string[]; note?: string } | { none: string } | null;
+
 export function ItemRow({
   item,
   onOpen,
   onToggle,
   showStatus = true,
+  update = null,
 }: {
   item: StudioItem;
   onOpen: () => void;
   onToggle?: () => void;
   showStatus?: boolean;
+  update?: RowUpdate;
 }) {
   const today = todayET();
   const done = isFinished(item.status);
@@ -231,8 +236,33 @@ export function ItemRow({
           {item.comments.length > 0 && <span className="inline-flex items-center gap-0.5"><MessageCircle className="h-3.5 w-3.5" />{item.comments.length}</span>}
           {showStatus && item.status !== 'todo' && !done && <StatusPill status={item.status} />}
         </p>
+        {update && 'none' in update && <p className="mt-2 text-[13px] text-ink/40">○ No update from {update.none} yet</p>}
+        {update && 'by' in update && (
+          <div className="mt-2 rounded-[10px] bg-emerald-50 px-3 py-2 text-[13px] leading-snug">
+            <p>
+              <b className="font-semibold text-emerald-700">● {update.by} updated</b>
+              <span className="text-ink/45"> · {update.when}</span>
+            </p>
+            <p className="mt-0.5 text-ink/75">{update.summary.join(' · ')}</p>
+            {update.note && <p className="mt-0.5 line-clamp-2 text-ink/50">“{update.note}”</p>}
+            {item.files.some((f) => f.url) && (
+              <div className="mt-1.5 flex gap-1.5">
+                {item.files.filter((f) => f.url).slice(0, 5).map((f) =>
+                  f.type.startsWith('image/') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={f.path} src={f.url} alt={f.name} className="h-11 w-11 rounded-[6px] object-cover" />
+                  ) : (
+                    <span key={f.path} className="grid h-11 w-11 place-items-center rounded-[6px] bg-black/[0.06] text-[10px] font-semibold uppercase text-ink/50">
+                      {f.type.startsWith('video/') ? 'Video' : 'File'}
+                    </span>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      {thumb && (
+      {thumb && !(update && 'by' in update) && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={thumb.url} alt="" className="h-12 w-12 shrink-0 rounded-[8px] object-cover" />
       )}

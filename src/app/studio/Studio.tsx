@@ -58,7 +58,7 @@ import {
   type StudioUser,
 } from '@/lib/studio-types';
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
-import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, StatusPill, dayLabel } from './ui';
+import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, StatusPill, dayLabel, type RowUpdate } from './ui';
 
 type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity' | 'report';
 type BrandFilter = 'all' | Brand;
@@ -158,8 +158,26 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
     upsert(r.ok ? r.data : item);
   };
 
+  // For Adam and Mo: under each task, what the other person did since you last touched it.
+  const updateOf = (i: StudioItem): RowUpdate => {
+    if (!manager || i.kind === 'inspo') return null;
+    const evs = initial.activity.filter((e) => e.itemId === i.id);
+    const mine = evs.findIndex((e) => e.by === me.name);
+    const fresh = (mine === -1 ? evs : evs.slice(0, mine)).filter((e) => e.by !== me.name);
+    if (fresh.length) {
+      const at = fresh[0].at;
+      return {
+        by: [...new Set(fresh.map((e) => e.by))].join(' & '),
+        when: `${dayLabel(todayET(new Date(at)))} ${timeET(at)}`,
+        summary: rollUp(fresh),
+        note: fresh.find((e) => /^left a note/.test(e.action))?.detail,
+      };
+    }
+    return i.assignee && i.assignee !== me.name && !isFinished(i.status) ? { none: i.assignee } : null;
+  };
+
   const row = (i: StudioItem, opts: { check?: boolean; status?: boolean } = {}) => (
-    <ItemRow key={i.id} item={i} onOpen={() => open(i)} onToggle={opts.check === false ? undefined : () => toggle(i)} showStatus={opts.status} />
+    <ItemRow key={i.id} item={i} onOpen={() => open(i)} onToggle={opts.check === false ? undefined : () => toggle(i)} showStatus={opts.status} update={updateOf(i)} />
   );
 
   // Adam and Mo issue tasks; content adds their own posts, stories and inspo.
