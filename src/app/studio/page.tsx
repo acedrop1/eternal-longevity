@@ -5,9 +5,7 @@ import { Studio } from './Studio';
 export const dynamic = 'force-dynamic';
 
 export default async function StudioPage() {
-  const session = await studioSession();
-  if (!session.ok) return <Lock configured={studioConfigured()} />;
-  const data = await loadStudio();
-  const who = session.who && data.settings.people.includes(session.who) ? session.who : null;
-  return <Studio initial={data} who={who} />;
+  const { user } = await studioSession();
+  if (!user) return <Lock configured={studioConfigured()} />;
+  return <Studio initial={await loadStudio()} me={user} />;
 }

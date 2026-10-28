@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronRight, Flag } from 'lucide-react';
+import { Check, ChevronRight, Flag, MessageCircle, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   BRAND_LABEL,
+  KIND_LABEL,
   STATUS_LABEL,
   isFinished,
   todayET,
@@ -21,6 +22,19 @@ export const BRAND_COLOR: Record<Brand, string> = {
   hair: '#CFC4F6',
   both: 'linear-gradient(135deg, #F7DD74 50%, #CFC4F6 50%)',
 };
+
+/** True on a computer-sized screen (the sidebar layout). */
+export function useWide(): boolean {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia('(min-width: 1024px)');
+    const on = () => setWide(q.matches);
+    on();
+    q.addEventListener('change', on);
+    return () => q.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
 
 export function BrandDot({ brand, className }: { brand: Brand; className?: string }) {
   return (
@@ -45,27 +59,33 @@ const STATUS_TONE: Record<Status, string> = {
 
 export function StatusPill({ status }: { status: Status }) {
   return (
-    <span className={cn('inline-flex h-[22px] items-center rounded-full px-2 text-[12px] font-semibold', STATUS_TONE[status])}>
+    <span className={cn('inline-flex h-[22px] shrink-0 items-center rounded-full px-2 text-[12px] font-semibold normal-case tracking-normal', STATUS_TONE[status])}>
       {STATUS_LABEL[status]}
     </span>
   );
 }
 
-export function LargeTitle({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: ReactNode }) {
+export function LargeTitle({ eyebrow, title, sub, children }: { eyebrow?: string; title: string; sub?: string; children?: ReactNode }) {
   return (
-    <header className="px-5 pb-3 pt-2">
+    <header className="px-5 pb-4 pt-2 lg:px-0 lg:pb-6 lg:pt-8">
       {eyebrow && <p className="text-[13px] font-semibold uppercase tracking-[0.04em] text-ink/40">{eyebrow}</p>}
       <div className="flex items-end justify-between gap-3">
-        <h1 className="text-[34px] font-bold leading-[1.1] tracking-[-0.025em]">{title}</h1>
+        <h1 className="text-[34px] font-bold leading-[1.1] tracking-[-0.025em] lg:text-[40px]">{title}</h1>
         {children}
       </div>
+      {sub && <p className="mt-1.5 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">{sub}</p>}
     </header>
   );
 }
 
+/** Groups flow into two columns on a computer. */
+export function Columns({ children }: { children: ReactNode }) {
+  return <div className="lg:columns-2 lg:gap-6">{children}</div>;
+}
+
 export function Group({ title, count, children, footer }: { title?: string; count?: number; children: ReactNode; footer?: string }) {
   return (
-    <section className="px-4 pb-6">
+    <section className="break-inside-avoid px-4 pb-6 lg:px-0">
       {title && (
         <h2 className="flex items-center gap-2 px-4 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.04em] text-ink/45">
           {title}
@@ -82,7 +102,7 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="px-4 py-5 text-center text-[15px] text-ink/40">{children}</p>;
 }
 
-/** "Oct 28", "Today", "Tomorrow", "Yesterday". */
+/** "Today", "Tomorrow", "Yesterday", "Friday", "Nov 8". */
 export function dayLabel(d: string, today = todayET()): string {
   const diff = Math.round((Date.parse(d) - Date.parse(today)) / 86_400_000);
   if (diff === 0) return 'Today';
@@ -91,6 +111,9 @@ export function dayLabel(d: string, today = todayET()): string {
   const date = new Date(`${d}T12:00:00`);
   return date.toLocaleDateString('en-US', diff > 1 && diff < 7 ? { weekday: 'long' } : { month: 'short', day: 'numeric' });
 }
+
+/** "Thu, Oct 29". */
+export const longDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 export function CheckCircle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
   return (
@@ -107,7 +130,7 @@ export function CheckCircle({ on, onToggle, label }: { on: boolean; onToggle: ()
       <span
         className={cn(
           'grid h-[24px] w-[24px] place-items-center rounded-full transition-all',
-          on ? 'bg-butter-deep text-ink' : 'ring-[1.5px] ring-ink/25',
+          on ? 'bg-butter-deep text-ink' : 'ring-[1.5px] ring-ink/25 hover:ring-ink/50',
         )}
       >
         {on && <Check className="h-[15px] w-[15px]" strokeWidth={3} />}
@@ -116,7 +139,7 @@ export function CheckCircle({ on, onToggle, label }: { on: boolean; onToggle: ()
   );
 }
 
-/** One item in a list: check, title, the facts that matter, chevron. */
+/** One item in a list: check, what it is, the first line of what to do, then due, who and status. */
 export function ItemRow({
   item,
   onOpen,
@@ -132,34 +155,48 @@ export function ItemRow({
   const done = isFinished(item.status);
   const late = !!item.due && item.due < today && !done;
   const thumb = item.files.find((f) => f.url && f.type.startsWith('image/'));
+  const brief = item.notes.split('\n').find((l) => l.trim())?.trim();
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onOpen())}
-      className="group flex min-h-[60px] w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors active:bg-black/[0.03] [&+&]:border-t [&+&]:border-black/[0.06]"
+      className="group flex min-h-[64px] w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[0.015] active:bg-black/[0.03] [&+&]:border-t [&+&]:border-black/[0.06]"
     >
-      {onToggle && <CheckCircle on={done} onToggle={onToggle} label={item.title} />}
+      {onToggle && (
+        <span className="pt-0.5">
+          <CheckCircle on={done} onToggle={onToggle} label={item.title} />
+        </span>
+      )}
       <div className="min-w-0 flex-1">
-        <p className={cn('line-clamp-2 text-[16px] leading-snug', done && 'text-ink/35 line-through')}>
+        <p className={cn('line-clamp-2 text-[16px] font-medium leading-snug', done && 'text-ink/35 line-through')}>
           {item.flagged && !done && <Flag className="mr-1 inline h-3.5 w-3.5 -translate-y-px fill-orange-500 text-orange-500" />}
           {item.title}
         </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink/45">
-          <BrandDot brand={item.brand} />
-          {item.due && <span className={cn(late && 'font-semibold text-red-600')}>{dayLabel(item.due, today)}</span>}
-          {item.assignee && <span>{item.assignee}</span>}
-          {(item.files.length > 0 || item.links.length > 0) && <span>{item.files.length + item.links.length} attached</span>}
-          {item.comments.length > 0 && <span>{item.comments.length} {item.comments.length === 1 ? 'note' : 'notes'}</span>}
+        {brief && !done && <p className="mt-0.5 line-clamp-1 text-[14px] leading-snug text-ink/55">{brief}</p>}
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-ink/45">
+          <span className="inline-flex items-center gap-1.5">
+            <BrandDot brand={item.brand} />
+            {KIND_LABEL[item.kind]}
+          </span>
+          {item.due && (
+            <span className={cn(late && 'font-semibold text-red-600')}>
+              {late ? 'Late · ' : 'Due '}
+              {dayLabel(item.due, today)}
+            </span>
+          )}
+          {item.assignee && <span>for {item.assignee}</span>}
+          {(item.files.length > 0 || item.links.length > 0) && <span className="inline-flex items-center gap-0.5"><Paperclip className="h-3.5 w-3.5" />{item.files.length + item.links.length}</span>}
+          {item.comments.length > 0 && <span className="inline-flex items-center gap-0.5"><MessageCircle className="h-3.5 w-3.5" />{item.comments.length}</span>}
           {showStatus && item.status !== 'todo' && !done && <StatusPill status={item.status} />}
         </p>
       </div>
       {thumb && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={thumb.url} alt="" className="h-11 w-11 shrink-0 rounded-[8px] object-cover" />
+        <img src={thumb.url} alt="" className="h-12 w-12 shrink-0 rounded-[8px] object-cover" />
       )}
-      <ChevronRight className="h-4 w-4 shrink-0 text-ink/25" />
+      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink/25" />
     </div>
   );
 }
@@ -186,7 +223,7 @@ export function Segmented<T extends string>({
           onClick={() => onChange(o.value)}
           className={cn(
             'min-h-[32px] flex-1 rounded-[8px] px-2 text-[13px] font-semibold transition-all',
-            o.value === value ? 'bg-white text-ink shadow-[0_2px_6px_rgba(17,17,17,0.12)]' : 'text-ink/55',
+            o.value === value ? 'bg-white text-ink shadow-[0_2px_6px_rgba(17,17,17,0.12)]' : 'text-ink/55 hover:text-ink',
           )}
         >
           {o.label}
@@ -206,7 +243,7 @@ export function Chips<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="scrollbar-hide -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+    <div className="scrollbar-hide -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
       {options.map((o) => (
         <button
           key={o.value}
@@ -215,7 +252,7 @@ export function Chips<T extends string>({
           onClick={() => onChange(o.value)}
           className={cn(
             'inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-semibold transition-colors',
-            o.value === value ? 'bg-ink text-white' : 'bg-white text-ink/70 ring-1 ring-black/[0.06]',
+            o.value === value ? 'bg-ink text-white' : 'bg-white text-ink/70 ring-1 ring-black/[0.06] hover:text-ink',
           )}
         >
           {o.dot && <BrandDot brand={o.dot} className="h-2 w-2" />}
@@ -244,8 +281,9 @@ export function Linkified({ text, className }: { text: string; className?: strin
   );
 }
 
-/** A card that slides up from the bottom (full height on a phone, centred on a computer). */
+/** Slides up from the bottom on a phone; a panel from the right on a computer. */
 export function Sheet({ open, onClose, children, label }: { open: boolean; onClose: () => void; children: ReactNode; label: string }) {
+  const wide = useWide();
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -258,10 +296,11 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
     };
   }, [open, onClose]);
 
+  const hidden = wide ? { x: '100%' } : { y: '100%' };
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={label}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-stretch lg:justify-end" role="dialog" aria-modal="true" aria-label={label}>
           <motion.div
             className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
@@ -270,10 +309,10 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
             onClick={onClose}
           />
           <motion.div
-            className="relative flex max-h-[calc(100dvh-env(safe-area-inset-top)-12px)] w-full flex-col overflow-hidden rounded-t-[22px] bg-milk shadow-[0_-12px_40px_-12px_rgba(17,17,17,0.35)] sm:max-h-[88dvh] sm:max-w-[560px] sm:rounded-[22px]"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            className="relative flex max-h-[calc(100dvh-env(safe-area-inset-top)-12px)] w-full flex-col overflow-hidden rounded-t-[22px] bg-milk shadow-[0_-12px_40px_-12px_rgba(17,17,17,0.35)] sm:max-w-[600px] lg:h-full lg:max-h-none lg:max-w-[600px] lg:rounded-none lg:rounded-l-[22px]"
+            initial={hidden}
+            animate={{ x: 0, y: 0 }}
+            exit={hidden}
             transition={{ type: 'spring', damping: 34, stiffness: 380 }}
           >
             {children}
@@ -300,7 +339,7 @@ export function BarButton({ children, onClick, bold, disabled }: { children: Rea
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={cn('relative z-10 min-h-[44px] rounded-full px-3 text-[17px] text-ink disabled:opacity-30', bold && 'font-semibold')}
+      className={cn('relative z-10 min-h-[44px] rounded-full px-3 text-[17px] text-ink hover:bg-black/[0.04] disabled:opacity-30', bold && 'font-semibold')}
     >
       {children}
     </button>

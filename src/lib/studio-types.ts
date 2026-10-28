@@ -61,8 +61,32 @@ export interface GuideSection {
   body: string;
 }
 
+export type Role = 'admin' | 'manager' | 'member';
+
+export const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', manager: 'Manager', member: 'Content' };
+
+/** Admins and managers issue and approve work; members (content) do it. */
+export const canAssign = (role: Role) => role !== 'member';
+
+/** What a member may add themselves: their own content ideas and references. */
+export const MEMBER_KINDS: Kind[] = ['post', 'story', 'inspo'];
+/** Verdicts only a manager gives. */
+export const VERDICTS: Status[] = ['approved', 'changes'];
+
+/** A teammate as the browser sees them: never their code. */
+export interface StudioUser {
+  id: string;
+  name: string;
+  role: Role;
+  active: boolean;
+  hasCode: boolean;
+  lastLogin: string | null;
+}
+
 export interface StudioSettings {
+  /** Names of active teammates, for the "Who" picker. */
   people: string[];
+  users: StudioUser[];
   targets: { posts: number; stories: number };
   guide: GuideSection[];
 }
@@ -74,11 +98,7 @@ export interface StudioData {
   live: boolean;
 }
 
-export const DEFAULT_SETTINGS: StudioSettings = {
-  people: ['Adam', 'Jacob', 'Mo'],
-  targets: { posts: 4, stories: 4 },
-  guide: [],
-};
+export const DEFAULT_TARGETS = { posts: 4, stories: 4 };
 
 export const KIND_LABEL: Record<Kind, string> = {
   task: 'Task',

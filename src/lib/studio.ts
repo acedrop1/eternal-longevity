@@ -1,27 +1,28 @@
 import 'server-only';
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import {
   BRANDS,
-  DEFAULT_SETTINGS,
+  DEFAULT_TARGETS,
   KINDS,
   PLATFORMS,
   STATUSES,
+  type GuideSection,
   type StudioData,
   type StudioFile,
   type StudioItem,
   type StudioLink,
   type StudioSettings,
+  type StudioUser,
   todayET,
 } from '@/lib/studio-types';
 
 /*
  * The content studio's gate and store.
  *
- * Gate: one team code, STUDIO_CODE (a Vercel env var, like SITE_PASSWORD).
- * Entering it sets a signed cookie good for 24 hours; changing the code signs
- * everyone out. No code set = nobody gets in.
+ * Gate: a personal code per teammate (below). A code sets a signed cookie
+ * good for 24 hours. No STUDIO_CODE set = nobody gets in.
  *
  * Store: one `site_settings` row per item (key studio:item:<id>) plus
  * studio:settings. Service role only, so every read and write goes through
@@ -32,18 +33,28 @@ import {
  */
 
 export const SESSION_COOKIE = 'el_studio';
-export const WHO_COOKIE = 'el_studio_who';
 export const SESSION_SECONDS = 24 * 60 * 60;
 export const BUCKET = 'studio';
 const PREFIX = 'studio:item:';
 const SETTINGS_KEY = 'studio:settings';
 
-function secret(): string | null {
+/*
+ * Logins: every teammate has their own code, issued by an admin from
+ * Settings → Team and stored only as a salted scrypt hash. STUDIO_CODE (the
+ * Vercel env var) is the owner's code and always signs in as the first admin,
+ * so the owner can never be locked out. The cookie names the person and their
+ * code version: issuing a new code or switching someone off signs them out.
+ */
+
+type StoredUser = Omit<StudioUser, 'hasCode'> & { hash?: string; salt?: string; ver: number };
+type Stored = { users: StoredUser[]; targets: StudioSettings['targets']; guide: GuideSection[] };
+
+function signingKey(): string | null {
   const code = process.env.STUDIO_CODE?.trim();
   return code ? createHash('sha256').update(`el-studio:${code}`).digest('hex') : null;
 }
 
-const sign = (exp: number, key: string) => createHmac('sha256', key).update(String(exp)).digest('hex');
+const sign = (payload: string, key: string) => createHmac('sha256', key).update(payload).digest('hex');
 
 function same(a: string, b: string): boolean {
   const x = Buffer.from(a);
@@ -52,34 +63,85 @@ function same(a: string, b: string): boolean {
 }
 
 export function studioConfigured(): boolean {
-  return secret() !== null;
+  return signingKey() !== null;
 }
 
-export function codeMatches(code: string): boolean {
-  const want = process.env.STUDIO_CODE?.trim();
-  if (!want) return false;
-  const h = (s: string) => createHash('sha256').update(s).digest('hex');
-  return same(h(code.trim()), h(want));
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I
+const normal = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+const hashCode = (code: string, salt: string) => scryptSync(normal(code), salt, 32).toString('hex');
+
+/** A fresh code like 7KQM-29XR (32^8, about a trillion). */
+export function newCode(): { code: string; hash: string; salt: string } {
+  const raw = Array.from({ length: 8 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('');
+  const salt = randomBytes(16).toString('hex');
+  return { code: `${raw.slice(0, 4)}-${raw.slice(4)}`, hash: hashCode(raw, salt), salt };
 }
 
-export function sessionValue(): string {
-  const key = secret()!;
+export const publicUser = ({ hash, salt, ver, ...u }: StoredUser): StudioUser => (void salt, void ver, { ...u, hasCode: !!hash });
+
+function publicSettings(s: Stored): StudioSettings {
+  return {
+    people: s.users.filter((u) => u.active).map((u) => u.name),
+    users: s.users.map(publicUser),
+    targets: s.targets,
+    guide: s.guide,
+  };
+}
+
+/** Settings as stored, with the old name list (before logins) turned into users. */
+function normalise(raw: unknown): Stored {
+  const r = (raw ?? {}) as Partial<Stored> & { people?: string[] };
+  const users: StoredUser[] =
+    r.users ??
+    (r.people ?? ['Adam', 'Jacob', 'Mo']).map((name, i) => ({
+      // Stable until first saved, so a sign-in cookie still matches after the list is written.
+      id: `u-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name,
+      role: i === 0 ? 'admin' : name === 'Mo' ? 'manager' : 'member',
+      active: true,
+      lastLogin: null,
+      ver: 0,
+    }));
+  return { users, targets: r.targets ?? DEFAULT_TARGETS, guide: r.guide ?? [] };
+}
+
+/** Who a code belongs to, or null. */
+export async function userForCode(code: string): Promise<StoredUser | null> {
+  const s = await loadStored();
+  const owner = process.env.STUDIO_CODE?.trim();
+  const h = (v: string) => createHash('sha256').update(v).digest('hex');
+  if (owner && same(h(code.trim()), h(owner))) return s.users.find((u) => u.active && u.role === 'admin') ?? null;
+  if (normal(code).length !== 8) return null;
+  return s.users.find((u) => u.active && u.hash && u.salt && same(hashCode(code, u.salt), u.hash)) ?? null;
+}
+
+export function sessionValue(u: StoredUser): string {
   const exp = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  return `${exp}.${sign(exp, key)}`;
+  const payload = `${exp}.${u.id}.${u.ver}`;
+  return `${payload}.${sign(payload, signingKey()!)}`;
 }
 
-export async function studioSession(): Promise<{ ok: boolean; who: string | null }> {
-  const jar = await cookies();
-  const key = secret();
-  const [exp, sig] = (jar.get(SESSION_COOKIE)?.value ?? '').split('.');
-  const ok = !!key && !!sig && Number(exp) > Date.now() / 1000 && same(sig, sign(Number(exp), key));
-  return { ok, who: ok ? (jar.get(WHO_COOKIE)?.value ?? null) : null };
+export async function studioSession(): Promise<{ ok: boolean; user: StudioUser | null }> {
+  const key = signingKey();
+  const [exp, id, ver, sig] = ((await cookies()).get(SESSION_COOKIE)?.value ?? '').split('.');
+  if (!key || !sig || !(Number(exp) > Date.now() / 1000) || !same(sig, sign(`${exp}.${id}.${ver}`, key))) {
+    return { ok: false, user: null };
+  }
+  const u = (await loadStored()).users.find((x) => x.id === id);
+  if (!u || !u.active || String(u.ver) !== ver) return { ok: false, user: null };
+  return { ok: true, user: publicUser(u) };
 }
 
-export async function requireStudio(): Promise<string> {
+export async function requireStudio(): Promise<StudioUser> {
   const s = await studioSession();
-  if (!s.ok) throw new Error('Your studio session ended. Enter the code again.');
-  return s.who ?? 'Team';
+  if (!s.user) throw new Error('Your studio session ended. Enter your code again.');
+  return s.user;
+}
+
+export async function requireAdmin(): Promise<StudioUser> {
+  const u = await requireStudio();
+  if (u.role !== 'admin') throw new Error('Only an admin can do that.');
+  return u;
 }
 
 /* ---------- store ---------- */
@@ -122,19 +184,27 @@ export async function putItem(item: StudioItem): Promise<void> {
   await write(PREFIX + item.id, item);
 }
 
-export async function putSettings(s: StudioSettings): Promise<void> {
+export async function loadStored(): Promise<Stored> {
+  if (!studioLive()) return normalise(memory.get(SETTINGS_KEY));
+  const { data, error } = await table().select('value').eq('key', SETTINGS_KEY).maybeSingle();
+  if (error) throw new Error(error.message);
+  return normalise((data as { value?: unknown } | null)?.value);
+}
+
+export async function putStored(s: Stored): Promise<StudioSettings> {
   await write(SETTINGS_KEY, s);
+  return publicSettings(s);
 }
 
 export async function loadStudio(): Promise<StudioData> {
   const rows = await readAll();
   const items = rows.filter((r) => r.key.startsWith(PREFIX)).map((r) => r.value as StudioItem);
-  const stored = rows.find((r) => r.key === SETTINGS_KEY)?.value as Partial<StudioSettings> | undefined;
-  return { items: await withUrls(items), settings: { ...DEFAULT_SETTINGS, ...stored }, live: studioLive() };
+  const settings = publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value));
+  return { items: await withUrls(items), settings, live: studioLive() };
 }
 
 export async function loadSettings(): Promise<StudioSettings> {
-  return (await loadStudio()).settings;
+  return publicSettings(await loadStored());
 }
 
 /* ---------- files ---------- */

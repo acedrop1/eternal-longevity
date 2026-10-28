@@ -31,7 +31,7 @@ export function Lock({ configured }: { configured: boolean }) {
         </span>
         <h1 className="text-[28px] font-bold tracking-[-0.02em]">Studio</h1>
         <p className="mt-1.5 text-[15px] text-ink-soft">
-          {configured ? 'Enter the team code. You stay signed in for 24 hours.' : 'The team code has not been set up yet.'}
+          {configured ? 'Enter your personal code. You stay signed in for 24 hours.' : 'The studio has not been set up yet.'}
         </p>
         {configured && (
           <form onSubmit={submit} className="mt-8">
@@ -43,9 +43,12 @@ export function Lock({ configured }: { configured: boolean }) {
               }}
               type="password"
               autoComplete="current-password"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               autoFocus
-              aria-label="Team code"
-              placeholder="Team code"
+              aria-label="Your code"
+              placeholder="Your code"
               className="h-[52px] w-full rounded-[14px] bg-white px-4 text-center text-[17px] tracking-[0.2em] outline-none ring-1 ring-black/[0.06] placeholder:tracking-normal placeholder:text-ink/30 focus:ring-2 focus:ring-butter-deep"
             />
             {error && (
