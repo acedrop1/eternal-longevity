@@ -71,7 +71,7 @@ const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
 const BRAND_CHIPS: { value: BrandFilter; label: string; dot?: Brand }[] = [
   { value: 'all', label: 'All' },
   { value: 'longevity', label: 'Longevity', dot: 'longevity' },
-  { value: 'hair', label: 'Hair', dot: 'hair' },
+  { value: 'hair', label: 'Hair & Esthetics', dot: 'hair' },
   { value: 'both', label: 'Collab', dot: 'both' },
 ];
 
@@ -536,7 +536,8 @@ function TasksTab({ items, people, crew, me, row }: { items: StudioItem[]; peopl
   // Adam and Mo land on the content person's list: what Jacob has to do, day by day.
   const [who, setWho] = useState<string>(canAssign(me.role) && crew ? crew : 'all');
   const today = todayET();
-  const mine = items.filter((i) => i.kind !== 'inspo' && (who === 'all' || i.assignee === who));
+  const [brand, setBrand] = useState<BrandFilter>('all');
+  const mine = items.filter((i) => i.kind !== 'inspo' && (who === 'all' || i.assignee === who) && (brand === 'all' || i.brand === brand));
   const list = mine;
 
   const groups = useMemo(() => {
@@ -554,9 +555,10 @@ function TasksTab({ items, people, crew, me, row }: { items: StudioItem[]; peopl
   return (
     <>
       <LargeTitle title="Tasks" sub={manager ? 'All work you and Mo have assigned (tasks, posts, stories, shoots), by when it’s due.' : 'Everything assigned to you, by when it’s due. Tap one to see exactly what to do.'} />
-      <div className="space-y-3 px-4 pb-5 lg:flex lg:items-center lg:gap-4 lg:space-y-0 lg:px-0">
+      <div className="space-y-3 px-4 pb-5 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-3 lg:space-y-0 lg:px-0">
         <Segmented className="lg:w-[260px]" value={view} onChange={setView} options={[{ value: 'open', label: 'To do' }, { value: 'done', label: 'Done (all work)' }]} />
         {manager && <Chips value={who} onChange={setWho} options={[{ value: 'all', label: 'Everyone' }, ...people.map((p) => ({ value: p, label: p }))]} />}
+        <Chips value={brand} onChange={setBrand} options={BRAND_CHIPS} />
       </div>
       {groups.every((g) => !g.items.length) && (
         <Group>

@@ -31,7 +31,7 @@ import {
   type StudioItem,
   type StudioUser,
 } from '@/lib/studio-types';
-import { BarButton, BrandDot, Linkified, Segmented, SheetBar, StatusPill, dayLabel, longDay } from './ui';
+import { BarButton, BrandTag, Linkified, Segmented, SheetBar, StatusPill, dayLabel, longDay } from './ui';
 
 export function blankItem(me: string, preset: Partial<StudioItem> = {}): StudioItem {
   const now = new Date().toISOString();
@@ -336,8 +336,8 @@ export function ItemSheet({
           ) : (
             <div className="rounded-[14px] bg-white px-4 py-4">
               <p className="flex flex-wrap items-center gap-2 text-[13px] text-ink/50">
-                <BrandDot brand={item.brand} />
-                {KIND_LABEL[item.kind]} · {BRAND_LABEL[item.brand]}
+                <BrandTag brand={item.brand} />
+                {KIND_LABEL[item.kind]}
                 <StatusPill status={item.status} />
               </p>
               <h2 className="mt-2 text-[22px] font-bold leading-snug tracking-[-0.01em]">{item.title}</h2>

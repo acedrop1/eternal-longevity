@@ -46,6 +46,24 @@ export function BrandDot({ brand, className }: { brand: Brand; className?: strin
   );
 }
 
+const BRAND_TONE: Record<Brand, string> = {
+  longevity: 'bg-butter text-ink',
+  hair: 'bg-lilac text-ink',
+  both: 'text-ink',
+};
+
+/** Which brand it's for, impossible to miss. */
+export function BrandTag({ brand, className }: { brand: Brand; className?: string }) {
+  return (
+    <span
+      className={cn('inline-flex h-[22px] shrink-0 items-center rounded-full px-2 text-[12px] font-bold normal-case tracking-normal', BRAND_TONE[brand], className)}
+      style={brand === 'both' ? { background: 'linear-gradient(90deg, #FFEC9F, #CFC4F6)' } : undefined}
+    >
+      {brand === 'both' ? 'Collab · both brands' : BRAND_LABEL[brand]}
+    </span>
+  );
+}
+
 const STATUS_TONE: Record<Status, string> = {
   todo: 'bg-black/[0.05] text-ink/60',
   doing: 'bg-sky/60 text-ink',
@@ -184,8 +202,9 @@ export function ItemRow({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onOpen())}
-      className="group flex min-h-[64px] w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-black/[0.015] active:bg-black/[0.03] [&+&]:border-t [&+&]:border-black/[0.06]"
+      className="group relative flex min-h-[64px] w-full cursor-pointer items-start gap-3 py-3 pl-5 pr-4 text-left transition-colors hover:bg-black/[0.015] active:bg-black/[0.03] [&+&]:border-t [&+&]:border-black/[0.06]"
     >
+      <span aria-hidden className="absolute inset-y-2 left-1.5 w-[4px] rounded-full" style={{ background: BRAND_COLOR[item.brand] }} />
       {onToggle && (
         <span className="pt-0.5">
           <CheckCircle on={done} onToggle={onToggle} label={item.title} />
@@ -198,10 +217,8 @@ export function ItemRow({
         </p>
         {brief && !done && <p className="mt-0.5 line-clamp-1 text-[14px] leading-snug text-ink/55">{brief}</p>}
         <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-ink/45">
-          <span className="inline-flex items-center gap-1.5">
-            <BrandDot brand={item.brand} />
-            {KIND_LABEL[item.kind]}
-          </span>
+          <BrandTag brand={item.brand} />
+          <span>{KIND_LABEL[item.kind]}</span>
           {item.due && (
             <span className={cn(late && 'font-semibold text-red-600')}>
               {late ? 'Late · ' : 'Due '}

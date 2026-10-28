@@ -127,7 +127,7 @@ export const KIND_LABEL: Record<Kind, string> = {
 
 export const BRAND_LABEL: Record<Brand, string> = {
   longevity: 'Eternal Longevity',
-  hair: 'Eternal Hair',
+  hair: 'Eternal Hair & Esthetics',
   both: 'Collab',
 };
 
