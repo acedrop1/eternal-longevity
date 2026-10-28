@@ -9,6 +9,11 @@ import {
   Printer,
   Check,
   CheckCircle2,
+  ChevronDown,
+  Grid3x3,
+  Menu,
+  SquarePlus,
+  SquareUser,
   Clapperboard,
   Copy,
   Images,
@@ -693,19 +698,24 @@ function ContentTab({ items, row }: { items: StudioItem[]; row: RowFn }) {
 
 /* ---------------- Grid ---------------- */
 
-
-function GridTile({ file, alt }: { file?: StudioFile; alt: string }) {
+function GridTile({ file, alt }: { file?: StudioFile | null; alt: string }) {
   if (file?.url && file.type.startsWith('video/'))
     return <video src={`${file.url}#t=0.1`} muted playsInline preload="metadata" className="h-full w-full object-cover" />;
   if (file?.url)
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={file.url} alt={alt} className="h-full w-full object-cover" />;
-  return <span className="grid h-full w-full place-items-center bg-black/[0.06] p-2 text-center text-[12px] font-semibold leading-tight text-ink/50">{alt || 'No image yet'}</span>;
+  return <span className="grid h-full w-full place-items-center bg-[#efefef] p-2 text-center text-[11px] font-semibold leading-tight text-[#737373]">{alt || 'No image yet'}</span>;
 }
 
+const igNum = (v?: string) => {
+  const n = Number(String(v ?? '').replace(/,/g, ''));
+  return !v ? '0' : Number.isFinite(n) && n >= 10_000 ? `${(n / 1000).toFixed(n >= 100_000 ? 0 : 1).replace(/\.0$/, '')}K` : v;
+};
+
 /*
- * How each Instagram page will look: planned posts on top (latest post date first),
- * then posts marked posted here, then screenshots of what was already live.
+ * The page as it looks in the Instagram app: profile header, then the grid with
+ * planned posts on top (latest post date first), posts marked posted here, then
+ * screenshots of what was already live.
  * ponytail: order comes from post dates; live screenshots reorder with arrows. Drag-and-drop if that gets tedious.
  */
 function GridTab({
@@ -722,18 +732,20 @@ function GridTab({
   onSaved: (b: GridBrand, g: GridPage) => void;
 }) {
   const [brand, setBrand] = useState<GridBrand>('longevity');
+  const [arrange, setArrange] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<GridPage>(grid[brand]);
   const [busy, setBusy] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [handle, setHandle] = useState(grid[brand].handle);
-  const input = useRef<HTMLInputElement>(null);
+  const liveInput = useRef<HTMLInputElement>(null);
+  const avatarInput = useRef<HTMLInputElement>(null);
   const page = grid[brand];
-  useEffect(() => setHandle(grid[brand].handle), [brand, grid]);
 
   const posts = items.filter((i) => i.kind === 'post' && (i.brand === brand || i.brand === 'both'));
   const media = (i: StudioItem) => i.files.find((f) => f.type.startsWith('image/') || f.type.startsWith('video/'));
   const planned = posts.filter((i) => !isFinished(i.status)).sort((a, b) => (b.due ?? '9999').localeCompare(a.due ?? '9999'));
   const posted = posts.filter((i) => isFinished(i.status)).sort((a, b) => (b.completedOn ?? '').localeCompare(a.completedOn ?? ''));
+  const total = planned.length + posted.length + page.live.length;
 
   const save = async (next: GridPage) => {
     setError(null);
@@ -741,14 +753,17 @@ function GridTab({
     const r = await saveStudioGrid(brand, next);
     if (!r.ok) setError(r.error);
   };
-
-  const addLive = async (files: FileList | null) => {
-    if (!files?.length) return;
+  const upload = async (files: FileList | null) => {
+    if (!files?.length) return [];
     setError(null);
     setBusy(files.length);
     const { files: up, error: e } = await uploadFiles(`grid-${brand}`, files);
     setBusy(0);
     if (e) setError(e);
+    return up;
+  };
+  const addLive = async (files: FileList | null) => {
+    const up = await upload(files);
     if (up.length) await save({ ...page, live: [...page.live, ...up] });
   };
   const move = (n: number, by: number) => {
@@ -757,101 +772,204 @@ function GridTab({
     live.splice(Math.max(0, Math.min(live.length, n + by)), 0, f);
     save({ ...page, live });
   };
+  const switchTo = (b: GridBrand) => {
+    setBrand(b);
+    setArrange(false);
+    setEditing(false);
+  };
+  const startEdit = () => {
+    setDraft(page);
+    setEditing(true);
+  };
 
-  const badge = 'absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none shadow-sm';
+  const field = 'w-full rounded-[8px] bg-[#efefef] px-3 py-2 text-[14px] outline-none focus:ring-2 focus:ring-butter-deep';
+  const handle = page.handle || 'username';
   return (
     <>
-      <LargeTitle title="Grid" sub="How each Instagram page will look. Planned posts sit on top with the day they go up." />
-      <div className="flex flex-wrap items-center gap-3 px-4 pb-5 lg:px-0">
-        <Segmented
-          value={brand}
-          onChange={(b) => (setBrand(b), setEditing(false))}
-          options={[
-            { value: 'longevity', label: 'Longevity' },
-            { value: 'hair', label: 'Hair & Esthetics' },
-          ]}
-          className="w-[280px]"
-        />
-      </div>
-
-      <div className="mx-4 max-w-[560px] rounded-[18px] bg-white pb-1 lg:mx-0">
-        {/* Profile header */}
-        <div className="flex items-center gap-4 px-4 py-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full text-[22px] font-bold" style={{ background: BRAND_COLOR[brand] }}>
-            {brand === 'longevity' ? 'EL' : 'EH'}
-          </span>
-          <div className="min-w-0 flex-1">
-            <label className="flex items-center text-[17px] font-semibold">
-              @
-              <input
-                value={handle}
-                onChange={(e) => setHandle(e.target.value.replace(/^@/, ''))}
-                onBlur={() => handle.trim() !== page.handle && save({ ...page, handle: handle.trim() })}
-                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                placeholder="username"
-                aria-label="Instagram username"
-                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink/25"
-              />
-            </label>
-            <p className="text-[13px] text-ink/50">
-              {posted.length + page.live.length} posted · {planned.length} planned
-            </p>
-            {page.handle && (
-              <a href={`https://www.instagram.com/${page.handle}/`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold underline decoration-butter-deep decoration-2 underline-offset-2">
-                Open on Instagram
-              </a>
-            )}
+      <LargeTitle title="Grid" sub="Each Instagram page as it will look. Planned posts sit on top with the day they go up." />
+      <div className="grid gap-6 px-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:px-0">
+        {/* The phone */}
+        <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[28px] bg-white text-[#000] shadow-[0_1px_2px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06] lg:mx-0">
+          {/* Top bar */}
+          <div className="flex h-[52px] items-center justify-between px-4">
+            <button type="button" onClick={() => switchTo(brand === 'longevity' ? 'hair' : 'longevity')} className="flex items-center gap-1 text-[20px] font-bold tracking-[-0.01em]">
+              {handle}
+              <ChevronDown className="h-5 w-5" strokeWidth={2.5} />
+            </button>
+            <span className="flex items-center gap-5">
+              <SquarePlus className="h-[26px] w-[26px]" strokeWidth={1.8} />
+              <Menu className="h-[26px] w-[26px]" strokeWidth={1.8} />
+            </span>
           </div>
+
+          {/* Header */}
+          <div className="flex items-center gap-5 px-4 pt-1">
+            <button
+              type="button"
+              onClick={() => avatarInput.current?.click()}
+              aria-label="Change profile photo"
+              className="shrink-0 rounded-full p-[3px]"
+              style={{ background: 'linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)' }}
+            >
+              <span className="block rounded-full bg-white p-[3px]">
+                <span className="grid h-[78px] w-[78px] place-items-center overflow-hidden rounded-full text-[22px] font-bold" style={{ background: BRAND_COLOR[brand] }}>
+                  {page.avatar?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={page.avatar.url} alt="" className="h-full w-full object-cover" />
+                  ) : brand === 'longevity' ? (
+                    'EL'
+                  ) : (
+                    'EH'
+                  )}
+                </span>
+              </span>
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold">{page.name || (brand === 'longevity' ? 'Eternal Longevity' : 'Eternal Hair & Esthetics')}</p>
+              <div className="mt-1.5 grid grid-cols-3 text-[13px] leading-tight">
+                {[
+                  [String(total), 'posts'],
+                  [igNum(page.followers), 'followers'],
+                  [igNum(page.following), 'following'],
+                ].map(([n, l]) => (
+                  <span key={l}>
+                    <b className="block text-[16px] font-semibold">{n}</b>
+                    {l}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          {page.bio && <p className="whitespace-pre-line px-4 pt-3 text-[14px] leading-snug">{page.bio}</p>}
+
+          {editing ? (
+            <div className="space-y-2 px-4 pt-3">
+              <input value={draft.handle} onChange={(e) => setDraft({ ...draft, handle: e.target.value.replace(/^@/, '') })} placeholder="Username" className={field} />
+              <input value={draft.name ?? ''} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Name" className={field} />
+              <textarea value={draft.bio ?? ''} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} placeholder="Bio" rows={3} className={cn(field, 'resize-none')} />
+              <div className="grid grid-cols-2 gap-2">
+                <input value={draft.followers ?? ''} onChange={(e) => setDraft({ ...draft, followers: e.target.value })} inputMode="numeric" placeholder="Followers" className={field} />
+                <input value={draft.following ?? ''} onChange={(e) => setDraft({ ...draft, following: e.target.value })} inputMode="numeric" placeholder="Following" className={field} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setEditing(false)} className="h-8 rounded-[8px] bg-[#efefef] text-[14px] font-semibold">
+                  Cancel
+                </button>
+                <button type="button" onClick={() => (save({ ...page, ...draft, live: page.live, avatar: page.avatar }), setEditing(false))} className="h-8 rounded-[8px] bg-[#0095f6] text-[14px] font-semibold text-white">
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5 px-4 pt-3">
+              <button type="button" onClick={startEdit} className="h-8 rounded-[8px] bg-[#efefef] text-[14px] font-semibold">
+                Edit profile
+              </button>
+              <a
+                href={page.handle ? `https://www.instagram.com/${page.handle}/` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="grid h-8 place-items-center rounded-[8px] bg-[#efefef] text-[14px] font-semibold"
+              >
+                View live page
+              </a>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="mt-4 grid grid-cols-3 border-t border-[#dbdbdb]">
+            <span className="flex h-11 items-center justify-center border-b border-black">
+              <Grid3x3 className="h-6 w-6" strokeWidth={1.8} />
+            </span>
+            <span className="flex h-11 items-center justify-center text-[#737373]">
+              <Clapperboard className="h-6 w-6" strokeWidth={1.8} />
+            </span>
+            <span className="flex h-11 items-center justify-center text-[#737373]">
+              <SquareUser className="h-6 w-6" strokeWidth={1.8} />
+            </span>
+          </div>
+
+          {/* Grid: newest top-left, 3 across, Instagram's 3:4 tiles */}
+          <div className="grid grid-cols-3 gap-px bg-white">
+            {[...planned, ...posted].map((i) => {
+              const m = media(i);
+              return (
+                <button key={i.id} type="button" onClick={() => open(i)} className={cn('relative aspect-[3/4] overflow-hidden', !isFinished(i.status) && 'ring-2 ring-inset ring-butter-deep')}>
+                  <GridTile file={m} alt={i.title} />
+                  {m?.type.startsWith('video/') && <Clapperboard className="absolute right-1.5 top-1.5 h-4 w-4 text-white drop-shadow" />}
+                  {!isFinished(i.status) && (
+                    <span className="absolute bottom-1.5 left-1.5 rounded-[5px] bg-butter px-1.5 py-[3px] text-[10px] font-bold leading-none text-ink shadow-sm">
+                      {i.due ? shortDay(i.due) : 'No date'}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {page.live.map((f, n) => (
+              <div key={f.path} className="relative aspect-[3/4] overflow-hidden">
+                <GridTile file={f} alt="Live post" />
+                {f.type.startsWith('video/') && <Clapperboard className="absolute right-1.5 top-1.5 h-4 w-4 text-white drop-shadow" />}
+                {arrange && (
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1">
+                    <button type="button" aria-label="Move earlier" onClick={() => move(n, -1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
+                      ‹
+                    </button>
+                    <button type="button" aria-label="Remove" onClick={() => save({ ...page, live: page.live.filter((x) => x.path !== f.path) })} className="grid h-7 w-7 place-items-center rounded-full bg-white">
+                      <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                    </button>
+                    <button type="button" aria-label="Move later" onClick={() => move(n, 1)} className="grid h-7 w-7 place-items-center rounded-full bg-white text-[15px] font-bold">
+                      ›
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {total === 0 && <p className="px-6 py-10 text-center text-[14px] text-[#737373]">No posts yet. Add the posts already on the page, then plan new ones.</p>}
         </div>
-        <div className="flex gap-2 px-4 pb-3">
-          <button type="button" onClick={() => create({ kind: 'post', brand })} className="flex h-9 flex-1 items-center justify-center gap-1 rounded-[10px] bg-butter text-[14px] font-semibold">
+
+        {/* Controls */}
+        <div className="space-y-3 lg:max-w-[340px]">
+          <Segmented
+            value={brand}
+            onChange={switchTo}
+            options={[
+              { value: 'longevity', label: 'Longevity' },
+              { value: 'hair', label: 'Hair & Esthetics' },
+            ]}
+          />
+          <button type="button" onClick={() => create({ kind: 'post', brand })} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-butter text-[15px] font-semibold">
             <Plus className="h-4 w-4" /> Plan a post
           </button>
-          <button type="button" onClick={() => input.current?.click()} disabled={busy > 0} className="flex h-9 flex-1 items-center justify-center gap-1 rounded-[10px] bg-black/[0.06] text-[14px] font-semibold disabled:opacity-50">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Add live posts'}
+          <button type="button" onClick={() => liveInput.current?.click()} disabled={busy > 0} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[12px] bg-white text-[15px] font-semibold ring-1 ring-black/[0.06] disabled:opacity-50">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {busy ? `Uploading ${busy}…` : 'Add posts already live'}
           </button>
           {page.live.length > 0 && (
-            <button type="button" onClick={() => setEditing((v) => !v)} className={cn('h-9 rounded-[10px] px-3 text-[14px] font-semibold', editing ? 'bg-ink text-white' : 'bg-black/[0.06]')}>
-              {editing ? 'Done' : 'Arrange'}
+            <button type="button" onClick={() => setArrange((v) => !v)} className={cn('h-11 w-full rounded-[12px] text-[15px] font-semibold', arrange ? 'bg-ink text-white' : 'bg-white ring-1 ring-black/[0.06]')}>
+              {arrange ? 'Done arranging' : 'Arrange live posts'}
             </button>
           )}
-          <input ref={input} type="file" multiple accept="image/*,video/*" hidden onChange={(e) => (addLive(e.target.files), (e.target.value = ''))} />
+          {error && <p role="alert" className="rounded-[12px] bg-red-50 px-4 py-3 text-[14px] text-red-700">{error}</p>}
+          <input ref={liveInput} type="file" multiple accept="image/*,video/*" hidden onChange={(e) => (addLive(e.target.files), (e.target.value = ''))} />
+          <input
+            ref={avatarInput}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={async (e) => {
+              const [a] = await upload(e.target.files);
+              e.target.value = '';
+              if (a) save({ ...page, avatar: a });
+            }}
+          />
+          <ul className="space-y-1.5 px-1 text-[13px] leading-snug text-ink/50">
+            <li>Yellow outline and date = planned. Tap a post to open it.</li>
+            <li>To reorder planned posts, change their post date.</li>
+            <li>Tiles show a picture once the image or video itself is uploaded to the post (a Drive link alone shows the title).</li>
+            <li>Tap the profile photo or Edit profile to match the real page. Collab posts show on both pages.</li>
+          </ul>
         </div>
-        {error && <p role="alert" className="mx-4 mb-3 rounded-[10px] bg-red-50 px-3 py-2 text-[14px] text-red-700">{error}</p>}
-
-        {/* The grid: newest top-left, 3 across, Instagram's 3:4 tiles */}
-        <div className="grid grid-cols-3 gap-[2px]">
-          {[...planned, ...posted].map((i) => (
-            <button key={i.id} type="button" onClick={() => open(i)} className={cn('relative aspect-[3/4] overflow-hidden bg-black/[0.04]', !isFinished(i.status) && 'outline-dashed outline-2 -outline-offset-2 outline-butter-deep')}>
-              <GridTile file={media(i)} alt={i.title} />
-              <span className={cn(badge, isFinished(i.status) ? 'bg-white/90 text-ink/70' : 'bg-butter text-ink')}>
-                {isFinished(i.status) ? `Posted ${i.completedOn ? shortDay(i.completedOn) : ''}` : i.due ? shortDay(i.due) : 'No date'}
-              </span>
-              {i.brand === 'both' && <span className={cn(badge, 'left-auto right-1.5 bg-white/90 text-ink/70')}>Collab</span>}
-            </button>
-          ))}
-          {page.live.map((f, n) => (
-            <div key={f.path} className="relative aspect-[3/4] overflow-hidden bg-black/[0.04]">
-              <GridTile file={f} alt="Live post" />
-              {editing && (
-                <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 p-1">
-                  <button type="button" aria-label="Move earlier" onClick={() => move(n, -1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[15px] font-bold">‹</button>
-                  <button type="button" aria-label="Remove" onClick={() => save({ ...page, live: page.live.filter((x) => x.path !== f.path) })} className="grid h-8 w-8 place-items-center rounded-full bg-white">
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </button>
-                  <button type="button" aria-label="Move later" onClick={() => move(n, 1)} className="grid h-8 w-8 place-items-center rounded-full bg-white text-[15px] font-bold">›</button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {planned.length + posted.length + page.live.length === 0 && (
-          <p className="px-4 py-8 text-center text-[14px] text-ink/45">Add screenshots of the posts already on the page, then plan posts to see them on top.</p>
-        )}
       </div>
-      <p className="mx-4 mt-3 max-w-[560px] text-[13px] text-ink/40 lg:mx-0">
-        Dashed = planned, with its post date. To change the order of planned posts, change their post date. Collab posts show on both pages.
-      </p>
     </>
   );
 }

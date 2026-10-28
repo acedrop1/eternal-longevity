@@ -303,8 +303,13 @@ export async function ensureBucket(): Promise<void> {
 
 async function gridUrls(s: StudioSettings): Promise<StudioSettings> {
   const pages = Object.entries(s.grid) as [keyof StudioSettings['grid'], StudioSettings['grid']['hair']][];
-  const signed = await withUrls(pages.map(([k, g]) => ({ id: k, files: g.live }) as StudioItem));
-  return { ...s, grid: Object.fromEntries(pages.map(([k, g], n) => [k, { ...g, live: signed[n].files }])) as StudioSettings['grid'] };
+  const signed = await withUrls(pages.map(([k, g]) => ({ id: k, files: g.avatar ? [...g.live, g.avatar] : g.live }) as StudioItem));
+  return {
+    ...s,
+    grid: Object.fromEntries(
+      pages.map(([k, g], n) => [k, { ...g, live: signed[n].files.slice(0, g.live.length), avatar: g.avatar ? signed[n].files[g.live.length] : null }]),
+    ) as StudioSettings['grid'],
+  };
 }
 
 export async function withUrls(items: StudioItem[]): Promise<StudioItem[]> {

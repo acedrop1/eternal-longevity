@@ -34,6 +34,7 @@ import {
   type GuideSection,
   type Role,
   type StudioComment,
+  type StudioFile,
   type StudioItem,
   type StudioSettings,
   type StudioUser,
@@ -244,11 +245,20 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
     const prev = await loadStored();
     const handle = String(page.handle ?? '').trim().replace(/^@/, '').slice(0, 30);
     if (handle && !/^[\w.]+$/.test(handle)) throw new Error('A handle is letters, numbers, dots and underscores only.');
-    const live = (Array.isArray(page.live) ? page.live : [])
-      .filter((f) => typeof f?.path === 'string' && f.path.startsWith(`grid-${brand}/`) && !f.path.includes('..'))
-      .slice(0, 90)
-      .map((f) => ({ path: f.path, name: String(f.name ?? '').slice(0, 120), type: String(f.type ?? '').slice(0, 60), size: Number(f.size) || 0 }));
-    const next = { handle, live };
+    const ours = (f: unknown): f is StudioFile =>
+      typeof (f as StudioFile)?.path === 'string' && (f as StudioFile).path.startsWith(`grid-${brand}/`) && !(f as StudioFile).path.includes('..');
+    const file = (f: StudioFile) => ({ path: f.path, name: String(f.name ?? '').slice(0, 120), type: String(f.type ?? '').slice(0, 60), size: Number(f.size) || 0 });
+    const live = (Array.isArray(page.live) ? page.live : []).filter(ours).slice(0, 90).map(file);
+    const t = (v: unknown, max: number) => String(v ?? '').slice(0, max);
+    const next: GridPage = {
+      handle,
+      live,
+      name: t(page.name, 60),
+      bio: t(page.bio, 300),
+      followers: t(page.followers, 12),
+      following: t(page.following, 12),
+      avatar: ours(page.avatar) ? file(page.avatar) : null,
+    };
     await putStored({ ...prev, grid: { ...prev.grid, [brand]: next } });
     if (live.length !== prev.grid[brand].live.length || handle !== prev.grid[brand].handle) {
       await logEvent({ by: user.name, action: `updated the ${handle ? '@' + handle : brand} grid`, detail: `${live.length} live posts` });

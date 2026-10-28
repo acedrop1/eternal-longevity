@@ -91,6 +91,11 @@ export interface StudioUser {
 export interface GridPage {
   handle: string;
   live: StudioFile[];
+  name?: string;
+  bio?: string;
+  followers?: string;
+  following?: string;
+  avatar?: StudioFile | null;
 }
 export type GridBrand = 'longevity' | 'hair';
 export const DEFAULT_GRID: Record<GridBrand, GridPage> = { longevity: { handle: 'etlongevity', live: [] }, hair: { handle: '', live: [] } };
