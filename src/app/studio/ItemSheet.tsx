@@ -202,7 +202,10 @@ export function ItemSheet({
 
   // Closing by clicking outside keeps your edits; only Cancel throws them away.
   const dirty = JSON.stringify(item) !== snap;
-  useEffect(() => bindClose?.(() => (dirty ? void done() : onClose())));
+  // Braces matter: returning the function would make React run it as cleanup on every render.
+  useEffect(() => {
+    bindClose?.(() => (dirty ? void done() : onClose()));
+  });
 
   const addFiles = async (list: FileList | null) => {
     if (!list?.length) return;
