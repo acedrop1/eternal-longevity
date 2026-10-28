@@ -917,6 +917,48 @@ function GridTab({
             </span>
           </div>
 
+          {adding && (
+            <div className="border-b border-[#dbdbdb] bg-white p-4">
+              {adding === 'choose' ? (
+                <div className="space-y-2">
+                  <p className="text-center text-[15px] font-semibold">New post for @{handle}</p>
+                  <button type="button" onClick={() => newInput.current?.click()} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-butter text-[15px] font-semibold">
+                    <Upload className="h-4 w-4" /> Upload a photo or video
+                  </button>
+                  <button type="button" onClick={() => setAdding('pick')} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#efefef] text-[15px] font-semibold">
+                    <Images className="h-4 w-4" /> Use one already in the studio
+                  </button>
+                  <button type="button" onClick={() => startPost([])} className="h-10 w-full text-[14px] font-semibold text-ink/55">
+                    Plan it without a picture yet
+                  </button>
+                  <button type="button" onClick={() => setAdding(null)} className="h-9 w-full text-[14px] text-ink/40">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex items-center justify-between">
+                    <button type="button" onClick={() => setAdding('choose')} className="text-[14px] font-semibold text-ink/55">
+                      ‹ Back
+                    </button>
+                    <p className="text-[15px] font-semibold">Pick a picture</p>
+                    <span className="w-10" />
+                  </div>
+                  {library.length === 0 ? (
+                    <p className="py-6 text-center text-[14px] text-ink/45">Nothing uploaded yet. Add pictures in Inspo or upload one.</p>
+                  ) : (
+                    <div className="grid max-h-[360px] grid-cols-4 gap-1 overflow-y-auto">
+                      {library.map((f) => (
+                        <button key={f.path} type="button" onClick={() => newFromLibrary(f)} className="aspect-square overflow-hidden rounded-[4px] bg-[#efefef]">
+                          <GridTile file={f} alt={f.name} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           {/* Grid: newest top-left, 3 across, Instagram's 3:4 tiles */}
           <div className="relative grid grid-cols-3 gap-px bg-white">
             <button
@@ -962,48 +1004,6 @@ function GridTab({
               </div>
             ))}
           </div>
-          {adding && (
-            <div className="border-t border-[#dbdbdb] bg-white p-4">
-              {adding === 'choose' ? (
-                <div className="space-y-2">
-                  <p className="text-center text-[15px] font-semibold">New post for @{handle}</p>
-                  <button type="button" onClick={() => newInput.current?.click()} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-butter text-[15px] font-semibold">
-                    <Upload className="h-4 w-4" /> Upload a photo or video
-                  </button>
-                  <button type="button" onClick={() => setAdding('pick')} className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[#efefef] text-[15px] font-semibold">
-                    <Images className="h-4 w-4" /> Use one already in the studio
-                  </button>
-                  <button type="button" onClick={() => startPost([])} className="h-10 w-full text-[14px] font-semibold text-ink/55">
-                    Plan it without a picture yet
-                  </button>
-                  <button type="button" onClick={() => setAdding(null)} className="h-9 w-full text-[14px] text-ink/40">
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-3 flex items-center justify-between">
-                    <button type="button" onClick={() => setAdding('choose')} className="text-[14px] font-semibold text-ink/55">
-                      ‹ Back
-                    </button>
-                    <p className="text-[15px] font-semibold">Pick a picture</p>
-                    <span className="w-10" />
-                  </div>
-                  {library.length === 0 ? (
-                    <p className="py-6 text-center text-[14px] text-ink/45">Nothing uploaded yet. Add pictures in Inspo or upload one.</p>
-                  ) : (
-                    <div className="grid max-h-[360px] grid-cols-4 gap-1 overflow-y-auto">
-                      {library.map((f) => (
-                        <button key={f.path} type="button" onClick={() => newFromLibrary(f)} className="aspect-square overflow-hidden rounded-[4px] bg-[#efefef]">
-                          <GridTile file={f} alt={f.name} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
           <input ref={newInput} type="file" accept="image/*,video/*" hidden onChange={(e) => (newFromUpload(e.target.files), (e.target.value = ''))} />
           {total === 0 && <p className="px-6 py-10 text-center text-[14px] text-[#737373]">No posts yet. Add the posts already on the page, then plan new ones.</p>}
         </div>
