@@ -12,6 +12,7 @@ import {
   getItem,
   loadStored,
   logEvent,
+  putNote,
   newCode,
   putItem,
   putStored,
@@ -230,6 +231,16 @@ export async function saveStudioSettings(next: Partial<Pick<StudioSettings, 'tar
           }))
         : prev.guide,
     });
+  });
+}
+
+/** Adam's or Mo's note on someone's week, for the end-of-week report. */
+export async function saveReportNote(person: string, weekStart: string, text: string): Promise<Result> {
+  return run(async () => {
+    await requireManager();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart) || !/^[\w .'-]{1,40}$/.test(person)) throw new Error('Bad report.');
+    await putNote(person, weekStart, String(text ?? '').slice(0, 8000));
+    return null;
   });
 }
 

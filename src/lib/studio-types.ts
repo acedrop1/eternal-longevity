@@ -106,11 +106,26 @@ export interface StudioEvent {
   detail?: string;
 }
 
+/** A task that passed its due day unfinished. Recorded once and kept, even if the date moves later. */
+export interface StudioMiss {
+  key: string;
+  itemId: string;
+  title: string;
+  assignee: string;
+  brand: Brand;
+  kind: Kind;
+  due: string;
+  firstSeen: string;
+}
+
 export interface StudioData {
   items: StudioItem[];
   settings: StudioSettings;
   /** The Activity log, newest first (Adam and Mo only; empty for content). */
   activity: StudioEvent[];
+  /** Missed deadlines and weekly report notes (Adam and Mo only). */
+  misses: StudioMiss[];
+  notes: Record<string, string>;
   /** False on a local build with no database: changes last until the server restarts. */
   live: boolean;
 }

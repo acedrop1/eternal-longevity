@@ -11,6 +11,7 @@ import {
   type GuideSection,
   type StudioData,
   type StudioEvent,
+  type StudioMiss,
   type StudioFile,
   type StudioItem,
   type StudioLink,
@@ -237,11 +238,48 @@ export async function putStored(s: Stored): Promise<StudioSettings> {
   return publicSettings(s);
 }
 
+const MISSES_KEY = 'studio:misses';
+const NOTE_PREFIX = 'studio:note:';
+
+/**
+ * Every assigned item whose due day ended unfinished (or that was finished after
+ * it) is written down the first time anyone opens the studio afterwards. The
+ * record keeps the original due date, so moving the date later can't hide it.
+ */
+async function recordMisses(items: StudioItem[], stored: unknown): Promise<StudioMiss[]> {
+  const misses = { ...((stored as Record<string, StudioMiss> | undefined) ?? {}) };
+  const today = todayET();
+  let added = false;
+  for (const i of items) {
+    if (i.kind === 'inspo' || !i.due || !i.assignee) continue;
+    const late = i.completedOn ? i.completedOn > i.due : i.due < today;
+    const key = `${i.id}:${i.due}`;
+    if (!late || misses[key]) continue;
+    misses[key] = { key, itemId: i.id, title: i.title, assignee: i.assignee, brand: i.brand, kind: i.kind, due: i.due, firstSeen: new Date().toISOString() };
+    added = true;
+  }
+  if (added) await write(MISSES_KEY, misses).catch(() => {});
+  return Object.values(misses);
+}
+
+export async function putNote(person: string, weekStart: string, text: string): Promise<void> {
+  await write(`${NOTE_PREFIX}${person}:${weekStart}`, text);
+}
+
 export async function loadStudio(withActivity = false): Promise<StudioData> {
   const rows = await readAll();
   const items = rows.filter((r) => r.key.startsWith(PREFIX)).map((r) => r.value as StudioItem);
   const settings = publicSettings(normalise(rows.find((r) => r.key === SETTINGS_KEY)?.value));
-  return { items: await withUrls(items), settings, activity: withActivity ? await loadActivity() : [], live: studioLive() };
+  const misses = await recordMisses(items, rows.find((r) => r.key === MISSES_KEY)?.value);
+  const notes = Object.fromEntries(rows.filter((r) => r.key.startsWith(NOTE_PREFIX)).map((r) => [r.key.slice(NOTE_PREFIX.length), String(r.value ?? '')]));
+  return {
+    items: await withUrls(items),
+    settings,
+    activity: withActivity ? await loadActivity() : [],
+    misses: withActivity ? misses : [],
+    notes: withActivity ? notes : {},
+    live: studioLive(),
+  };
 }
 
 export async function loadSettings(): Promise<StudioSettings> {

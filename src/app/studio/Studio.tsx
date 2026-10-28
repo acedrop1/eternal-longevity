@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
   Activity,
   BookOpen,
+  ClipboardCheck,
+  Printer,
   Check,
   CheckCircle2,
   Clapperboard,
@@ -30,6 +32,7 @@ import {
   importStudio,
   issueStudioCode,
   lockStudio,
+  saveReportNote,
   saveStudioItem,
   saveStudioSettings,
   updateStudioUser,
@@ -50,13 +53,14 @@ import {
   type StudioData,
   type StudioEvent,
   type StudioItem,
+  type StudioMiss,
   type StudioSettings,
   type StudioUser,
 } from '@/lib/studio-types';
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
-import { BarButton, BrandDot, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
+import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
 
-type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity';
+type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity' | 'report';
 type BrandFilter = 'all' | Brand;
 
 const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
@@ -66,7 +70,10 @@ const TABS: { id: Tab; label: string; icon: typeof Sun }[] = [
   { id: 'inspo', label: 'Inspo', icon: Images },
   { id: 'guide', label: 'Guide', icon: BookOpen },
   { id: 'activity', label: 'Activity', icon: Activity },
+  { id: 'report', label: 'Report', icon: ClipboardCheck },
 ];
+
+const MANAGER_TABS: Tab[] = ['activity', 'report'];
 
 const BRAND_CHIPS: { value: BrandFilter; label: string; dot?: Brand }[] = [
   { value: 'all', label: 'All' },
@@ -102,7 +109,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   // Clicking outside or pressing Escape asks the open item to save first.
   const closer = useRef<(() => void) | null>(null);
   const manager = canAssign(me.role);
-  const tabs = manager ? TABS : TABS.filter((t) => t.id !== 'activity');
+  const tabs = manager ? TABS : TABS.filter((t) => !MANAGER_TABS.includes(t.id));
   const crew = settings.users.find((u) => u.active && u.role === 'member')?.name ?? '';
 
   useEffect(() => {
@@ -124,7 +131,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   useEffect(() => {
     try {
       const t = localStorage.getItem('studio-tab') as Tab | null;
-      if (t && TABS.some((x) => x.id === t) && (t !== 'activity' || canAssign(me.role))) setTab(t);
+      if (t && TABS.some((x) => x.id === t) && (!MANAGER_TABS.includes(t) || canAssign(me.role))) setTab(t);
     } catch {}
   }, [me.role]);
 
@@ -175,7 +182,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
   return (
     <div className="lg:flex">
       {/* Sidebar (computer) */}
-      <aside className="sticky top-0 hidden h-dvh w-[260px] shrink-0 flex-col border-r border-black/[0.06] bg-white/60 px-4 py-6 backdrop-blur-xl lg:flex">
+      <aside className="sticky top-0 hidden h-dvh print:!hidden w-[260px] shrink-0 flex-col border-r border-black/[0.06] bg-white/60 px-4 py-6 backdrop-blur-xl lg:flex">
         <div className="flex items-center gap-2 px-2">
           <Wordmark href={null} className="text-[18px]" />
           <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-butter">Studio</span>
@@ -216,7 +223,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
 
       <div className="min-w-0 flex-1">
         {/* Toolbar (phone) */}
-        <div className="sticky top-0 z-30 flex h-[52px] items-center justify-between bg-milk/85 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl [box-sizing:content-box] lg:hidden">
+        <div className="sticky top-0 z-30 flex h-[52px] items-center justify-between bg-milk/85 print:hidden px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl [box-sizing:content-box] lg:hidden">
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Settings" className="grid h-11 w-11 place-items-center rounded-full text-ink/70">
             <Settings className="h-[22px] w-[22px]" />
           </button>
@@ -242,6 +249,20 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'content' && <ContentTab items={visible} row={row} />}
           {tab === 'inspo' && <InspoTab items={items} me={me} open={open} upsert={upsert} />}
           {tab === 'guide' && <GuideTab settings={settings} canEdit={manager} onSaved={setSettings} />}
+          {tab === 'report' && manager && (
+            <ReportTab
+              items={items}
+              misses={initial.misses}
+              events={initial.activity}
+              notes={initial.notes}
+              users={settings.users.filter((u) => u.active && u.role === 'member')}
+              targets={settings.targets}
+              open={(id) => {
+                const i = items.find((x) => x.id === id);
+                if (i) open(i);
+              }}
+            />
+          )}
           {tab === 'activity' && manager && (
             <ActivityTab
               events={initial.activity}
@@ -256,7 +277,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
       </div>
 
       {/* Tab bar (phone) */}
-      <nav aria-label="Studio" className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.08] bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+      <nav aria-label="Studio" className="fixed inset-x-0 bottom-0 z-40 print:hidden border-t border-black/[0.08] bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-[720px]">
           {tabs.map(({ id, label, icon: Icon }) => {
             const on = tab === id;
@@ -807,6 +828,253 @@ function ActivityTab({ events, users, open }: { events: StudioEvent[]; users: St
           </Group>
         ))}
       </div>
+    </>
+  );
+}
+
+/* ---------------- Report ---------------- */
+
+/** Monday of the week holding `d`, YYYY-MM-DD. */
+function mondayOf(d: string): string {
+  const t = new Date(`${d}T12:00:00Z`);
+  return addDays(d, -((t.getUTCDay() + 6) % 7));
+}
+
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
+const shortDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+function grade(pct: number | null): { letter: string; tone: string } {
+  if (pct === null) return { letter: '—', tone: 'text-ink/30' };
+  if (pct >= 90) return { letter: 'A', tone: 'text-emerald-600' };
+  if (pct >= 80) return { letter: 'B', tone: 'text-emerald-600' };
+  if (pct >= 70) return { letter: 'C', tone: 'text-[#C9A82E]' };
+  if (pct >= 60) return { letter: 'D', tone: 'text-orange-600' };
+  return { letter: 'F', tone: 'text-red-600' };
+}
+
+type Commitment = { key: string; itemId: string; title: string; brand: Brand; due: string; result: 'on time' | 'late' | 'missed' | 'upcoming'; daysLate: number; doneOn: string | null };
+
+function ReportTab({
+  items,
+  misses,
+  events,
+  notes,
+  users,
+  targets,
+  open,
+}: {
+  items: StudioItem[];
+  misses: StudioMiss[];
+  events: StudioEvent[];
+  notes: Record<string, string>;
+  users: StudioUser[];
+  targets: StudioSettings['targets'];
+  open: (id: string) => void;
+}) {
+  const today = todayET();
+  const thisWeek = mondayOf(today);
+  const [week, setWeek] = useState(thisWeek);
+  const [person, setPerson] = useState(users[0]?.name ?? '');
+  const [note, setNote] = useState('');
+  const [saved, setSaved] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const end = addDays(week, 6);
+  const noteKey = `${person}:${week}`;
+
+  useEffect(() => {
+    setNote(notes[noteKey] ?? '');
+    setSaved(null);
+    // Only when the person or week changes, not on every 30-second refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteKey]);
+
+  // Everything due that week: today's due dates plus any deadline already recorded as missed.
+  const commitments = useMemo(() => {
+    const byKey = new Map<string, Commitment>();
+    const judge = (key: string, itemId: string, title: string, brand: Brand, due: string) => {
+      const it = items.find((i) => i.id === itemId);
+      const doneOn = it && isFinished(it.status) ? it.completedOn : null;
+      const result: Commitment['result'] = doneOn ? (doneOn <= due ? 'on time' : 'late') : due < today ? 'missed' : 'upcoming';
+      byKey.set(key, { key, itemId, title: it?.title ?? title, brand: it?.brand ?? brand, due, result, daysLate: result === 'late' ? daysBetween(due, doneOn!) : result === 'missed' ? daysBetween(due, today) : 0, doneOn });
+    };
+    for (const m of misses) if (m.assignee === person && m.due >= week && m.due <= end) judge(m.key, m.itemId, m.title, m.brand, m.due);
+    for (const i of items) {
+      if (i.kind === 'inspo' || i.assignee !== person || !i.due || i.due < week || i.due > end) continue;
+      if (!byKey.has(`${i.id}:${i.due}`)) judge(`${i.id}:${i.due}`, i.id, i.title, i.brand, i.due);
+    }
+    return [...byKey.values()].sort((a, b) => a.due.localeCompare(b.due));
+  }, [items, misses, person, week, end, today]);
+
+  const onTime = commitments.filter((c) => c.result === 'on time');
+  const late = commitments.filter((c) => c.result === 'late');
+  const missed = commitments.filter((c) => c.result === 'missed');
+  const judged = onTime.length + late.length + missed.length;
+  const pct = judged ? Math.round((onTime.length / judged) * 100) : null;
+  const g = grade(pct);
+  const sentBack = events.filter((e) => e.action === 'asked for changes on' && todayET(new Date(e.at)) >= week && todayET(new Date(e.at)) <= end && items.find((i) => i.id === e.itemId)?.assignee === person).length;
+  const days = Array.from({ length: 7 }, (_, n) => addDays(week, n)).filter((d) => d <= today);
+  const goalDays = days.filter((d) => {
+    const done = items.filter((i) => i.assignee === person && i.completedOn === d);
+    return done.filter((i) => i.kind === 'post').length >= targets.posts && done.filter((i) => i.kind === 'story').length >= targets.stories;
+  }).length;
+  const weeks = [thisWeek, addDays(thisWeek, -7), addDays(thisWeek, -14), addDays(thisWeek, -21)];
+  const range = `${shortDay(week)} – ${shortDay(end)}`;
+
+  const text = [
+    `${person}: weekly report, ${range}`,
+    `Grade: ${g.letter}${pct !== null ? ` (${pct}% on time)` : ''}`,
+    `On time: ${onTime.length} · Late: ${late.length} · Missed: ${missed.length} · Sent back for changes: ${sentBack} · Daily posting goal hit: ${goalDays} of ${days.length} days`,
+    '',
+    ...(late.length || missed.length
+      ? ['Missed deadlines:', ...[...missed, ...late].sort((a, b) => a.due.localeCompare(b.due)).map((c) => `- ${c.title} (${BRAND_LABEL[c.brand]}), due ${shortDay(c.due)}: ${c.result === 'missed' ? `still not done, ${c.daysLate} day${c.daysLate === 1 ? '' : 's'} late` : `done ${c.daysLate} day${c.daysLate === 1 ? '' : 's'} late`}`)]
+      : ['No missed deadlines.']),
+    ...(note.trim() ? ['', 'Notes:', note.trim()] : []),
+  ].join('\n');
+
+  if (!users.length) {
+    return (
+      <>
+        <LargeTitle title="Report" />
+        <Group>
+          <Empty>Add a content person under Settings → Team to see their report.</Empty>
+        </Group>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <LargeTitle title="Report" sub="How the week went: what was done on time, what was missed, and your notes. Hand it over at the end of the week.">
+        <button type="button" onClick={() => window.print()} className="mb-1 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 text-[14px] font-semibold ring-1 ring-black/[0.06] print:hidden">
+          <Printer className="h-4 w-4" /> Print / PDF
+        </button>
+      </LargeTitle>
+      <div className="space-y-3 px-4 pb-5 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-3 lg:space-y-0 lg:px-0 print:hidden">
+        {users.length > 1 && <Chips value={person} onChange={setPerson} options={users.map((u) => ({ value: u.name, label: u.name }))} />}
+        <Chips value={week} onChange={setWeek} options={weeks.map((w, n) => ({ value: w, label: n === 0 ? 'This week' : n === 1 ? 'Last week' : `Week of ${new Date(`${w}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` }))} />
+      </div>
+      <p className="px-5 pb-4 text-[15px] font-semibold lg:px-1">
+        {person} · {range}
+      </p>
+
+      <div className="grid gap-3 px-4 pb-6 lg:grid-cols-[260px_1fr] lg:px-0">
+        <div className="flex items-center gap-4 rounded-[22px] bg-white p-5 lg:flex-col lg:justify-center lg:text-center">
+          <p className={cn('text-[72px] font-bold leading-none tracking-[-0.04em]', g.tone)}>{g.letter}</p>
+          <div>
+            <p className="text-[17px] font-semibold">{pct === null ? 'Nothing due yet' : `${pct}% on time`}</p>
+            <p className="text-[13px] text-ink/50">{judged ? `${onTime.length} of ${judged} deadlines met` : 'The grade starts once a due day has passed.'}</p>
+          </div>
+        </div>
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {[
+            { n: onTime.length, label: 'on time', tone: 'text-emerald-700' },
+            { n: late.length, label: 'done late', tone: 'text-orange-600' },
+            { n: missed.length, label: 'missed, still open', tone: 'text-red-600' },
+            { n: sentBack, label: 'sent back for changes', tone: 'text-orange-600' },
+            { n: goalDays, label: `days hitting ${targets.posts} posts + ${targets.stories} stories (of ${days.length})`, tone: 'text-ink' },
+            { n: commitments.filter((c) => c.result === 'upcoming').length, label: 'still coming up', tone: 'text-ink' },
+          ].map((x) => (
+            <div key={x.label} className="rounded-[14px] bg-white px-4 py-3">
+              <dd className={cn('text-[26px] font-bold leading-none', x.n ? x.tone : 'text-ink/25')}>{x.n}</dd>
+              <dt className="mt-1.5 text-[13px] leading-snug text-ink/55">{x.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <Columns>
+        <Group title="Missed deadlines" count={late.length + missed.length}>
+          {late.length + missed.length === 0 ? (
+            <Empty>None this week.</Empty>
+          ) : (
+            [...missed, ...late]
+              .sort((a, b) => a.due.localeCompare(b.due))
+              .map((c) => (
+                <button key={c.key} type="button" onClick={() => open(c.itemId)} className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-black/[0.015] [&+&]:border-t [&+&]:border-black/[0.06]">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium leading-snug">{c.title}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-ink/50">
+                      <BrandTag brand={c.brand} />
+                      Due {shortDay(c.due)}
+                    </span>
+                  </span>
+                  <span className={cn('shrink-0 text-right text-[13px] font-semibold', c.result === 'missed' ? 'text-red-600' : 'text-orange-600')}>
+                    {c.result === 'missed' ? 'Still not done' : `Done ${shortDay(c.doneOn!)}`}
+                    <span className="block font-normal text-ink/45">
+                      {c.daysLate} day{c.daysLate === 1 ? '' : 's'} late
+                    </span>
+                  </span>
+                </button>
+              ))
+          )}
+        </Group>
+
+        <Group title="Day by day">
+          {days.length === 0 ? (
+            <Empty>This week hasn’t started yet.</Empty>
+          ) : (
+            days.map((d) => {
+              const due = commitments.filter((c) => c.due === d);
+              const ok = due.filter((c) => c.result === 'on time').length;
+              const bad = due.filter((c) => c.result === 'missed' || c.result === 'late');
+              return (
+                <div key={d} className="px-4 py-3 [&+&]:border-t [&+&]:border-black/[0.06]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[15px] font-semibold">{shortDay(d)}</span>
+                    <span className="text-[13px] text-ink/50">
+                      {due.length ? `${due.length} due · ${ok} on time${bad.length ? ` · ` : ''}` : 'Nothing due'}
+                      {bad.length > 0 && <span className="font-semibold text-red-600">{bad.length} missed</span>}
+                    </span>
+                  </div>
+                  {bad.length > 0 && <p className="mt-1 text-[13px] leading-snug text-ink/55">{bad.map((c) => c.title).join(' · ')}</p>}
+                </div>
+              );
+            })
+          )}
+        </Group>
+      </Columns>
+
+      <section className="break-inside-avoid px-4 pb-6 lg:px-0">
+        <h2 className="px-4 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.04em] text-ink/45">Your notes for {person}</h2>
+        <textarea
+          value={note}
+          onChange={(e) => {
+            setNote(e.target.value);
+            setSaved(null);
+          }}
+          rows={4}
+          placeholder="What went well, what has to change next week. Only you and Mo see this until you hand it over."
+          className="w-full resize-none rounded-[14px] bg-white p-4 text-[15px] leading-relaxed outline-none [field-sizing:content] focus:ring-2 focus:ring-butter-deep print:ring-0"
+        />
+        <div className="mt-2 flex flex-wrap gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={async () => {
+              const r = await saveReportNote(person, week, note);
+              setSaved(r.ok ? 'Saved' : r.error);
+            }}
+            className="h-10 rounded-[10px] bg-ink px-4 text-[14px] font-semibold text-white"
+          >
+            Save note
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1800);
+              } catch {
+                setSaved('Copy didn’t work here. Use Print / PDF instead.');
+              }
+            }}
+            className="flex h-10 items-center gap-1.5 rounded-[10px] bg-butter px-4 text-[14px] font-semibold"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} Copy report as text
+          </button>
+          {saved && <span className="self-center text-[13px] text-ink/50">{saved}</span>}
+        </div>
+      </section>
     </>
   );
 }
