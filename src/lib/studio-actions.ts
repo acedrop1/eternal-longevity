@@ -275,6 +275,7 @@ export async function saveStudioGrid(brand: GridBrand, page: GridPage): Promise<
       followers: t(page.followers, 12),
       following: t(page.following, 12),
       avatar: ours(page.avatar) ? file(page.avatar) : null,
+      order: (Array.isArray(page.order) ? page.order : []).filter((id) => typeof id === 'string' && /^[\w-]{8,64}$/.test(id)).slice(0, 200),
     };
     await putStored({ ...prev, grid: { ...prev.grid, [brand]: next } });
     if (live.length !== prev.grid[brand].live.length || handle !== prev.grid[brand].handle) {
