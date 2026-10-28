@@ -132,7 +132,7 @@ function allowedEdit(raw: Partial<StudioItem>, prev: StudioItem | null, user: St
     if (!MEMBER_KINDS.includes(raw.kind as never)) raw = { ...raw, kind: prev.kind };
     return { ...raw, status: verdictKept(raw.status) as StudioItem['status'] };
   }
-  return { ...prev, status: verdictKept(raw.status) as StudioItem['status'], files: raw.files, links: raw.links, platforms: raw.platforms };
+  return { ...prev, status: verdictKept(raw.status) as StudioItem['status'], files: raw.files, links: raw.links, platforms: raw.platforms, cover: raw.cover };
 }
 
 export async function saveStudioItem(raw: Partial<StudioItem>): Promise<Result<StudioItem>> {

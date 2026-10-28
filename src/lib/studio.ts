@@ -9,7 +9,10 @@ import {
   KINDS,
   PLATFORMS,
   STATUSES,
+  type GridBrand,
   type GuideSection,
+  type IgMedia,
+  type IgPage,
   type StudioData,
   type StudioEvent,
   type StudioMiss,
@@ -281,7 +284,82 @@ export async function loadStudio(withActivity = false): Promise<StudioData> {
     misses: withActivity ? misses : [],
     notes: withActivity ? notes : {},
     live: studioLive(),
+    instagram: await loadInstagram(),
+    igReady: igConfigured(),
   };
+}
+
+/*
+ * Instagram (API with Instagram Login): each page's long-lived token sits in
+ * site_settings under studio-ig:<page>, outside the studio:% read, and never
+ * reaches a browser. Tokens last 60 days; they are renewed once a week on use.
+ */
+const IG_PREFIX = 'studio-ig:';
+export const igConfigured = () => !!(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET);
+
+export async function putIgToken(brand: GridBrand, token: string): Promise<void> {
+  await write(IG_PREFIX + brand, { token, at: new Date().toISOString() });
+}
+
+async function igToken(brand: GridBrand): Promise<string | null> {
+  let t: { token?: string; at?: string } | undefined;
+  if (!studioLive()) t = memory.get(IG_PREFIX + brand) as typeof t;
+  else t = ((await table().select('value').eq('key', IG_PREFIX + brand).maybeSingle()).data as { value?: typeof t } | null)?.value;
+  if (!t?.token) return null;
+  if (Date.now() - Date.parse(t.at ?? '') > 7 * 86_400_000) {
+    const r = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(t.token)}`, { cache: 'no-store' });
+    const j = (await r.json().catch(() => ({}))) as { access_token?: string };
+    if (r.ok && j.access_token) {
+      await putIgToken(brand, j.access_token);
+      return j.access_token;
+    }
+  }
+  return t.token;
+}
+
+async function loadInstagram(): Promise<Partial<Record<GridBrand, IgPage>>> {
+  if (!igConfigured()) return {};
+  const out: Partial<Record<GridBrand, IgPage>> = {};
+  await Promise.all(
+    (['longevity', 'hair'] as GridBrand[]).map(async (b) => {
+      const token = await igToken(b).catch(() => null);
+      if (!token) return;
+      const get = async (path: string, fields: string) => {
+        const r = await fetch(`https://graph.instagram.com/${path}?fields=${fields}&access_token=${encodeURIComponent(token)}`, { next: { revalidate: 300 } });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error((j as { error?: { message?: string } }).error?.message ?? 'Instagram did not answer.');
+        return j as Record<string, unknown>;
+      };
+      try {
+        const [me, media, extra] = await Promise.all([
+          get('me', 'username,name,profile_picture_url,followers_count,follows_count,media_count'),
+          get('me/media', 'id,media_type,media_url,thumbnail_url,permalink,timestamp&limit=36'),
+          get('me', 'biography,website').catch(() => ({}) as Record<string, unknown>),
+        ]);
+        type M = { id: string; media_type: IgMedia['type']; media_url?: string; thumbnail_url?: string; permalink: string; timestamp: string };
+        out[b] = {
+          username: String(me.username ?? ''),
+          name: String(me.name ?? ''),
+          avatar: String(me.profile_picture_url ?? ''),
+          followers: Number(me.followers_count) || 0,
+          following: Number(me.follows_count) || 0,
+          posts: Number(me.media_count) || 0,
+          bio: String(extra.biography ?? ''),
+          website: String(extra.website ?? ''),
+          media: ((media.data as M[]) ?? []).map((m) => ({
+            id: m.id,
+            type: m.media_type,
+            url: (m.media_type === 'VIDEO' ? m.thumbnail_url : m.media_url) ?? m.media_url ?? '',
+            permalink: m.permalink,
+            at: m.timestamp,
+          })),
+        };
+      } catch (e) {
+        out[b] = { username: '', name: '', avatar: '', followers: 0, following: 0, posts: 0, bio: '', website: '', media: [], error: e instanceof Error ? e.message : 'Instagram did not answer.' };
+      }
+    }),
+  );
+  return out;
 }
 
 export async function loadSettings(): Promise<StudioSettings> {
@@ -369,6 +447,10 @@ export function cleanItem(raw: Partial<StudioItem>, prev: StudioItem | null, who
       .slice(0, 60)
       .filter((f: StudioFile) => ownPath(id, f?.path))
       .map((f: StudioFile) => ({ path: f.path, name: text(f.name, 200), type: text(f.type, 100), size: Number(f.size) || 0 })),
+    cover:
+      raw.cover && typeof raw.cover === 'object'
+        ? { at: Math.max(0, Math.min(3600, Number(raw.cover.at) || 0)), path: ownPath(id, raw.cover.path) ? raw.cover.path : undefined }
+        : null,
     comments: prev?.comments ?? [],
     completedOn: finished ? (prev?.completedOn ?? day(raw.completedOn) ?? todayET()) : null,
     completedBy: finished ? (prev && (prev.status === 'done' || prev.status === 'posted') ? (prev.completedBy ?? null) : who) : null,

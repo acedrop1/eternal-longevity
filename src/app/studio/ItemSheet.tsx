@@ -165,6 +165,9 @@ export function ItemSheet({
   const [link, setLink] = useState('');
   const [note, setNote] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
+  const coverInput = useRef<HTMLInputElement>(null);
+  const scrub = useRef<HTMLVideoElement>(null);
+  const [length, setLength] = useState(0);
   const [confirm, confirmDialog] = useConfirm();
   const [snap, setSnap] = useState(() => JSON.stringify(start));
 
@@ -218,6 +221,21 @@ export function ItemSheet({
     const next = { ...item, files: [...item.files, ...files], title: item.title || (item.kind === 'inspo' ? 'Inspo' : item.title) };
     setItem(next);
     // A saved item keeps its uploads right away, so closing the sheet cannot lose them.
+    if (saved) await persist(next);
+  };
+
+  // The grid cover for a video post: a frame of the video, or an image uploaded for it.
+  const video = item.files.find((f) => f.type.startsWith('video/') && f.url);
+  const coverImage = item.cover?.path ? item.files.find((f) => f.path === item.cover?.path) : undefined;
+  const addCover = async (list: FileList | null) => {
+    if (!list?.length) return;
+    setUploading(1);
+    const { files, error: e } = await uploadFiles(item.id, list);
+    setUploading(0);
+    if (e) return setError(e);
+    if (!files[0]) return;
+    const next = { ...item, files: [...item.files, files[0]], cover: { path: files[0].path } };
+    setItem(next);
     if (saved) await persist(next);
   };
 
@@ -558,6 +576,61 @@ export function ItemSheet({
               </button>
             </div>
           </section>
+          )}
+
+          {full && content && video && (
+            <section>
+              <Heading>Cover (what shows on the grid)</Heading>
+              <div className="flex gap-3 rounded-[14px] bg-white p-3">
+                <div className="aspect-[3/4] w-28 shrink-0 overflow-hidden rounded-[8px] bg-black/[0.05]">
+                  {coverImage?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={coverImage.url} alt="Cover" className="h-full w-full object-cover" />
+                  ) : (
+                    <video
+                      ref={scrub}
+                      src={video.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={(e) => {
+                        setLength(e.currentTarget.duration || 0);
+                        e.currentTarget.currentTime = item.cover?.at || 0.1;
+                      }}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  {coverImage ? (
+                    <button type="button" onClick={() => set('cover', { at: 0 })} className="h-10 w-full rounded-[10px] bg-black/[0.06] text-[14px] font-semibold">
+                      Use a frame from the video
+                    </button>
+                  ) : (
+                    <label className="block text-[14px] text-ink/60">
+                      Slide to pick the frame
+                      <input
+                        type="range"
+                        min={0}
+                        max={length || 1}
+                        step={0.1}
+                        value={item.cover?.at ?? 0}
+                        onChange={(e) => {
+                          const at = Number(e.target.value);
+                          set('cover', { at });
+                          if (scrub.current) scrub.current.currentTime = at;
+                        }}
+                        className="mt-2 w-full accent-[#F7DD74]"
+                      />
+                    </label>
+                  )}
+                  <button type="button" onClick={() => coverInput.current?.click()} disabled={uploading > 0} className="flex h-10 w-full items-center justify-center gap-1.5 rounded-[10px] bg-butter text-[14px] font-semibold disabled:opacity-50">
+                    <Paperclip className="h-4 w-4" /> Upload a cover image
+                  </button>
+                  <input ref={coverInput} type="file" accept="image/*" hidden onChange={(e) => (addCover(e.target.files), (e.target.value = ''))} />
+                </div>
+              </div>
+            </section>
           )}
 
           {error && !reviewing && (

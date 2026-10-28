@@ -47,6 +47,8 @@ export interface StudioItem {
   flagged: boolean;
   links: StudioLink[];
   files: StudioFile[];
+  /** Video cover for the grid: a moment in the video, or one of its uploaded images. */
+  cover?: { at?: number; path?: string } | null;
   comments: StudioComment[];
   /** YYYY-MM-DD it was posted or done; what the daily rings count. */
   completedOn: string | null;
@@ -99,6 +101,30 @@ export interface GridPage {
   followers?: string;
   following?: string;
   avatar?: StudioFile | null;
+  /** Planned post ids in the order dragged on the Grid (newer, unordered ones go first). */
+  order?: string[];
+}
+
+/** A page pulled from Instagram (once connected). */
+export interface IgMedia {
+  id: string;
+  type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+  /** The picture to show: the image, or a video's cover. */
+  url: string;
+  permalink: string;
+  at: string;
+}
+export interface IgPage {
+  username: string;
+  name: string;
+  avatar: string;
+  followers: number;
+  following: number;
+  posts: number;
+  bio: string;
+  website: string;
+  media: IgMedia[];
+  error?: string;
 }
 export type GridBrand = 'longevity' | 'hair';
 export const DEFAULT_GRID: Record<GridBrand, GridPage> = { longevity: { handle: 'etlongevity', live: [] }, hair: { handle: '', live: [] } };
@@ -137,6 +163,9 @@ export interface StudioMiss {
 
 export interface StudioData {
   items: StudioItem[];
+  /** Pages connected to Instagram, and whether the app keys are set at all. */
+  instagram: Partial<Record<GridBrand, IgPage>>;
+  igReady: boolean;
   settings: StudioSettings;
   /** The Activity log, newest first (Adam and Mo only; empty for content). */
   activity: StudioEvent[];
