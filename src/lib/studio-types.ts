@@ -50,6 +50,8 @@ export interface StudioItem {
   comments: StudioComment[];
   /** YYYY-MM-DD it was posted or done; what the daily rings count. */
   completedOn: string | null;
+  /** Who checked it off. */
+  completedBy?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

@@ -187,6 +187,7 @@ export function ItemRow({
             </span>
           )}
           {item.assignee && <span>for {item.assignee}</span>}
+          {done && item.completedBy && <span className="font-semibold text-ink/60">✓ done by {item.completedBy}</span>}
           {(item.files.length > 0 || item.links.length > 0) && <span className="inline-flex items-center gap-0.5"><Paperclip className="h-3.5 w-3.5" />{item.files.length + item.links.length}</span>}
           {item.comments.length > 0 && <span className="inline-flex items-center gap-0.5"><MessageCircle className="h-3.5 w-3.5" />{item.comments.length}</span>}
           {showStatus && item.status !== 'todo' && !done && <StatusPill status={item.status} />}

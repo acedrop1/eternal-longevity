@@ -279,6 +279,7 @@ export function cleanItem(raw: Partial<StudioItem>, prev: StudioItem | null, who
       .map((f: StudioFile) => ({ path: f.path, name: text(f.name, 200), type: text(f.type, 100), size: Number(f.size) || 0 })),
     comments: prev?.comments ?? [],
     completedOn: finished ? (prev?.completedOn ?? day(raw.completedOn) ?? todayET()) : null,
+    completedBy: finished ? (prev && (prev.status === 'done' || prev.status === 'posted') ? (prev.completedBy ?? null) : who) : null,
     createdBy: prev?.createdBy ?? who,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,

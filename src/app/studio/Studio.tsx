@@ -399,6 +399,10 @@ function TodayTab({
               </p>
             </div>
           </div>
+          {manager ? (
+            <TeamProgress items={items} users={settings.users} />
+          ) : (
+          <>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -416,6 +420,8 @@ function TodayTab({
             </button>
           </div>
           <p className="px-2 pt-2 text-[13px] leading-snug text-ink/40">Posted something? Log it so it counts toward today’s goal.</p>
+          </>
+          )}
         </section>
 
         <div>
@@ -455,6 +461,48 @@ function TodayTab({
   );
 }
 
+/** How each content person is doing, at a glance. */
+function TeamProgress({ items, users }: { items: StudioItem[]; users: StudioUser[] }) {
+  const today = todayET();
+  const weekAgo = addDays(today, -6);
+  const crew = users.filter((u) => u.active && u.role === 'member');
+  if (!crew.length) return null;
+  return (
+    <div className="mt-3 space-y-3">
+      {crew.map((u) => {
+        const theirs = items.filter((i) => i.kind !== 'inspo' && i.assignee === u.name);
+        const open = theirs.filter((i) => !isFinished(i.status));
+        const stats = [
+          { n: open.filter((i) => i.due && i.due < today).length, label: 'late', tone: 'text-red-600' },
+          { n: open.filter((i) => i.due === today).length, label: 'due today', tone: '' },
+          { n: open.filter((i) => i.status === 'review').length, label: 'for you to review', tone: 'text-[#C9A82E]' },
+          { n: theirs.filter((i) => isFinished(i.status) && (i.completedOn ?? '') >= weekAgo).length, label: 'done this week', tone: 'text-emerald-700' },
+        ];
+        return (
+          <div key={u.id} className="rounded-[18px] bg-white p-4 text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-[13px] font-bold text-butter">{initials(u.name)}</span>
+              <div>
+                <p className="text-[16px] font-semibold">{u.name}</p>
+                <p className="text-[12px] text-ink/45">{u.lastLogin ? `Last signed in ${dayLabel(todayET(new Date(u.lastLogin)), today).toLowerCase()}` : 'Hasn’t signed in yet'}</p>
+              </div>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-2">
+              {stats.map((s) => (
+                <div key={s.label} className="rounded-[10px] bg-black/[0.03] px-3 py-2">
+                  <dt className="sr-only">{s.label}</dt>
+                  <dd className={cn('text-[20px] font-bold leading-none', s.n ? s.tone : 'text-ink/25')}>{s.n}</dd>
+                  <p className="mt-1 text-[12px] text-ink/50">{s.label}</p>
+                </div>
+              ))}
+            </dl>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ---------------- Tasks ---------------- */
 
 function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: string[]; me: StudioUser; row: RowFn }) {
@@ -463,7 +511,7 @@ function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: str
   const [who, setWho] = useState<string>('all');
   const today = todayET();
   const mine = items.filter((i) => i.kind !== 'inspo' && (who === 'all' || i.assignee === who));
-  const list = mine.filter((i) => i.kind === 'task' || i.kind === 'shoot');
+  const list = mine;
 
   const groups = useMemo(() => {
     if (view === 'done') {
@@ -487,7 +535,7 @@ function TasksTab({ items, people, me, row }: { items: StudioItem[]; people: str
 
   return (
     <>
-      <LargeTitle title="Tasks" sub={manager ? 'Everything you and Mo have assigned, by when it’s due.' : 'Everything assigned to you, by when it’s due. Tap a task to see exactly what to do.'} />
+      <LargeTitle title="Tasks" sub={manager ? 'All work you and Mo have assigned (tasks, posts, stories, shoots), by when it’s due.' : 'Everything assigned to you, by when it’s due. Tap one to see exactly what to do.'} />
       <div className="space-y-3 px-4 pb-5 lg:flex lg:items-center lg:gap-4 lg:space-y-0 lg:px-0">
         <Segmented className="lg:w-[260px]" value={view} onChange={setView} options={[{ value: 'open', label: 'To do' }, { value: 'done', label: 'Done (all work)' }]} />
         {manager && <Chips value={who} onChange={setWho} options={[{ value: 'all', label: 'Everyone' }, ...people.map((p) => ({ value: p, label: p }))]} />}
