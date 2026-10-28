@@ -299,6 +299,71 @@ export function ItemSheet({
 
   const lastChange = [...item.comments].reverse().find((c) => c.verdict === 'changes');
 
+  // Adam and Mo reviewing: the work and the verdict come first, the edit form waits behind a button.
+  const reviewing = manager && !isNew && item.kind !== 'inspo' && item.status === 'review';
+  const [showAll, setShowAll] = useState(false);
+  const full = !reviewing || showAll;
+  const lastVerdict = item.comments.map((c) => !!c.verdict).lastIndexOf(true);
+  const theirNotes = item.comments.slice(lastVerdict + 1).filter((c) => c.by !== me.name);
+  const reviewPanel = reviewing && (
+    <section className="rounded-[14px] bg-white p-4 ring-2 ring-butter-deep">
+      <p className="text-[12px] font-bold uppercase tracking-[0.04em] text-ink/50">{item.assignee || 'They'} sent this for review</p>
+      {item.files.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {item.files.map((f) => (
+            <FileTile key={f.path} file={f} />
+          ))}
+        </div>
+      )}
+      {item.links.map((l, i) => (
+        <a
+          key={i}
+          href={l.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center gap-2 rounded-[10px] bg-black/[0.04] px-3 py-2.5 text-[15px] font-medium"
+        >
+          <Link2 className="h-4 w-4 shrink-0 text-ink/40" />
+          <span className="min-w-0 flex-1 truncate">{l.label || l.url.replace(/^https?:\/\/(www\.)?/, '')}</span>
+          <span className="shrink-0 text-[13px] text-ink/45">Open</span>
+        </a>
+      ))}
+      {!item.files.length && !item.links.length && <p className="mt-2 text-[15px] text-ink/45">No files or links attached. Check the notes.</p>}
+      {theirNotes.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {theirNotes.map((c) => (
+            <li key={c.id} className="rounded-[12px] bg-black/[0.04] px-3.5 py-2.5">
+              <p className="text-[11px] text-ink/40">
+                {c.by} · {new Date(c.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })}
+              </p>
+              <Linkified text={c.body} className="text-[15px] leading-snug" />
+            </li>
+          ))}
+        </ul>
+      )}
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        rows={2}
+        placeholder="Your feedback (needed to ask for changes, optional to approve)"
+        className="mt-4 w-full resize-none rounded-[12px] bg-black/[0.04] px-3.5 py-2.5 text-[15px] outline-none [field-sizing:content] focus:ring-2 focus:ring-butter-deep"
+      />
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" disabled={busy} onClick={() => comment('changes')} className="h-12 rounded-[12px] bg-peach/70 text-[15px] font-semibold">
+          Ask for changes
+        </button>
+        <button type="button" disabled={busy} onClick={() => comment('approved')} className="flex h-12 items-center justify-center gap-1.5 rounded-[12px] bg-emerald-600 text-[15px] font-semibold text-white">
+          <Check className="h-4 w-4" strokeWidth={3} /> Approve
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="mt-2 rounded-[12px] bg-red-50 px-4 py-3 text-[14px] text-red-700">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+
   return (
     <>
       {confirmDialog}
@@ -369,10 +434,16 @@ export function ItemSheet({
             </div>
           )}
 
-          {nextStep}
+          {reviewing ? reviewPanel : nextStep}
+
+          {reviewing && (
+            <button type="button" onClick={() => setShowAll((v) => !v)} className="h-11 w-full rounded-[12px] bg-black/[0.05] text-[15px] font-semibold text-ink/70">
+              {showAll ? 'Hide task details' : 'Edit task details and see all notes'}
+            </button>
+          )}
 
           {/* Details */}
-          {editable ? (
+          {!full ? null : editable ? (
             <>
               <Segmented<Kind>
                 value={item.kind}
@@ -387,7 +458,7 @@ export function ItemSheet({
             </>
           ) : null}
 
-          {item.kind !== 'inspo' && (
+          {full && item.kind !== 'inspo' && (
             <div className="overflow-hidden rounded-[14px] bg-white">
               <Field label="Status">
                 <select value={item.status} onChange={(e) => set('status', e.target.value as Status)} className={selectCls}>
@@ -420,7 +491,7 @@ export function ItemSheet({
             </div>
           )}
 
-          {content && (
+          {full && content && (
             <div className="flex flex-wrap gap-2">
               {PLATFORMS.map((p) => {
                 const on = item.platforms.includes(p);
@@ -440,6 +511,7 @@ export function ItemSheet({
           )}
 
           {/* Files and links */}
+          {full && (
           <section>
             <Heading>{editable ? 'Files & links' : 'Files & links (add your work here)'}</Heading>
             <div className="rounded-[14px] bg-white p-3">
@@ -486,15 +558,16 @@ export function ItemSheet({
               </button>
             </div>
           </section>
+          )}
 
-          {error && (
+          {error && !reviewing && (
             <p role="alert" className="rounded-[12px] bg-red-50 px-4 py-3 text-[14px] text-red-700">
               {error}
             </p>
           )}
 
           {/* Notes thread */}
-          {item.kind !== 'inspo' && !isNew && (
+          {full && item.kind !== 'inspo' && !isNew && (
             <section>
               <Heading>Notes</Heading>
               <div className="rounded-[14px] bg-white p-3">

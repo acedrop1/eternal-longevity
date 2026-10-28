@@ -58,7 +58,7 @@ import {
   type StudioUser,
 } from '@/lib/studio-types';
 import { FileTile, ItemSheet, blankItem, uploadFiles } from './ItemSheet';
-import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, dayLabel } from './ui';
+import { BarButton, BrandDot, BrandTag, byDay, Chips, dayTitle, Columns, Empty, Group, ItemRow, LargeTitle, Linkified, Segmented, Sheet, SheetBar, StatusPill, dayLabel } from './ui';
 
 type Tab = 'today' | 'tasks' | 'content' | 'inspo' | 'guide' | 'activity' | 'report';
 type BrandFilter = 'all' | Brand;
@@ -266,6 +266,7 @@ export function Studio({ initial, me }: { initial: StudioData; me: StudioUser })
           {tab === 'activity' && manager && (
             <ActivityTab
               events={initial.activity}
+              items={items}
               users={settings.users.filter((u) => u.active)}
               open={(id) => {
                 const i = items.find((x) => x.id === id);
@@ -743,9 +744,22 @@ function InspoTab({ items, me, open, upsert }: { items: StudioItem[]; me: Studio
 
 const timeET = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
 
-function ActivityTab({ events, users, open }: { events: StudioEvent[]; users: StudioUser[]; open: (id: string) => void }) {
+// One line per task: "sent for review · 2 links · 8 notes".
+function rollUp(evs: StudioEvent[]) {
+  const total = (re: RegExp) => evs.filter((e) => re.test(e.action)).reduce((t, e) => t + (Number(e.action.match(/\d+/)?.[0]) || 1), 0);
+  const plural = (n: number, w: string) => (n ? [`${n} ${w}${n > 1 ? 's' : ''}`] : []);
+  const other = [...evs]
+    .reverse()
+    .map((e) => e.action)
+    .filter((a) => !/^(left a note|added \d+ links?|uploaded \d+ files?)/.test(a))
+    .map((a) => a.replace(/ (on|to)$/, ''));
+  return [...new Set(other), ...plural(total(/^uploaded/), 'file'), ...plural(total(/^added \d+ link/), 'link'), ...plural(total(/^left a note/), 'note')];
+}
+
+function ActivityTab({ events, items, users, open }: { events: StudioEvent[]; items: StudioItem[]; users: StudioUser[]; open: (id: string) => void }) {
   const people = users.map((u) => u.name);
   const [who, setWho] = useState('all');
+  const [view, setView] = useState<'task' | 'time'>('task');
   const today = todayET();
   const list = events.filter((e) => who === 'all' || e.by === who);
   const days = [...new Set(list.map((e) => todayET(new Date(e.at))))];
@@ -771,7 +785,16 @@ function ActivityTab({ events, users, open }: { events: StudioEvent[]; users: St
   return (
     <>
       <LargeTitle title="Activity" sub="Everything done in the studio, newest first. Only you and Mo see this." />
-      <div className="px-4 pb-5 lg:px-0">
+      <div className="flex flex-wrap items-center gap-3 px-4 pb-5 lg:px-0">
+        <Segmented
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'task', label: 'By task' },
+            { value: 'time', label: 'Timeline' },
+          ]}
+          className="w-[220px]"
+        />
         <Chips value={who} onChange={setWho} options={[{ value: 'all', label: 'Everyone' }, ...people.map((p) => ({ value: p, label: p }))]} />
       </div>
 
@@ -800,7 +823,51 @@ function ActivityTab({ events, users, open }: { events: StudioEvent[]; users: St
           <Empty>Nothing yet. Every sign-in, check-off, upload, note and approval shows up here from now on.</Empty>
         </Group>
       )}
-      <div className="lg:max-w-[820px]">
+      {view === 'task' && (
+        <div className="lg:max-w-[820px]">
+          {days.map((d) => {
+            const dayEvents = list.filter((e) => e.itemId && todayET(new Date(e.at)) === d);
+            const ids = [...new Set(dayEvents.map((e) => e.itemId!))];
+            if (!ids.length) return null;
+            return (
+              <Group key={d} title={dayLabel(d, today)} count={ids.length}>
+                {ids.map((id) => {
+                  const evs = dayEvents.filter((e) => e.itemId === id);
+                  const item = items.find((i) => i.id === id);
+                  const note = evs.find((e) => /^left a note/.test(e.action))?.detail;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      disabled={!item}
+                      onClick={() => open(id)}
+                      className="flex w-full items-start gap-3 px-4 py-3.5 text-left [&+&]:border-t [&+&]:border-black/[0.06] enabled:hover:bg-black/[0.015]"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[16px] font-semibold leading-snug">{item?.title ?? evs[0].itemTitle ?? 'Deleted item'}</span>
+                        {item && (
+                          <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <BrandTag brand={item.brand} />
+                            <StatusPill status={item.status} />
+                            {item.status === 'review' && <span className="text-[13px] font-semibold text-orange-600">Waiting on you</span>}
+                          </span>
+                        )}
+                        <span className="mt-1.5 block text-[14px] text-ink/65">
+                          {[...new Set(evs.map((e) => e.by))].join(' & ')}: {rollUp(evs).join(' · ')}
+                        </span>
+                        {note && <span className="mt-1 line-clamp-2 block text-[13px] text-ink/45">“{note}”</span>}
+                      </span>
+                      <span className="shrink-0 text-[13px] tabular-nums text-ink/40">{timeET(evs[0].at)}</span>
+                    </button>
+                  );
+                })}
+              </Group>
+            );
+          })}
+        </div>
+      )}
+
+      <div className={cn('lg:max-w-[820px]', view === 'task' && 'hidden')}>
         {days.map((d) => (
           <Group key={d} title={dayLabel(d, today)} count={list.filter((e) => todayET(new Date(e.at)) === d).length}>
             {list
