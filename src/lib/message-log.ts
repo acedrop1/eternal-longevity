@@ -47,7 +47,10 @@ export async function logMessage(row: {
   if (!supabaseAdminConfigured()) return;
   try {
     const db = createSupabaseAdminClient();
-    const body = row.channel === 'email' ? htmlToText(row.body) : redact(row.body);
+    // Staff notices can carry patient details (check-in comments, names): keep the
+    // subject and status, not the body. Member-facing messages keep theirs.
+    const internal = [row.to].flat().every((r) => /@(etlongevity|eternallongevity)\.com$/i.test(r.trim()));
+    const body = internal ? '' : row.channel === 'email' ? htmlToText(row.body) : redact(row.body);
     await db.from('message_log').insert(
       [row.to].flat().map((r) => ({
         channel: row.channel,

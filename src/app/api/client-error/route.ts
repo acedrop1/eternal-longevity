@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { allow } from '@/lib/rate-limit';
 
 /**
  * Receives browser crash reports (lib/report-client-error) and writes them to
@@ -6,6 +7,15 @@ import { NextResponse } from 'next/server';
  * it trusts nothing: fields are clipped and it never echoes anything back.
  */
 export async function POST(req: Request) {
+  const none = new NextResponse(null, { status: 204 });
+  // Our pages only, and a few a minute per visitor: a flood can't bury real errors.
+  const origin = req.headers.get('origin');
+  try {
+    if (origin && new URL(origin).host !== new URL(req.url).host) return none;
+  } catch {
+    return none;
+  }
+  if (!(await allow('client-error', { max: 20, windowSeconds: 600 }))) return none;
   try {
     const raw = (await req.text()).slice(0, 4000);
     const r = JSON.parse(raw) as Record<string, unknown>;

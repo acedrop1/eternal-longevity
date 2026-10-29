@@ -8,6 +8,7 @@
  */
 
 import { revalidatePath } from 'next/cache';
+import { allow } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
 import { supabaseConfigured } from '@/lib/env';
@@ -81,6 +82,9 @@ export async function sendMessageAction(channel: MessageChannel, body: string): 
   const text = body.trim();
   if (!text) return { ok: false, error: 'Type a message first.' };
   if (text.length > 4000) return { ok: false, error: 'Message is too long.' };
+  if (!(await allow('member-msg', { max: 30, windowSeconds: 600 }, user.id))) {
+    return { ok: false, error: 'You have sent a lot of messages in a few minutes. Please wait a little and try again.' };
+  }
 
   const db = await createSupabaseServerClient();
   const { error } = await db.from('messages').insert({

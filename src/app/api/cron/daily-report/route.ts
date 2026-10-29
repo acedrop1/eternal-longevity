@@ -68,6 +68,13 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
+  // Keep the email/text log a year, then let it go: it exists to answer "what did we send", not as a record.
+  await db
+    .from('message_log')
+    .delete()
+    .lt('created_at', new Date(Date.now() - 365 * 86400_000).toISOString())
+    .then(({ error }) => error && console.error('[daily-report] message_log purge failed:', error.message));
+
   const [
     signups,
     intakes,

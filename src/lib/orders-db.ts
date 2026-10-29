@@ -197,6 +197,8 @@ export async function getOrder(orderNumber: string): Promise<Order | null> {
   if (r.userId) q = q.eq('user_id', r.userId);
   const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
+  // A deleted (test) order is gone for members; staff can still open it to restore it.
+  if (r.userId && (await getHiddenOrders())[String(orderNumber)] === 'deleted') return null;
   return mapOrder(data as OrderRow);
 }
 
@@ -1393,6 +1395,7 @@ export async function remindHealthQuestionsAction(
 export async function setOrderVisibilityAction(orderNumber: string, to: OrderVisibility | null): Promise<ActionResult> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
+  if (to !== null && to !== 'archived' && to !== 'deleted') return { ok: false, error: 'bad_visibility' };
   const db = createSupabaseAdminClient();
   const { data: o } = await db.from('orders').select('id, status').eq('order_number', orderNumber).maybeSingle();
   if (!o) return { ok: false, error: 'Order not found.' };

@@ -16,5 +16,8 @@ export function createSupabaseBrowserClient() {
         'NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment.',
     );
   }
-  return createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // Same as the server's (lib/supabase/server): Secure in production, never cross-site.
+    cookieOptions: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' },
+  });
 }

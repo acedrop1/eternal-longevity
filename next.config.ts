@@ -1,5 +1,13 @@
 import type { NextConfig } from 'next';
 
+const SUPABASE_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').hostname;
+  } catch {
+    return '';
+  }
+})();
+
 const nextConfig: NextConfig = {
   // Dev only: lets a phone on the same Wi-Fi load the local preview (http://<Mac IP>:3000).
   allowedDevOrigins: ['192.168.1.238'],
@@ -52,8 +60,9 @@ const nextConfig: NextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
-      // Product photos uploaded in Admin → Products (Supabase Storage).
-      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
+      // Product photos uploaded in Admin → Products (Supabase Storage). Our
+      // project only: '*.supabase.co' let anyone's bucket through the optimizer.
+      ...(SUPABASE_HOST ? [{ protocol: 'https' as const, hostname: SUPABASE_HOST, pathname: '/storage/v1/object/public/**' }] : []),
     ],
   },
 };

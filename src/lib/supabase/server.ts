@@ -23,6 +23,8 @@ export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // Secure in production, never sent cross-site.
+    cookieOptions: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' },
     cookies: {
       getAll() {
         return cookieStore.getAll();

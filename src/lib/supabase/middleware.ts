@@ -68,6 +68,8 @@ export async function updateSession(request: NextRequest) {
   if (!supabaseConfigured) return response;
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // Secure in production, never sent cross-site (same as lib/supabase/server).
+    cookieOptions: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' },
     cookies: {
       getAll() {
         return request.cookies.getAll();

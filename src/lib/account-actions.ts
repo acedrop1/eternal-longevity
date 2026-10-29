@@ -55,6 +55,8 @@ export async function changePasswordAction(input: {
   const { error } = await supabase.auth.updateUser({ password: input.next });
   if (error) return { ok: false, message: error.code === 'weak_password' ? 'That password has shown up in a data breach elsewhere, so it isn’t safe to use. Please choose a different one.' : 'Could not update your password.' };
 
+  // A changed password ends every other session, as the reset flow does.
+  await supabase.auth.signOut({ scope: 'others' }).catch(() => undefined);
   return { ok: true, message: 'Password updated.' };
 }
 
@@ -66,6 +68,9 @@ async function raiseRequest(
 ): Promise<AccountResult> {
   const user = await getSession();
   if (!user) return { ok: false, message: 'Please sign in again.' };
+  if (!(await allow('account-request', { max: 3, windowSeconds: 3600 }, user.id))) {
+    return { ok: false, message: 'Your request is already in. We will be in touch soon.' };
+  }
 
   const sent = await sendEmail({
     to: SUPPORT_EMAIL,

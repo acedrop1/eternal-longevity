@@ -77,7 +77,8 @@ export const LIMITS = {
   /** A six-digit code is 10^6; resend is how you get more tries. */
   mfa: { max: 15, windowSeconds: 900 },
   /** Does this email have an account? */
-  enumeration: { max: 20, windowSeconds: 600 },
+  // A real visitor checks their own email once or twice; a lister checks hundreds.
+  enumeration: { max: 6, windowSeconds: 3600 },
   /** Promo-code guessing. */
   promo: { max: 20, windowSeconds: 600 },
   /** Contact-form and intake spam. */

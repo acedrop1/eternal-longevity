@@ -315,7 +315,8 @@ export async function ensureBucket(): Promise<void> {
   if (data) return;
   const { error } = await storage.createBucket(BUCKET, {
     public: false,
-    allowedMimeTypes: ['image/*', 'video/*', 'application/pdf'],
+    // No SVG (it can carry script): photos, video and PDFs only.
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/gif', 'video/*', 'application/pdf'],
   });
   if (error && !/exists/i.test(error.message)) throw new Error(error.message);
 }
