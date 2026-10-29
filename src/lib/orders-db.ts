@@ -26,6 +26,7 @@ import {
   orderCancelledByTeamEmail,
   orderReceivedEmail,
   sendEmail,
+  unfinishedVisitEmail,
 } from '@/lib/email';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { supabaseConfigured } from '@/lib/env';
@@ -648,11 +649,11 @@ async function placeOrder(input: {
   // spent; hand it back here if that ever happens outside a database outage.
   if (!created.length) return { ok: false, error: 'insert_failed' };
 
-  // One email for the basket, however many orders it became. Not when the
-  // health questions follow: then their one email comes once those are done
-  // (visitCompleteEmail), so checkout doesn't send three emails in five minutes.
+  // One email for the basket, however many orders it became. When the health
+  // questions still follow, it carries the link to them: if the browser dies
+  // between checkout and the questions, the member still has the way back.
   const healthQuestions = (await intakeStateFor(user.id)) === 'awaiting_visit';
-  if (user.email && !healthQuestions) {
+  if (user.email) {
     const msg = orderReceivedEmail({
       firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'there',
       orderNumber: created.join(', '),
@@ -664,6 +665,7 @@ async function placeOrder(input: {
       shipping: bookedShippingCents,
       discount: bookedDiscountCents,
       total: bookedTotalCents,
+      healthQuestions,
     });
     await sendEmail({ to: user.email, subject: msg.subject, html: msg.html });
   }
@@ -1259,6 +1261,52 @@ export async function addOrderNoteAction(orderNumber: string, note: string): Pro
   const id = await orderIdFor(orderNumber);
   if (!id) return { ok: false, error: 'not_found' };
   await appendUpdate(id, user.name, user.role === 'doctor' ? 'physician' : 'admin', 'Update', text);
+  revalidatePortal();
+  return { ok: true };
+}
+
+/**
+ * Admin: email the member the "answer the health questions" reminder now, for
+ * an order still waiting on them. Counted as the next step of the daily
+ * reminder sequence (cron/recovery), so the automatic ones don't double up.
+ */
+export async function remindHealthQuestionsAction(orderNumber: string): Promise<ActionResult> {
+  const { user, error } = await requireRole(['admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const db = createSupabaseAdminClient();
+  const { data: o } = await db
+    .from('orders')
+    .select('id, user_id, status, member_email, member_name')
+    .eq('order_number', orderNumber)
+    .maybeSingle();
+  if (!o) return { ok: false, error: 'not_found' };
+  if (o.status !== 'awaiting-visit') return { ok: false, error: 'Their health questions are already in.' };
+  if (!o.member_email) return { ok: false, error: 'No email on this order.' };
+
+  const firstName = (o.member_name ?? '').trim().split(/\s+/)[0] || 'there';
+  const msg = unfinishedVisitEmail({ firstName, visitUrl: `${SITE_URL}/portal/visit` });
+  const sent = await sendEmail({ to: o.member_email, subject: msg.subject, html: msg.html });
+  if (!sent.ok) return { ok: false, error: 'The email did not send. Try again in a minute.' };
+
+  try {
+    const { data: intake } = o.user_id
+      ? await db
+          .from('intake_submissions')
+          .select('id')
+          .eq('user_id', o.user_id)
+          .eq('status', 'awaiting_visit')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
+    const ref = intake?.id ?? orderNumber;
+    const { data: prior } = await db.from('email_sends').select('step').eq('stage', 'visit').eq('ref', ref);
+    const step = Math.max(-1, ...(prior ?? []).map((r) => r.step)) + 1;
+    await db.from('email_sends').insert({ email: o.member_email.toLowerCase(), stage: 'visit', ref, step });
+  } catch {
+    // Best effort: at worst the daily run sends its own reminder too.
+  }
+  await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', 'Emailed a reminder to answer the health questions.');
   revalidatePortal();
   return { ok: true };
 }

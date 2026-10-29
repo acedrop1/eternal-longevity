@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { reportClientError } from '@/lib/report-client-error';
+import { reloadOnNetworkError, reportClientError } from '@/lib/report-client-error';
 import Link from 'next/link';
 
 /**
@@ -20,6 +20,7 @@ export default function GlobalError({
     // eslint-disable-next-line no-console
     console.error('Caught by app/error.tsx:', error);
     reportClientError(error, 'app');
+    reloadOnNetworkError(error);
   }, [error]);
 
   return (

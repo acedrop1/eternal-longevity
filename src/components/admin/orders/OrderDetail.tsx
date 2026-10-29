@@ -10,7 +10,7 @@ import {
   retrySendToPharmacyAction,
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
-import { addOrderNoteAction } from '@/lib/orders-db';
+import { addOrderNoteAction, remindHealthQuestionsAction } from '@/lib/orders-db';
 import { adminRefundOrder } from '@/lib/admin-billing-actions';
 import { setOrderShippingCostAction } from '@/lib/settings-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
@@ -75,6 +75,7 @@ export function OrderDetail({
 
   // The fulfillment steps, as the index row ran them.
   const [pending, start] = useTransition();
+  const [reminder, setReminder] = useState<string | null>(null);
   const [result, setResult] = useState<FulfillmentResult | null>(null);
   const [pharmacyRef, setPharmacyRef] = useState('');
   const [carrier, setCarrier] = useState(CARRIERS[0]);
@@ -160,12 +161,31 @@ export function OrderDetail({
             <p className="mt-1 text-[14px] text-ink/65">
               Placed {formatDateTime(o?.placedAt ?? b?.createdAt)}
             </p>
+            {reminder && (
+              <p role="status" className="mt-1 text-[14px] font-medium text-ink">
+                {reminder}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {admin && o && (
               <MoreActions>
                 {(close) => (
                   <>
+                    <MenuItem
+                      disabled={o.status !== 'awaiting-visit' || pending}
+                      hint={o.status === 'awaiting-visit' ? 'Emails a link to the health questions' : 'Only while waiting on health questions'}
+                      onClick={() => {
+                        close();
+                        start(async () => {
+                          const res = await remindHealthQuestionsAction(o.id);
+                          setReminder(res.ok ? 'Reminder emailed.' : (res.error ?? 'Could not send.'));
+                          if (res.ok) router.refresh();
+                        });
+                      }}
+                    >
+                      Email health-question reminder
+                    </MenuItem>
                     <MenuItem
                       disabled={!o.paidAt}
                       hint={o.paidAt ? undefined : 'Nothing was charged'}

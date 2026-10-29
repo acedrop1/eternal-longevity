@@ -19,3 +19,25 @@ export function reportClientError(error: Error & { digest?: string }, where: str
     // Reporting must never throw from an error screen.
   }
 }
+
+/**
+ * A dropped connection ("Load failed" on iPhone Safari, "Failed to fetch" in
+ * Chrome, a stale code chunk after a deploy) is not a real crash: reload the
+ * page once and it heals. On /checkout that reload lands a member whose order
+ * went through straight on their health questions (the checkout page
+ * redirects there). At most one reload a minute, so a real outage can't loop.
+ * Returns true when it is reloading.
+ */
+export function reloadOnNetworkError(error: Error): boolean {
+  try {
+    const msg = `${error?.name ?? ''} ${error?.message ?? ''}`;
+    if (!/load failed|failed to fetch|networkerror|network error|chunkloaderror|loading chunk|connection/i.test(msg)) return false;
+    const last = Number(window.sessionStorage.getItem('el-net-reload') ?? 0);
+    if (Date.now() - last < 60_000) return false;
+    window.sessionStorage.setItem('el-net-reload', String(Date.now()));
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
