@@ -71,7 +71,7 @@ export async function PortalShell({
           user.role === 'member' ? IDLE_MINUTES.member : IDLE_MINUTES.staff
         }
       />
-      <div className={cn('min-h-screen', lightBody ? (staff ? 'bg-[#ECECE8] text-ink' : 'bg-white text-ink') : 'bg-ink text-white')}>
+      <div className={cn('min-h-screen', lightBody ? (staff ? 'bg-milk-deep text-ink' : 'bg-white text-ink') : 'bg-ink text-white')}>
         {/* ============ TOP BAR ============ */}
         {/* The public header's frosted glass: a floating rounded bar, milky
             white so it reads over anything scrolling beneath it. */}
@@ -161,21 +161,25 @@ export async function PortalShell({
             </div>
           </div>
 
-          {/* Mobile-only nav strip, swipeable, same glass as the bar */}
-          {/* Members use the bottom tab bar on phones instead. */}
-          {staff && navItems.length > 0 && (
-            <div className={cn(GLASS_BAR, 'mt-2 md:hidden')}>
+        </header>
+
+        {/* Mobile-only nav strip, swipeable, same glass as the bar. Not pinned:
+            it scrolls away so the page gets the phone screen. Members use the
+            bottom tab bar on phones instead; a one-tab portal needs no strip. */}
+        {staff && navItems.length > 1 && (
+          <div className="px-3 pt-2 md:hidden">
+            <div className={GLASS_BAR}>
               <PortalNav nav={navItems} variant="mobile" />
             </div>
-          )}
-        </header>
+          </div>
+        )}
 
         {/* ============ CONTENT. Sidebar + main ============ */}
         {/* theme-light stays on the content wrapper: staff pages (admin,
             doctor, pharmacy) still colour themselves through the theme
             tokens (text-foreground, bg-surface, border-line), and this is
             what resolves those to ink on white. */}
-        <div className={cn(lightBody && 'theme-light')}>
+        <div className={cn(lightBody && 'theme-light', staff && 'staff-ground')}>
           <div className="px-3 md:flex md:items-start md:gap-6 md:px-5">
             {/* Left sidebar. Desktop only */}
             {navItems.length > 0 && (

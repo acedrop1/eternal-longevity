@@ -62,6 +62,12 @@
   --glass-border-strong: rgba(0, 0, 0, 0.10);
 }
 
+/* Staff portals: white cards on a soft grey ground, Shopify-admin style
+   (theme-light would otherwise force the ground white). */
+.theme-light.staff-ground {
+  background-color: #EBEBE8 !important;
+}
+
 /* Descendant overrides for the most-used Tailwind utilities so the light
  * theme reads correctly even without the variable-driven Tailwind config.
  * Cards, surfaces, borders, and text-foreground all flip. */

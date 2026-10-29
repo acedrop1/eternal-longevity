@@ -48,6 +48,10 @@ interface Overview {
   /** Fulfillment rows on the board's "To place" tab (draft or submitted). */
   toPlace: SweepShipment[];
   activity: { time: string; action: string }[];
+  /** Privacy requests still open (they run on a legal clock). */
+  privacyOpen: number;
+  /** The numbers could not be read: say so instead of "all clear". */
+  failed?: boolean;
 }
 
 const EMPTY: Overview = {
@@ -62,13 +66,16 @@ const EMPTY: Overview = {
   orders: [],
   toPlace: [],
   activity: [],
+  privacyOpen: 0,
 };
 
+/** Midnight in New York, as an instant (Vercel runs in UTC). */
 const startOfToday = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  const wall = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const sinceMidnight = ((wall.getHours() * 60 + wall.getMinutes()) * 60 + wall.getSeconds()) * 1000;
+  return new Date(Date.now() - sinceMidnight).toISOString();
 };
+const nyHour = () => Number(new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }));
 
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -81,7 +88,7 @@ async function loadOverview(): Promise<Overview> {
     const db = createSupabaseAdminClient();
     const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
 
-    const [members, subs, intakes, orders, shipments, shipped, updates, today, week, counts, hidden] =
+    const [members, subs, intakes, orders, shipments, shipped, updates, today, week, counts, hidden, privacy] =
       await Promise.all([
         db.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'member'),
         db.from('subscriptions').select('per_cycle_cents, cadence_label').eq('status', 'active'),
@@ -111,6 +118,7 @@ async function loadOverview(): Promise<Overview> {
         // The nav badges' counts; "messages awaiting a reply" uses the inbox's rule.
         getPendingCounts('admin'),
         getHiddenOrders(),
+        db.from('privacy_requests').select('*', { count: 'exact', head: true }).not('status', 'in', '(completed,denied,appealed)'),
       ]);
     // Deleted (test) orders leave the overview; archived ones are done, so off the live list too.
     const orderOf = (u: { orders: unknown }) => {
@@ -133,13 +141,15 @@ async function loadOverview(): Promise<Overview> {
       shippedWeek: (shipped.data ?? []).filter((r) => !hidden[String(r.order_ref).replace(/^FUL-/, '')]).length,
       orders: (orders.data ?? []).filter((o) => !hidden[String(o.order_number)]) as unknown as SweepOrder[],
       toPlace: (shipments.data ?? []).filter((r) => !hidden[String(r.order_ref).replace(/^FUL-/, '')]),
+      privacyOpen: privacy.count ?? 0,
       activity: (updates.data ?? []).filter((u) => hidden[orderOf(u)] !== 'deleted').slice(0, 6).map((u) => ({
         time: fmtTime(u.created_at),
         action: [u.author ?? u.author_role ?? 'System', u.label, u.body ?? ''].filter(Boolean).join(' · '),
       })),
     };
-  } catch {
-    return EMPTY;
+  } catch (err) {
+    console.error('[admin overview] load failed:', err);
+    return { ...EMPTY, failed: true };
   }
 }
 
@@ -240,10 +250,19 @@ export default async function AdminPortalPage() {
           badge: 'Inbox',
         }]
       : []),
+    ...(o.privacyOpen
+      ? [{
+          label: `${plural(o.privacyOpen, 'privacy request')} open`,
+          detail: 'Answer within the legal deadline shown on each request.',
+          href: '/portal/admin/privacy-requests',
+          tone: 'attention' as const,
+          badge: 'Privacy',
+        }]
+      : []),
     ...stale.map((s) => ({
       label: `Order #${s.ref}`,
       detail: `${STALE[s.kind][0]} for ${waited(s.hours)}`,
-      href: '/portal/admin/fulfillment?tab=issues',
+      href: `/portal/admin/orders/${encodeURIComponent(s.ref.replace(/^FUL-/, ''))}`,
       tone: STALE[s.kind][1],
       badge: 'Stuck',
     })),
@@ -264,8 +283,15 @@ export default async function AdminPortalPage() {
       <div className="space-y-5">
         <AdminPageHeader
           title="Overview"
-          subtitle={`Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}, ${firstName}. ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}.`}
+          subtitle={`Good ${nyHour() < 12 ? 'morning' : nyHour() < 17 ? 'afternoon' : 'evening'}, ${firstName}. ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York' })}.`}
         />
+
+        {o.failed && (
+          <p role="alert" className="rounded-inner border border-red-600/20 bg-red-50 px-4 py-2.5 text-[14px] text-red-800">
+            These numbers could not be loaded, so they show as zero. Refresh in a minute; if it keeps happening, the database
+            may be down.
+          </p>
+        )}
 
         {!live && (
           <p className="rounded-inner border border-amber-600/25 bg-amber-50 px-4 py-2.5 text-[14px] text-amber-900">
@@ -273,6 +299,36 @@ export default async function AdminPortalPage() {
             Real numbers appear once Supabase is connected.
           </p>
         )}
+
+        <SectionCard
+          flush
+          title="Needs attention"
+          description="What needs the team now: order issues, unanswered messages, privacy requests and anything stuck."
+        >
+          {attention.length === 0 ? (
+            <p className="px-4 py-6 text-[14px] text-ink/65">
+              {o.failed ? 'Could not check. See the note above.' : 'All clear. Nothing is waiting on the team.'}
+            </p>
+          ) : (
+            <ul className="divide-y divide-ink/10">
+              {attention.map((a, i) => (
+                <li key={i}>
+                  <Link
+                    href={a.href}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-milk/70"
+                  >
+                    <StatusBadge tone={a.tone}>{a.badge}</StatusBadge>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium text-ink">{a.label}</span>
+                      <span className="block truncate text-[13px] text-ink/65">{a.detail}</span>
+                    </span>
+                    <span aria-hidden className="flex-none text-ink/40">›</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <MetricCard
@@ -325,33 +381,6 @@ export default async function AdminPortalPage() {
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="min-w-0 space-y-5">
-            <SectionCard
-              flush
-              title="Needs attention"
-              description="Orders board issues, unanswered messages, and anything stuck past its limit."
-            >
-              {attention.length === 0 ? (
-                <p className="px-4 py-6 text-[14px] text-ink/65">All clear. Nothing is waiting on the team.</p>
-              ) : (
-                <ul className="divide-y divide-ink/10">
-                  {attention.map((a, i) => (
-                    <li key={i}>
-                      <Link
-                        href={a.href}
-                        className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-milk/70"
-                      >
-                        <StatusBadge tone={a.tone}>{a.badge}</StatusBadge>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-medium text-ink">{a.label}</span>
-                          <span className="block truncate text-[13px] text-ink/65">{a.detail}</span>
-                        </span>
-                        <span aria-hidden className="flex-none text-ink/40">›</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </SectionCard>
 
             <SectionCard flush title="Recent activity" description="Order and clinical updates as they happen.">
               {o.activity.length === 0 ? (

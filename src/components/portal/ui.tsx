@@ -9,27 +9,28 @@ import { cn } from '@/lib/utils';
  */
 
 /** The admin nav, one list so the admin pages can't drift apart. */
+// Grouped like Shopify's admin: the work first (orders, inbox), then customers, catalog, growth and compliance.
 export const ADMIN_NAV: NavItem[] = [
   { label: 'Overview', href: '/portal/admin' },
-  { label: 'Analytics', href: '/portal/admin/analytics' },
-  { label: 'Marketing', href: '/portal/admin/marketing' },
-  { label: 'Landing pages', href: '/portal/admin/landing-pages' },
-  { label: 'Members', href: '/portal/admin/members' },
-  { label: 'Applications', href: '/portal/admin/queue' },
-  { label: 'Messages', href: '/portal/admin/messages' },
-  { label: 'Emails', href: '/portal/admin/emails' },
-  { label: 'Billing', href: '/portal/admin/billing' },
-  { label: 'Subscriptions', href: '/portal/admin/subscriptions' },
-  { label: 'Privacy requests', href: '/portal/admin/privacy-requests' },
-  { label: 'Consent & tracking', href: '/portal/admin/consent' },
-  { label: 'Orders', href: '/portal/admin/orders' },
-  { label: 'Fulfillment', href: '/portal/admin/fulfillment' },
-  { label: 'Products', href: '/portal/admin/products' },
-  { label: 'Pricing', href: '/portal/admin/pricing' },
-  { label: 'Pharmacy', href: '/portal/admin/pharmacy' },
-  { label: 'Check-ins', href: '/portal/admin/checkins' },
-  { label: 'Compliance', href: '/portal/admin/compliance' },
-  { label: 'Settings', href: '/portal/admin/settings' },
+  { label: 'Orders', href: '/portal/admin/orders', group: 'Orders' },
+  { label: 'Fulfillment', href: '/portal/admin/fulfillment', group: 'Orders' },
+  { label: 'Applications', href: '/portal/admin/queue', group: 'Orders' },
+  { label: 'Check-ins', href: '/portal/admin/checkins', group: 'Orders' },
+  { label: 'Messages', href: '/portal/admin/messages', group: 'Inbox' },
+  { label: 'Emails', href: '/portal/admin/emails', group: 'Inbox' },
+  { label: 'Members', href: '/portal/admin/members', group: 'Customers' },
+  { label: 'Subscriptions', href: '/portal/admin/subscriptions', group: 'Customers' },
+  { label: 'Billing', href: '/portal/admin/billing', group: 'Customers' },
+  { label: 'Products', href: '/portal/admin/products', group: 'Catalog' },
+  { label: 'Pricing', href: '/portal/admin/pricing', group: 'Catalog' },
+  { label: 'Pharmacy', href: '/portal/admin/pharmacy', group: 'Catalog' },
+  { label: 'Analytics', href: '/portal/admin/analytics', group: 'Growth' },
+  { label: 'Marketing', href: '/portal/admin/marketing', group: 'Growth' },
+  { label: 'Landing pages', href: '/portal/admin/landing-pages', group: 'Growth' },
+  { label: 'Compliance', href: '/portal/admin/compliance', group: 'Compliance' },
+  { label: 'Privacy requests', href: '/portal/admin/privacy-requests', group: 'Compliance' },
+  { label: 'Consent & tracking', href: '/portal/admin/consent', group: 'Compliance' },
+  { label: 'Settings', href: '/portal/admin/settings', group: 'Settings' },
 ];
 
 /** The prescriber's nav, one list so the doctor pages can't drift apart. */

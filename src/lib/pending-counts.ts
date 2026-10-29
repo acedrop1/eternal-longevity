@@ -38,7 +38,7 @@ export async function getPendingCounts(
     if (role === 'admin') {
       // Applications get no badge: signing up is not a task for anyone.
       const dayAgo = new Date(Date.now() - 86400_000).toISOString();
-      const [board, issues, support, open, hidden] = await Promise.all([
+      const [board, issues, support, open, hidden, privacy] = await Promise.all([
         db
           .from('fulfillment_orders')
           .select('*', { count: 'exact', head: true })
@@ -54,9 +54,12 @@ export async function getPendingCounts(
         awaitingReply(db, 'support'),
         db.from('orders').select('order_number').in('status', [...OPEN_ORDER]).limit(1000),
         getHiddenOrders(),
+        // Privacy requests run on a legal clock.
+        db.from('privacy_requests').select('*', { count: 'exact', head: true }).not('status', 'in', '(completed,denied,appealed)'),
       ]);
       return {
         '/portal/admin/orders': (open.data ?? []).filter((o) => !hidden[String(o.order_number)]).length,
+        '/portal/admin/privacy-requests': privacy.count ?? 0,
         '/portal/admin/fulfillment': (board.count ?? 0) + (issues.count ?? 0),
         '/portal/admin/messages': support,
       };

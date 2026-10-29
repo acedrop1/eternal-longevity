@@ -12,6 +12,8 @@ export interface NavItem {
   badge?: number;
   /** Other path prefixes that belong to this tab (e.g. an order's own page). */
   also?: string[];
+  /** Section heading in the desktop rail; consecutive items share it. */
+  group?: string;
 }
 
 interface PortalNavProps {
@@ -141,10 +143,14 @@ export function PortalNav({ nav, variant }: PortalNavProps) {
   return (
     <nav aria-label="Portal">
       <ul className="space-y-0.5">
-        {nav.map((item) => {
+        {nav.map((item, i) => {
           const isActive = item.href === activeHref;
+          const heading = item.group && item.group !== nav[i - 1]?.group && item.group !== item.label ? item.group : null;
           return (
             <li key={item.href}>
+              {heading && (
+                <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink/55">{heading}</p>
+              )}
               <Link href={item.href} aria-current={isActive ? 'page' : undefined} className="group block rounded-full">
                 <RailItem isActive={isActive} label={item.label} badge={item.badge} />
               </Link>
