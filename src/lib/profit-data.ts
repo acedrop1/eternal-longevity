@@ -5,6 +5,8 @@ import { livePrices } from './pharmacy-prices';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
 import { getTransfer, listRefunds, type FrameTransfer } from './frame';
 import type { Order } from './orders';
+import { shippingCostFor } from './shipping';
+import { getShippingCost } from './shipping-settings';
 import {
   orderEconomics,
   productCostCents,
@@ -35,12 +37,12 @@ const MIGRATION_HINT = '(have supabase/migrations/0025_order_costs.sql and 0026_
  * what they charge us), else the stored cost.
  */
 export async function costTable(): Promise<CostTable> {
-  const [products, rx, live] = await Promise.all([getCatalog(), getPharmacyEntries(), livePrices(3_000)]);
+  const [products, rx, live, rates] = await Promise.all([getCatalog(), getPharmacyEntries(), livePrices(3_000), getShippingCost()]);
   return Object.fromEntries(
     products.map((p) => {
       const e = rx[p.id];
       const unitCost = (e?.sku ? live?.get(e.sku) : undefined) ?? e?.unitCost ?? 0;
-      return [p.id, { unitCost, quantity: e?.quantity ?? 1, storage: p.storage }];
+      return [p.id, { unitCost, quantity: e?.quantity ?? 1, storage: p.storage, shipCost: shippingCostFor(p.storage, rates) }];
     }),
   );
 }

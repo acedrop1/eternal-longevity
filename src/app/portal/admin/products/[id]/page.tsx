@@ -7,7 +7,8 @@ import { getSession, loginUrl } from '@/lib/auth-server';
 import { catalogStore, getCatalog, getCatalogProduct, pharmacyEntryFor } from '@/lib/catalog';
 import type { ProductInput } from '@/lib/product-actions';
 import { toProductInput } from '@/lib/product-input';
-import { getShippingSettings } from '@/lib/shipping-settings';
+import { getShippingCost, getShippingSettings } from '@/lib/shipping-settings';
+import { shippingCostFor } from '@/lib/shipping';
 import { liveCatalog } from '@/lib/pharmacy-prices';
 import { PRODUCT_CATEGORY } from '@/lib/intake-categories';
 import type { DeliveryForm, ShopCategory } from '@/lib/shopProducts';
@@ -129,6 +130,7 @@ export default async function AdminProductPage({ params, searchParams }: PagePro
         canSave={catalogStore() !== 'none'}
         storage={storage}
         shipping={await getShippingSettings()}
+        shipCost={shippingCostFor(storage, await getShippingCost())}
         nav={nav}
       />
     </PortalShell>

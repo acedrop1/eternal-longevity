@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { getPrescriber } from '@/lib/prescriber';
-import { getShippingSettings } from '@/lib/shipping-settings';
+import { getShippingCost, getShippingSettings } from '@/lib/shipping-settings';
 import { getMarketingSettings } from '@/lib/marketing-settings';
 import {
   AdminSettings,
@@ -86,7 +86,7 @@ export default async function AdminSettingsPage() {
     fromEmail: process.env.RESEND_FROM_EMAIL || 'Not set',
   };
 
-  const [prescriber, shipping, marketing] = await Promise.all([getPrescriber(), getShippingSettings(), getMarketingSettings()]);
+  const [prescriber, shipping, shippingCost, marketing] = await Promise.all([getPrescriber(), getShippingSettings(), getShippingCost(), getMarketingSettings()]);
 
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
@@ -102,6 +102,7 @@ export default async function AdminSettingsPage() {
         prescriber={prescriber}
         clinic={{ name: SITE_NAME, siteUrl: SITE_URL }}
         shipping={shipping}
+        shippingCost={shippingCost}
         marketing={marketing}
         smsReady={smsConfigured()}
       />

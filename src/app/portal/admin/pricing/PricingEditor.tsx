@@ -19,6 +19,8 @@ export interface PricingRow {
   unitCost: number;
   quantity: number;
   storage?: 'refrigerated' | 'room';
+  /** What the pharmacy charges us per box of it. */
+  shipCost: number;
   comp?: { market: string; position: Position };
 }
 
@@ -100,7 +102,7 @@ export function PricingEditor({ rows, shipping }: { rows: PricingRow[]; shipping
 function economics(r: PricingRow, key: PlanKey, months: number, shipping: ShippingSettings, firstOrder = false) {
   const price = planPrice(r, key);
   if (!(price > 0) || !(r.unitCost > 0) || (key === 'annual' && !r.twelveMonthPlan)) return null;
-  return planEconomics(price, shipping.pricePerShipment, months, { unitCost: r.unitCost, quantity: r.quantity, storage: r.storage }, { firstOrder });
+  return planEconomics(price, shipping.pricePerShipment, months, { unitCost: r.unitCost, quantity: r.quantity, storage: r.storage, shipCost: r.shipCost }, { firstOrder });
 }
 
 function MarketCell({ comp }: { comp?: PricingRow['comp'] }) {

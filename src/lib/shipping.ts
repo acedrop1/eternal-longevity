@@ -8,7 +8,8 @@
  * shippingMethodFor alone.
  *
  * One price for every shipment: $5 by default, set in Admin → Settings (the
- * pharmacy charges us $25 2-day; the plan prices carry the rest). A
+ * pharmacy charges us $25 2-day for a cold box, $15 for everything else; the
+ * plan prices carry the rest). A
  * member's first order ships free (firstOrderFree). After that every order
  * pays, renewals included. Every plan ships once per billing cycle, a 12
  * month plan included.
@@ -26,8 +27,20 @@ export function shippingMethodFor(_storage?: Storage): ShippingMethod {
 /** Whole dollars per shipment. */
 export const SHIPPING_PRICE: Record<ShippingMethod, number> = { '2_DAY': 5, OVERNIGHT: 5 };
 
-/** What the pharmacy charges us per shipment, whole dollars. Admin-only (profit, lib/profit). */
-export const SHIPPING_COST: Record<ShippingMethod, number> = { '2_DAY': 25, OVERNIGHT: 35 };
+/**
+ * What the pharmacy charges us per 2-day box, whole dollars (RxHere, Oct 29
+ * 2026): $25 packed cold, $15 for pills and everything else. Admin-only (lib/profit).
+ */
+export interface ShippingCost {
+  cold: number;
+  room: number;
+}
+/** Defaults; the live rates are editable in Admin → Settings (lib/shipping-settings). */
+export const SHIPPING_COST: ShippingCost = { cold: 25, room: 15 };
+
+export function shippingCostFor(storage?: Storage, rates: ShippingCost = SHIPPING_COST): number {
+  return storage === 'refrigerated' ? rates.cold : rates.room;
+}
 
 export const SHIPPING_LABEL: Record<ShippingMethod, string> = {
   '2_DAY': '2-day shipping',

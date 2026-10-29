@@ -11,9 +11,47 @@ import { getPrescriber, recordAudit } from './prescriber';
 import { pharmacyEntryFor } from './catalog';
 import { buildPrescriptionPayload } from './rxhere-rules';
 import { postPrescription, rxhereSandbox } from './rxhere';
-import { getShippingSettings, saveShippingSettings, type ShippingSettings } from './shipping-settings';
+import { getShippingCost, getShippingSettings, saveShippingCost, saveShippingSettings, type ShippingSettings } from './shipping-settings';
+import type { ShippingCost } from './shipping';
 import type { SettingsResult } from './admin-settings-actions';
 import { getMarketingSettings, saveMarketingSettings, type MarketingSettings } from './marketing-settings';
+
+/** Admin → Settings → Shipping: what the pharmacy charges us per box. Feeds the profit numbers only. */
+export async function saveShippingCostAction(input: ShippingCost): Promise<SettingsResult & { value?: ShippingCost }> {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') return { ok: false, message: 'Admin access is required.' };
+  const cold = Number(input?.cold);
+  const room = Number(input?.room);
+  if (![cold, room].every((n) => Number.isInteger(n) && n >= 0 && n <= 500)) {
+    return { ok: false, message: 'Pharmacy shipping is whole dollars from $0 to $500.' };
+  }
+  const before = await getShippingCost();
+  let value: ShippingCost;
+  try {
+    value = await saveShippingCost({ cold, room });
+  } catch (err) {
+    return { ok: false, message: (err instanceof Error && err.message) || 'Could not save.' };
+  }
+  await recordAudit(
+    (
+      [
+        ['Pharmacy shipping · cold box', `$${before.cold}`, `$${value.cold}`],
+        ['Pharmacy shipping · everything else', `$${before.room}`, `$${value.room}`],
+      ] as const
+    ).map(([field, oldValue, newValue]) => ({
+      actorId: session.id,
+      actorName: session.name,
+      actorRole: 'admin',
+      entity: 'settings',
+      entityId: null,
+      field,
+      oldValue,
+      newValue,
+    })),
+  );
+  revalidatePath('/portal/admin', 'layout');
+  return { ok: true, message: 'Saved. Profit numbers use the new rates from now on; paid orders keep what they cost.', value };
+}
 
 export async function saveShippingSettingsAction(input: ShippingSettings): Promise<SettingsResult & { value?: ShippingSettings }> {
   const session = await getSession();

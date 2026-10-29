@@ -14,7 +14,7 @@ import { SectionCard, StatusBadge, headerButton, secondaryButton } from '@/compo
 import { detailGrid } from '@/components/admin/DetailHeader';
 import { PRODUCT_STATUS } from '@/components/admin/AdminProductsIndex';
 import { PROCESSING_FEE_FIXED_CENTS, PROCESSING_FEE_PCT, planEconomics } from '@/lib/profit';
-import { SHIPPING_COST, SHIPPING_LABEL, shippingMethodFor } from '@/lib/shipping';
+import { SHIPPING_LABEL, shippingMethodFor } from '@/lib/shipping';
 import type { ShippingSettings } from '@/lib/shipping-settings';
 import { formatMoney } from '@/lib/format';
 
@@ -69,6 +69,7 @@ export function AdminProductEditor({
   canSave,
   storage,
   shipping,
+  shipCost,
   nav,
 }: {
   initial: ProductInput;
@@ -77,6 +78,8 @@ export function AdminProductEditor({
   storage?: 'refrigerated' | 'room';
   /** What the customer pays per box (Admin → Settings), for the profit numbers. */
   shipping: ShippingSettings;
+  /** What the pharmacy charges us per box of this product (Admin → Settings). */
+  shipCost: number;
   /** Previous / next product ids for the header arrows. */
   nav?: { prev: string | null; next: string | null };
 }) {
@@ -113,7 +116,7 @@ export function AdminProductEditor({
     const price = key === 'sixMonth' ? (p.pricing.sixMonth ?? 0) : p.pricing[key];
     const offered = key === 'annual' ? p.twelveMonthPlan : true;
     const save = p.pricing.monthly && price ? Math.round((1 - price / (p.pricing.monthly * months)) * 100) : 0;
-    const cost = { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage };
+    const cost = { unitCost: p.pharmacy.unitCost, quantity: p.pharmacy.quantity, storage, shipCost };
     const e = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost) : null;
     const first = price > 0 && p.pharmacy.unitCost > 0 ? planEconomics(price, ship, months, cost, { firstOrder: true }) : null;
     return { price, offered, save, e, first };
@@ -312,7 +315,7 @@ export function AdminProductEditor({
           {/* Plans as variants, with live profit. */}
           <SectionCard
             title="Variants"
-            description={`Plan length. Price is what each plan bills; profit updates as you type: price + $${ship}/box shipping − your cost − $${SHIPPING_COST[method]}/box pharmacy shipping − card fee (${(PROCESSING_FEE_PCT * 100).toFixed(2)}% + ${PROCESSING_FEE_FIXED_CENTS}¢).`}
+            description={`Plan length. Price is what each plan bills; profit updates as you type: price + $${ship}/box shipping − your cost − $${shipCost}/box pharmacy shipping − card fee (${(PROCESSING_FEE_PCT * 100).toFixed(2)}% + ${PROCESSING_FEE_FIXED_CENTS}¢).`}
             flush
           >
             <div className="border-b border-ink/10 px-4 py-3">
@@ -442,7 +445,7 @@ export function AdminProductEditor({
               </div>
               <div>
                 <dt className="text-ink/60">Pharmacy charges us</dt>
-                <dd className="font-medium text-ink">${SHIPPING_COST[method]} per box</dd>
+                <dd className="font-medium text-ink">${shipCost} per box</dd>
               </div>
             </dl>
             <p className="mt-3 text-[13px] text-ink/60">

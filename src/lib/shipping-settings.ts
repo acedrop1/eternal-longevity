@@ -16,7 +16,7 @@ import 'server-only';
 import { cache } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
-import { SHIPPING_PRICE } from '@/lib/shipping';
+import { SHIPPING_COST, SHIPPING_PRICE, type ShippingCost } from '@/lib/shipping';
 
 export interface ShippingSettings {
   pricePerShipment: number;
@@ -52,6 +52,45 @@ export const getShippingSettings = cache(async (): Promise<ShippingSettings> => 
     return DEFAULT_SHIPPING;
   }
 });
+
+/*
+ * What the pharmacy charges us per box, Admin → Settings. Its own row
+ * ('shipping_cost') so it never travels with the public shipping settings
+ * above. Read only by admin pages and the profit numbers.
+ */
+const COST_KEY = 'shipping_cost';
+
+function cleanCost(v: unknown): ShippingCost {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  const pick = (x: unknown, d: number) => {
+    const n = Number(x);
+    return Number.isFinite(n) && n >= 0 && n <= 500 ? Math.round(n) : d;
+  };
+  return { cold: pick(o.cold, SHIPPING_COST.cold), room: pick(o.room, SHIPPING_COST.room) };
+}
+
+/** Current pharmacy shipping rates, once per request. Never throws. */
+export const getShippingCost = cache(async (): Promise<ShippingCost> => {
+  if (!supabaseAdminConfigured()) return SHIPPING_COST;
+  try {
+    const { data, error } = await db().from('site_settings').select('value').eq('key', COST_KEY).maybeSingle();
+    if (error || !data) return SHIPPING_COST;
+    return cleanCost(data.value);
+  } catch {
+    return SHIPPING_COST;
+  }
+});
+
+/** Admin only: the caller checks the role and writes the audit entry. */
+export async function saveShippingCost(next: ShippingCost): Promise<ShippingCost> {
+  const value = cleanCost(next);
+  if (!supabaseAdminConfigured()) throw new Error('Connect Supabase to save settings.');
+  const { error } = await db()
+    .from('site_settings')
+    .upsert({ key: COST_KEY, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw new Error(error.message);
+  return value;
+}
 
 /** Admin only: the caller checks the role and writes the audit entry. */
 export async function saveShippingSettings(next: ShippingSettings): Promise<ShippingSettings> {

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { PrescriberForm } from '@/components/prescriber/PrescriberForm';
-import { saveMarketingSettingsAction, saveShippingSettingsAction } from '@/lib/settings-actions';
+import { saveMarketingSettingsAction, saveShippingCostAction, saveShippingSettingsAction } from '@/lib/settings-actions';
+import type { ShippingCost } from '@/lib/shipping';
 import type { MarketingSettings } from '@/lib/marketing-settings';
 import type { SettingsResult } from '@/lib/admin-settings-actions';
 import type { ShippingSettings } from '@/lib/shipping-settings';
@@ -22,6 +23,8 @@ export interface AdminSettingsProps {
   prescriber: PrescriberRecord;
   clinic: { name: string; siteUrl: string };
   shipping: ShippingSettings;
+  /** What the pharmacy charges us per box (admin-only). */
+  shippingCost: ShippingCost;
   marketing: MarketingSettings;
   /** Twilio keys are set (texts can be sent at all). */
   smsReady: boolean;
@@ -37,6 +40,7 @@ export function AdminSettings({
   prescriber,
   clinic,
   shipping,
+  shippingCost,
   marketing,
   smsReady,
 }: AdminSettingsProps) {
@@ -91,10 +95,13 @@ export function AdminSettings({
 
       <SettingsRow
         title="Shipping"
-        description="What customers pay per box. Every order ships 2-day (the pharmacy charges us $25). A 12 month plan ships once, with the full year."
+        description="What customers pay per box, and what the pharmacy charges us for it. Every order ships 2-day. A 12 month plan ships once, with the full year."
       >
         <SectionCard>
           <ShippingForm initial={shipping} />
+        </SectionCard>
+        <SectionCard>
+          <PharmacyShippingForm initial={shippingCost} />
         </SectionCard>
       </SettingsRow>
 
@@ -226,6 +233,108 @@ function ShippingForm({ initial }: { initial: ShippingSettings }) {
           className={cn(
             'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
             busy || !dirty || price === '' ? 'cursor-not-allowed bg-ink/10 text-ink/65' : 'bg-ink text-white hover:bg-ink/85',
+          )}
+        >
+          {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DollarField({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[13px] font-medium text-ink/70">{label}</span>
+      <span className="relative block">
+        <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[16px] text-ink/60">
+          $
+        </span>
+        <input
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+          className="w-full rounded-inner bg-white py-3 pl-8 pr-4 text-[16px] tabular-nums text-ink ring-1 ring-ink/10 focus:outline-none focus:ring-ink/30"
+        />
+      </span>
+      <span className="mt-1 block text-[13px] text-ink/60">{hint}</span>
+    </label>
+  );
+}
+
+function PharmacyShippingForm({ initial }: { initial: ShippingCost }) {
+  const [saved, setSaved] = useState(initial);
+  const [cold, setCold] = useState(String(initial.cold));
+  const [room, setRoom] = useState(String(initial.room));
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<SettingsResult | null>(null);
+  const dirty = cold !== String(saved.cold) || room !== String(saved.room);
+  const empty = cold === '' || room === '';
+
+  async function save() {
+    if (!dirty || busy || empty) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await saveShippingCostAction({ cold: Number(cold), room: Number(room) });
+      setResult(res);
+      if (res.ok && res.value) {
+        setSaved(res.value);
+        setCold(String(res.value.cold));
+        setRoom(String(res.value.room));
+      }
+    } catch {
+      setResult({ ok: false, message: 'Request failed. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="mb-4 text-[14px] font-medium text-ink">Pharmacy charges us, per box</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DollarField
+          label="Cold box (refrigerated)"
+          hint="Injectables and anything kept 2–8°C."
+          value={cold}
+          onChange={(v) => {
+            setCold(v);
+            setResult(null);
+          }}
+        />
+        <DollarField
+          label="Everything else"
+          hint="Pills, troches, creams, foams."
+          value={room}
+          onChange={(v) => {
+            setRoom(v);
+            setResult(null);
+          }}
+        />
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-ink/60">
+        Used only for the profit numbers in Pricing, Products and Analytics. Customers never see it. A box with anything cold in it costs the cold rate. Every change is recorded in the audit trail.
+      </p>
+      {result && (
+        <p
+          role={result.ok ? 'status' : 'alert'}
+          className={cn(
+            'mt-4 rounded-inner border px-4 py-3 text-sm',
+            result.ok ? 'border-emerald-600/20 bg-emerald-50 text-emerald-800' : 'border-red-600/20 bg-red-50 text-red-700',
+          )}
+        >
+          {result.message}
+        </p>
+      )}
+      <div className="mt-5">
+        <button
+          type="button"
+          disabled={busy || !dirty || empty}
+          onClick={save}
+          className={cn(
+            'rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all active:scale-[0.98]',
+            busy || !dirty || empty ? 'cursor-not-allowed bg-ink/10 text-ink/65' : 'bg-ink text-white hover:bg-ink/85',
           )}
         >
           {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}

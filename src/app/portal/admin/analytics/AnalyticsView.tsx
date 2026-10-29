@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/format';
-import { SHIPPING_COST } from '@/lib/shipping';
 import { PRESETS, PROCESSING_FEE_FIXED_CENTS, PROCESSING_FEE_PCT, change, dayLabel, type DateRange, type OrderRow, type Preset, type Row, type Totals } from '@/lib/profit';
 import {
   AdminPageHeader,
@@ -286,7 +285,7 @@ export function AnalyticsView(p: Props) {
             ['Refunds', 'What the card processor reports as refunded on the order’s charge, in full or in part, from the portal or the Frame dashboard.'],
             ['Net sales', 'Gross sales − refunds.'],
             ['Product cost', 'Your cost per unit (Products → Pharmacy) × units per 30 days × months in the plan × quantity. Frozen on the order when it is paid, so a later price change does not rewrite the past. Not counted on an order closed without shipping (cancelled, denied, declined).'],
-            ['Pharmacy shipping', `What the pharmacy charges us per order: $${SHIPPING_COST['2_DAY']} for 2-day, $${SHIPPING_COST.OVERNIGHT} for overnight (cold-chain). Frozen at payment like product cost.`],
+            ['Pharmacy shipping', 'What the pharmacy charges us per order, 2-day: the cold-box rate if anything in it is refrigerated, else the everyday rate (both set in Settings → Shipping). Frozen at payment like product cost.'],
             ['Processing fees', `The real fee the card processor reports for the charge. The processor keeps it when a payment is refunded, so it stays. Where it was not recorded: ${FEE_RATE} of the amount charged (est.). $0 orders have no fee.`],
             ['Gross profit', 'Net sales − product cost − pharmacy shipping − processing fees. Excludes everything else (prescriber, software, ads, payroll).'],
             ['Margin', 'Gross profit ÷ net sales.'],
