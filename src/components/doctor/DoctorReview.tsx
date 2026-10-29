@@ -184,7 +184,7 @@ export function DoctorReview({
               : res.error === 'product_unavailable'
                 ? 'This product was pulled from sale; ask admin. Nothing was signed or charged.'
                 : res.error === 'health_questions_open'
-                  ? 'The patient hasn’t finished their health questions for this order yet. Nothing was signed or charged.'
+                  ? 'The patient hasn’t finished their health questions for this order yet. Message them to finish. Nothing was signed or charged.'
                   : res.error === 'not_authorized'
                     ? 'This order is assigned to another prescriber. Nothing was signed or charged.'
                     : 'Could not sign. Nothing was charged — try again.',

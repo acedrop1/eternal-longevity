@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment-actions';
 import {
   addOrderNoteAction,
+  sendToPrescriberAnywayAction,
   setOrderVisibilityAction,
   previewHealthReminderAction,
   remindHealthQuestionsAction,
@@ -151,6 +152,21 @@ export function OrderDetail({
       confirmLabel: 'Send to pharmacy',
     });
     if (ok) run(() => retrySendToPharmacyAction(b.id));
+  };
+
+  const sendAnyway = async () => {
+    if (!o) return;
+    const ok = await confirm({
+      title: `Send ${ref} to Dr. Elder anyway?`,
+      body: 'It goes into his queue now and he is emailed and texted, so he can reach out to them. He still can’t sign or charge until they answer the health questions (they include the safety screen), and the automatic reminders stop.',
+      confirmLabel: 'Send anyway',
+    });
+    if (!ok) return;
+    start(async () => {
+      const res = await sendToPrescriberAnywayAction(o.id);
+      setResult({ ok: res.ok, message: res.ok ? 'Sent to Dr. Elder.' : (res.error ?? 'Could not send it.') });
+      router.refresh();
+    });
   };
 
   // Cancel opens the index's own cancel form (reason, refund, follow-up) in a dialog.
@@ -304,6 +320,9 @@ export function OrderDetail({
                 </button>
                 <button type="button" onClick={() => setReminding('text')} className={secondaryButton}>
                   Text reminder…
+                </button>
+                <button type="button" onClick={sendAnyway} disabled={pending} className={secondaryButton}>
+                  Send to Dr. Elder anyway…
                 </button>
               </div>
             </SectionCard>

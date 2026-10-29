@@ -1388,6 +1388,28 @@ export async function remindHealthQuestionsAction(
 }
 
 /**
+ * Admin: send an order still waiting on the health questions to the
+ * prescriber anyway, so it isn't stuck while the member misses the email.
+ * He sees it and can message them; signing still waits for the questions
+ * (healthQuestionsOpen), since they carry the safety screen.
+ */
+export async function sendToPrescriberAnywayAction(orderNumber: string): Promise<ActionResult> {
+  const { user, error } = await requireRole(['admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const db = createSupabaseAdminClient();
+  const { data: o } = await db.from('orders').select('status').eq('order_number', orderNumber).maybeSingle();
+  if (!o) return { ok: false, error: 'Order not found.' };
+  if (o.status !== 'awaiting-visit') return { ok: false, error: 'It isn’t waiting on health questions any more.' };
+  const res = await releaseToDoctor(orderNumber, { anyway: true });
+  if (!res.ok) return { ok: false, error: res.error ?? 'Could not send it.' };
+  await recordAudit([
+    { actorId: user.id, actorName: user.name, actorRole: 'admin', entity: 'order', entityId: orderNumber, field: 'Status', oldValue: 'awaiting-visit', newValue: 'assigned (sent anyway)' },
+  ]);
+  revalidatePortal();
+  return { ok: true };
+}
+
+/**
  * Admin: archive, delete or restore an order (Shopify style). Delete is for
  * test orders and only once an order is closed; it hides the order everywhere
  * and takes it out of revenue and profit, but keeps the record.
