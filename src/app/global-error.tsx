@@ -3,8 +3,8 @@
 /* Plain <a> on purpose: the router may be what crashed, so these do a full page load. */
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-import { useEffect } from 'react';
-import { reloadOnNetworkError, reportClientError } from '@/lib/report-client-error';
+import { useEffect, useState } from 'react';
+import { reloadWhenOnline, reportClientError, shouldAutoReload } from '@/lib/report-client-error';
 
 /**
  * Last-resort boundary: a crash in the root layout itself (the site-wide
@@ -13,9 +13,11 @@ import { reloadOnNetworkError, reportClientError } from '@/lib/report-client-err
  * own <html>/<body> and inline styles: globals.css may be what failed.
  */
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+  // A dropped connection heals itself: show "reconnecting" and reload, never a dead page.
+  const [healing, setHealing] = useState(true);
   useEffect(() => {
     reportClientError(error, 'global-error');
-    reloadOnNetworkError(error);
+    setHealing(shouldAutoReload(error) && reloadWhenOnline());
   }, [error]);
 
   return (
@@ -23,7 +25,9 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
       <body style={{ margin: 0, fontFamily: '-apple-system, "Helvetica Neue", Arial, sans-serif', background: '#fff', color: '#111' }}>
         <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '48px 20px' }}>
           <div style={{ maxWidth: 560, margin: '0 auto' }}>
-            <h1 style={{ fontSize: 40, lineHeight: 1, letterSpacing: '-0.04em', margin: '0 0 16px' }}>This page didn&apos;t load.</h1>
+            <h1 style={{ fontSize: 40, lineHeight: 1, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
+              {healing ? 'Reconnecting…' : 'This page didn\u2019t load.'}
+            </h1>
             <p style={{ fontSize: 16, lineHeight: 1.6, color: '#555', margin: '0 0 28px' }}>
               Nothing you did is lost. If you just placed an order, tap Continue: it takes you to your next step, usually a few quick health questions.
             </p>

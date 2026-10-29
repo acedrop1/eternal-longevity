@@ -168,24 +168,26 @@ export function OrderDetail({
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {admin && o?.status === 'awaiting-visit' && (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    const res = await remindHealthQuestionsAction(o.id);
+                    setReminder(res.ok ? (res.message ?? 'Reminder sent.') : (res.error ?? 'Could not send.'));
+                    if (res.ok) router.refresh();
+                  })
+                }
+                className={cn(headerButton, 'disabled:opacity-40')}
+              >
+                {pending ? 'Sending…' : 'Send health-question reminder (email + text)'}
+              </button>
+            )}
             {admin && o && (
               <MoreActions>
                 {(close) => (
                   <>
-                    <MenuItem
-                      disabled={o.status !== 'awaiting-visit' || pending}
-                      hint={o.status === 'awaiting-visit' ? 'Emails a link to the health questions' : 'Only while waiting on health questions'}
-                      onClick={() => {
-                        close();
-                        start(async () => {
-                          const res = await remindHealthQuestionsAction(o.id);
-                          setReminder(res.ok ? 'Reminder emailed.' : (res.error ?? 'Could not send.'));
-                          if (res.ok) router.refresh();
-                        });
-                      }}
-                    >
-                      Email health-question reminder
-                    </MenuItem>
                     <MenuItem
                       disabled={!o.paidAt}
                       hint={o.paidAt ? undefined : 'Nothing was charged'}

@@ -59,6 +59,7 @@ import { heldProductsFor } from '@/lib/held-products';
 import { intakeCovers } from '@/lib/purchase-rules';
 import { claimCheckout, releaseCheckout } from '@/lib/order-lock';
 import { SITE_URL } from '@/lib/site';
+import { memberTextsAllowed, sendSms } from '@/lib/sms';
 import { writePrescriptionForOrder } from '@/lib/refills';
 import { nextOrderNumber } from '@/lib/order-number';
 import { openSignWindow, passwordMatches, signWindowOpen } from '@/lib/reauth';
@@ -691,7 +692,9 @@ async function placeOrder(input: {
     await db.from('profiles').update({ cart: left as unknown as Json }).eq('id', user.id);
   }
 
-  revalidatePortal();
+  // No revalidatePath here: it makes the reply carry a fresh page tree, and a
+  // phone dropping signal mid-reply crashed checkout (order #110006). The
+  // browser does a full page load next, and every portal page reads per request.
   return { ok: true, orderNumber: created[0] };
 }
 
@@ -1270,7 +1273,7 @@ export async function addOrderNoteAction(orderNumber: string, note: string): Pro
  * an order still waiting on them. Counted as the next step of the daily
  * reminder sequence (cron/recovery), so the automatic ones don't double up.
  */
-export async function remindHealthQuestionsAction(orderNumber: string): Promise<ActionResult> {
+export async function remindHealthQuestionsAction(orderNumber: string): Promise<ActionResult & { message?: string }> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
   const db = createSupabaseAdminClient();
@@ -1306,9 +1309,22 @@ export async function remindHealthQuestionsAction(orderNumber: string): Promise<
   } catch {
     // Best effort: at worst the daily run sends its own reminder too.
   }
-  await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', 'Emailed a reminder to answer the health questions.');
+  // A text too, only if they agreed to texts (TCPA). No name or treatment in it.
+  let texted = '';
+  const { data: prof } = o.user_id ? await db.from('profiles').select('phone').eq('id', o.user_id).maybeSingle() : { data: null };
+  if (!prof?.phone) texted = ' No text: no phone number on file.';
+  else if (!(await memberTextsAllowed(db, o.user_id))) texted = ' No text: they didn’t agree to texts.';
+  else {
+    const sms = await sendSms(
+      prof.phone,
+      `Eternal Longevity: your order is waiting on a few quick health questions (about 2 min) before your doctor can review it. Nothing is charged yet. ${SITE_URL}/portal/visit`,
+    );
+    texted = sms.ok ? ' Text sent too.' : ' The text did not send.';
+  }
+
+  await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', 'Sent a reminder to answer the health questions.');
   revalidatePortal();
-  return { ok: true };
+  return { ok: true, message: `Reminder emailed.${texted}` };
 }
 
 /**

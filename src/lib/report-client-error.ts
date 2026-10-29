@@ -21,21 +21,33 @@ export function reportClientError(error: Error & { digest?: string }, where: str
 }
 
 /**
- * A dropped connection ("Load failed" on iPhone Safari, "Failed to fetch" in
- * Chrome, a stale code chunk after a deploy) is not a real crash: reload the
- * page once and it heals. On /checkout that reload lands a member whose order
- * went through straight on their health questions (the checkout page
- * redirects there). At most one reload a minute, so a real outage can't loop.
- * Returns true when it is reloading.
+ * Should this crash heal itself with a reload? A dropped connection ("Load
+ * failed" on iPhone Safari, "Failed to fetch" in Chrome, a stale code chunk
+ * after a deploy) always; anything on /checkout too, because reloading
+ * checkout lands a member whose order went through on their health questions
+ * (the page redirects there) and anyone else back on their basket.
  */
-export function reloadOnNetworkError(error: Error): boolean {
+export function shouldAutoReload(error: Error): boolean {
+  const msg = `${error?.name ?? ''} ${error?.message ?? ''}`;
+  const network = /load failed|failed to fetch|networkerror|network error|chunkloaderror|loading chunk|connection/i.test(msg);
+  return network || (typeof window !== 'undefined' && window.location.pathname.startsWith('/checkout'));
+}
+
+/**
+ * Reload once the connection is back. Up to 5 tries in 2 minutes per page, so
+ * a real outage shows the fallback screen instead of looping. Returns true
+ * while it is (or will be) reloading.
+ */
+export function reloadWhenOnline(): boolean {
   try {
-    const msg = `${error?.name ?? ''} ${error?.message ?? ''}`;
-    if (!/load failed|failed to fetch|networkerror|network error|chunkloaderror|loading chunk|connection/i.test(msg)) return false;
-    const last = Number(window.sessionStorage.getItem('el-net-reload') ?? 0);
-    if (Date.now() - last < 60_000) return false;
-    window.sessionStorage.setItem('el-net-reload', String(Date.now()));
-    window.location.reload();
+    const key = `el-reload:${window.location.pathname}`;
+    const now = Date.now();
+    const tries = (JSON.parse(window.sessionStorage.getItem(key) ?? '[]') as number[]).filter((t) => now - t < 120_000);
+    if (tries.length >= 5) return false;
+    window.sessionStorage.setItem(key, JSON.stringify([...tries, now]));
+    const go = () => window.location.reload();
+    if (navigator.onLine === false) window.addEventListener('online', go, { once: true });
+    else window.setTimeout(go, tries.length ? 1500 * tries.length : 300);
     return true;
   } catch {
     return false;
