@@ -14,6 +14,7 @@ import {
 } from '@/lib/supabase/admin';
 import { ADMIN_NAV } from '@/components/portal/ui';
 import { monthlyRecurringCents, paidRevenue } from '@/lib/revenue';
+import { deletedOrders } from '@/lib/order-visibility';
 import { AdminPageHeader } from '@/components/admin/IndexTable';
 import type { PromoCode } from '@/lib/promo-db';
 
@@ -54,7 +55,7 @@ export default async function AdminBillingPage() {
   if (supabaseAdminConfigured()) {
     try {
       const db = createSupabaseAdminClient();
-      const [{ data: profiles }, { data: subs }, { data: orders }, paid] =
+      const [{ data: profiles }, { data: subs }, { data: orders }, paid, gone] =
         await Promise.all([
           db
             .from('profiles')
@@ -70,6 +71,7 @@ export default async function AdminBillingPage() {
             .limit(100),
           // One definition of revenue for Overview, Billing and the daily report.
           paidRevenue(db),
+          deletedOrders(),
         ]);
 
       if (profiles && profiles.length > 0) {
@@ -86,7 +88,7 @@ export default async function AdminBillingPage() {
         cycleRevenueCents: monthlyRecurringCents(activeSubs),
         paidOrders: paid.orders,
         lifetimeRevenueCents: paid.cents,
-        recent: (orders ?? []).slice(0, 6).map((o) => ({
+        recent: (orders ?? []).filter((o) => !gone.has(String(o.order_number))).slice(0, 6).map((o) => ({
           label: o.order_number,
           amountCents: o.total_cents ?? 0,
           when: fmtWhen(o.created_at),

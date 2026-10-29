@@ -27,6 +27,7 @@ import { ADMIN_NAV } from '@/components/portal/ui';
 import { CategoryAnswers } from '@/components/doctor/CategoryAnswers';
 import { MessageLog } from '@/components/admin/MessageLog';
 import { messagesTo } from '@/lib/message-log';
+import { deletedOrders } from '@/lib/order-visibility';
 
 export const metadata: Metadata = {
   title: 'Member record',
@@ -140,6 +141,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
      * applied, ordered, approved by the prescriber, charged, shipped — lives in
      * order_updates against their shop orders, and admin had no way to see it.
      */
+    const gone = await deletedOrders();
     const [{ data: subs }, { data: orders }, { data: intake }, { data: shopOrders }, { data: addressRows }] =
       await Promise.all([
         db
@@ -259,7 +261,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
         perCycle: Math.round((s.per_cycle_cents ?? 0) / 100),
         nextBilling: s.status === 'active' ? s.next_billing_date : null,
       })),
-      orders: (orders ?? []).map((o) => {
+      orders: (orders ?? []).filter((o) => !gone.has(String(o.order_number))).map((o) => {
         const items = itemsByOrder.get(o.id) ?? [];
         const ful = fulfilment.get(`FUL-${o.order_number}`);
 

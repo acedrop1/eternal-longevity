@@ -11,7 +11,8 @@ import { catalogStore, getCatalog, getPharmacyEntries } from '@/lib/catalog';
 import { SHOP_CATEGORIES, offersTwelveMonth } from '@/lib/shopProducts';
 import { fromPrice } from '@/lib/lineup';
 import { planEconomics } from '@/lib/profit';
-import { getShippingSettings } from '@/lib/shipping-settings';
+import { getShippingCost, getShippingSettings } from '@/lib/shipping-settings';
+import { shippingCostFor } from '@/lib/shipping';
 
 export const metadata: Metadata = { title: 'Products' };
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,12 @@ export default async function AdminProductsPage() {
   if (!user) redirect(await loginUrl());
   if (user.role !== 'admin') redirect(user.redirectTo);
 
-  const [products, pharmacy, shipping] = await Promise.all([getCatalog(), getPharmacyEntries().then(withLiveCosts), getShippingSettings()]);
+  const [products, pharmacy, shipping, rates] = await Promise.all([
+    getCatalog(),
+    getPharmacyEntries().then(withLiveCosts),
+    getShippingSettings(),
+    getShippingCost(),
+  ]);
   const note = STORE_NOTE[catalogStore()];
   const live = products.filter((p) => p.status === 'live').length;
 
@@ -53,7 +59,7 @@ export default async function AdminProductsPage() {
         )
           .filter(([, price]) => price > 0)
           .map(([label, price, months]) => {
-            const e = planEconomics(price, shipping.pricePerShipment, months, { ...pharmacy[p.id], storage: p.storage });
+            const e = planEconomics(price, shipping.pricePerShipment, months, { ...pharmacy[p.id], storage: p.storage, shipCost: shippingCostFor(p.storage, rates) });
             return { label, profit: e.profit, margin: e.margin };
           })
       : [],

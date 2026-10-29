@@ -1370,12 +1370,16 @@ export async function remindHealthQuestionsAction(
     }
   }
 
+  let texted = false;
   if (send.text) {
     if (d.smsBlocked || !d.phone) done.push(`No text: ${d.smsBlocked ?? 'no phone number on file.'}`);
-    else done.push((await sendSms(d.phone, REMINDER_SMS)).ok ? 'Text sent.' : 'The text did not send.');
+    else {
+      texted = (await sendSms(d.phone, REMINDER_SMS)).ok;
+      done.push(texted ? 'Text sent.' : 'The text did not send.');
+    }
   }
 
-  const how = [send.email && 'email', send.text && !d.smsBlocked && 'text'].filter(Boolean).join(' and ');
+  const how = [send.email && 'email', texted && 'text'].filter(Boolean).join(' and ');
   if (how) await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', `Sent a reminder by ${how} to answer the health questions.`);
   revalidatePortal();
   return { ok: true, message: done.join(' ') };
@@ -1394,6 +1398,10 @@ export async function setOrderVisibilityAction(orderNumber: string, to: OrderVis
   if (!o) return { ok: false, error: 'Order not found.' };
   if (to === 'deleted' && ![...TERMINAL_ORDER, 'delivered'].includes(o.status as OrderStatus)) {
     return { ok: false, error: 'Cancel it first. Only closed orders can be deleted.' };
+  }
+  // Archiving a live order would hide work that still needs doing.
+  if (to === 'archived' && ![...TERMINAL_ORDER, 'shipped', 'delivered'].includes(o.status as OrderStatus)) {
+    return { ok: false, error: 'Only orders that have shipped or closed can be archived.' };
   }
   try {
     await setOrderVisibility(orderNumber, to);

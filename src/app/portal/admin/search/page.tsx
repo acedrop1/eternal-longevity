@@ -8,6 +8,7 @@ import { getSession, loginUrl } from '@/lib/auth-server';
 import { getCatalog } from '@/lib/catalog';
 import { statusLabel } from '@/lib/orders';
 import { createSupabaseAdminClient, supabaseAdminConfigured } from '@/lib/supabase/admin';
+import { deletedOrders } from '@/lib/order-visibility';
 
 export const metadata: Metadata = { title: 'Search' };
 export const dynamic = 'force-dynamic';
@@ -97,7 +98,7 @@ export default async function AdminSearchPage({ searchParams }: { searchParams: 
               .limit(10)
           ).data ?? [])
         : [];
-      const seen = new Set<string>();
+      const seen = new Set<string>(await deletedOrders());
       orders = [...(o.data ?? []), ...byProduct]
         .filter((r) => !seen.has(r.order_number) && seen.add(r.order_number))
         .slice(0, 12)

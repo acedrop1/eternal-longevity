@@ -15,6 +15,7 @@ import {
 } from '@/lib/email';
 import { formatMoney } from '@/lib/format';
 import { paidRevenue } from '@/lib/revenue';
+import { deletedOrders } from '@/lib/order-visibility';
 import { SITE_URL } from '@/lib/site';
 
 /**
@@ -77,15 +78,16 @@ export async function GET(req: NextRequest) {
   ] = await Promise.all([
     countSince(db, 'profiles', 'created_at', since),
     countSince(db, 'intake_submissions', 'created_at', since),
-    countSince(db, 'orders', 'created_at', since),
+    // Deleted (test) orders don't count, as in Revenue below.
+    Promise.all([db.from('orders').select('order_number').gte('created_at', since), deletedOrders()]).then(
+      ([{ data }, gone]) => (data ?? []).filter((o) => !gone.has(String(o.order_number))).length,
+    ),
     countSince(db, 'prescriptions', 'created_at', since, {
       column: 'status',
       value: 'signed',
     }),
-    countSince(db, 'fulfillment_orders', 'created_at', since, {
-      column: 'status',
-      value: 'shipped',
-    }),
+    // Boxes that left the pharmacy in the window, delivered since or not.
+    countSince(db, 'fulfillment_orders', 'shipped_at', since),
     // 'submitted' = paid and on the board, not yet placed with the pharmacy.
     countSince(db, 'fulfillment_orders', 'created_at', '1970-01-01', {
       column: 'status',
@@ -170,14 +172,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: 'email_not_configured', stats });
   }
 
-  const mail = {
+  // Revenue is admin-only, as everywhere else: the prescriber's copy leaves it out.
+  const mailFor = (money: boolean) => ({
     subject: `Daily report — ${stats.dateLabel} · ${orders} orders, ${signups} signups`,
     html: noticeEmail({
       eyebrow: 'Daily report',
       heading: stats.dateLabel,
       rows: [
         ['Orders', String(orders)],
-        ['Revenue (payments landed)', formatMoney(revenueCents)],
+        ...(money ? [['Revenue (payments landed)', formatMoney(revenueCents)] as [string, string]] : []),
         ['New signups', String(signups)],
         ['Intakes', String(intakes)],
         ['Rx signed', String(prescriptionsSigned)],
@@ -191,14 +194,16 @@ export async function GET(req: NextRequest) {
       ],
       cta: { label: 'Open orders', href: `${SITE_URL}/portal/admin/fulfillment` },
     }),
-  };
+  });
   // The prescriber shares the orders board, so he gets the summary too.
   const prescriber = await getPrescriber().catch(() => null);
-  const results = await Promise.all(
-    [...new Set([SUPPORT_EMAIL, prescriber?.email].filter(Boolean) as string[])].map((to) =>
-      sendEmail({ to, subject: mail.subject, html: mail.html }),
-    ),
-  );
+  const team = mailFor(true);
+  const sends = [sendEmail({ to: SUPPORT_EMAIL, subject: team.subject, html: team.html })];
+  if (prescriber?.email && prescriber.email !== SUPPORT_EMAIL) {
+    const dr = mailFor(false);
+    sends.push(sendEmail({ to: prescriber.email, subject: dr.subject, html: dr.html }));
+  }
+  const results = await Promise.all(sends);
 
   return NextResponse.json({ ok: results.every((r) => r.ok), stats });
 }

@@ -52,16 +52,6 @@ export default async function AdminFulfillmentPage() {
       board = await loadFulfillmentBoard();
 
 
-      // Auto-generated refill drafts join the ready-to-submit list.
-      const draftItems: ReadyRxView[] = allOrders
-        .filter((o) => o.status === 'draft')
-        .map((o) => ({
-          kind: 'draft' as const,
-          id: o.id,
-          patientName: o.patient_name,
-          protocolName: o.cycle_label ?? 'Refill cycle',
-        }));
-
       const orderedRxIds = new Set(
         allOrders
           .map((o) => o.prescription_id)
@@ -97,7 +87,6 @@ export default async function AdminFulfillmentPage() {
             : 'Patient',
           protocolName: r.protocol_name,
         })),
-        ...draftItems,
       ];
     } catch {
       ready = DEMO_READY;
@@ -117,7 +106,7 @@ export default async function AdminFulfillmentPage() {
   return (
     <PortalShell user={user} nav={ADMIN_NAV}>
       <AdminPageHeader
-        title="Orders"
+        title="Fulfillment"
         subtitle="Place each paid order with the pharmacy and mark it here. The prescriber sees the same list; patients are emailed at each step."
       />
 

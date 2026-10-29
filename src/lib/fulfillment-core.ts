@@ -19,6 +19,7 @@ import 'server-only';
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { deletedOrders } from '@/lib/order-visibility';
 import { deliveredEmail, sendEmail, shippedEmail } from '@/lib/email';
 import { memberTextsAllowed, sendSms } from '@/lib/sms';
 
@@ -278,7 +279,9 @@ export async function loadFulfillmentBoard(): Promise<BoardRow[]> {
     .or(`status.in.(draft,submitted,accepted,shipped),and(status.eq.delivered,updated_at.gte.${since})`)
     .order('created_at', { ascending: true })
     .limit(500);
-  const rows = data ?? [];
+  // Deleted (test) orders leave every board: admin, prescriber and pharmacy.
+  const gone = await deletedOrders();
+  const rows = (data ?? []).filter((r) => !gone.has(numberOf(r.order_ref) ?? ''));
 
   const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
   const phones = new Map<string, string | null>();

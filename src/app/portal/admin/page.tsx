@@ -99,11 +99,8 @@ async function loadOverview(): Promise<Overview> {
           .in('status', ['draft', 'submitted'])
           .order('created_at', { ascending: true })
           .limit(500),
-        db
-          .from('orders')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'shipped')
-          .gte('created_at', weekAgo),
+        // Boxes that left the pharmacy this week, delivered since or not.
+        db.from('fulfillment_orders').select('order_ref').gte('shipped_at', weekAgo),
         db
           .from('order_updates')
           .select('author, author_role, label, body, created_at, orders(order_number)')
@@ -133,9 +130,9 @@ async function loadOverview(): Promise<Overview> {
       messagesAwaiting: counts['/portal/admin/messages'] ?? 0,
       applications: countIntakes('submitted', 'in_review', 'needs_info'),
       awaitingVisit: countIntakes('awaiting_visit'),
-      shippedWeek: shipped.count ?? 0,
+      shippedWeek: (shipped.data ?? []).filter((r) => !hidden[String(r.order_ref).replace(/^FUL-/, '')]).length,
       orders: (orders.data ?? []).filter((o) => !hidden[String(o.order_number)]) as unknown as SweepOrder[],
-      toPlace: shipments.data ?? [],
+      toPlace: (shipments.data ?? []).filter((r) => !hidden[String(r.order_ref).replace(/^FUL-/, '')]),
       activity: (updates.data ?? []).filter((u) => hidden[orderOf(u)] !== 'deleted').slice(0, 6).map((u) => ({
         time: fmtTime(u.created_at),
         action: [u.author ?? u.author_role ?? 'System', u.label, u.body ?? ''].filter(Boolean).join(' · '),

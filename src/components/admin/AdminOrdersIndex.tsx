@@ -150,6 +150,8 @@ export function AdminOrdersIndex({ rows }: { rows: OrderIndexRow[] }) {
   const chosen = shown.filter((r) => picked.has(r.ref));
   const allPicked = shown.length > 0 && chosen.length === shown.length;
   const openOnes = chosen.filter((r) => !CLOSED.includes(r.status));
+  // Archive takes shipped orders too; delete only closed ones.
+  const liveOnes = openOnes.filter((r) => r.status !== 'shipped');
   const bulk = async (to: 'archived' | 'deleted' | null) => {
     if (!chosen.length) return;
     if (to === 'deleted') {
@@ -218,7 +220,13 @@ export function AdminOrdersIndex({ rows }: { rows: OrderIndexRow[] }) {
               Unarchive
             </button>
           ) : (
-            <button type="button" disabled={busy} onClick={() => void bulk('archived')} className={bulkButton}>
+            <button
+              type="button"
+              disabled={busy || liveOnes.length > 0}
+              title={liveOnes.length ? 'Only shipped or closed orders can be archived' : undefined}
+              onClick={() => void bulk('archived')}
+              className={bulkButton}
+            >
               Archive
             </button>
           )}
@@ -233,7 +241,8 @@ export function AdminOrdersIndex({ rows }: { rows: OrderIndexRow[] }) {
           </button>
           {openOnes.length > 0 && (
             <span className="text-[13px] text-ink/60">
-              Delete is for closed orders: {openOnes.map((r) => `#${r.ref}`).join(', ')} {openOnes.length === 1 ? 'is' : 'are'} still open.
+              {openOnes.map((r) => `#${r.ref}`).join(', ')} {openOnes.length === 1 ? 'is' : 'are'} still open: delete takes closed
+              orders only{liveOnes.length ? ', archive takes shipped or closed ones' : ''}.
             </span>
           )}
           <button type="button" onClick={() => setPicked(new Set())} className="ml-auto text-[13px] text-ink/60 underline underline-offset-2">

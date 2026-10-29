@@ -99,7 +99,7 @@ export function OrderDetail({
     }
     start(async () => {
       const res = await setOrderVisibilityAction(o.id, to);
-      if (!res.ok) return setReminder(res.error ?? 'Could not save.');
+      if (!res.ok) return setResult({ ok: false, message: res.error ?? 'Could not save.' });
       if (to === 'deleted') router.push('/portal/admin/orders');
       else router.refresh();
     });
@@ -212,6 +212,8 @@ export function OrderDetail({
                       Refund…
                     </MenuItem>
                     <MenuItem
+                      disabled={!visibility && !closed && o.status !== 'shipped'}
+                      hint={!visibility && !closed && o.status !== 'shipped' ? 'Only once it has shipped or closed' : undefined}
                       onClick={() => {
                         close();
                         void setVisibility(visibility === 'archived' || visibility === 'deleted' ? null : 'archived');
@@ -287,8 +289,9 @@ export function OrderDetail({
           {admin && o?.status === 'awaiting-visit' && (
             <SectionCard title="Waiting on health questions">
               <p className="text-[14px] leading-relaxed text-ink/70">
-                Dr. Elder can&apos;t review this order until they answer the health questions. Automatic reminders go out about 2
-                hours, 1 day and 3 days after the order. Send one now; you see it before it goes.
+                Dr. Elder can&apos;t review this order until they answer the health questions. Automatic email reminders go out
+                with the daily noon (ET) run: the first once the order is 2 hours old, then at 1 and 3 days. Send one now; you see it
+                before it goes.
               </p>
               {reminder && (
                 <p role="status" className="mt-2 text-[14px] font-medium text-ink">

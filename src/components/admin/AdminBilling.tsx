@@ -329,7 +329,8 @@ function PromoPanel({ sampleCodes }: { sampleCodes?: PromoCode[] }) {
       setCodes((cs) => cs.map((c) => (c.id === id ? { ...c, active: next } : c)));
       return;
     }
-    await togglePromoAction(id, next);
+    const r = await togglePromoAction(id, next).catch(() => ({ ok: false, message: 'Request failed. Please try again.' }));
+    if (!r.ok) setResult(r);
     load();
   }
 
