@@ -52,6 +52,8 @@ const inputBad = 'ring-red-600/50 focus:ring-red-600/50';
 
 /** Consent ids shown as small fine-print rows under the main consent tiles. */
 const FINE_PRINT = ['sms_alerts', 'marketing_email'];
+/** Fine print that is a notice, not a choice: no checkbox (order texts, Oct 29 2026). */
+const NOTICE = ['sms_alerts'];
 
 /** MMDDYYYY digits -> ISO yyyy-mm-dd, or null when it isn't a real date (02/31). */
 function isoFromDobDigits(d: string): string | null {
@@ -543,6 +545,13 @@ export function FieldRenderer({
           <div className="space-y-2.5 px-1 pt-2">
             {CONSENT_ITEMS.filter((c) => FINE_PRINT.includes(c.id) && !field.hideItems?.includes(c.id)).map((c) => {
               const checked = !!consents[c.id];
+              if (NOTICE.includes(c.id)) {
+                return (
+                  <p key={c.id} className="text-[12px] leading-snug text-ink/60 md:text-[12.5px]">
+                    {c.label}
+                  </p>
+                );
+              }
               return (
                 <button
                   key={c.id}

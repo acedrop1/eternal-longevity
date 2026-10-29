@@ -227,7 +227,7 @@ async function loadDetail(id: string): Promise<MemberDetail | null> {
     const consents: MemberDetail['consents'] = [
       { label: 'Telehealth informed consent', on: box('master_ack'), detail: accepted?.at ? `Agreed ${fmtDate(accepted.at)} (version ${accepted.version ?? '—'})` : consentAnswers ? 'From their assessment' : 'No assessment yet' },
       { label: 'Health information acknowledgment', on: box('health_ack'), detail: box('health_ack') ? 'Agreed in the assessment' : consentAnswers ? 'Not yet (asked at their next assessment)' : 'No assessment yet' },
-      { label: 'Account & care text alerts', on: box('sms_alerts'), detail: 'Sign-in codes, care team messages, order updates' },
+      { label: 'Order & account texts', on: box('sms_alerts'), detail: box('sms_alerts') ? 'Sign-in codes, order updates, care team messages (STOP to opt out)' : 'Off: left the old optional box unticked. On after their next assessment' },
       { label: 'Marketing emails', on: mkt ? mkt.email_status === 'subscribed' : false, detail: statusText(mkt?.email_status) + last('email') },
       { label: 'Marketing texts', on: mkt ? mkt.sms_status === 'subscribed' : false, detail: statusText(mkt?.sms_status) + (mkt?.phone ? ` · ${mkt.phone}` : '') + last('sms') },
       { label: 'Assessment reminder emails', on: reminders ? true : null, detail: reminders?.at ? `Agreed at sign-up ${fmtDate(reminders.at)}` : 'No sign-up consent on file' },

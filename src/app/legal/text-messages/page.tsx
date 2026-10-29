@@ -46,20 +46,17 @@ const marketingSections = (on: boolean): LegalSection[] =>
     ];
 const OPT_IN = CONSENT_ITEMS.find((c) => c.id === 'sms_alerts')!.label;
 
-/** The exact opt-in a patient sees in the assessment (unticked by default). */
+/** The exact notice a patient sees in the assessment, under their mobile number. */
 function OptInExample() {
   return (
     <div className="mb-12 max-w-[68ch] rounded-shell bg-milk p-5 md:p-7">
-      <p className="text-[13px] font-medium text-ink/65">Where you opt in: the final step of the assessment at etlongevity.com/start</p>
+      <p className="text-[13px] font-medium text-ink/65">Where you see it: the final step of the assessment at etlongevity.com/start</p>
       <div className="mt-4 rounded-inner bg-white p-5 ring-1 ring-ink/10">
         <label className="block text-[13px] font-semibold text-ink">Mobile phone number</label>
         <div className="mt-1.5 rounded-full bg-milk px-4 py-2.5 text-[14px] text-ink/45">(555) 123-4567</div>
-        <div className="mt-5 flex gap-3">
-          <span aria-hidden className="mt-0.5 h-5 w-5 shrink-0 rounded-[5px] border-[1.5px] border-ink/40 bg-white" />
-          <p className="text-[13.5px] leading-relaxed text-ink/80">{OPT_IN}</p>
-        </div>
+        <p className="mt-5 text-[13.5px] leading-relaxed text-ink/80">{OPT_IN}</p>
         <p className="mt-4 text-[12.5px] text-ink/60">
-          The box is never pre-ticked, and leaving it unticked does not affect your care or your order.{' '}
+          Reply STOP to any text to stop them. Marketing texts are never sent without your separate opt-in.{' '}
           <Link href="/legal/terms" className="underline underline-offset-[3px]">Terms of Service</Link> ·{' '}
           <Link href="/legal/privacy" className="underline underline-offset-[3px]">Privacy Policy</Link>
         </p>
@@ -73,8 +70,8 @@ export default async function TextMessagesPage() {
   return (
     <LegalLayout
       title="Text Messaging Terms"
-      effective="October 19, 2026"
-      lead={`We keep account and care texts separate from marketing texts, each with its own permission. Eternal Longevity Account Alerts is an optional program for our patients; these terms explain how you opt in, what we send, how often, and how to stop. Marketing text messages are covered in their own section below.`}
+      effective="October 29, 2026"
+      lead={`We keep account and order texts separate from marketing texts. Eternal Longevity Account Alerts are the texts about your account and orders that come with using our service; these terms explain what we send, how often, and how to stop. Marketing text messages are a separate, optional program, covered in their own section below.`}
       sections={[
         {
           heading: 'Account and care text messages',
@@ -84,9 +81,9 @@ export default async function TextMessagesPage() {
           ],
         },
         {
-          heading: 'Account Alerts: How You Opt In',
+          heading: 'Account Alerts: How You Agree and How to Stop',
           paragraphs: [
-            'You opt in by ticking the optional, unticked box shown above on the final step of the online assessment, after entering your mobile number. Consent is not a condition of purchase or of receiving care. You can also turn alerts off at any time.',
+            'Account Alerts are part of using your account, like order emails. When you enter your mobile number in the online assessment, the final step tells you that we will text that number about your account and orders, as shown above. You can stop them at any time by replying STOP. Marketing texts are a separate program that you join only by your own choice.',
           ],
         },
         {

@@ -445,10 +445,12 @@ export const CONSENT_ITEMS = [
       'I agree to Eternal Longevity LLC collecting and using the health information I provide for my assessment, clinical review, prescribing when appropriate, pharmacy fulfillment, follow-up, payment and required records. I have read the Health Information Privacy section (etlongevity.com/legal/privacy#health-information). This choice is separate from optional marketing and advertising tracking.',
   },
   {
+    // A notice, not a box (Oct 29 2026): order and account texts go to every member, like order email.
+    // Marketing texts stay a separate, unticked opt-in. Recorded as sms_alerts: true on submit (intake-actions).
     id: 'sms_alerts',
     required: false,
     label:
-      'Optional: Yes, text me account alerts from Eternal Longevity at the mobile number I provided: sign-in codes, messages from my care team, order and shipping updates, and account notices. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to cancel. Consent is not a condition of purchase. See our Text Messaging Terms and Privacy Policy.',
+      'Order and account texts: by continuing, you agree that Eternal Longevity may text the mobile number you provided about your account and orders: sign-in codes, order and shipping updates, messages from your care team, and account notices. These are not marketing texts. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to opt out at any time. See our Text Messaging Terms and Privacy Policy.',
   },
   {
     // Marketing email: pre-checked when the step is shown (IntakeWizard), untick to opt out, counted on submit.

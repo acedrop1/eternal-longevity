@@ -86,9 +86,10 @@ export async function sendVerificationCode(
 }
 
 /**
- * Member text alerts are opt-in: the unticked "sms_alerts" box on the intake
- * consents step (Text Messaging Terms, /legal/text-messages). Reads the
- * member's most recent intake. STOP replies are handled by Twilio itself.
+ * Order and account texts: since Oct 29 2026 a notice on the intake consent
+ * step (recorded as sms_alerts: true); before that an optional box, so members
+ * who left it unticked stay email-only. Reads the member's most recent intake.
+ * STOP replies are handled by Twilio itself (it blocks further sends).
  */
 export async function memberTextsAllowed(db: SupabaseClient, userId: string | null | undefined): Promise<boolean> {
   if (!userId) return false;

@@ -99,6 +99,15 @@ function keepAttribution(answers: Record<string, unknown>): void {
 const SAFETY_DECLINE =
   'Your answers to the safety questions mean this treatment isn\u2019t right for you, so your order was closed. Nothing was charged. Message your care team with any questions.';
 
+/**
+ * The consent step now shows order texts as a notice (intakeSchema sms_alerts),
+ * so a submission that went through it has agreed to them: record that, the
+ * way the old box did. Only for consents given in this submission.
+ */
+function noteOrderTexts(consents: unknown): void {
+  if (consents && typeof consents === 'object') (consents as Record<string, unknown>).sms_alerts = true;
+}
+
 export async function emailHasAccountAction(email: string): Promise<boolean> {
   // This answers "does this person have an account here" to anyone who asks,
   // about a medical practice. Throttled rather than removed: the intake wizard
@@ -260,6 +269,7 @@ export async function submitIntakeAction(
   }
   // Which consent text they agreed to, and when (the boxes alone don't say).
   answers.consentsAccepted = { version: CONSENT_VERSION, at: new Date().toISOString() };
+  noteOrderTexts(answers.consents);
   const plan = chosenPlan(ctx, live, answers);
   if (!plan) return { ok: false, error: 'Choose a treatment and plan to continue.' };
   answers.requestedProduct = plan.name;
@@ -422,6 +432,7 @@ export async function submitMemberAssessmentAction(
   }
   // Which consent text they agreed to, and when: kept from the visit they first gave it, renewed if given again now.
   merged.consentsAccepted = answers.consents ? { version: CONSENT_VERSION, at: new Date().toISOString() } : (merged.consentsAccepted ?? { version: CONSENT_VERSION, at: new Date().toISOString() });
+  if (answers.consents) noteOrderTexts(merged.consents);
   const plan = chosenPlan(ctx, live, merged);
   if (!plan) return { ok: false, error: 'Choose a treatment and plan to continue.' };
   merged.requestedProduct = plan.name;
@@ -706,6 +717,7 @@ export async function submitVisitAction(
   }
   // Which consent text they agreed to, and when: kept from the visit they first gave it, renewed if given again now.
   merged.consentsAccepted = (visitAnswers as Record<string, unknown>)?.consents ? { version: CONSENT_VERSION, at: new Date().toISOString() } : (merged.consentsAccepted ?? { version: CONSENT_VERSION, at: new Date().toISOString() });
+  if ((visitAnswers as Record<string, unknown>)?.consents) noteOrderTexts(merged.consents);
   const { error } = await db
     .from('intake_submissions')
     .update({ answers: merged as unknown as Json, status: 'submitted' })
