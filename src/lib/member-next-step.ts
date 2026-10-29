@@ -71,8 +71,7 @@ export function memberNextStep(input: {
     };
   }
   // Ordered, but the health questions that follow checkout aren't answered: the order waits on them.
-  // 'assigned' too: admin can send an order to Dr. Elder before the questions are in, and they're still owed.
-  if (state === 'awaiting_visit' && orders.some((o) => o.status === 'awaiting-visit' || o.status === 'assigned')) {
+  if (state === 'awaiting_visit' && orders.some((o) => o.status === 'awaiting-visit')) {
     return {
       eyebrow: 'Next step',
       title: 'Answer a few health questions for Dr. Elder',

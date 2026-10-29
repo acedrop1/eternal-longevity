@@ -12,7 +12,6 @@ import {
 } from '@/lib/fulfillment-actions';
 import {
   addOrderNoteAction,
-  sendToPrescriberAnywayAction,
   setOrderVisibilityAction,
   previewHealthReminderAction,
   remindHealthQuestionsAction,
@@ -152,21 +151,6 @@ export function OrderDetail({
       confirmLabel: 'Send to pharmacy',
     });
     if (ok) run(() => retrySendToPharmacyAction(b.id));
-  };
-
-  const sendAnyway = async () => {
-    if (!o) return;
-    const ok = await confirm({
-      title: `Send ${ref} to Dr. Elder anyway?`,
-      body: 'It goes into his queue now and he is emailed and texted, so he can reach out to them. He still can’t sign or charge until they answer the health questions (they include the safety screen), and the automatic reminders stop.',
-      confirmLabel: 'Send anyway',
-    });
-    if (!ok) return;
-    start(async () => {
-      const res = await sendToPrescriberAnywayAction(o.id);
-      setResult({ ok: res.ok, message: res.ok ? 'Sent to Dr. Elder.' : (res.error ?? 'Could not send it.') });
-      router.refresh();
-    });
   };
 
   // Cancel opens the index's own cancel form (reason, refund, follow-up) in a dialog.
@@ -320,9 +304,6 @@ export function OrderDetail({
                 </button>
                 <button type="button" onClick={() => setReminding('text')} className={secondaryButton}>
                   Text reminder…
-                </button>
-                <button type="button" onClick={sendAnyway} disabled={pending} className={secondaryButton}>
-                  Send to Dr. Elder anyway…
                 </button>
               </div>
             </SectionCard>
@@ -686,7 +667,8 @@ function ReminderPreview({
 
   const send = () =>
     startSend(async () => {
-      const res = await remindHealthQuestionsAction(orderNumber, { email, text }).catch(() => null);
+      const anyway = text && Boolean(preview?.smsNoConsent);
+      const res = await remindHealthQuestionsAction(orderNumber, { email, text, anyway }).catch(() => null);
       if (!res) return setError('Could not reach the server. Nothing was sent; try again.');
       if (!res.ok) return setError(res.error ?? 'Could not send.');
       onSent(res.message ?? 'Reminder sent.');
@@ -728,6 +710,12 @@ function ReminderPreview({
               <span className="text-ink/55">To: </span>
               {preview.phoneLast4 ? `•••• ${preview.phoneLast4}` : 'no number on file'}
             </p>
+            {preview.smsNoConsent && (
+              <p className="mt-2 text-[13px] leading-relaxed text-amber-800">
+                They didn&apos;t agree to texts at checkout. It&apos;s about their own order and has no health details, so you can
+                send it anyway. It&apos;s logged.
+              </p>
+            )}
             {preview.smsBlocked ? (
               <p className="mt-2 text-[13px] text-ink/65">{preview.smsBlocked}</p>
             ) : (
@@ -751,7 +739,7 @@ function ReminderPreview({
           disabled={!preview?.ok || sending || (text && Boolean(preview?.smsBlocked))}
           className={cn(headerButton, 'disabled:opacity-40')}
         >
-          {sending ? 'Sending…' : text ? 'Send text' : 'Send email'}
+          {sending ? 'Sending…' : text ? (preview?.smsNoConsent ? 'Send text anyway' : 'Send text') : 'Send email'}
         </button>
       </div>
     </div>

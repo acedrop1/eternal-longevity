@@ -115,11 +115,7 @@ function addressNotes(shippingAddress: unknown): string[] {
  * Send a new order to the prescriber and tell him about it.
  * Called from placeOrderAction.
  */
-export async function releaseToDoctor(
-  orderNumber: string,
-  /** Admin's "send anyway": goes to the prescriber before the health questions are in. */
-  opts: { anyway?: boolean } = {},
-): Promise<{
+export async function releaseToDoctor(orderNumber: string): Promise<{
   ok: boolean;
   error?: string;
 }> {
@@ -143,7 +139,7 @@ export async function releaseToDoctor(
    * order waits as 'awaiting-visit': not in his queue, never charged.
    * submitVisitAction calls this again once they are in.
    */
-  if (order.user_id && !opts.anyway) {
+  if (order.user_id) {
     const { data: intake, error: intakeErr } = await db
       .from('intake_submissions')
       .select('status')
@@ -220,7 +216,7 @@ export async function releaseToDoctor(
   await db.from('order_updates').insert({
     order_id: order.id,
     label: 'Sent to prescriber',
-    body: [opts.anyway && 'Sent before the health questions were answered.', ...notes].filter(Boolean).join(' ') || null,
+    body: notes.length ? notes.join(' ') : null,
     author: 'System',
     author_role: 'system',
     // The stale-order sweep times the prescriber's wait from this entry.
@@ -243,9 +239,8 @@ export async function releaseToDoctor(
       html: noticeEmail({
         eyebrow: 'New order',
         heading: `${memberName} placed an order · ${summary.total}`,
-        body: opts.anyway
-          ? 'Sent to the prescriber before they answered the health questions. He can message them; he can only sign once the questions are in.'
-          : order.status === 'awaiting-visit'
+        body:
+          order.status === 'awaiting-visit'
             ? 'They finished their health questions, so it is with the prescriber now. Nothing is charged until he signs.'
             : 'It has gone straight to the prescriber. Nothing is charged until he signs.',
         rows: summary.rows,

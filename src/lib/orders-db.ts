@@ -1290,14 +1290,11 @@ async function healthReminderDraft(orderNumber: string) {
   if (!o.member_email) return { error: 'No email on this order.' } as const;
   const firstName = (o.member_name ?? '').trim().split(/\s+/)[0] || 'there';
   const email = unfinishedVisitEmail({ firstName, visitUrl: `${SITE_URL}/portal/visit` });
-  // A text only if they agreed to texts (TCPA). No name or treatment in it.
+  // No name or treatment in the text. Without their text consent it only goes if admin sends it anyway.
   const { data: prof } = o.user_id ? await db.from('profiles').select('phone').eq('id', o.user_id).maybeSingle() : { data: null };
-  const smsBlocked = !prof?.phone
-    ? 'No phone number on file.'
-    : !(await memberTextsAllowed(db, o.user_id))
-      ? 'They didn’t agree to texts, so we can’t text them.'
-      : null;
-  return { db, o, email, phone: prof?.phone ?? null, smsBlocked } as const;
+  const smsBlocked = prof?.phone ? null : 'No phone number on file.';
+  const smsNoConsent = Boolean(prof?.phone) && !(await memberTextsAllowed(db, o.user_id));
+  return { db, o, email, phone: prof?.phone ?? null, smsBlocked, smsNoConsent } as const;
 }
 
 export type HealthReminderPreview = {
@@ -1311,6 +1308,8 @@ export type HealthReminderPreview = {
   sms?: string;
   /** Why no text can go, when it can't. */
   smsBlocked?: string | null;
+  /** They never agreed to texts: it only goes as "send anyway". */
+  smsNoConsent?: boolean;
 };
 
 /** Admin: what the reminder email and text will say, before sending. */
@@ -1327,6 +1326,7 @@ export async function previewHealthReminderAction(orderNumber: string): Promise<
     phoneLast4: d.phone ? d.phone.replace(/\D/g, '').slice(-4) : undefined,
     sms: REMINDER_SMS,
     smsBlocked: d.smsBlocked,
+    smsNoConsent: d.smsNoConsent,
   };
 }
 
@@ -1338,7 +1338,7 @@ export async function previewHealthReminderAction(orderNumber: string): Promise<
  */
 export async function remindHealthQuestionsAction(
   orderNumber: string,
-  send: { email: boolean; text: boolean } = { email: true, text: true },
+  send: { email: boolean; text: boolean; anyway?: boolean } = { email: true, text: true },
 ): Promise<ActionResult & { message?: string }> {
   const { user, error } = await requireRole(['admin']);
   if (error || !user) return { ok: false, error: 'not_authorized' };
@@ -1375,6 +1375,7 @@ export async function remindHealthQuestionsAction(
   let texted = false;
   if (send.text) {
     if (d.smsBlocked || !d.phone) done.push(`No text: ${d.smsBlocked ?? 'no phone number on file.'}`);
+    else if (d.smsNoConsent && !send.anyway) done.push('No text: they haven’t agreed to texts.');
     else {
       texted = (await sendSms(d.phone, REMINDER_SMS)).ok;
       done.push(texted ? 'Text sent.' : 'The text did not send.');
@@ -1383,30 +1384,14 @@ export async function remindHealthQuestionsAction(
 
   const how = [send.email && 'email', texted && 'text'].filter(Boolean).join(' and ');
   if (how) await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', `Sent a reminder by ${how} to answer the health questions.`);
+  // Audit only (the timeline is the member's): a text sent without their consent, on admin's say-so.
+  if (texted && d.smsNoConsent) {
+    await recordAudit([
+      { actorId: user.id, actorName: user.name, actorRole: 'admin', entity: 'order', entityId: orderNumber, field: 'Text sent anyway', oldValue: null, newValue: 'Health-question reminder, no text consent on file' },
+    ]);
+  }
   revalidatePortal();
   return { ok: true, message: done.join(' ') };
-}
-
-/**
- * Admin: send an order still waiting on the health questions to the
- * prescriber anyway, so it isn't stuck while the member misses the email.
- * He sees it and can message them; signing still waits for the questions
- * (healthQuestionsOpen), since they carry the safety screen.
- */
-export async function sendToPrescriberAnywayAction(orderNumber: string): Promise<ActionResult> {
-  const { user, error } = await requireRole(['admin']);
-  if (error || !user) return { ok: false, error: 'not_authorized' };
-  const db = createSupabaseAdminClient();
-  const { data: o } = await db.from('orders').select('status').eq('order_number', orderNumber).maybeSingle();
-  if (!o) return { ok: false, error: 'Order not found.' };
-  if (o.status !== 'awaiting-visit') return { ok: false, error: 'It isn’t waiting on health questions any more.' };
-  const res = await releaseToDoctor(orderNumber, { anyway: true });
-  if (!res.ok) return { ok: false, error: res.error ?? 'Could not send it.' };
-  await recordAudit([
-    { actorId: user.id, actorName: user.name, actorRole: 'admin', entity: 'order', entityId: orderNumber, field: 'Status', oldValue: 'awaiting-visit', newValue: 'assigned (sent anyway)' },
-  ]);
-  revalidatePortal();
-  return { ok: true };
 }
 
 /**
