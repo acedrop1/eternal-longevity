@@ -1268,63 +1268,112 @@ export async function addOrderNoteAction(orderNumber: string, note: string): Pro
   return { ok: true };
 }
 
-/**
- * Admin: email the member the "answer the health questions" reminder now, for
- * an order still waiting on them. Counted as the next step of the daily
- * reminder sequence (cron/recovery), so the automatic ones don't double up.
- */
-export async function remindHealthQuestionsAction(orderNumber: string): Promise<ActionResult & { message?: string }> {
-  const { user, error } = await requireRole(['admin']);
-  if (error || !user) return { ok: false, error: 'not_authorized' };
+const REMINDER_SMS = `Eternal Longevity: your order is waiting on a few quick health questions (about 2 min) before your doctor can review it. Nothing is charged yet. ${SITE_URL}/portal/visit Reply STOP to opt out.`;
+
+/** The health-question reminder for one order, exactly as it would go out. */
+async function healthReminderDraft(orderNumber: string) {
   const db = createSupabaseAdminClient();
   const { data: o } = await db
     .from('orders')
     .select('id, user_id, status, member_email, member_name')
     .eq('order_number', orderNumber)
     .maybeSingle();
-  if (!o) return { ok: false, error: 'not_found' };
-  if (o.status !== 'awaiting-visit') return { ok: false, error: 'Their health questions are already in.' };
-  if (!o.member_email) return { ok: false, error: 'No email on this order.' };
-
+  if (!o) return { error: 'not_found' } as const;
+  if (o.status !== 'awaiting-visit') return { error: 'Their health questions are already in.' } as const;
+  if (!o.member_email) return { error: 'No email on this order.' } as const;
   const firstName = (o.member_name ?? '').trim().split(/\s+/)[0] || 'there';
-  const msg = unfinishedVisitEmail({ firstName, visitUrl: `${SITE_URL}/portal/visit` });
-  const sent = await sendEmail({ to: o.member_email, subject: msg.subject, html: msg.html });
-  if (!sent.ok) return { ok: false, error: 'The email did not send. Try again in a minute.' };
-
-  try {
-    const { data: intake } = o.user_id
-      ? await db
-          .from('intake_submissions')
-          .select('id')
-          .eq('user_id', o.user_id)
-          .eq('status', 'awaiting_visit')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-      : { data: null };
-    const ref = intake?.id ?? orderNumber;
-    const { data: prior } = await db.from('email_sends').select('step').eq('stage', 'visit').eq('ref', ref);
-    const step = Math.max(-1, ...(prior ?? []).map((r) => r.step)) + 1;
-    await db.from('email_sends').insert({ email: o.member_email.toLowerCase(), stage: 'visit', ref, step });
-  } catch {
-    // Best effort: at worst the daily run sends its own reminder too.
-  }
-  // A text too, only if they agreed to texts (TCPA). No name or treatment in it.
-  let texted = '';
+  const email = unfinishedVisitEmail({ firstName, visitUrl: `${SITE_URL}/portal/visit` });
+  // A text only if they agreed to texts (TCPA). No name or treatment in it.
   const { data: prof } = o.user_id ? await db.from('profiles').select('phone').eq('id', o.user_id).maybeSingle() : { data: null };
-  if (!prof?.phone) texted = ' No text: no phone number on file.';
-  else if (!(await memberTextsAllowed(db, o.user_id))) texted = ' No text: they didn’t agree to texts.';
-  else {
-    const sms = await sendSms(
-      prof.phone,
-      `Eternal Longevity: your order is waiting on a few quick health questions (about 2 min) before your doctor can review it. Nothing is charged yet. ${SITE_URL}/portal/visit`,
-    );
-    texted = sms.ok ? ' Text sent too.' : ' The text did not send.';
+  const smsBlocked = !prof?.phone
+    ? 'No phone number on file.'
+    : !(await memberTextsAllowed(db, o.user_id))
+      ? 'They didn’t agree to texts, so we can’t text them.'
+      : null;
+  return { db, o, email, phone: prof?.phone ?? null, smsBlocked } as const;
+}
+
+export type HealthReminderPreview = {
+  ok: boolean;
+  error?: string;
+  to?: string;
+  subject?: string;
+  html?: string;
+  /** Last 4 digits only. */
+  phoneLast4?: string;
+  sms?: string;
+  /** Why no text can go, when it can't. */
+  smsBlocked?: string | null;
+};
+
+/** Admin: what the reminder email and text will say, before sending. */
+export async function previewHealthReminderAction(orderNumber: string): Promise<HealthReminderPreview> {
+  const { user, error } = await requireRole(['admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const d = await healthReminderDraft(orderNumber);
+  if ('error' in d) return { ok: false, error: d.error };
+  return {
+    ok: true,
+    to: d.o.member_email ?? '',
+    subject: d.email.subject,
+    html: d.email.html,
+    phoneLast4: d.phone ? d.phone.replace(/\D/g, '').slice(-4) : undefined,
+    sms: REMINDER_SMS,
+    smsBlocked: d.smsBlocked,
+  };
+}
+
+/**
+ * Admin: send the "answer the health questions" reminder now, by email and/or
+ * text, for an order still waiting on them. The email counts as the next step
+ * of the daily reminder sequence (cron/recovery), so the automatic ones don't
+ * double up.
+ */
+export async function remindHealthQuestionsAction(
+  orderNumber: string,
+  send: { email: boolean; text: boolean } = { email: true, text: true },
+): Promise<ActionResult & { message?: string }> {
+  const { user, error } = await requireRole(['admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  if (!send.email && !send.text) return { ok: false, error: 'Pick email, text or both.' };
+  const d = await healthReminderDraft(orderNumber);
+  if ('error' in d) return { ok: false, error: d.error };
+  const { db, o } = d;
+  const done: string[] = [];
+
+  if (send.email) {
+    const sent = await sendEmail({ to: o.member_email!, subject: d.email.subject, html: d.email.html });
+    if (!sent.ok) return { ok: false, error: 'The email did not send. Try again in a minute.' };
+    done.push('Email sent.');
+    try {
+      const { data: intake } = o.user_id
+        ? await db
+            .from('intake_submissions')
+            .select('id')
+            .eq('user_id', o.user_id)
+            .eq('status', 'awaiting_visit')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : { data: null };
+      const ref = intake?.id ?? orderNumber;
+      const { data: prior } = await db.from('email_sends').select('step').eq('stage', 'visit').eq('ref', ref);
+      const step = Math.max(-1, ...(prior ?? []).map((r) => r.step)) + 1;
+      await db.from('email_sends').insert({ email: o.member_email!.toLowerCase(), stage: 'visit', ref, step });
+    } catch {
+      // Best effort: at worst the daily run sends its own reminder too.
+    }
   }
 
-  await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', 'Sent a reminder to answer the health questions.');
+  if (send.text) {
+    if (d.smsBlocked || !d.phone) done.push(`No text: ${d.smsBlocked ?? 'no phone number on file.'}`);
+    else done.push((await sendSms(d.phone, REMINDER_SMS)).ok ? 'Text sent.' : 'The text did not send.');
+  }
+
+  const how = [send.email && 'email', send.text && !d.smsBlocked && 'text'].filter(Boolean).join(' and ');
+  if (how) await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', `Sent a reminder by ${how} to answer the health questions.`);
   revalidatePortal();
-  return { ok: true, message: `Reminder emailed.${texted}` };
+  return { ok: true, message: done.join(' ') };
 }
 
 /**

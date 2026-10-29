@@ -10,7 +10,12 @@ import {
   retrySendToPharmacyAction,
   type FulfillmentResult,
 } from '@/lib/fulfillment-actions';
-import { addOrderNoteAction, remindHealthQuestionsAction } from '@/lib/orders-db';
+import {
+  addOrderNoteAction,
+  previewHealthReminderAction,
+  remindHealthQuestionsAction,
+  type HealthReminderPreview,
+} from '@/lib/orders-db';
 import { adminRefundOrder } from '@/lib/admin-billing-actions';
 import { setOrderShippingCostAction } from '@/lib/settings-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
@@ -134,6 +139,11 @@ export function OrderDetail({
   // Refund is its own action: money back (full or part) without cancelling, unless admin asks.
   const [refunding, setRefunding] = useState(false);
   const refundDialog = useRef<HTMLDialogElement>(null);
+  const [reminding, setReminding] = useState<'email' | 'text' | null>(null);
+  const remindDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (reminding) remindDialog.current?.showModal();
+  }, [reminding]);
   useEffect(() => {
     if (refunding) refundDialog.current?.showModal();
   }, [refunding]);
@@ -161,29 +171,8 @@ export function OrderDetail({
             <p className="mt-1 text-[14px] text-ink/65">
               Placed {formatDateTime(o?.placedAt ?? b?.createdAt)}
             </p>
-            {reminder && (
-              <p role="status" className="mt-1 text-[14px] font-medium text-ink">
-                {reminder}
-              </p>
-            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {admin && o?.status === 'awaiting-visit' && (
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() =>
-                  start(async () => {
-                    const res = await remindHealthQuestionsAction(o.id);
-                    setReminder(res.ok ? (res.message ?? 'Reminder sent.') : (res.error ?? 'Could not send.'));
-                    if (res.ok) router.refresh();
-                  })
-                }
-                className={cn(headerButton, 'disabled:opacity-40')}
-              >
-                {pending ? 'Sending…' : 'Send health-question reminder (email + text)'}
-              </button>
-            )}
             {admin && o && (
               <MoreActions>
                 {(close) => (
@@ -252,6 +241,28 @@ export function OrderDetail({
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Main column */}
         <div className="min-w-0 space-y-5">
+          {admin && o?.status === 'awaiting-visit' && (
+            <SectionCard title="Waiting on health questions">
+              <p className="text-[14px] leading-relaxed text-ink/70">
+                Dr. Elder can&apos;t review this order until they answer the health questions. Automatic reminders go out about 2
+                hours, 1 day and 3 days after the order. Send one now; you see it before it goes.
+              </p>
+              {reminder && (
+                <p role="status" className="mt-2 text-[14px] font-medium text-ink">
+                  {reminder}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={() => setReminding('email')} className={headerButton}>
+                  Email reminder…
+                </button>
+                <button type="button" onClick={() => setReminding('text')} className={secondaryButton}>
+                  Text reminder…
+                </button>
+              </div>
+            </SectionCard>
+          )}
+
           <SectionCard title="Items" flush>
             {o ? (
               <>
@@ -548,6 +559,27 @@ export function OrderDetail({
         </dialog>
       )}
 
+      {reminding && o && (
+        <dialog
+          ref={remindDialog}
+          aria-label={`Health-question reminder for ${ref}`}
+          onClose={() => setReminding(null)}
+          onClick={(e) => e.target === e.currentTarget && remindDialog.current?.close()}
+          className="!m-auto w-[calc(100%-32px)] max-w-2xl rounded-shell bg-transparent p-0 backdrop:bg-ink/40 backdrop:backdrop-blur-sm"
+        >
+          <ReminderPreview
+            channel={reminding}
+            orderNumber={o.id}
+            onClose={() => remindDialog.current?.close()}
+            onSent={(message) => {
+              setReminder(message);
+              remindDialog.current?.close();
+              router.refresh();
+            }}
+          />
+        </dialog>
+      )}
+
       {refunding && o && (
         <dialog
           ref={refundDialog}
@@ -559,6 +591,104 @@ export function OrderDetail({
           <RefundOrder order={o} canCancel={Boolean(cancel)} onClose={() => refundDialog.current?.close()} />
         </dialog>
       )}
+    </div>
+  );
+}
+
+/** The reminder email and text exactly as they will go out, with a choice of which to send. */
+function ReminderPreview({
+  channel,
+  orderNumber,
+  onClose,
+  onSent,
+}: {
+  channel: 'email' | 'text';
+  orderNumber: string;
+  onClose: () => void;
+  onSent: (message: string) => void;
+}) {
+  const [preview, setPreview] = useState<HealthReminderPreview | null>(null);
+  const email = channel === 'email';
+  const text = channel === 'text';
+  const [error, setError] = useState('');
+  const [sending, startSend] = useTransition();
+
+  useEffect(() => {
+    previewHealthReminderAction(orderNumber)
+      .then(setPreview)
+      .catch(() => setPreview({ ok: false, error: 'Could not load the preview. Check your connection and try again.' }));
+  }, [orderNumber]);
+
+  const send = () =>
+    startSend(async () => {
+      const res = await remindHealthQuestionsAction(orderNumber, { email, text }).catch(() => null);
+      if (!res) return setError('Could not reach the server. Nothing was sent; try again.');
+      if (!res.ok) return setError(res.error ?? 'Could not send.');
+      onSent(res.message ?? 'Reminder sent.');
+    });
+
+  return (
+    <div className="max-h-[90vh] overflow-y-auto rounded-inner bg-white p-5 ring-1 ring-ink/10">
+      <h2 className="text-[17px] font-semibold text-ink">{email ? 'Email' : 'Text'} reminder: health questions</h2>
+      <p className="mt-1 text-[13px] leading-relaxed text-ink/65">This is exactly what they will get.</p>
+
+      {!preview && <p className="mt-5 text-[14px] text-ink/65">Loading preview…</p>}
+      {preview && !preview.ok && <p role="alert" className="mt-5 text-[14px] text-red-700">{preview.error}</p>}
+      {preview?.ok && (
+        <div className="mt-5 space-y-5">
+          {email && (
+          <section>
+            <dl className="space-y-0.5 text-[13px] text-ink/70">
+              <div>
+                <dt className="inline text-ink/55">To: </dt>
+                <dd className="inline">{preview.to}</dd>
+              </div>
+              <div>
+                <dt className="inline text-ink/55">Subject: </dt>
+                <dd className="inline font-medium text-ink">{preview.subject}</dd>
+              </div>
+            </dl>
+            <iframe
+              title="Email preview"
+              sandbox=""
+              srcDoc={preview.html}
+              className="mt-2 h-[420px] w-full rounded-inner bg-white ring-1 ring-ink/10"
+            />
+          </section>
+          )}
+
+          {text && (
+          <section>
+            <p className="text-[13px] text-ink/70">
+              <span className="text-ink/55">To: </span>
+              {preview.phoneLast4 ? `•••• ${preview.phoneLast4}` : 'no number on file'}
+            </p>
+            {preview.smsBlocked ? (
+              <p className="mt-2 text-[13px] text-ink/65">{preview.smsBlocked}</p>
+            ) : (
+              <p className="mt-2 max-w-sm whitespace-pre-wrap rounded-[18px] rounded-bl-[6px] bg-milk px-4 py-3 text-[14px] leading-snug text-ink">
+                {preview.sms}
+              </p>
+            )}
+          </section>
+          )}
+        </div>
+      )}
+
+      {error && <p role="alert" className="mt-4 text-[13px] text-red-700">{error}</p>}
+      <div className="mt-5 flex flex-wrap justify-end gap-2">
+        <button type="button" onClick={onClose} className={secondaryButton}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={send}
+          disabled={!preview?.ok || sending || (text && Boolean(preview?.smsBlocked))}
+          className={cn(headerButton, 'disabled:opacity-40')}
+        >
+          {sending ? 'Sending…' : text ? 'Send text' : 'Send email'}
+        </button>
+      </div>
     </div>
   );
 }
