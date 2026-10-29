@@ -1,5 +1,6 @@
 import 'server-only';
 import type { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { deletedOrders } from '@/lib/order-visibility';
 
 /*
  * Revenue, one definition for Overview, Billing and the daily report. Money
@@ -14,16 +15,18 @@ type Db = ReturnType<typeof createSupabaseAdminClient>;
 export async function paidRevenue(db: Db, since?: string): Promise<{ orders: number; cents: number }> {
   // ponytail: sums in the app, so it sees at most PostgREST's 1000-row cap;
   // move to a SQL sum (RPC) once paid orders pass that. Partial refunds are not netted.
-  let q = db.from('orders').select('total_cents').not('paid_confirmed_at', 'is', null);
+  let q = db.from('orders').select('order_number, total_cents').not('paid_confirmed_at', 'is', null);
   if (since) q = q.gte('paid_confirmed_at', since);
-  const { data, error } = await q;
+  const [{ data, error }, gone] = await Promise.all([q, deletedOrders()]);
   if (error) {
     console.error('[revenue] paid orders query failed:', error.message);
     return { orders: 0, cents: 0 };
   }
+  // Deleted (test) orders don't count.
+  const kept = data.filter((o) => !gone.has(String(o.order_number)));
   return {
-    orders: data.length,
-    cents: data.reduce((sum, o) => sum + (Number(o.total_cents) || 0), 0),
+    orders: kept.length,
+    cents: kept.reduce((sum, o) => sum + (Number(o.total_cents) || 0), 0),
   };
 }
 

@@ -18,6 +18,7 @@ import {
   type SweepShipment,
 } from '@/lib/order-health';
 import { getPendingCounts } from '@/lib/pending-counts';
+import { getHiddenOrders } from '@/lib/order-visibility';
 import { loadEconData } from '@/lib/profit-data';
 import { aggregate, dayOf, presetRange } from '@/lib/profit';
 import type { OrderStatus } from '@/lib/orders';
@@ -80,7 +81,7 @@ async function loadOverview(): Promise<Overview> {
     const db = createSupabaseAdminClient();
     const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
 
-    const [members, subs, intakes, orders, shipments, shipped, updates, today, week, counts] =
+    const [members, subs, intakes, orders, shipments, shipped, updates, today, week, counts, hidden] =
       await Promise.all([
         db.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'member'),
         db.from('subscriptions').select('per_cycle_cents, cadence_label').eq('status', 'active'),
@@ -105,14 +106,20 @@ async function loadOverview(): Promise<Overview> {
           .gte('created_at', weekAgo),
         db
           .from('order_updates')
-          .select('author, author_role, label, body, created_at')
+          .select('author, author_role, label, body, created_at, orders(order_number)')
           .order('created_at', { ascending: false })
-          .limit(6),
+          .limit(30),
         paidRevenue(db, startOfToday()),
         paidRevenue(db, weekAgo),
         // The nav badges' counts; "messages awaiting a reply" uses the inbox's rule.
         getPendingCounts('admin'),
+        getHiddenOrders(),
       ]);
+    // Deleted (test) orders leave the overview; archived ones are done, so off the live list too.
+    const orderOf = (u: { orders: unknown }) => {
+      const o = (Array.isArray(u.orders) ? u.orders[0] : u.orders) as { order_number?: string } | null;
+      return o?.order_number ? String(o.order_number) : '';
+    };
 
     const intakeRows = intakes.data ?? [];
     const countIntakes = (...s: string[]) => intakeRows.filter((r) => s.includes(r.status)).length;
@@ -127,9 +134,9 @@ async function loadOverview(): Promise<Overview> {
       applications: countIntakes('submitted', 'in_review', 'needs_info'),
       awaitingVisit: countIntakes('awaiting_visit'),
       shippedWeek: shipped.count ?? 0,
-      orders: (orders.data ?? []) as unknown as SweepOrder[],
+      orders: (orders.data ?? []).filter((o) => !hidden[String(o.order_number)]) as unknown as SweepOrder[],
       toPlace: shipments.data ?? [],
-      activity: (updates.data ?? []).map((u) => ({
+      activity: (updates.data ?? []).filter((u) => hidden[orderOf(u)] !== 'deleted').slice(0, 6).map((u) => ({
         time: fmtTime(u.created_at),
         action: [u.author ?? u.author_role ?? 'System', u.label, u.body ?? ''].filter(Boolean).join(' · '),
       })),

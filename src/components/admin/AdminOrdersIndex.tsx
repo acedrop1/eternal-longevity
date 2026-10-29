@@ -41,18 +41,20 @@ export type OrderIndexRow = {
     | 'Cancelled';
   tracking: string;
   promo: string;
+  archived?: boolean;
 };
 
-type Tab = 'all' | 'review' | 'unfulfilled' | 'fulfilled' | 'unpaid' | 'cancelled' | 'refunded';
+type Tab = 'all' | 'review' | 'unfulfilled' | 'fulfilled' | 'unpaid' | 'cancelled' | 'refunded' | 'archived';
 
 const TABS: { key: Tab; label: string; match: (r: OrderIndexRow) => boolean }[] = [
-  { key: 'all', label: 'All', match: () => true },
-  { key: 'review', label: 'In review', match: (r) => r.fulfillment === 'Health questions' || r.fulfillment === 'With prescriber' },
-  { key: 'unfulfilled', label: 'Unfulfilled', match: (r) => r.fulfillment === 'Unfulfilled' || r.fulfillment === 'In progress' },
-  { key: 'fulfilled', label: 'Fulfilled', match: (r) => r.fulfillment === 'Shipped' || r.fulfillment === 'Delivered' },
-  { key: 'unpaid', label: 'Unpaid', match: (r) => r.payment === 'Awaiting payment' },
-  { key: 'cancelled', label: 'Cancelled', match: (r) => r.fulfillment === 'Cancelled' || r.fulfillment === 'Declined' },
-  { key: 'refunded', label: 'Refunded', match: (r) => r.payment === 'Refunded' || r.payment === 'Partially refunded' },
+  { key: 'all', label: 'All', match: (r) => !r.archived },
+  { key: 'review', label: 'In review', match: (r) => !r.archived && (r.fulfillment === 'Health questions' || r.fulfillment === 'With prescriber') },
+  { key: 'unfulfilled', label: 'Unfulfilled', match: (r) => !r.archived && (r.fulfillment === 'Unfulfilled' || r.fulfillment === 'In progress') },
+  { key: 'fulfilled', label: 'Fulfilled', match: (r) => !r.archived && (r.fulfillment === 'Shipped' || r.fulfillment === 'Delivered') },
+  { key: 'unpaid', label: 'Unpaid', match: (r) => !r.archived && (r.payment === 'Awaiting payment') },
+  { key: 'cancelled', label: 'Cancelled', match: (r) => !r.archived && (r.fulfillment === 'Cancelled' || r.fulfillment === 'Declined') },
+  { key: 'refunded', label: 'Refunded', match: (r) => !r.archived && (r.payment === 'Refunded' || r.payment === 'Partially refunded') },
+  { key: 'archived', label: 'Archived', match: (r) => Boolean(r.archived) },
 ];
 
 const PAYMENT_TONE: Record<OrderIndexRow['payment'], BadgeTone> = {

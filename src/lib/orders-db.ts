@@ -50,6 +50,7 @@ import {
   MAX_LINE_QUANTITY,
   MAX_ORDER_LINES,
   ORDER_FROM,
+  TERMINAL_ORDER,
   shippingAddressError,
 } from '@/lib/order-rules';
 import type { Database } from '@/lib/database.types';
@@ -60,6 +61,7 @@ import { intakeCovers } from '@/lib/purchase-rules';
 import { claimCheckout, releaseCheckout } from '@/lib/order-lock';
 import { SITE_URL } from '@/lib/site';
 import { memberTextsAllowed, sendSms } from '@/lib/sms';
+import { getHiddenOrders, setOrderVisibility, type OrderVisibility } from '@/lib/order-visibility';
 import { writePrescriptionForOrder } from '@/lib/refills';
 import { nextOrderNumber } from '@/lib/order-number';
 import { openSignWindow, passwordMatches, signWindowOpen } from '@/lib/reauth';
@@ -175,12 +177,15 @@ export async function listOrders(): Promise<Order[]> {
   if (!r) return [];
   let q = r.db.from('orders').select(SELECT);
   if (r.userId) q = q.eq('user_id', r.userId);
-  const { data, error } = await q.order('created_at', { ascending: false });
+  const [{ data, error }, hidden] = await Promise.all([q.order('created_at', { ascending: false }), getHiddenOrders()]);
   if (error) {
     console.error('[orders-db] listOrders:', error.message);
     return [];
   }
-  return (data ?? []).map((r) => mapOrder(r as OrderRow));
+  return (data ?? [])
+    .map((r) => mapOrder(r as OrderRow))
+    .filter((o) => hidden[o.id] !== 'deleted')
+    .map((o) => (hidden[o.id] === 'archived' ? { ...o, archived: true } : o));
 }
 
 /** One order by its human-readable order number. */
@@ -1374,6 +1379,35 @@ export async function remindHealthQuestionsAction(
   if (how) await appendUpdate(o.id, user.name, 'admin', 'Reminder sent', `Sent a reminder by ${how} to answer the health questions.`);
   revalidatePortal();
   return { ok: true, message: done.join(' ') };
+}
+
+/**
+ * Admin: archive, delete or restore an order (Shopify style). Delete is for
+ * test orders and only once an order is closed; it hides the order everywhere
+ * and takes it out of revenue and profit, but keeps the record.
+ */
+export async function setOrderVisibilityAction(orderNumber: string, to: OrderVisibility | null): Promise<ActionResult> {
+  const { user, error } = await requireRole(['admin']);
+  if (error || !user) return { ok: false, error: 'not_authorized' };
+  const db = createSupabaseAdminClient();
+  const { data: o } = await db.from('orders').select('id, status').eq('order_number', orderNumber).maybeSingle();
+  if (!o) return { ok: false, error: 'Order not found.' };
+  if (to === 'deleted' && ![...TERMINAL_ORDER, 'delivered'].includes(o.status as OrderStatus)) {
+    return { ok: false, error: 'Cancel it first. Only closed orders can be deleted.' };
+  }
+  try {
+    await setOrderVisibility(orderNumber, to);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Could not save.' };
+  }
+  // Audit only: the order's timeline is the member's to read.
+  await recordAudit([
+    { actorId: user.id, actorName: user.name, actorRole: 'admin', entity: 'order', entityId: orderNumber, field: 'Visibility', oldValue: null, newValue: to ?? 'restored' },
+  ]);
+  revalidatePortal();
+  revalidatePath('/portal/admin/orders');
+  revalidatePath('/portal/admin/analytics');
+  return { ok: true };
 }
 
 /**

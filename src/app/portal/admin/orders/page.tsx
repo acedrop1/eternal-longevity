@@ -72,6 +72,7 @@ export default async function AdminOrdersPage() {
     fulfillment: fulfillmentOf(o),
     tracking: o.tracking ?? '',
     promo: o.promoCode ?? '',
+    archived: o.archived,
   }));
 
   return (

@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment-actions';
 import {
   addOrderNoteAction,
+  setOrderVisibilityAction,
   previewHealthReminderAction,
   remindHealthQuestionsAction,
   type HealthReminderPreview,
@@ -66,7 +67,10 @@ export function OrderDetail({
   extras,
   admin,
   profit = null,
+  visibility = null,
 }: {
+  /** Admin: archived or deleted (lib/order-visibility). */
+  visibility?: 'archived' | 'deleted' | null;
   board?: BoardRow;
   order?: Order;
   extras: OrderExtras | null;
@@ -81,6 +85,25 @@ export function OrderDetail({
   // The fulfillment steps, as the index row ran them.
   const [pending, start] = useTransition();
   const [reminder, setReminder] = useState<string | null>(null);
+  const closed = Boolean(o && ['denied-admin', 'declined-clinical', 'canceled', 'refunded', 'delivered'].includes(o.status));
+  const setVisibility = async (to: 'archived' | 'deleted' | null) => {
+    if (!o) return;
+    if (to === 'deleted') {
+      const ok = await confirm({
+        title: `Delete ${ref}?`,
+        body: 'For test orders. It disappears from every list, and from revenue and profit. The record is kept, so it can be restored if needed.',
+        confirmLabel: 'Delete order',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    start(async () => {
+      const res = await setOrderVisibilityAction(o.id, to);
+      if (!res.ok) return setReminder(res.error ?? 'Could not save.');
+      if (to === 'deleted') router.push('/portal/admin/orders');
+      else router.refresh();
+    });
+  };
   const [result, setResult] = useState<FulfillmentResult | null>(null);
   const [pharmacyRef, setPharmacyRef] = useState('');
   const [carrier, setCarrier] = useState(CARRIERS[0]);
@@ -167,6 +190,7 @@ export function OrderDetail({
               {status && <StatusBadge tone={status[1]}>{status[0]}</StatusBadge>}
               {b && <StatusBadge tone={refill ? 'attention' : 'neutral'}>{refill ? 'Refill' : 'New order'}</StatusBadge>}
               {late && b && <StatusBadge tone="critical">Waiting {b.ageDays} days</StatusBadge>}
+              {visibility && <StatusBadge tone="neutral">{visibility === 'deleted' ? 'Deleted' : 'Archived'}</StatusBadge>}
             </div>
             <p className="mt-1 text-[14px] text-ink/65">
               Placed {formatDateTime(o?.placedAt ?? b?.createdAt)}
@@ -186,6 +210,25 @@ export function OrderDetail({
                       }}
                     >
                       Refund…
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        close();
+                        void setVisibility(visibility === 'archived' || visibility === 'deleted' ? null : 'archived');
+                      }}
+                    >
+                      {visibility === 'archived' || visibility === 'deleted' ? 'Restore' : 'Archive'}
+                    </MenuItem>
+                    <MenuItem
+                      danger
+                      disabled={!closed || visibility === 'deleted'}
+                      hint={closed ? 'For test orders' : 'Cancel it first'}
+                      onClick={() => {
+                        close();
+                        void setVisibility('deleted');
+                      }}
+                    >
+                      Delete…
                     </MenuItem>
                     <MenuItem
                       danger

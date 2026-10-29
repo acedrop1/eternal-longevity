@@ -7,6 +7,7 @@ import { getTransfer, listRefunds, type FrameTransfer } from './frame';
 import type { Order } from './orders';
 import { shippingCostFor } from './shipping';
 import { getShippingCost } from './shipping-settings';
+import { deletedOrders } from './order-visibility';
 import {
   orderEconomics,
   productCostCents,
@@ -228,12 +229,14 @@ export async function loadEconData(): Promise<EconData> {
       if (error) throw new Error(error.message);
       rows.push(...((data ?? []) as Row[]));
     }
-    return { orders: rows.map(fromRow), costs, source: 'live', snapshots: true };
+    const gone = await deletedOrders();
+    return { orders: rows.map(fromRow).filter((o) => !gone.has(o.number)), costs, source: 'live', snapshots: true };
   } catch (err) {
     console.error(`[profit] reading order_costs failed ${MIGRATION_HINT}; estimating every order:`, err);
   }
   try {
-    return { orders: (await paid(BASE)).map(fromRow), costs, source: 'live', snapshots: false };
+    const gone = await deletedOrders();
+    return { orders: (await paid(BASE)).map(fromRow).filter((o) => !gone.has(o.number)), costs, source: 'live', snapshots: false };
   } catch (err) {
     console.error('[profit] reading paid orders failed:', err);
     return { orders: [], costs, source: 'live', snapshots: false };

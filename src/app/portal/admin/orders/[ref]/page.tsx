@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { getHiddenOrders } from '@/lib/order-visibility';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { ADMIN_NAV, DOCTOR_NAV } from '@/components/portal/ui';
 import { OrderDetail } from '@/components/admin/orders/OrderDetail';
@@ -70,7 +71,14 @@ export default async function OrderPage({ params }: { params: Promise<{ ref: str
   return (
     <PortalShell user={user} nav={admin ? ADMIN_NAV : DOCTOR_NAV}>
       <div className="space-y-5">
-        <OrderDetail board={board} order={order ?? undefined} extras={extras} admin={admin} profit={profit} />
+        <OrderDetail
+          board={board}
+          order={order ?? undefined}
+          extras={extras}
+          admin={admin}
+          profit={profit}
+          visibility={admin && orderNumber ? ((await getHiddenOrders())[orderNumber] ?? null) : null}
+        />
         {messages && <MessageLog messages={messages} description="Everything we emailed or texted this customer since this order was placed. Links are removed." />}
       </div>
     </PortalShell>

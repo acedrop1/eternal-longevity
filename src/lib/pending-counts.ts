@@ -13,6 +13,10 @@ import {
   createSupabaseAdminClient,
   supabaseAdminConfigured,
 } from '@/lib/supabase/admin';
+import { getHiddenOrders } from '@/lib/order-visibility';
+
+/** Orders still moving: not yet shipped, closed or archived. */
+const OPEN_ORDER = ['awaiting-visit', 'pending-admin', 'assigned', 'signed', 'paid', 'compounding'] as const;
 
 /** Plausible demo counts so the badges render before the backend is connected. */
 const DEMO_COUNTS: Record<Role, Record<string, number>> = {
@@ -34,7 +38,7 @@ export async function getPendingCounts(
     if (role === 'admin') {
       // Applications get no badge: signing up is not a task for anyone.
       const dayAgo = new Date(Date.now() - 86400_000).toISOString();
-      const [board, issues, support] = await Promise.all([
+      const [board, issues, support, open, hidden] = await Promise.all([
         db
           .from('fulfillment_orders')
           .select('*', { count: 'exact', head: true })
@@ -48,8 +52,11 @@ export async function getPendingCounts(
             `status.eq.pending-admin,and(status.eq.signed,paid_confirmed_at.is.null),and(status.eq.assigned,created_at.lt.${dayAgo})`,
           ),
         awaitingReply(db, 'support'),
+        db.from('orders').select('order_number').in('status', [...OPEN_ORDER]).limit(1000),
+        getHiddenOrders(),
       ]);
       return {
+        '/portal/admin/orders': (open.data ?? []).filter((o) => !hidden[String(o.order_number)]).length,
         '/portal/admin/fulfillment': (board.count ?? 0) + (issues.count ?? 0),
         '/portal/admin/messages': support,
       };

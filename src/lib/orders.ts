@@ -50,6 +50,8 @@ export interface OrderUpdate {
 
 export interface Order {
   id: string;
+  /** Admin archived it (Shopify style): off the open lists, still counted. */
+  archived?: boolean;
   /** Who placed it — admin needs a route from an order to the member. */
   userId?: string;
   memberName: string;
