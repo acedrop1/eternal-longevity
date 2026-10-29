@@ -12,6 +12,7 @@ import {
 } from '@/lib/fulfillment-actions';
 import { addOrderNoteAction } from '@/lib/orders-db';
 import { adminRefundOrder } from '@/lib/admin-billing-actions';
+import { setOrderShippingCostAction } from '@/lib/settings-actions';
 import type { BoardRow } from '@/lib/fulfillment-core';
 import type { OrderExtras } from '@/lib/order-detail';
 import type { Economics } from '@/lib/profit';
@@ -441,7 +442,7 @@ export function OrderDetail({
             </div>
           </SectionCard>
 
-          {admin && profit && <ProfitCard e={profit} />}
+          {admin && profit && o && <ProfitCard e={profit} orderNumber={o.id} />}
 
           <SectionCard title="Shipping address">
             <address className="text-[14px] not-italic leading-relaxed text-ink">
@@ -550,7 +551,20 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Admin only. Revenue down to profit, each estimated figure marked "est.". */
-function ProfitCard({ e }: { e: Economics }) {
+function ProfitCard({ e, orderNumber }: { e: Economics; orderNumber: string }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [ship, setShip] = useState(String(e.shippingCost / 100));
+  const [error, setError] = useState('');
+  const [saving, startSave] = useTransition();
+  const saveShip = () =>
+    startSave(async () => {
+      const res = await setOrderShippingCostAction(orderNumber, Number(ship));
+      if (!res.ok) return setError(res.message);
+      setError('');
+      setEditing(false);
+      router.refresh();
+    });
   const est = <span className="ml-1 text-[12px] font-normal text-amber-800">est.</span>;
   const row = (label: string, cents: number, estimated = false) => (
     <div className="flex justify-between gap-4 text-ink/75">
@@ -572,7 +586,45 @@ function ProfitCard({ e }: { e: Economics }) {
           <dd>{formatMoney(e.revenue)}</dd>
         </div>
         {row('Product cost', e.productCost, e.est.cost)}
-        {row('Pharmacy shipping', e.shippingCost, e.est.shipping)}
+        {editing ? (
+          <div className="flex items-center justify-between gap-3 text-ink/75">
+            <dt>Pharmacy shipping</dt>
+            <dd className="flex items-center gap-2">
+              <span className="relative">
+                <span aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/60">
+                  $
+                </span>
+                <input
+                  inputMode="numeric"
+                  aria-label="Pharmacy shipping, whole dollars"
+                  value={ship}
+                  onChange={(ev) => setShip(ev.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+                  className="w-20 rounded-inner bg-white py-1.5 pl-6 pr-2 text-[16px] tabular-nums text-ink ring-1 ring-ink/15 focus:outline-none focus:ring-ink/35"
+                />
+              </span>
+              <button type="button" onClick={saveShip} disabled={saving || ship === ''} className="text-[13px] font-semibold text-ink underline underline-offset-2 disabled:opacity-50">
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setEditing(false)} className="text-[13px] text-ink/60">
+                Cancel
+              </button>
+            </dd>
+          </div>
+        ) : (
+          <div className="flex justify-between gap-4 text-ink/75">
+            <dt>
+              Pharmacy shipping{' '}
+              <button type="button" onClick={() => setEditing(true)} className="ml-1 text-[12px] text-ink/55 underline underline-offset-2 hover:text-ink">
+                Edit
+              </button>
+            </dt>
+            <dd>
+              {e.shippingCost ? `−${formatMoney(e.shippingCost)}` : formatMoney(0)}
+              {e.est.shipping && est}
+            </dd>
+          </div>
+        )}
+        {error && <p role="alert" className="text-[13px] text-red-700">{error}</p>}
         {row('Processing fee', e.stripeFee, e.est.fee)}
         {e.refunds > 0 && row('Refunds', e.refunds)}
         <div className="flex justify-between gap-4 border-t border-ink/10 pt-2 font-semibold text-ink">

@@ -14,6 +14,8 @@ import { postPrescription, rxhereSandbox } from './rxhere';
 import { getShippingCost, getShippingSettings, saveShippingCost, saveShippingSettings, type ShippingSettings } from './shipping-settings';
 import type { ShippingCost } from './shipping';
 import type { SettingsResult } from './admin-settings-actions';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient, supabaseAdminConfigured } from './supabase/admin';
 import { getMarketingSettings, saveMarketingSettings, type MarketingSettings } from './marketing-settings';
 
 /** Admin → Settings → Shipping: what the pharmacy charges us per box. Feeds the profit numbers only. */
@@ -51,6 +53,45 @@ export async function saveShippingCostAction(input: ShippingCost): Promise<Setti
   );
   revalidatePath('/portal/admin', 'layout');
   return { ok: true, message: 'Saved. Profit numbers use the new rates from now on; paid orders keep what they cost.', value };
+}
+
+/**
+ * Order page → Profit: correct what the pharmacy charged us to ship one paid
+ * order (its frozen snapshot in order_costs). Admin only, audited.
+ */
+export async function setOrderShippingCostAction(orderNumber: string, dollars: number): Promise<SettingsResult> {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') return { ok: false, message: 'Admin access is required.' };
+  if (!Number.isInteger(dollars) || dollars < 0 || dollars > 500) return { ok: false, message: 'Whole dollars from $0 to $500.' };
+  if (!supabaseAdminConfigured()) return { ok: false, message: 'Connect Supabase to save.' };
+  // The generated types predate order_costs.
+  const db = createSupabaseAdminClient() as unknown as SupabaseClient;
+  const { data: order } = await db
+    .from('orders')
+    .select('id, order_costs(shipping_cost_cents)')
+    .eq('order_number', String(orderNumber ?? '').trim())
+    .maybeSingle();
+  if (!order) return { ok: false, message: 'Order not found.' };
+  const snap = (Array.isArray(order.order_costs) ? order.order_costs[0] : order.order_costs) as { shipping_cost_cents?: number | null } | null;
+  const before = snap?.shipping_cost_cents;
+  const { error } = await db
+    .from('order_costs')
+    .upsert({ order_id: order.id, shipping_cost_cents: dollars * 100 }, { onConflict: 'order_id' });
+  if (error) return { ok: false, message: error.message };
+  await recordAudit([
+    {
+      actorId: session.id,
+      actorName: session.name,
+      actorRole: 'admin',
+      entity: 'order',
+      entityId: orderNumber,
+      field: 'Pharmacy shipping cost',
+      oldValue: before === null || before === undefined ? 'not recorded' : `$${before / 100}`,
+      newValue: `$${dollars}`,
+    },
+  ]);
+  revalidatePath('/portal/admin', 'layout');
+  return { ok: true, message: 'Saved.' };
 }
 
 export async function saveShippingSettingsAction(input: ShippingSettings): Promise<SettingsResult & { value?: ShippingSettings }> {
